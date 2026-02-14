@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>platberlitz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a0f;
+      color: #c8c8d0;
+      font-family: 'Figtree', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .rainbow {
+      font-size: clamp(2.5rem, 8vw, 4.5rem);
+      font-weight: 600;
+      background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: rainbowShift 8s linear infinite;
+      margin-bottom: 0.4rem;
+    }
+
+    @keyframes rainbowShift {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    .subtitle {
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      color: #5a5a6e;
+      margin-bottom: 2.5rem;
+    }
+
+    .links {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .links a {
+      color: #9090a8;
+      text-decoration: none;
+      border: 1px solid #2a2a3a;
+      border-radius: 999px;
+      padding: 0.55rem 1.6rem;
+      font-size: 0.95rem;
+      transition: color 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .links a:hover {
+      color: #d0d0e0;
+      border-color: #4a4a6a;
+      box-shadow: 0 0 12px rgba(84, 160, 255, 0.15);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="rainbow">welcome :3</h1>
+    <p class="subtitle">small purasites</p>
+    <div class="links">
+      <a href="https://platberlitz.github.io/platinum-startpage/">startpage</a>
+      <a href="https://platberlitz.github.io/platinum-startpage/assistant.html">assistant</a>
+    </div>
+  </div>
+</body>
+</html>
