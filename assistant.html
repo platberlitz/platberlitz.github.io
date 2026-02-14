@@ -2488,33 +2488,33 @@ function importSTPreset(event) {
     // Set Extra Parameters field
     document.getElementById('setExtraParams').value = Object.keys(extra).length ? JSON.stringify(extra, null, 2) : '';
 
-    // Extract text prompt fields into prompt entries
-    const promptFields = {
-      system_prompt: 'System Prompt',
-      main_prompt: 'Main Prompt',
-      jailbreak_prompt: 'Jailbreak',
-      nsfw_prompt: 'NSFW Prompt',
-      persona_description: 'Persona',
-      scenario: 'Scenario',
-      char_persona: 'Character Persona',
-      world_info: 'World Info'
-    };
-    const entries = loadPromptEntries();
-    let imported = 0;
-    for (const [field, label] of Object.entries(promptFields)) {
-      const val = data[field];
-      if (!val || typeof val !== 'string' || !val.trim()) continue;
-      const existing = entries.find(e => e.name === label);
-      if (existing) {
-        existing.content = val.trim();
-        existing.enabled = true;
-      } else {
-        entries.push({ id: 'pe_' + Date.now() + '_' + (++imported), name: label, content: val.trim(), enabled: true });
+    // Extract prompt entries from ST prompts array
+    if (Array.isArray(data.prompts)) {
+      // Build enabled map from prompt_order (use last order set)
+      const enabledMap = {};
+      if (Array.isArray(data.prompt_order) && data.prompt_order.length > 0) {
+        const orderSet = data.prompt_order[data.prompt_order.length - 1];
+        if (orderSet && Array.isArray(orderSet.order)) {
+          orderSet.order.forEach(o => { enabledMap[o.identifier] = o.enabled; });
+        }
       }
-    }
-    if (imported > 0 || entries.some(e => Object.values(promptFields).includes(e.name))) {
-      savePromptEntries(entries);
-      renderPromptEntries();
+
+      const entries = [];
+      data.prompts.forEach(p => {
+        if (p.marker) return; // skip marker-only entries
+        if (!p.content || !p.content.trim()) return; // skip empty
+        const enabled = enabledMap[p.identifier] != null ? enabledMap[p.identifier] : (p.enabled !== false);
+        entries.push({
+          id: 'pe_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          name: p.name || p.identifier || 'Untitled',
+          content: p.content.trim(),
+          enabled: enabled
+        });
+      });
+      if (entries.length > 0) {
+        savePromptEntries(entries);
+        renderPromptEntries();
+      }
     }
 
     // Save as a named preset
