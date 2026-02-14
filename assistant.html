@@ -670,6 +670,23 @@ body {
   margin-left: auto;
 }
 
+/* Prompt entry list */
+.prompt-entry-list { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.prompt-entry { background: var(--hover); border-radius: 8px; overflow: hidden; transition: opacity 0.2s; }
+.prompt-entry.disabled { opacity: 0.5; }
+.prompt-entry.dragging { opacity: 0.4; }
+.prompt-entry.drag-over { border: 2px solid var(--accent); }
+.prompt-entry-header { display: flex; align-items: center; gap: 6px; padding: 6px 8px; cursor: default; font-size: 0.85em; }
+.prompt-entry-header .drag-handle { cursor: grab; color: var(--text-secondary); user-select: none; font-size: 1em; }
+.prompt-entry-header input[type="checkbox"] { width: auto; margin: 0; cursor: pointer; }
+.prompt-entry-header .pe-name { flex: 1; background: transparent; border: 1px solid transparent; color: var(--text-primary); font-size: inherit; font-family: inherit; padding: 2px 4px; border-radius: 4px; min-width: 0; }
+.prompt-entry-header .pe-name:focus { border-color: var(--accent); outline: none; }
+.prompt-entry-header button { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1em; padding: 2px 4px; line-height: 1; }
+.prompt-entry-header button:hover { color: var(--text-primary); }
+.prompt-entry-body { display: none; padding: 0 8px 8px; }
+.prompt-entry-body.open { display: block; }
+.prompt-entry-body textarea { width: 100%; min-height: 60px; resize: vertical; font-size: 0.85em; }
+
 /* Message fade-in animation */
 @keyframes msgFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .msg-new { animation: msgFadeIn 0.3s ease forwards; }
@@ -1066,10 +1083,11 @@ pre.has-line-numbers { counter-reset: code-line; }
       <button class="model-refresh-btn" onclick="document.getElementById('stPresetFile').click()" title="Import SillyTavern preset">&#128228;</button>
       <input type="file" id="stPresetFile" accept=".json" style="display:none" onchange="importSTPreset(event)">
     </div>
-    <label>System Prompt</label>
-    <textarea id="setSystemPrompt" placeholder="You are a helpful assistant." rows="3"></textarea>
-    <label>Persona (optional)</label>
-    <textarea id="setPersona" placeholder="Describe yourself so the AI can personalize responses..."></textarea>
+    <label style="display:flex;align-items:center;justify-content:space-between">
+      Prompt Entries
+      <button class="model-refresh-btn" onclick="addPromptEntry()" title="Add prompt entry">+</button>
+    </label>
+    <div id="promptEntryList" class="prompt-entry-list"></div>
 
     <div class="modal-section">Request Parameters</div>
     <label class="toggle-row">
@@ -1602,6 +1620,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cleaned !== storedUrl) localStorage.setItem('llmProxyUrl', cleaned);
   }
 
+  migrateToPromptEntries();
   loadConversations();
   loadTheme();
   loadCustomFont(localStorage.getItem('assistantFont') || '');
@@ -2218,8 +2237,7 @@ function openSettings() {
   const currentModel = localStorage.getItem('llmModel') || '';
   document.getElementById('setModelManual').value = currentModel;
   document.getElementById('setApiFormat').value = localStorage.getItem('llmApiFormat') || 'auto';
-  document.getElementById('setSystemPrompt').value = localStorage.getItem('llmSystemPrompt') || '';
-  document.getElementById('setPersona').value = localStorage.getItem('llmPersona') || '';
+  renderPromptEntries();
   document.getElementById('setExtraParams').value = localStorage.getItem('llmExtraParams') || '';
   document.getElementById('setExcludeParams').value = localStorage.getItem('llmExcludeParams') || '';
   document.getElementById('setStreaming').checked = localStorage.getItem('llmStreaming') !== 'false';
@@ -2275,8 +2293,6 @@ function saveSettings() {
   localStorage.setItem('llmApiKey', document.getElementById('setKey').value.trim());
   localStorage.setItem('llmModel', getSelectedModel('settings'));
   localStorage.setItem('llmApiFormat', document.getElementById('setApiFormat').value);
-  localStorage.setItem('llmSystemPrompt', document.getElementById('setSystemPrompt').value.trim());
-  localStorage.setItem('llmPersona', document.getElementById('setPersona').value.trim());
   localStorage.setItem('llmExtraParams', extraParamsVal);
   localStorage.setItem('llmExcludeParams', document.getElementById('setExcludeParams').value.trim());
   localStorage.setItem('llmStreaming', document.getElementById('setStreaming').checked ? 'true' : 'false');
@@ -2340,8 +2356,16 @@ function applyPreset(id) {
   try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
   const preset = presets.find(p => p.id === id);
   if (!preset) return;
-  document.getElementById('setSystemPrompt').value = preset.systemPrompt || '';
-  document.getElementById('setPersona').value = preset.persona || '';
+  // Prompt entries (new format) or legacy fallback
+  if (preset.promptEntries) {
+    savePromptEntries(preset.promptEntries);
+  } else {
+    const entries = [];
+    if (preset.systemPrompt) entries.push({ id: 'pe_' + Date.now() + '_sys', name: 'System Prompt', content: preset.systemPrompt, enabled: true });
+    if (preset.persona) entries.push({ id: 'pe_' + Date.now() + '_per', name: 'Persona', content: preset.persona, enabled: true });
+    if (entries.length > 0) savePromptEntries(entries);
+  }
+  renderPromptEntries();
   if ('temperature' in preset) document.getElementById('setTemperature').value = preset.temperature ?? '';
   if ('extraParams' in preset) document.getElementById('setExtraParams').value = preset.extraParams || '';
 }
@@ -2354,8 +2378,7 @@ function saveCurrentAsPreset() {
   const preset = {
     id: 'preset_' + Date.now(),
     name: name,
-    systemPrompt: document.getElementById('setSystemPrompt').value.trim(),
-    persona: document.getElementById('setPersona').value.trim(),
+    promptEntries: loadPromptEntries(),
     temperature: document.getElementById('setTemperature').value.trim(),
     extraParams: document.getElementById('setExtraParams').value.trim()
   };
@@ -2472,8 +2495,7 @@ function importSTPreset(event) {
     const preset = {
       id: 'preset_' + Date.now(),
       name: presetName,
-      systemPrompt: document.getElementById('setSystemPrompt').value.trim(),
-      persona: document.getElementById('setPersona').value.trim(),
+      promptEntries: loadPromptEntries(),
       temperature: temperature !== null ? String(temperature) : '',
       extraParams: document.getElementById('setExtraParams').value.trim()
     };
@@ -2484,6 +2506,174 @@ function importSTPreset(event) {
     showToast('Imported ST preset: ' + presetName, 'success');
   };
   reader.readAsText(file);
+}
+
+// ============================================
+// Prompt Manager
+// ============================================
+function loadPromptEntries() {
+  try { return JSON.parse(localStorage.getItem('llmPromptEntries') || '[]'); } catch(e) { return []; }
+}
+
+function savePromptEntries(entries) {
+  localStorage.setItem('llmPromptEntries', JSON.stringify(entries));
+}
+
+function migrateToPromptEntries() {
+  if (localStorage.getItem('llmPromptEntries')) return;
+  const entries = [];
+  const sys = localStorage.getItem('llmSystemPrompt');
+  entries.push({ id: 'pe_' + Date.now() + '_sys', name: 'System Prompt', content: sys || 'You are a helpful assistant.', enabled: true });
+  const persona = localStorage.getItem('llmPersona');
+  if (persona) {
+    entries.push({ id: 'pe_' + Date.now() + '_per', name: 'Persona', content: persona, enabled: true });
+  }
+  savePromptEntries(entries);
+}
+
+function renderPromptEntries() {
+  const list = document.getElementById('promptEntryList');
+  if (!list) return;
+  list.innerHTML = '';
+  const entries = loadPromptEntries();
+
+  entries.forEach((entry) => {
+    const div = document.createElement('div');
+    div.className = 'prompt-entry' + (entry.enabled ? '' : ' disabled');
+    div.dataset.peId = entry.id;
+    div.draggable = true;
+
+    // Drag-and-drop
+    div.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', entry.id);
+      div.classList.add('dragging');
+    });
+    div.addEventListener('dragend', () => div.classList.remove('dragging'));
+    div.addEventListener('dragover', (e) => { e.preventDefault(); div.classList.add('drag-over'); });
+    div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+    div.addEventListener('drop', (e) => {
+      e.preventDefault();
+      div.classList.remove('drag-over');
+      const draggedId = e.dataTransfer.getData('text/plain');
+      if (draggedId === entry.id) return;
+      const current = loadPromptEntries();
+      const fromIdx = current.findIndex(x => x.id === draggedId);
+      const toIdx = current.findIndex(x => x.id === entry.id);
+      if (fromIdx === -1 || toIdx === -1) return;
+      const [moved] = current.splice(fromIdx, 1);
+      current.splice(toIdx, 0, moved);
+      savePromptEntries(current);
+      renderPromptEntries();
+    });
+
+    // Header row
+    const header = document.createElement('div');
+    header.className = 'prompt-entry-header';
+
+    const drag = document.createElement('span');
+    drag.className = 'drag-handle';
+    drag.textContent = '☰';
+
+    const toggle = document.createElement('input');
+    toggle.type = 'checkbox';
+    toggle.checked = entry.enabled;
+    toggle.title = entry.enabled ? 'Enabled' : 'Disabled';
+    toggle.onchange = () => togglePromptEntry(entry.id);
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'pe-name';
+    nameInput.value = entry.name;
+    nameInput.oninput = () => updatePromptEntry(entry.id, 'name', nameInput.value);
+
+    const expandBtn = document.createElement('button');
+    expandBtn.textContent = '▼';
+    expandBtn.title = 'Expand/collapse';
+    expandBtn.onclick = () => {
+      const body = div.querySelector('.prompt-entry-body');
+      body.classList.toggle('open');
+      expandBtn.textContent = body.classList.contains('open') ? '▲' : '▼';
+    };
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '✕';
+    delBtn.title = 'Delete entry';
+    delBtn.onclick = () => deletePromptEntry(entry.id);
+
+    header.appendChild(drag);
+    header.appendChild(toggle);
+    header.appendChild(nameInput);
+    header.appendChild(expandBtn);
+    header.appendChild(delBtn);
+
+    // Body (collapsible textarea)
+    const body = document.createElement('div');
+    body.className = 'prompt-entry-body';
+    const ta = document.createElement('textarea');
+    ta.value = entry.content;
+    ta.placeholder = 'Enter prompt content...';
+    ta.oninput = () => updatePromptEntry(entry.id, 'content', ta.value);
+    body.appendChild(ta);
+
+    div.appendChild(header);
+    div.appendChild(body);
+    list.appendChild(div);
+  });
+}
+
+function addPromptEntry() {
+  const entries = loadPromptEntries();
+  entries.push({ id: 'pe_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), name: 'New Prompt', content: '', enabled: true });
+  savePromptEntries(entries);
+  renderPromptEntries();
+}
+
+function deletePromptEntry(id) {
+  let entries = loadPromptEntries();
+  entries = entries.filter(e => e.id !== id);
+  savePromptEntries(entries);
+  renderPromptEntries();
+}
+
+function togglePromptEntry(id) {
+  const entries = loadPromptEntries();
+  const entry = entries.find(e => e.id === id);
+  if (entry) entry.enabled = !entry.enabled;
+  savePromptEntries(entries);
+  renderPromptEntries();
+}
+
+function updatePromptEntry(id, field, value) {
+  const entries = loadPromptEntries();
+  const entry = entries.find(e => e.id === id);
+  if (entry) entry[field] = value;
+  savePromptEntries(entries);
+}
+
+function buildSystemMessages(conv) {
+  const msgs = [];
+  // Character system prompt override takes priority for the first entry
+  const hasCharOverride = conv && conv.characterSystemPrompt;
+  const entries = loadPromptEntries();
+  entries.forEach((entry, i) => {
+    if (!entry.enabled) return;
+    let content = entry.content;
+    // If the conversation has a character system prompt, override the first enabled entry
+    if (hasCharOverride && i === 0) content = conv.characterSystemPrompt;
+    if (content.trim()) msgs.push({ role: 'system', content });
+  });
+  // If no entries enabled but character override exists, add it
+  if (msgs.length === 0 && hasCharOverride) {
+    msgs.push({ role: 'system', content: conv.characterSystemPrompt });
+  }
+  // Fallback if completely empty
+  if (msgs.length === 0) {
+    msgs.push({ role: 'system', content: 'You are a helpful assistant.' });
+  }
+  // Memory prompt
+  const mem = getMemoryPrompt();
+  if (mem) msgs.push({ role: 'system', content: mem });
+  return msgs;
 }
 
 // ============================================
@@ -2694,8 +2884,6 @@ async function resendAfterEdit() {
   const proxyUrl = localStorage.getItem('llmProxyUrl');
   const apiKey = localStorage.getItem('llmApiKey');
   const conv = getActiveConv();
-  const systemPrompt = getConversationSystemPrompt(conv);
-  const persona = localStorage.getItem('llmPersona') || '';
   if (!proxyUrl || !apiKey) return;
 
   const assistantMsg = { role: 'assistant', content: '', swipes: [''], swipeIndex: 0 };
@@ -2711,10 +2899,7 @@ async function resendAfterEdit() {
   area.appendChild(wrapper);
   area.scrollTop = area.scrollHeight;
 
-  const apiMessages = [{ role: 'system', content: systemPrompt }];
-  if (persona) apiMessages.push({ role: 'system', content: 'About the user: ' + persona });
-  const _mem1 = getMemoryPrompt();
-  if (_mem1) apiMessages.push({ role: 'system', content: _mem1 });
+  const apiMessages = buildSystemMessages(conv);
   messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: m.content }); });
 
   await streamResponse(apiMessages, assistantMsg, 0, bubble);
@@ -3086,8 +3271,6 @@ async function sendMessage() {
   const proxyUrl = localStorage.getItem('llmProxyUrl');
   const apiKey = localStorage.getItem('llmApiKey');
   const conv = getActiveConv();
-  const systemPrompt = getConversationSystemPrompt(conv);
-  const persona = localStorage.getItem('llmPersona') || '';
 
   if (!proxyUrl || !apiKey) {
     document.getElementById('setupModal').classList.add('open');
@@ -3130,10 +3313,7 @@ async function sendMessage() {
   area.appendChild(wrapper);
   area.scrollTop = area.scrollHeight;
 
-  const apiMessages = [{ role: 'system', content: systemPrompt }];
-  if (persona) apiMessages.push({ role: 'system', content: 'About the user: ' + persona });
-  const _mem2 = getMemoryPrompt();
-  if (_mem2) apiMessages.push({ role: 'system', content: _mem2 });
+  const apiMessages = buildSystemMessages(conv);
   messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: m.content }); });
 
   // Capture and clear model override
@@ -3175,12 +3355,7 @@ async function regenerate() {
   bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
 
   const conv = getActiveConv();
-  const systemPrompt = getConversationSystemPrompt(conv);
-  const persona = localStorage.getItem('llmPersona') || '';
-  const apiMessages = [{ role: 'system', content: systemPrompt }];
-  if (persona) apiMessages.push({ role: 'system', content: 'About the user: ' + persona });
-  const _mem3 = getMemoryPrompt();
-  if (_mem3) apiMessages.push({ role: 'system', content: _mem3 });
+  const apiMessages = buildSystemMessages(conv);
   for (let i = 0; i < lastIdx; i++) {
     if (messages[i].role !== 'system') apiMessages.push({ role: messages[i].role, content: messages[i].content });
   }
@@ -3231,6 +3406,7 @@ function exportAllConversations() {
     exportedAt: new Date().toISOString(),
     settings: {
       model: localStorage.getItem('llmModel') || '',
+      promptEntries: loadPromptEntries(),
       systemPrompt: localStorage.getItem('llmSystemPrompt') || '',
       persona: localStorage.getItem('llmPersona') || '',
       apiFormat: localStorage.getItem('llmApiFormat') || 'auto',
