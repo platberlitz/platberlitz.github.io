@@ -1736,6 +1736,15 @@ document.addEventListener('DOMContentLoaded', () => {
 function renderMarkdown(text) {
   if (!text) return '';
 
+  // Fix UTF-8 text that was decoded as Latin-1 (smart quotes, em dashes, etc. showing as â + boxes)
+  text = text.replace(/[\xC0-\xF4][\x80-\xBF]{1,3}/g, function(m) {
+    try {
+      const bytes = new Uint8Array(m.length);
+      for (let i = 0; i < m.length; i++) bytes[i] = m.charCodeAt(i);
+      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch(e) { return m; }
+  });
+
   // Extract KaTeX math before HTML escaping
   const mathPlaceholders = [];
   let s = text;
