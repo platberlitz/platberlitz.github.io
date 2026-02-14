@@ -2488,6 +2488,35 @@ function importSTPreset(event) {
     // Set Extra Parameters field
     document.getElementById('setExtraParams').value = Object.keys(extra).length ? JSON.stringify(extra, null, 2) : '';
 
+    // Extract text prompt fields into prompt entries
+    const promptFields = {
+      system_prompt: 'System Prompt',
+      main_prompt: 'Main Prompt',
+      jailbreak_prompt: 'Jailbreak',
+      nsfw_prompt: 'NSFW Prompt',
+      persona_description: 'Persona',
+      scenario: 'Scenario',
+      char_persona: 'Character Persona',
+      world_info: 'World Info'
+    };
+    const entries = loadPromptEntries();
+    let imported = 0;
+    for (const [field, label] of Object.entries(promptFields)) {
+      const val = data[field];
+      if (!val || typeof val !== 'string' || !val.trim()) continue;
+      const existing = entries.find(e => e.name === label);
+      if (existing) {
+        existing.content = val.trim();
+        existing.enabled = true;
+      } else {
+        entries.push({ id: 'pe_' + Date.now() + '_' + (++imported), name: label, content: val.trim(), enabled: true });
+      }
+    }
+    if (imported > 0 || entries.some(e => Object.values(promptFields).includes(e.name))) {
+      savePromptEntries(entries);
+      renderPromptEntries();
+    }
+
     // Save as a named preset
     const presetName = data.name || file.name.replace(/\.json$/i, '');
     let presets = [];
