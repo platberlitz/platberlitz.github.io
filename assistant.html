@@ -683,7 +683,7 @@ body {
 
 /* Prompt entry list */
 .prompt-entry-list { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
-.prompt-entry { background: var(--hover); border-radius: 8px; overflow: hidden; transition: opacity 0.2s; border: 1px solid var(--card-border); }
+.prompt-entry { background: var(--hover); border-radius: 8px; overflow: hidden; transition: opacity 0.2s; border: 1px solid var(--card-border); flex-shrink: 0; }
 .prompt-entry.disabled { opacity: 0.5; }
 .prompt-entry.dragging { opacity: 0.4; }
 .prompt-entry.drag-over { border-color: var(--accent); }
