@@ -484,6 +484,17 @@ body {
   outline: none;
   transition: border-color 0.2s;
 }
+.prompt-entry-header input,
+.prompt-entry-header button,
+.prompt-entry-body textarea {
+  width: auto;
+  padding: 0;
+  margin-bottom: 0;
+  font-size: inherit;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
 .modal input:focus, .modal textarea:focus, .modal select:focus { border-color: var(--accent); }
 .modal textarea { resize: vertical; min-height: 60px; max-height: 120px; }
 .modal select option { background: var(--sidebar-bg); color: var(--text-primary); }
@@ -678,14 +689,14 @@ body {
 .prompt-entry.drag-over { border-color: var(--accent); }
 .prompt-entry-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: default; }
 .prompt-entry-header .drag-handle { cursor: grab; color: var(--text-secondary); -webkit-text-fill-color: var(--text-secondary); user-select: none; font-size: 1.2em; flex-shrink: 0; }
-.prompt-entry-header input[type="checkbox"] { width: 22px !important; height: 22px; margin: 0; margin-bottom: 0 !important; cursor: pointer; flex-shrink: 0; padding: 0 !important; }
-.prompt-entry-header .pe-name { flex: 1; background: var(--sidebar-bg); border: 1px solid var(--card-border); color: var(--text-primary); -webkit-text-fill-color: var(--text-primary); font-size: 16px; font-family: inherit; padding: 10px 12px !important; border-radius: 6px; min-width: 0; width: auto !important; margin-bottom: 0 !important; }
+.prompt-entry-header input[type="checkbox"] { width: 22px; height: 22px; margin: 0; cursor: pointer; flex-shrink: 0; padding: 0; }
+.prompt-entry-header .pe-name { flex: 1; background: var(--sidebar-bg); border: 1px solid var(--card-border); color: var(--text-primary); -webkit-text-fill-color: var(--text-primary); font-size: 16px; font-family: inherit; padding: 10px 12px; border-radius: 6px; min-width: 0; }
 .prompt-entry-header .pe-name:focus { border-color: var(--accent); outline: none; }
-.prompt-entry-header button { background: none; border: none; color: var(--text-secondary); -webkit-text-fill-color: var(--text-secondary); cursor: pointer; font-size: 1.3em; padding: 8px; line-height: 1; flex-shrink: 0; min-width: 40px; min-height: 40px; display: flex; align-items: center; justify-content: center; width: auto !important; }
+.prompt-entry-header button { background: none; border: none; color: var(--text-secondary); -webkit-text-fill-color: var(--text-secondary); cursor: pointer; font-size: 1.3em; padding: 8px; line-height: 1; flex-shrink: 0; min-width: 40px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
 .prompt-entry-header button:hover { color: var(--text-primary); -webkit-text-fill-color: var(--text-primary); }
 .prompt-entry-body { display: none; padding: 0 14px 12px; }
 .prompt-entry-body.open { display: block; }
-.prompt-entry-body textarea { width: 100%; min-height: 100px; resize: vertical; font-size: 16px; margin-bottom: 0 !important; }
+.prompt-entry-body textarea { width: 100%; min-height: 100px; resize: vertical; font-size: 16px; background: var(--hover); border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; color: var(--text-primary); }
 
 /* Message fade-in animation */
 @keyframes msgFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
