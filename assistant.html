@@ -2333,6 +2333,8 @@ function applyPreset(id) {
   if (!preset) return;
   document.getElementById('setSystemPrompt').value = preset.systemPrompt || '';
   document.getElementById('setPersona').value = preset.persona || '';
+  if ('temperature' in preset) document.getElementById('setTemperature').value = preset.temperature ?? '';
+  if ('extraParams' in preset) document.getElementById('setExtraParams').value = preset.extraParams || '';
 }
 
 function saveCurrentAsPreset() {
@@ -2344,7 +2346,9 @@ function saveCurrentAsPreset() {
     id: 'preset_' + Date.now(),
     name: name,
     systemPrompt: document.getElementById('setSystemPrompt').value.trim(),
-    persona: document.getElementById('setPersona').value.trim()
+    persona: document.getElementById('setPersona').value.trim(),
+    temperature: document.getElementById('setTemperature').value.trim(),
+    extraParams: document.getElementById('setExtraParams').value.trim()
   };
   presets.push(preset);
   localStorage.setItem('assistantPresets', JSON.stringify(presets));
@@ -2449,13 +2453,25 @@ function importSTPreset(event) {
       document.getElementById('setTemperature').value = temperature;
     }
 
-    // Merge into Extra Parameters (preserve existing non-conflicting keys)
-    let existing = {};
-    try { existing = JSON.parse(document.getElementById('setExtraParams').value || '{}'); } catch(e) {}
-    Object.assign(existing, extra);
-    document.getElementById('setExtraParams').value = JSON.stringify(existing, null, 2);
+    // Set Extra Parameters field
+    document.getElementById('setExtraParams').value = Object.keys(extra).length ? JSON.stringify(extra, null, 2) : '';
 
+    // Save as a named preset
     const presetName = data.name || file.name.replace(/\.json$/i, '');
+    let presets = [];
+    try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
+    const preset = {
+      id: 'preset_' + Date.now(),
+      name: presetName,
+      systemPrompt: document.getElementById('setSystemPrompt').value.trim(),
+      persona: document.getElementById('setPersona').value.trim(),
+      temperature: temperature !== null ? String(temperature) : '',
+      extraParams: document.getElementById('setExtraParams').value.trim()
+    };
+    presets.push(preset);
+    localStorage.setItem('assistantPresets', JSON.stringify(presets));
+    loadPresets();
+    document.getElementById('setPresetSelect').value = preset.id;
     showToast('Imported ST preset: ' + presetName, 'success');
   };
   reader.readAsText(file);
