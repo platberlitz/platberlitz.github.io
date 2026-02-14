@@ -2416,94 +2416,25 @@ function importSTPreset(event) {
       return;
     }
 
-    // Map ST parameter names to API-compatible names
-    const nameMap = {
-      temp: 'temperature',
-      top_p: 'top_p',
-      top_k: 'top_k',
-      min_p: 'min_p',
-      rep_pen: 'repetition_penalty',
-      rep_pen_range: 'repetition_penalty_range',
-      rep_pen_slope: 'repetition_penalty_slope',
-      freq_pen: 'frequency_penalty',
-      presence_pen: 'presence_penalty',
-      typical_p: 'typical_p',
-      tfs: 'tfs_z',
-      top_a: 'top_a',
-      mirostat_mode: 'mirostat_mode',
-      mirostat_tau: 'mirostat_tau',
-      mirostat_eta: 'mirostat_eta',
-      max_tokens: 'max_tokens',
-      genamt: 'max_tokens',
-      max_length: 'max_tokens',
-      seed: 'seed',
-      smoothing_factor: 'smoothing_factor',
-      smoothing_curve: 'smoothing_curve',
-      dynatemp: 'dynatemp',
-      min_temp: 'min_temp',
-      max_temp: 'max_temp',
-      temperature_last: 'temperature_last',
-      sampler_order: 'sampler_order',
-      no_repeat_ngram_size: 'no_repeat_ngram_size',
-      penalty_alpha: 'penalty_alpha',
-      epsilon_cutoff: 'epsilon_cutoff',
-      eta_cutoff: 'eta_cutoff',
-      encoder_rep_pen: 'encoder_repetition_penalty',
-      frequency_penalty: 'frequency_penalty',
-      presence_penalty: 'presence_penalty',
-      temperature: 'temperature',
-      repetition_penalty: 'repetition_penalty'
-    };
-
-    // Fields to skip (metadata, not sampler params)
-    const skip = new Set([
-      'name', 'preset', 'do_sample', 'early_stopping',
-      'grammar_string', 'banned_tokens', 'custom_token_bans',
-      'ignore_eos_token_ban', 'num_beams', 'length_penalty',
-      'min_length', 'add_bos_token', 'truncation_length',
-      'ban_eos_token', 'skip_special_tokens',
-      'sampler_priority', 'n'
-    ]);
-
-    const extra = {};
-    let temperature = null;
-
-    for (const [key, val] of Object.entries(data)) {
-      if (skip.has(key)) continue;
-      if (typeof val === 'string' && key !== 'sampler_order') continue;
-      if (typeof val === 'boolean') continue;
-      const mapped = nameMap[key] || key;
-      if (mapped === 'temperature') {
-        temperature = val;
-      } else {
-        extra[mapped] = val;
-      }
+    // Extract system prompt from ST preset
+    const sysPrompt = data.system_prompt || data.main_prompt || data.systemPrompt || '';
+    if (!sysPrompt) {
+      showToast('No system prompt found in preset.', 'error');
+      return;
     }
 
-    // Set temperature field
-    if (temperature !== null) {
-      document.getElementById('setTemperature').value = temperature;
+    // Find or create the System Prompt entry and set its content
+    const entries = loadPromptEntries();
+    let sysEntry = entries.find(e => e.name === 'System Prompt');
+    if (sysEntry) {
+      sysEntry.content = sysPrompt;
+      sysEntry.enabled = true;
+    } else {
+      entries.unshift({ id: 'pe_' + Date.now() + '_sys', name: 'System Prompt', content: sysPrompt, enabled: true });
     }
-
-    // Set Extra Parameters field
-    document.getElementById('setExtraParams').value = Object.keys(extra).length ? JSON.stringify(extra, null, 2) : '';
-
-    // Save as a named preset
-    const presetName = data.name || file.name.replace(/\.json$/i, '');
-    let presets = [];
-    try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
-    const preset = {
-      id: 'preset_' + Date.now(),
-      name: presetName,
-      promptEntries: loadPromptEntries(),
-      temperature: temperature !== null ? String(temperature) : '',
-      extraParams: document.getElementById('setExtraParams').value.trim()
-    };
-    presets.push(preset);
-    localStorage.setItem('assistantPresets', JSON.stringify(presets));
-    loadPresets();
-    document.getElementById('setPresetSelect').value = preset.id;
-    showToast('Imported ST preset: ' + presetName, 'success');
+    savePromptEntries(entries);
+    renderPromptEntries();
+    showToast('Imported system prompt from: ' + (data.name || file.name.replace(/\.json$/i, '')), 'success');
   };
   reader.readAsText(file);
 }
