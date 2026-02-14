@@ -2401,6 +2401,13 @@ function deleteSelectedPreset() {
   presets = presets.filter(p => p.id !== id);
   localStorage.setItem('assistantPresets', JSON.stringify(presets));
   loadPresets();
+
+  // Clear imported prompt entries and extra params
+  savePromptEntries([{ id: 'pe_' + Date.now() + '_sys', name: 'System Prompt', content: '', enabled: true }]);
+  renderPromptEntries();
+  document.getElementById('setTemperature').value = '';
+  document.getElementById('setExtraParams').value = '';
+
   showToast('Preset deleted.', 'info');
 }
 
