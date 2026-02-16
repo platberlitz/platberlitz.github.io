@@ -261,6 +261,7 @@ body {
   background: var(--msg-user);
   color: white;
   border-bottom-right-radius: 4px;
+  white-space: pre-wrap;
 }
 .msg-bubble.assistant {
   background: var(--msg-assistant);
@@ -1894,8 +1895,26 @@ function renderMarkdown(text) {
   s = s.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
   s = s.replace(/^---$/gm, '<hr>');
-  const parts = s.split(/(<pre>[\s\S]*?<\/pre>|<div class="mermaid-container">[\s\S]*?<\/div>)/g);
-  s = parts.map(part => (part.startsWith('<pre>') || part.startsWith('<div class="mermaid')) ? part : part.replace(/\n/g, '<br>')).join('');
+  // Markdown tables
+  s = s.replace(/(^\|.+\|$\n?)+/gm, match => {
+    const rows = match.trim().split('\n').filter(r => r.trim());
+    if (rows.length < 2) return match;
+    const parseRow = r => r.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+    const isSep = r => /^\|[\s\-:|]+\|$/.test(r.trim());
+    let headerRow = parseRow(rows[0]);
+    let bodyStart = 1;
+    if (isSep(rows[1])) bodyStart = 2;
+    let html = '<table><thead><tr>' + headerRow.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+    for (let i = bodyStart; i < rows.length; i++) {
+      if (isSep(rows[i])) continue;
+      const cells = parseRow(rows[i]);
+      html += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+    }
+    html += '</tbody></table>';
+    return html;
+  });
+  const parts = s.split(/(<pre>[\s\S]*?<\/pre>|<div class="mermaid-container">[\s\S]*?<\/div>|<table>[\s\S]*?<\/table>)/g);
+  s = parts.map(part => (part.startsWith('<pre>') || part.startsWith('<div class="mermaid') || part.startsWith('<table>')) ? part : part.replace(/\n/g, '<br>')).join('');
 
   // Restore KaTeX math placeholders
   s = s.replace(/\x00MATH(\d+)\x00/g, (_, idx) => {
