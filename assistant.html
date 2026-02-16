@@ -254,6 +254,8 @@ body {
 .msg-wrapper { display: flex; flex-direction: column; position: relative; }
 .msg-wrapper.user { align-self: flex-end; max-width: 75%; }
 .msg-wrapper.assistant { align-self: flex-start; max-width: 75%; }
+.msg-wrapper.assistant.has-avatar { flex-direction: row; align-items: flex-start; }
+.msg-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin-right: 8px; margin-top: 2px; }
 
 .msg-bubble {
   padding: 12px 16px;
@@ -600,6 +602,7 @@ body {
   .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 500; }
   .sidebar.collapsed { margin-left: -260px; }
   .msg-wrapper.user, .msg-wrapper.assistant { max-width: 95%; }
+  .msg-avatar { width: 26px; height: 26px; margin-right: 6px; }
   .toolbar-title { font-size: 0.85em; }
   .input-area { padding: 8px 12px 12px; }
   .messages-area { padding: 12px; }
@@ -1534,15 +1537,28 @@ function loadCachedModels(target) {
 // ============================================
 // Memory System
 // ============================================
-function loadMemories() {
-  try { return JSON.parse(localStorage.getItem('assistantMemories') || '[]'); } catch(e) { return []; }
+async function loadMemories() {
+  try {
+    const mems = await idbGetAll('memories');
+    if (mems.length > 0) return mems;
+  } catch(e) {}
+  try {
+    const mems = JSON.parse(localStorage.getItem('assistantMemories') || '[]');
+    if (mems.length > 0) {
+      await idbPutAll('memories', mems);
+      localStorage.removeItem('assistantMemories');
+    }
+    return mems;
+  } catch(e) { return []; }
 }
-function saveMemories(memories) {
-  localStorage.setItem('assistantMemories', JSON.stringify(memories));
+async function saveMemories(memories) {
+  if (!db) return;
+  await idbClear('memories');
+  await idbPutAll('memories', memories);
 }
-function getMemoryPrompt() {
+async function getMemoryPrompt() {
   if (localStorage.getItem('llmMemoryEnabled') !== 'true') return '';
-  const memories = loadMemories();
+  const memories = await loadMemories();
   if (memories.length === 0) return '';
   return 'User memories (facts learned from previous conversations):\n' +
     memories.map(m => '- ' + m.text).join('\n');
@@ -1579,7 +1595,7 @@ async function callApiNonStreaming(messages) {
 async function extractMemories(conversationMessages) {
   if (localStorage.getItem('llmMemoryEnabled') !== 'true') return;
 
-  const existing = loadMemories();
+  const existing = await loadMemories();
   const existingText = existing.map(m => '- ' + m.text).join('\n') || '(none yet)';
 
   const extractPrompt = [
@@ -1598,16 +1614,46 @@ Example response: ["User prefers TypeScript over JavaScript", "User is building 
     const response = await callApiNonStreaming(extractPrompt);
     const newMemories = JSON.parse(response);
     if (Array.isArray(newMemories) && newMemories.length > 0) {
-      const memories = loadMemories();
+      const memories = await loadMemories();
       newMemories.forEach(text => {
         if (typeof text === 'string' && text.trim()) {
           memories.push({ id: 'mem_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), text: text.trim(), createdAt: Date.now() });
         }
       });
-      while (memories.length > 50) memories.shift();
-      saveMemories(memories);
+      await saveMemories(memories);
+      cleanupMemories(); // fire-and-forget, has its own cooldown
     }
   } catch(e) { /* silent fail — memory is best-effort */ }
+}
+
+let _lastCleanup = 0;
+async function cleanupMemories() {
+  if (Date.now() - _lastCleanup < 300000) return; // 5-min cooldown
+  const memories = await loadMemories();
+  if (memories.length < 5) return;
+
+  const prompt = [
+    { role: 'system', content: `You are a memory cleanup system. Given a list of user memories (each with an ID), identify contradictions and duplicates.
+
+Rules:
+- If two memories contradict, keep the NEWER one (higher ID number = newer). Mark the older for removal.
+- If two memories say the same thing differently, keep the more specific one. Mark the other for removal.
+- If a memory is outdated or superseded, mark it for removal.
+
+Respond ONLY with a JSON object: {"remove": ["id1", "id2"]}
+If no changes needed: {"remove": []}` },
+    { role: 'user', content: memories.map(m => '[' + m.id + '] ' + m.text).join('\n') }
+  ];
+
+  try {
+    const response = await callApiNonStreaming(prompt);
+    const result = JSON.parse(response);
+    if (result.remove && result.remove.length > 0) {
+      const cleaned = memories.filter(m => !result.remove.includes(m.id));
+      await saveMemories(cleaned);
+    }
+    _lastCleanup = Date.now();
+  } catch(e) { /* silent fail */ }
 }
 
 function openManageMemories() {
@@ -1619,8 +1665,8 @@ function openManageMemories() {
   const popup = document.createElement('div');
   popup.className = 'char-info-popup';
 
-  function renderMemoryList() {
-    const memories = loadMemories();
+  async function renderMemoryList() {
+    const memories = await loadMemories();
     let html = '<h3>Memories (' + memories.length + ')</h3>';
     if (memories.length === 0) {
       html += '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">No memories saved yet. The AI will automatically remember facts about you as you chat.</div>';
@@ -1633,7 +1679,7 @@ function openManageMemories() {
           '</div>';
       });
       html += '</div>';
-      html += '<button class="btn btn-secondary" style="width:100%;margin-bottom:8px;padding:8px;font-size:0.8em" onclick="if(confirm(\'Clear all memories?\')){saveMemories([]);openManageMemories()}">Clear All</button>';
+      html += '<button class="btn btn-secondary" style="width:100%;margin-bottom:8px;padding:8px;font-size:0.8em" onclick="if(confirm(\'Clear all memories?\')){saveMemories([]).then(()=>openManageMemories())}">Clear All</button>';
     }
     html += '<button class="btn btn-primary" style="width:100%;padding:8px" onclick="this.closest(\'.char-info-popup\').previousElementSibling.click()">Close</button>';
     popup.innerHTML = html;
@@ -1645,9 +1691,9 @@ function openManageMemories() {
   document.body.appendChild(popup);
 }
 
-function deleteMemory(id) {
-  const memories = loadMemories().filter(m => m.id !== id);
-  saveMemories(memories);
+async function deleteMemory(id) {
+  const memories = (await loadMemories()).filter(m => m.id !== id);
+  await saveMemories(memories);
   openManageMemories();
 }
 
@@ -1712,7 +1758,7 @@ function prepareAnthropicMessages(apiMessages) {
 // ============================================
 // Initialization
 // ============================================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Migration: strip endpoint suffix from proxy URL
   const storedUrl = localStorage.getItem('llmProxyUrl');
   if (storedUrl) {
@@ -1720,12 +1766,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cleaned !== storedUrl) localStorage.setItem('llmProxyUrl', cleaned);
   }
 
+  await openDB();
   migrateToPromptEntries();
-  loadConversations();
+  await loadConversations();
   loadTheme();
   loadCustomFont(localStorage.getItem('assistantFont') || '');
   loadCachedModels('setup');
   loadCachedModels('settings');
+
+  // Save on page unload — sync fallback since IDB is async
+  window.addEventListener('beforeunload', () => {
+    clearTimeout(_saveDebounceTimer);
+    saveConversations();
+    try {
+      localStorage.setItem('assistantConversations', JSON.stringify(conversations));
+      localStorage.setItem('assistantActiveConvId', activeConvId || '');
+    } catch(e) {}
+  });
 
   // Show setup modal if no API key
   if (!localStorage.getItem('llmProxyUrl') || !localStorage.getItem('llmApiKey')) {
@@ -2092,13 +2149,86 @@ function updateTokenInfo() {
 }
 
 // ============================================
+// IndexedDB Storage Layer
+// ============================================
+const DB_NAME = 'assistantDB';
+const DB_VERSION = 1;
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('conversations')) d.createObjectStore('conversations', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('memories')) d.createObjectStore('memories', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'key' });
+    };
+    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function idbPut(store, data) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const s = tx.objectStore(store);
+    s.put(data);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function idbGetAll(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const s = tx.objectStore(store);
+    const req = s.getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbDelete(store, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const s = tx.objectStore(store);
+    s.delete(key);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function idbClear(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).clear();
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function idbPutAll(store, items) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const s = tx.objectStore(store);
+    items.forEach(item => s.put(item));
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// ============================================
 // Conversation Management
 // ============================================
 function genId() { return 'conv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6); }
 
 function saveConversations() {
-  localStorage.setItem('assistantConversations', JSON.stringify(conversations));
-  localStorage.setItem('assistantActiveConvId', activeConvId || '');
+  try { localStorage.setItem('assistantActiveConvId', activeConvId || ''); } catch(e) {}
+  if (!db) return;
+  idbPutAll('conversations', conversations)
+    .then(() => idbPut('meta', { key: 'activeConvId', value: activeConvId || '' }))
+    .catch(e => console.error('IDB save error:', e));
 }
 
 let _saveDebounceTimer;
@@ -2107,7 +2237,33 @@ function debouncedSave() {
   _saveDebounceTimer = setTimeout(saveConversations, 1000);
 }
 
-function loadConversations() {
+async function loadConversations() {
+  // Try IndexedDB first
+  try {
+    const convs = await idbGetAll('conversations');
+    if (convs.length > 0) {
+      conversations = convs;
+      const meta = await new Promise((resolve) => {
+        const tx = db.transaction('meta', 'readonly');
+        const req = tx.objectStore('meta').get('activeConvId');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+      activeConvId = meta?.value || conversations[0].id;
+      conversations.forEach(c => c.messages.forEach(m => {
+        if (m.role === 'assistant' && !m.swipes) { m.swipes = [typeof m.content === 'string' ? m.content : '']; m.swipeIndex = 0; }
+      }));
+      activeConvId = (conversations.find(c => c.id === activeConvId)) ? activeConvId : conversations[0].id;
+      messages = getActiveConv().messages;
+      renderSidebar();
+      renderMessages();
+      updateTokenInfo();
+      updateCharacterUI();
+      return;
+    }
+  } catch(e) { console.error('IDB load error:', e); }
+
+  // Migrate from localStorage
   const saved = localStorage.getItem('assistantConversations');
   if (saved) {
     try { conversations = JSON.parse(saved); }
@@ -2135,6 +2291,14 @@ function loadConversations() {
   const savedActive = localStorage.getItem('assistantActiveConvId');
   activeConvId = (savedActive && conversations.find(c => c.id === savedActive)) ? savedActive : conversations[0].id;
   messages = getActiveConv().messages;
+
+  // Write migrated data to IndexedDB and clean localStorage
+  try {
+    await idbPutAll('conversations', conversations);
+    await idbPut('meta', { key: 'activeConvId', value: activeConvId || '' });
+    localStorage.removeItem('assistantConversations');
+    localStorage.removeItem('assistantActiveConvId');
+  } catch(e) { console.error('IDB migration error:', e); }
 
   saveConversations();
   renderSidebar();
@@ -2817,7 +2981,7 @@ function updatePromptEntry(id, field, value) {
   savePromptEntries(entries);
 }
 
-function buildSystemMessages(conv) {
+async function buildSystemMessages(conv) {
   const msgs = [];
   // Character system prompt override takes priority for the first entry
   const hasCharOverride = conv && conv.characterSystemPrompt;
@@ -2838,7 +3002,7 @@ function buildSystemMessages(conv) {
     msgs.push({ role: 'system', content: 'You are a helpful assistant.' });
   }
   // Memory prompt
-  const mem = getMemoryPrompt();
+  const mem = await getMemoryPrompt();
   if (mem) msgs.push({ role: 'system', content: mem });
   return msgs;
 }
@@ -2846,6 +3010,18 @@ function buildSystemMessages(conv) {
 // ============================================
 // Render Messages
 // ============================================
+function maybeAddAvatar(wrapper) {
+  const conv = getActiveConv();
+  if (conv && conv.characterAvatar) {
+    wrapper.classList.add('has-avatar');
+    const avatar = document.createElement('img');
+    avatar.className = 'msg-avatar';
+    avatar.src = conv.characterAvatar;
+    avatar.alt = '';
+    wrapper.appendChild(avatar);
+  }
+}
+
 function renderMessages() {
   closeChatSearch();
   const area = document.getElementById('messagesArea');
@@ -2895,6 +3071,7 @@ function renderMessages() {
       bubble.textContent = msg.content;
     }
 
+    if (msg.role === 'assistant') maybeAddAvatar(wrapper);
     wrapper.appendChild(bubble);
 
     // Message actions
@@ -3079,11 +3256,12 @@ async function resendAfterEdit() {
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble assistant';
   bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  maybeAddAvatar(wrapper);
   wrapper.appendChild(bubble);
   area.appendChild(wrapper);
   area.scrollTop = area.scrollHeight;
 
-  const apiMessages = buildSystemMessages(conv);
+  const apiMessages = await buildSystemMessages(conv);
   messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: m.content }); });
 
   await streamResponse(apiMessages, assistantMsg, 0, bubble);
@@ -3492,11 +3670,12 @@ async function sendMessage() {
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble assistant';
   bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  maybeAddAvatar(wrapper);
   wrapper.appendChild(bubble);
   area.appendChild(wrapper);
   area.scrollTop = area.scrollHeight;
 
-  const apiMessages = buildSystemMessages(conv);
+  const apiMessages = await buildSystemMessages(conv);
   messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: m.content }); });
 
   // Capture and clear model override
@@ -3506,10 +3685,6 @@ async function sendMessage() {
   await streamResponse(apiMessages, assistantMsg, 0, bubble, overrideModel);
 
   extractMemories(apiMessages);
-  if (messages.length > 50) {
-    showToast('Oldest messages trimmed to stay within limit', 'info');
-    messages.splice(0, messages.length - 50);
-  }
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
   renderMessages();
@@ -3541,7 +3716,7 @@ async function regenerate() {
   bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
 
   const conv = getActiveConv();
-  const apiMessages = buildSystemMessages(conv);
+  const apiMessages = await buildSystemMessages(conv);
   for (let i = 0; i < lastIdx; i++) {
     if (messages[i].role !== 'system') apiMessages.push({ role: messages[i].role, content: messages[i].content });
   }
