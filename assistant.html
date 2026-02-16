@@ -2043,13 +2043,18 @@ function saveConversations() {
 
 function loadConversations() {
   const saved = localStorage.getItem('assistantConversations');
-  if (saved) conversations = JSON.parse(saved);
+  if (saved) {
+    try { conversations = JSON.parse(saved); }
+    catch (e) { console.error('Failed to parse conversations, resetting:', e); conversations = []; }
+  }
 
   // Migrate legacy
   const legacy = localStorage.getItem('assistantChatHistory');
   if (legacy && conversations.length === 0) {
-    conversations.push({ id: genId(), title: 'Chat', messages: JSON.parse(legacy), createdAt: Date.now(), updatedAt: Date.now() });
-    localStorage.removeItem('assistantChatHistory');
+    try {
+      conversations.push({ id: genId(), title: 'Chat', messages: JSON.parse(legacy), createdAt: Date.now(), updatedAt: Date.now() });
+      localStorage.removeItem('assistantChatHistory');
+    } catch (e) { console.error('Failed to parse legacy chat:', e); }
   }
 
   if (conversations.length === 0) {
@@ -2950,15 +2955,14 @@ function renderEditMode(area, msg, idx) {
     const oldBranch = JSON.parse(JSON.stringify(messages.slice(idx)));
     if (!msg.branches) {
       msg.branches = [oldBranch];
-      msg.branchIndex = 1;
     } else {
-      // Save current continuation as current branch before editing
       msg.branches[msg.branchIndex] = oldBranch;
-      msg.branchIndex = msg.branches.length;
     }
 
     msg.content = editedText;
     messages.length = idx + 1;
+    // Create new branch slot and switch to it
+    msg.branchIndex = msg.branches.length;
     saveConversations();
     renderMessages();
     await resendAfterEdit();
@@ -3031,8 +3035,8 @@ function switchBranch(msgIdx, dir) {
   const newIdx = Math.max(0, Math.min(msg.branches.length - 1, msg.branchIndex + dir));
   if (newIdx === msg.branchIndex) return;
   msg.branchIndex = newIdx;
-  // Replace messages from msgIdx onward with the selected branch
-  const branch = msg.branches[msg.branchIndex];
+  // Replace messages from msgIdx onward with the selected branch (deep clone)
+  const branch = JSON.parse(JSON.stringify(msg.branches[msg.branchIndex]));
   messages.length = msgIdx;
   branch.forEach(m => messages.push(m));
   saveConversations();
@@ -3049,16 +3053,15 @@ function forkBranch(msgIdx) {
   const currentBranch = JSON.parse(JSON.stringify(messages.slice(msgIdx)));
   if (!msg.branches) {
     msg.branches = [currentBranch];
-    msg.branchIndex = 1;
   } else {
     msg.branches[msg.branchIndex] = currentBranch;
-    msg.branchIndex = msg.branches.length;
   }
 
-  // Truncate messages after this user message
+  // Create new empty branch (just the user message) and switch to it
   messages.length = msgIdx + 1;
   const newBranch = JSON.parse(JSON.stringify(messages.slice(msgIdx)));
-  msg.branches[msg.branchIndex] = newBranch;
+  msg.branches.push(newBranch);
+  msg.branchIndex = msg.branches.length - 1;
   saveConversations();
   renderMessages();
   updateTokenInfo();
@@ -3391,6 +3394,7 @@ async function sendMessage() {
   // Auto-title
   if (conv && conv.title === 'New Chat') {
     conv.title = (text || 'Image chat').slice(0, 40);
+    conv.updatedAt = Date.now();
     renderSidebar();
   }
 
