@@ -956,6 +956,19 @@ pre.has-line-numbers { counter-reset: code-line; }
   .toast { max-width: calc(100vw - 32px); }
   .scroll-fab { width: 44px; height: 44px; bottom: 8px; right: 12px; }
 }
+/* Focus-visible for keyboard navigation */
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Message timestamps */
+.msg-timestamp {
+  font-size: 0.75em;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
 </style>
 </head>
 <body>
@@ -969,8 +982,8 @@ pre.has-line-numbers { counter-reset: code-line; }
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <button onclick="createConversation()">+ New Chat</button>
-    <button onclick="document.getElementById('charImportInput').click()" title="Import character card" style="flex:0 0 auto;padding:10px 12px">&#128101;</button>
+    <button onclick="createConversation()" aria-label="New chat">+ New Chat</button>
+    <button onclick="document.getElementById('charImportInput').click()" title="Import character card" aria-label="Import character card" style="flex:0 0 auto;padding:10px 12px">&#128101;</button>
     <input type="file" id="charImportInput" accept=".png,.json" style="display:none" onchange="importCharacterCard(event)">
   </div>
   <div class="sidebar-search">
@@ -984,12 +997,12 @@ pre.has-line-numbers { counter-reset: code-line; }
   <!-- Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
-      <button class="toolbar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
+      <button class="toolbar-toggle" onclick="toggleSidebar()" title="Toggle sidebar" aria-label="Toggle sidebar">&#9776;</button>
       <span class="toolbar-title">AI Assistant</span>
     </div>
     <div class="toolbar-right">
       <div class="toolbar-more">
-        <button class="toolbar-btn" onclick="toggleToolbarMenu(event)" title="More actions">&#8943;</button>
+        <button class="toolbar-btn" onclick="toggleToolbarMenu(event)" title="More actions" aria-label="More actions">&#8943;</button>
         <div class="toolbar-menu" id="toolbarMenu">
           <button onclick="exportConversation();closeToolbarMenu()">&#8615; Export chat (JSON)</button>
           <button onclick="exportMarkdown();closeToolbarMenu()">&#128221; Export as Markdown</button>
@@ -999,9 +1012,9 @@ pre.has-line-numbers { counter-reset: code-line; }
         </div>
       </div>
       <input type="file" id="importInput" accept=".json" style="display:none" onchange="importConversation(event)">
-      <button class="toolbar-btn" id="charInfoBtn" onclick="showCharacterInfo()" title="Character info" style="display:none">&#8505;</button>
-      <button class="toolbar-btn" onclick="openSettings()" title="Settings">&#9881;</button>
-      <button class="toolbar-btn" id="themeToggle" onclick="toggleTheme()" title="Theme: dark">&#9790;</button>
+      <button class="toolbar-btn" id="charInfoBtn" onclick="showCharacterInfo()" title="Character info" aria-label="Character info" style="display:none">&#8505;</button>
+      <button class="toolbar-btn" onclick="openSettings()" title="Settings" aria-label="Settings">&#9881;</button>
+      <button class="toolbar-btn" id="themeToggle" onclick="toggleTheme()" title="Theme: dark" aria-label="Toggle theme">&#9790;</button>
     </div>
   </div>
 
@@ -1009,16 +1022,16 @@ pre.has-line-numbers { counter-reset: code-line; }
   <div class="chat-search-bar" id="chatSearchBar">
     <input type="text" id="chatSearchInput" placeholder="Search in chat..." oninput="debouncedChatSearch()">
     <span class="search-count" id="chatSearchCount"></span>
-    <button onclick="navigateChatSearch(-1)" title="Previous">&#9650;</button>
-    <button onclick="navigateChatSearch(1)" title="Next">&#9660;</button>
-    <button onclick="closeChatSearch()" title="Close">&times;</button>
+    <button onclick="navigateChatSearch(-1)" title="Previous" aria-label="Previous search result">&#9650;</button>
+    <button onclick="navigateChatSearch(1)" title="Next" aria-label="Next search result">&#9660;</button>
+    <button onclick="closeChatSearch()" title="Close" aria-label="Close search">&times;</button>
   </div>
 
   <!-- Messages -->
   <div class="messages-area" id="messagesArea">
     <div class="chat-placeholder">Start a conversation...</div>
   </div>
-  <button class="scroll-fab" id="scrollFab" onclick="document.getElementById('messagesArea').scrollTo({top:document.getElementById('messagesArea').scrollHeight,behavior:'smooth'})" title="Scroll to bottom">&#8595;</button>
+  <button class="scroll-fab" id="scrollFab" onclick="document.getElementById('messagesArea').scrollTo({top:document.getElementById('messagesArea').scrollHeight,behavior:'smooth'})" title="Scroll to bottom" aria-label="Scroll to bottom">&#8595;</button>
 
   <!-- Input -->
   <div class="input-area">
@@ -1029,11 +1042,11 @@ pre.has-line-numbers { counter-reset: code-line; }
     </div>
     <div class="input-row" style="position:relative">
       <div class="mention-dropdown" id="mentionDropdown"></div>
-      <button class="input-btn" onclick="document.getElementById('fileInput').click()" title="Attach image">&#128206;</button>
+      <button class="input-btn" onclick="document.getElementById('fileInput').click()" title="Attach image" aria-label="Attach image">&#128206;</button>
       <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFileSelect(event)">
       <textarea id="chatInput" placeholder="Type a message..." rows="1"></textarea>
-      <button class="input-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input">&#127908;</button>
-      <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+      <button class="input-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input" aria-label="Voice input">&#127908;</button>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Send message">Send</button>
     </div>
     <div class="token-info" id="tokenInfo"></div>
   </div>
@@ -1232,6 +1245,21 @@ let modelOverride = null;
 let mentionActive = false;
 let mentionIdx = 0;
 
+function formatRelativeTime(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return 'just now';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return min + 'm ago';
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return hr + 'h ago';
+  const days = Math.floor(hr / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return days + 'd ago';
+  return new Date(ts).toLocaleDateString();
+}
+
 // ============================================
 // Toast Notifications
 // ============================================
@@ -1313,7 +1341,7 @@ function isLightColor(color) {
 function applyTheme(name) {
   let t;
   if (name === 'custom') {
-    try { t = JSON.parse(localStorage.getItem('assistantCustomTheme') || 'null'); } catch(e) {}
+    try { t = JSON.parse(localStorage.getItem('assistantCustomTheme') || 'null'); } catch(e) { console.warn('Custom theme parse error:', e); }
     if (!t) t = themePresets.dark;
   } else {
     t = themePresets[name] || themePresets.dark;
@@ -1377,7 +1405,7 @@ function onThemeSelectChange() {
 
 function loadCustomColorPickers() {
   let t;
-  try { t = JSON.parse(localStorage.getItem('assistantCustomTheme') || 'null'); } catch(e) {}
+  try { t = JSON.parse(localStorage.getItem('assistantCustomTheme') || 'null'); } catch(e) { console.warn('Custom theme parse error:', e); }
   if (!t) t = themePresets.dark;
   const toHex = (c) => {
     if (c.startsWith('#') && c.length >= 7) return c.slice(0, 7);
@@ -1488,7 +1516,7 @@ function loadCachedModels(target) {
   try {
     const cached = JSON.parse(localStorage.getItem('llmModelList') || '[]');
     if (cached.length > 0) populateModelSelect(target, cached);
-  } catch(e) {}
+  } catch(e) { console.warn('Cached model list parse error:', e); }
 }
 
 // ============================================
@@ -1699,10 +1727,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auto-resize textarea + character count + @model mentions
   const ta = document.getElementById('chatInput');
+  let tokenDebounce;
   ta.addEventListener('input', () => {
     ta.style.height = 'auto';
     ta.style.height = Math.min(ta.scrollHeight, 150) + 'px';
-    updateTokenInfo();
+    clearTimeout(tokenDebounce);
+    tokenDebounce = setTimeout(updateTokenInfo, 300);
     handleMentionInput(ta);
   });
 
@@ -1733,7 +1763,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeChatSearch();
         return;
       }
-      if (streaming && abortController) abortController.abort();
+      if (streaming && abortController) { streaming = false; abortController.abort(); }
       document.getElementById('settingsModal').classList.remove('open');
       document.getElementById('setupModal').classList.remove('open');
       document.getElementById('shortcutsModal').classList.remove('open');
@@ -1871,7 +1901,7 @@ function renderMarkdown(text) {
   s = s.replace(/\x00MATH(\d+)\x00/g, (_, idx) => {
     const ph = mathPlaceholders[parseInt(idx)];
     if (typeof katex !== 'undefined') {
-      try { return katex.renderToString(ph.math, { displayMode: ph.display, throwOnError: false }); } catch(e) {}
+      try { return katex.renderToString(ph.math, { displayMode: ph.display, throwOnError: false }); } catch(e) { console.warn('KaTeX render error:', e); }
     }
     return (ph.display ? '$$' : '$') + ph.math.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + (ph.display ? '$$' : '$');
   });
@@ -2039,6 +2069,12 @@ function genId() { return 'conv_' + Date.now() + '_' + Math.random().toString(36
 function saveConversations() {
   localStorage.setItem('assistantConversations', JSON.stringify(conversations));
   localStorage.setItem('assistantActiveConvId', activeConvId || '');
+}
+
+let _saveDebounceTimer;
+function debouncedSave() {
+  clearTimeout(_saveDebounceTimer);
+  _saveDebounceTimer = setTimeout(saveConversations, 1000);
 }
 
 function loadConversations() {
@@ -2403,7 +2439,7 @@ function closeSettings() {
 // ============================================
 function loadPresets() {
   let presets = [];
-  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) { console.warn('Presets parse error:', e); }
   const select = document.getElementById('setPresetSelect');
   select.innerHTML = '<option value="">-- Custom --</option>';
   presets.forEach(p => {
@@ -2418,7 +2454,7 @@ function loadPresets() {
 function applyPreset(id) {
   if (!id) return;
   let presets = [];
-  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) { console.warn('Presets parse error:', e); }
   const preset = presets.find(p => p.id === id);
   if (!preset) return;
   // Prompt entries (new format) or legacy fallback
@@ -2439,7 +2475,7 @@ function saveCurrentAsPreset() {
   const name = prompt('Preset name:');
   if (!name) return;
   let presets = [];
-  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) { console.warn('Presets parse error:', e); }
   const preset = {
     id: 'preset_' + Date.now(),
     name: name,
@@ -2459,7 +2495,7 @@ function deleteSelectedPreset() {
   const id = select.value;
   if (!id) { showToast('Select a preset to delete.', 'info'); return; }
   let presets = [];
-  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) { console.warn('Presets parse error:', e); }
   const preset = presets.find(p => p.id === id);
   if (!preset) return;
   if (!confirm('Delete preset "' + preset.name + '"?')) return;
@@ -2592,7 +2628,7 @@ function importSTPreset(event) {
     // Save as a named preset
     const presetName = data.name || file.name.replace(/\.json$/i, '');
     let presets = [];
-    try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
+    try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) { console.warn('Presets parse error:', e); }
     const preset = {
       id: 'preset_' + Date.now(),
       name: presetName,
@@ -2813,6 +2849,7 @@ function renderMessages() {
             const img = document.createElement('img');
             img.src = part.image_url.url;
             img.className = 'chat-inline-img';
+            img.alt = 'User uploaded image';
             bubble.appendChild(img);
           }
         });
@@ -2837,6 +2874,7 @@ function renderMessages() {
     const copyBtn = document.createElement('button');
     copyBtn.className = 'msg-action-btn';
     copyBtn.textContent = 'Copy';
+    copyBtn.setAttribute('aria-label', 'Copy message');
     copyBtn.onclick = () => {
       navigator.clipboard.writeText(getMsgText(msg));
       copyBtn.textContent = 'Copied!';
@@ -2848,12 +2886,14 @@ function renderMessages() {
       const editBtn = document.createElement('button');
       editBtn.className = 'msg-action-btn';
       editBtn.textContent = 'Edit';
+      editBtn.setAttribute('aria-label', 'Edit message');
       editBtn.onclick = () => { msg._editing = true; renderMessages(); };
       actions.appendChild(editBtn);
 
       const forkBtn = document.createElement('button');
       forkBtn.className = 'msg-action-btn';
       forkBtn.textContent = 'Fork';
+      forkBtn.setAttribute('aria-label', 'Fork conversation');
       forkBtn.onclick = () => forkBranch(idx);
       actions.appendChild(forkBtn);
     }
@@ -2861,6 +2901,7 @@ function renderMessages() {
     const delBtn = document.createElement('button');
     delBtn.className = 'msg-action-btn';
     delBtn.textContent = 'Delete';
+    delBtn.setAttribute('aria-label', 'Delete message');
     delBtn.onclick = () => {
       if (msg.role === 'assistant' && !confirm('Delete this response?')) return;
       messages.splice(idx, 1);
@@ -2872,6 +2913,14 @@ function renderMessages() {
 
     wrapper.appendChild(actions);
 
+    // Message timestamp
+    if (msg.timestamp) {
+      const tsEl = document.createElement('div');
+      tsEl.className = 'msg-timestamp';
+      tsEl.textContent = formatRelativeTime(msg.timestamp);
+      wrapper.appendChild(tsEl);
+    }
+
     // Branch controls for user messages
     if (msg.role === 'user' && msg.branches && msg.branches.length > 1) {
       const branchDiv = document.createElement('div');
@@ -2880,12 +2929,14 @@ function renderMessages() {
       bPrev.textContent = '\u25C0';
       bPrev.disabled = msg.branchIndex <= 0;
       bPrev.onclick = () => switchBranch(idx, -1);
+      bPrev.setAttribute('aria-label', 'Previous branch');
       const bCounter = document.createElement('span');
       bCounter.textContent = (msg.branchIndex + 1) + '/' + msg.branches.length;
       const bNext = document.createElement('button');
       bNext.textContent = '\u25B6';
       bNext.disabled = msg.branchIndex >= msg.branches.length - 1;
       bNext.onclick = () => switchBranch(idx, 1);
+      bNext.setAttribute('aria-label', 'Next branch');
       branchDiv.appendChild(bPrev);
       branchDiv.appendChild(bCounter);
       branchDiv.appendChild(bNext);
@@ -2900,12 +2951,14 @@ function renderMessages() {
       prev.textContent = '\u25C0';
       prev.disabled = !msg.swipes || msg.swipeIndex <= 0;
       prev.onclick = () => swipeMsg(idx, -1);
+      prev.setAttribute('aria-label', 'Previous swipe');
       const counter = document.createElement('span');
       counter.textContent = msg.swipes ? (msg.swipeIndex + 1) + '/' + msg.swipes.length : '1/1';
       const next = document.createElement('button');
       next.textContent = '\u25B6';
       next.disabled = !msg.swipes || msg.swipeIndex >= msg.swipes.length - 1;
       next.onclick = () => swipeMsg(idx, 1);
+      next.setAttribute('aria-label', 'Next swipe');
       swipeDiv.appendChild(prev);
       swipeDiv.appendChild(counter);
       swipeDiv.appendChild(next);
@@ -2914,6 +2967,7 @@ function renderMessages() {
       const regen = document.createElement('button');
       regen.className = 'regen-btn';
       regen.textContent = 'Regenerate';
+      regen.setAttribute('aria-label', 'Regenerate response');
       regen.onclick = () => regenerate();
       wrapper.appendChild(regen);
     }
@@ -2986,7 +3040,7 @@ async function resendAfterEdit() {
   const conv = getActiveConv();
   if (!proxyUrl || !apiKey) return;
 
-  const assistantMsg = { role: 'assistant', content: '', swipes: [''], swipeIndex: 0 };
+  const assistantMsg = { role: 'assistant', content: '', swipes: [''], swipeIndex: 0, timestamp: Date.now() };
   messages.push(assistantMsg);
 
   const area = document.getElementById('messagesArea');
@@ -3019,7 +3073,7 @@ function swipeMsg(idx, dir) {
   if (!msg || !msg.swipes) return;
   msg.swipeIndex = Math.max(0, Math.min(msg.swipes.length - 1, msg.swipeIndex + dir));
   msg.content = msg.swipes[msg.swipeIndex];
-  saveConversations();
+  debouncedSave();
   renderMessages();
 }
 
@@ -3039,7 +3093,7 @@ function switchBranch(msgIdx, dir) {
   const branch = JSON.parse(JSON.stringify(msg.branches[msg.branchIndex]));
   messages.length = msgIdx;
   branch.forEach(m => messages.push(m));
-  saveConversations();
+  debouncedSave();
   renderMessages();
   updateTokenInfo();
 }
@@ -3062,9 +3116,8 @@ function forkBranch(msgIdx) {
   const newBranch = JSON.parse(JSON.stringify(messages.slice(msgIdx)));
   msg.branches.push(newBranch);
   msg.branchIndex = msg.branches.length - 1;
-  saveConversations();
+  debouncedSave();
   renderMessages();
-  updateTokenInfo();
 }
 
 // ============================================
@@ -3120,7 +3173,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
 
   // Extra params & excludes
   let extra = {};
-  try { extra = JSON.parse(localStorage.getItem('llmExtraParams') || '{}'); } catch(e) {}
+  try { extra = JSON.parse(localStorage.getItem('llmExtraParams') || '{}'); } catch(e) { console.warn('Extra params parse error:', e); }
   const exclude = (localStorage.getItem('llmExcludeParams') || '').split(',').map(s => s.trim()).filter(Boolean);
 
   abortController = new AbortController();
@@ -3176,7 +3229,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
 
     if (!resp.ok) {
       let errText = '';
-      try { errText = await resp.text(); } catch(e) {}
+      try { errText = await resp.text(); } catch(e) { console.warn('Error reading response text:', e); }
       throw new Error('API returned ' + resp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
     }
 
@@ -3361,7 +3414,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
 // Send Message
 // ============================================
 async function sendMessage() {
-  if (streaming && abortController) { abortController.abort(); return; }
+  if (streaming && abortController) { streaming = false; abortController.abort(); return; }
 
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
@@ -3387,7 +3440,7 @@ async function sendMessage() {
     userContent = text;
   }
 
-  messages.push({ role: 'user', content: userContent });
+  messages.push({ role: 'user', content: userContent, timestamp: Date.now() });
   input.value = '';
   input.style.height = 'auto';
 
@@ -3400,7 +3453,7 @@ async function sendMessage() {
 
   renderMessages();
 
-  const assistantMsg = { role: 'assistant', content: '', swipes: [''], swipeIndex: 0 };
+  const assistantMsg = { role: 'assistant', content: '', swipes: [''], swipeIndex: 0, timestamp: Date.now() };
   messages.push(assistantMsg);
 
   const area = document.getElementById('messagesArea');
@@ -3423,9 +3476,12 @@ async function sendMessage() {
   await streamResponse(apiMessages, assistantMsg, 0, bubble, overrideModel);
 
   extractMemories(apiMessages);
-  if (messages.length > 50) messages.splice(0, messages.length - 50);
+  if (messages.length > 50) {
+    showToast('Oldest messages trimmed to stay within limit', 'info');
+    messages.splice(0, messages.length - 50);
+  }
   if (conv) conv.updatedAt = Date.now();
-  saveConversations();
+  debouncedSave();
   renderMessages();
   updateTokenInfo();
 }
@@ -3463,7 +3519,7 @@ async function regenerate() {
   await streamResponse(apiMessages, msg, msg.swipeIndex, bubble);
 
   if (conv) conv.updatedAt = Date.now();
-  saveConversations();
+  debouncedSave();
   renderMessages();
   updateTokenInfo();
 }
@@ -3472,6 +3528,7 @@ async function regenerate() {
 // Clear Chat
 // ============================================
 function clearChat() {
+  if (!confirm('Clear this conversation?')) return;
   const conv = getActiveConv();
   if (conv) {
     conv.messages = [];
@@ -3729,7 +3786,7 @@ function handleMentionInput(ta) {
 
   const query = atMatch[1].toLowerCase();
   let models = [];
-  try { models = JSON.parse(localStorage.getItem('llmModelList') || '[]'); } catch(e) {}
+  try { models = JSON.parse(localStorage.getItem('llmModelList') || '[]'); } catch(e) { console.warn('Model list parse error:', e); }
   if (models.length === 0) { closeMentionDropdown(); return; }
 
   const filtered = models.filter(m => m.toLowerCase().includes(query)).slice(0, 8);
