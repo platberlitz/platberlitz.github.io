@@ -83,10 +83,11 @@ body {
 
 .sidebar-search {
   padding: 8px 8px 0;
+  position: relative;
 }
 .sidebar-search input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 8px 28px 8px 10px;
   font-family: inherit;
   font-size: 0.82em;
   background: var(--hover);
@@ -98,6 +99,12 @@ body {
 }
 .sidebar-search input:focus { border-color: var(--accent); }
 .sidebar-search input::placeholder { color: var(--text-secondary); }
+.search-clear-btn {
+  position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--text-secondary); cursor: pointer;
+  font-size: 16px; padding: 4px; display: none;
+}
+.sidebar-search input:not(:placeholder-shown) + .search-clear-btn { display: block; }
 
 .conv-list {
   flex: 1;
@@ -125,6 +132,17 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.conv-rename-input {
+  background: var(--bg);
+  color: var(--text-primary);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: inherit;
+  width: 100%;
+  flex: 1;
+  outline: none;
 }
 .conv-item .conv-delete {
   display: none;
@@ -1003,10 +1021,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   <div class="sidebar-header">
     <button onclick="createConversation()" aria-label="New chat">+ New Chat</button>
     <button onclick="document.getElementById('charImportInput').click()" title="Import character card" aria-label="Import character card" style="flex:0 0 auto;padding:10px 12px">&#128101;</button>
+    <button onclick="clearAllConversations()" title="Delete all conversations" aria-label="Delete all conversations" style="flex:0 0 auto;padding:10px 12px">&#128465;</button>
     <input type="file" id="charImportInput" accept=".png,.json" style="display:none" onchange="importCharacterCard(event)">
   </div>
   <div class="sidebar-search">
     <input type="text" id="sidebarSearch" placeholder="Search conversations..." oninput="filterConversations()">
+    <button class="search-clear-btn" onclick="document.getElementById('sidebarSearch').value='';filterConversations()" aria-label="Clear search">&times;</button>
   </div>
   <div class="conv-list" id="convList"></div>
 </div>
@@ -1205,6 +1225,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <div class="theme-color-item"><input type="text" id="cMsgMaxWidth" oninput="liveCustomTheme()" placeholder="75%" style="width:60px"><span>Msg Width</span></div>
       <div class="theme-color-item"><input type="text" id="cMsgFontSize" oninput="liveCustomTheme()" placeholder="0.95em" style="width:60px"><span>Font Size</span></div>
       <div class="theme-color-item"><input type="color" id="cCodeBg" oninput="liveCustomTheme()"><span>Code BG</span></div>
+      <div class="theme-color-item" style="grid-column: 1 / -1">
+        <button onclick="resetCustomTheme()" style="width:100%;padding:6px;cursor:pointer">Reset to Dark defaults</button>
+      </div>
     </div>
     <label>Font</label>
     <input type="text" id="setFont" placeholder="e.g. Inter, Poppins, JetBrains Mono">
@@ -1480,6 +1503,12 @@ function loadCustomColorPickers() {
   document.getElementById('cMsgMaxWidth').value = t.msgMaxWidth || '';
   document.getElementById('cMsgFontSize').value = t.msgFontSize || '';
   document.getElementById('cCodeBg').value = t.codeBg ? toHex(t.codeBg) : '#000000';
+}
+
+function resetCustomTheme() {
+  localStorage.removeItem('assistantCustomTheme');
+  loadCustomColorPickers();
+  liveCustomTheme();
 }
 
 function getCustomThemeFromPickers() {
@@ -2396,6 +2425,7 @@ function switchConversation(id) {
 
 function deleteConversation(id, e) {
   e.stopPropagation();
+  if (!confirm('Delete this conversation?')) return;
   conversations = conversations.filter(c => c.id !== id);
   if (conversations.length === 0) {
     createConversation();
@@ -2404,6 +2434,12 @@ function deleteConversation(id, e) {
   if (activeConvId === id) switchConversation(conversations[0].id);
   saveConversations();
   renderSidebar();
+}
+
+function clearAllConversations() {
+  if (!confirm('Delete ALL conversations? This cannot be undone.')) return;
+  conversations = [];
+  createConversation();
 }
 
 function renderSidebar() {
@@ -2482,6 +2518,7 @@ function renderSidebar() {
     pinBtn.className = 'conv-pin' + (c.pinned ? ' pinned' : '');
     pinBtn.innerHTML = '&#128204;';
     pinBtn.title = c.pinned ? 'Unpin' : 'Pin';
+    pinBtn.setAttribute('aria-label', c.pinned ? 'Unpin conversation' : 'Pin conversation');
     pinBtn.onclick = (e) => {
       e.stopPropagation();
       c.pinned = !c.pinned;
@@ -2492,10 +2529,36 @@ function renderSidebar() {
     const title = document.createElement('span');
     title.className = 'conv-title';
     title.textContent = c.title;
+    title.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'conv-rename-input';
+      input.value = c.title;
+      input.onclick = (ev) => ev.stopPropagation();
+      const commit = () => {
+        const val = input.value.trim();
+        if (val && val !== c.title) {
+          c.title = val;
+          saveConversations();
+        }
+        renderSidebar();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') commit();
+        if (ev.key === 'Escape') renderSidebar();
+      });
+      title.replaceWith(input);
+      input.focus();
+      input.select();
+    });
 
     const del = document.createElement('button');
     del.className = 'conv-delete';
     del.innerHTML = '&times;';
+    del.title = 'Delete';
+    del.setAttribute('aria-label', 'Delete conversation');
     del.onclick = (e) => deleteConversation(c.id, e);
 
     div.appendChild(pinBtn);
