@@ -3808,6 +3808,8 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         }
       }
       if (!fullText && !thinkingText) fullText = 'No response.';
+      assistantMsg.swipes[swipeIdx] = fullText;
+      assistantMsg.content = fullText;
       if (thinkingText) {
         assistantMsg.swipeThinking = assistantMsg.swipeThinking || [];
         assistantMsg.swipeThinking[swipeIdx] = thinkingText;
