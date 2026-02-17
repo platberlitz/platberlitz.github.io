@@ -3177,15 +3177,21 @@ function renderMessages() {
       regen.textContent = 'Regenerate';
       regen.setAttribute('aria-label', 'Regenerate response');
       regen.onclick = () => regenerate();
-      wrapper.appendChild(regen);
 
       if (idx === messages.length - 1) {
         const continueBtn = document.createElement('button');
-        continueBtn.className = 'msg-action-btn';
+        continueBtn.className = 'regen-btn';
         continueBtn.textContent = 'Continue';
         continueBtn.setAttribute('aria-label', 'Continue generation');
         continueBtn.onclick = () => continueMessage();
-        wrapper.appendChild(continueBtn);
+
+        const btnRow = document.createElement('div');
+        btnRow.style.cssText = 'display:flex;gap:6px;justify-content:center';
+        btnRow.appendChild(regen);
+        btnRow.appendChild(continueBtn);
+        wrapper.appendChild(btnRow);
+      } else {
+        wrapper.appendChild(regen);
       }
     }
 
