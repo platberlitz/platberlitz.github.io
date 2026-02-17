@@ -2045,6 +2045,70 @@ function buildApiContent(msg) {
   return parts;
 }
 
+function extractImages(msg) {
+  const images = [];
+  // 1. message.images[] array (some proxies put images here)
+  if (msg.images?.length) {
+    for (const img of msg.images) {
+      if (img.image_url?.url) images.push(img.image_url.url);
+      else if (img.url) images.push(img.url);
+      else if (img.b64_json) images.push('data:image/png;base64,' + img.b64_json);
+      else if (typeof img === 'string' && img.length > 100)
+        images.push(img.startsWith('data:') ? img : 'data:image/png;base64,' + img);
+    }
+  }
+  // 2. message.content as array
+  const content = msg.content;
+  let text = '';
+  if (Array.isArray(content)) {
+    for (const item of content) {
+      if (item.type === 'text') { text += item.text; continue; }
+      if (item.type === 'image_url' && item.image_url?.url) { images.push(item.image_url.url); continue; }
+      if (item.type === 'image' && item.source?.data) {
+        images.push('data:' + (item.source.media_type || 'image/png') + ';base64,' + item.source.data);
+        continue;
+      }
+      if (item.image_url?.url) { images.push(item.image_url.url); continue; }
+      if (typeof item === 'string' && item.startsWith('data:image')) { images.push(item); continue; }
+    }
+  } else {
+    text = content || '';
+  }
+  // 3. message.parts[] (Gemini inline_data)
+  if (msg.parts) {
+    for (const part of msg.parts) {
+      if (part.inline_data?.data) {
+        images.push('data:' + (part.inline_data.mime_type || 'image/png') + ';base64,' + part.inline_data.data);
+      }
+      if (part.text && !text) text += part.text;
+    }
+  }
+  // 4. Extract images from text string (data URIs, URLs, raw base64)
+  if (typeof text === 'string' && text && !images.length) {
+    const dataUriMatch = text.match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
+    if (dataUriMatch) {
+      images.push(dataUriMatch[0]);
+      text = text.replace(dataUriMatch[0], '').trim();
+    }
+    if (!images.length) {
+      const urlMatch = text.match(/^https?:\/\/[^\s]+\.(png|jpg|jpeg|webp|gif)(\?[^\s]*)?$/i);
+      if (urlMatch) { images.push(text.trim()); text = ''; }
+    }
+    if (!images.length) {
+      const embeddedMatch = text.match(/(https?:\/\/[^\s]+\.(png|jpg|jpeg|webp|gif)(\?[^\s]*)?)/i);
+      if (embeddedMatch) {
+        images.push(embeddedMatch[1]);
+        text = text.replace(embeddedMatch[1], '').trim();
+      }
+    }
+    if (!images.length) {
+      const rawB64 = text.match(/^[A-Za-z0-9+/]{100,}[=]{0,2}$/);
+      if (rawB64) { images.push('data:image/png;base64,' + rawB64[0]); text = ''; }
+    }
+  }
+  return { text, images };
+}
+
 function renderMarkdown(text) {
   if (!text) return '';
 
@@ -3728,22 +3792,12 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           }
         }
       } else {
-        const rawContent = data.choices?.[0]?.message?.content;
-        if (Array.isArray(rawContent)) {
-          const textParts = [];
-          const imageParts = [];
-          for (const part of rawContent) {
-            if (part.type === 'text') textParts.push(part.text);
-            else if (part.type === 'image_url' && part.image_url?.url) imageParts.push(part.image_url.url);
-          }
-          fullText = textParts.join('') || 'No response.';
-          if (imageParts.length) {
-            assistantMsg.swipeImages = assistantMsg.swipeImages || [];
-            assistantMsg.swipeImages[swipeIdx] = imageParts;
-            assistantMsg.images = imageParts;
-          }
-        } else {
-          fullText = rawContent || 'No response.';
+        const extracted = extractImages(data.choices[0].message);
+        fullText = extracted.text || 'No response.';
+        if (extracted.images.length) {
+          assistantMsg.swipeImages = assistantMsg.swipeImages || [];
+          assistantMsg.swipeImages[swipeIdx] = extracted.images;
+          assistantMsg.images = extracted.images;
         }
         thinkingText = data.choices?.[0]?.message?.reasoning_content || '';
       }
@@ -3837,15 +3891,18 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               } else if (Array.isArray(delta)) {
                 for (const part of delta) {
                   if (part.type === 'text') fullText += part.text;
-                  else if (part.type === 'image_url' && part.image_url?.url) streamImages.push(part.image_url.url);
+                  else {
+                    const ex = extractImages({ content: [part] });
+                    if (ex.images.length) streamImages.push(...ex.images);
+                  }
                 }
               }
               // Some proxies deliver images in the final chunk's message field
               const finishMsg = json.choices?.[0]?.message;
-              if (finishMsg && Array.isArray(finishMsg.content)) {
-                for (const part of finishMsg.content) {
-                  if (part.type === 'image_url' && part.image_url?.url) streamImages.push(part.image_url.url);
-                }
+              if (finishMsg) {
+                const ex = extractImages(finishMsg);
+                if (ex.images.length) streamImages.push(...ex.images);
+                if (ex.text && !fullText) fullText = ex.text;
               }
               const reasoning = json.choices?.[0]?.delta?.reasoning_content;
               if (reasoning) thinkingText += reasoning;
