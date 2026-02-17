@@ -1226,7 +1226,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <div class="theme-color-item"><input type="text" id="cMsgFontSize" oninput="liveCustomTheme()" placeholder="0.95em" style="width:60px"><span>Font Size</span></div>
       <div class="theme-color-item"><input type="color" id="cCodeBg" oninput="liveCustomTheme()"><span>Code BG</span></div>
       <div class="theme-color-item" style="grid-column: 1 / -1">
-        <button onclick="resetCustomTheme()" style="width:100%;padding:6px;cursor:pointer">Reset to Dark defaults</button>
+        <button onclick="resetCustomTheme()" style="width:100%;padding:6px;cursor:pointer">Clear custom theme</button>
       </div>
     </div>
     <label>Font</label>
@@ -1507,8 +1507,9 @@ function loadCustomColorPickers() {
 
 function resetCustomTheme() {
   localStorage.removeItem('assistantCustomTheme');
-  loadCustomColorPickers();
-  liveCustomTheme();
+  document.getElementById('setTheme').value = 'dark';
+  document.getElementById('customThemeColors').style.display = 'none';
+  applyTheme('dark');
 }
 
 function getCustomThemeFromPickers() {
