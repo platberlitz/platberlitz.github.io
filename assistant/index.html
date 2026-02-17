@@ -120,11 +120,18 @@ body {
   border-top: 1px solid var(--card-border);
 }
 .sidebar-footer a {
-  color: var(--text-secondary);
+  color: var(--accent);
   text-decoration: none;
 }
 .sidebar-footer a:hover {
   color: var(--accent);
+  text-decoration: underline;
+}
+.sidebar-footer .footer-cta {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.9em;
+  opacity: 0.7;
 }
 
 .conv-item {
@@ -1050,6 +1057,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   <div class="conv-list" id="convList"></div>
   <div class="sidebar-footer">
     made by <a href="https://platberlitz.github.io/" target="_blank">purachina</a> and 100% claude
+    <span class="footer-cta">click for more stuff from me</span>
   </div>
 </div>
 
