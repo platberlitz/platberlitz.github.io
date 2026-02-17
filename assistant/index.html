@@ -1186,30 +1186,28 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
         <option value="claude">Claude</option>
         <option value="claudeDark">Claude Dark</option>
       </optgroup>
-      <optgroup label="HyDE Gallery">
-        <option value="oneBit">1-Bit</option>
-        <option value="graphiteMono">Graphite Mono</option>
-        <option value="abyssalWave">Abyssal Wave</option>
-        <option value="cosmicBlue">Cosmic Blue</option>
-        <option value="pixelDream">Pixel Dream</option>
-        <option value="anotherWorld">Another World</option>
-        <option value="obsidianPurple">Obsidian Purple</option>
-        <option value="scarletNight">Scarlet Night</option>
-        <option value="synthWave">Synth Wave</option>
-        <option value="amethystAura">Amethyst Aura</option>
-        <option value="decayGreen">Decay Green</option>
-        <option value="greenLush">Green Lush</option>
-        <option value="rainDark">Rain Dark</option>
-        <option value="everBlushing">Ever Blushing</option>
-        <option value="edgeRunner">Edge Runner</option>
-        <option value="monokai">Monokai</option>
-        <option value="redStone">Red Stone</option>
-        <option value="soulsborne">Soulsborne</option>
-        <option value="doomBringers">Doom Bringers</option>
-        <option value="nightbrew">Nightbrew</option>
-        <option value="joker">Joker</option>
-        <option value="nordicBlue">Nordic Blue</option>
-      </optgroup>
+        <option value="monochrome">Monochrome</option>
+        <option value="pewter">Pewter</option>
+        <option value="deepSea">Deep Sea</option>
+        <option value="gunmetal">Gunmetal</option>
+        <option value="clearSky">Clear Sky</option>
+        <option value="cobalt">Cobalt</option>
+        <option value="nightshade">Nightshade</option>
+        <option value="plumWine">Plum Wine</option>
+        <option value="neonDusk">Neon Dusk</option>
+        <option value="lavenderHaze">Lavender Haze</option>
+        <option value="jadeMist">Jade Mist</option>
+        <option value="mossStone">Moss Stone</option>
+        <option value="emeraldForest">Emerald Forest</option>
+        <option value="winterBreeze">Winter Breeze</option>
+        <option value="neonNoir">Neon Noir</option>
+        <option value="hotPink">Hot Pink</option>
+        <option value="roseQuartz">Rose Quartz</option>
+        <option value="ember">Ember</option>
+        <option value="moltenCore">Molten Core</option>
+        <option value="orchidTeal">Orchid Teal</option>
+        <option value="acidGlow">Acid Glow</option>
+        <option value="fjord">Fjord</option>
       <option value="custom">Custom</option>
     </select>
     <div class="theme-colors" id="customThemeColors" style="display:none">
@@ -1343,34 +1341,34 @@ const themePresets = {
   solarized:  { bg:'#002b36', sidebar:'#073642', cardBorder:'#586e75', textPrimary:'#fdf6e3', textSecondary:'#93a1a1', accent:'#268bd2', accentHover:'#2aa198', msgUser:'#268bd2', msgAssistant:'#073642' },
   onedark:    { bg:'#282c34', sidebar:'#21252b', cardBorder:'#3e4451', textPrimary:'#abb2bf', textSecondary:'#5c6370', accent:'#61afef', accentHover:'#c678dd', msgUser:'#61afef', msgAssistant:'#2c313c' },
   rosepine:   { bg:'#191724', sidebar:'#1f1d2e', cardBorder:'#26233a', textPrimary:'#e0def4', textSecondary:'#908caa', accent:'#c4a7e7', accentHover:'#ebbcba', msgUser:'#c4a7e7', msgAssistant:'#1f1d2e' },
-  // HyDE Gallery
-  oneBit:         { bg:'#131313', sidebar:'#222222', cardBorder:'#333333', textPrimary:'#e0e0e0', textSecondary:'rgba(224,224,224,0.6)', accent:'#FCFCFC', accentHover:'#ffffff', msgUser:'#FCFCFC', msgAssistant:'#222222' },
-  graphiteMono:   { bg:'#222222', sidebar:'#333333', cardBorder:'#444444', textPrimary:'#e0e0e0', textSecondary:'rgba(224,224,224,0.6)', accent:'#D9D9D9', accentHover:'#eeeeee', msgUser:'#D9D9D9', msgAssistant:'#333333' },
-  abyssalWave:    { bg:'#061234', sidebar:'#0f1e44', cardBorder:'#182a54', textPrimary:'#d0e0d0', textSecondary:'rgba(208,224,208,0.6)', accent:'#50AA09', accentHover:'#6ec42a', msgUser:'#50AA09', msgAssistant:'#0f1e44' },
-  cosmicBlue:     { bg:'#1E212B', sidebar:'#2a2e3a', cardBorder:'#363a48', textPrimary:'#c8cdd2', textSecondary:'rgba(200,205,210,0.6)', accent:'#5B6B76', accentHover:'#7b8b96', msgUser:'#5B6B76', msgAssistant:'#2a2e3a' },
-  pixelDream:     { bg:'#1e4c84', sidebar:'#2a5a94', cardBorder:'#3668a4', textPrimary:'#e0f0ff', textSecondary:'rgba(224,240,255,0.6)', accent:'#7ed6ff', accentHover:'#9ee6ff', msgUser:'#7ed6ff', msgAssistant:'#2a5a94' },
-  anotherWorld:   { bg:'#0D55B2', sidebar:'#1a64c0', cardBorder:'#2874d0', textPrimary:'#e0f0f8', textSecondary:'rgba(224,240,248,0.6)', accent:'#249CB6', accentHover:'#44bcd6', msgUser:'#249CB6', msgAssistant:'#1a64c0' },
-  obsidianPurple: { bg:'#07040C', sidebar:'#16121e', cardBorder:'#251e30', textPrimary:'#e0d8e8', textSecondary:'rgba(224,216,232,0.6)', accent:'#BDA8DC', accentHover:'#ddc8fc', msgUser:'#BDA8DC', msgAssistant:'#16121e' },
-  scarletNight:   { bg:'#1E2233', sidebar:'#2a2e44', cardBorder:'#363a54', textPrimary:'#dcd0e0', textSecondary:'rgba(220,208,224,0.6)', accent:'#822195', accentHover:'#a241b5', msgUser:'#822195', msgAssistant:'#2a2e44' },
-  synthWave:      { bg:'#495495', sidebar:'#5a64a5', cardBorder:'#6a74b5', textPrimary:'#f0e0f8', textSecondary:'rgba(240,224,248,0.6)', accent:'#ff7edb', accentHover:'#ff9eeb', msgUser:'#ff7edb', msgAssistant:'#5a64a5' },
-  amethystAura:   { bg:'#5D69CE', sidebar:'#6d79de', cardBorder:'#7d89ee', textPrimary:'#f0e8f0', textSecondary:'rgba(240,232,240,0.6)', accent:'#A45785', accentHover:'#c477a5', msgUser:'#A45785', msgAssistant:'#6d79de' },
-  decayGreen:     { bg:'#14161E', sidebar:'#20222e', cardBorder:'#2c2e3e', textPrimary:'#d8e8e0', textSecondary:'rgba(216,232,224,0.6)', accent:'#95D3AF', accentHover:'#b5f3cf', msgUser:'#95D3AF', msgAssistant:'#20222e' },
-  greenLush:      { bg:'#373C3F', sidebar:'#454b4f', cardBorder:'#555b5f', textPrimary:'#d8e8d8', textSecondary:'rgba(216,232,216,0.6)', accent:'#83B38E', accentHover:'#a3d3ae', msgUser:'#83B38E', msgAssistant:'#454b4f' },
-  rainDark:       { bg:'#295233', sidebar:'#376243', cardBorder:'#457253', textPrimary:'#d8f0d0', textSecondary:'rgba(216,240,208,0.6)', accent:'#89E574', accentHover:'#a9ff94', msgUser:'#89E574', msgAssistant:'#376243' },
-  everBlushing:   { bg:'#141b1e', sidebar:'#20282e', cardBorder:'#2c343e', textPrimary:'#d0e0f0', textSecondary:'rgba(208,224,240,0.6)', accent:'#67b0e8', accentHover:'#87d0ff', msgUser:'#67b0e8', msgAssistant:'#20282e' },
-  edgeRunner:     { bg:'#000000', sidebar:'#141414', cardBorder:'#282828', textPrimary:'#e0e0e0', textSecondary:'rgba(224,224,224,0.6)', accent:'#fada16', accentHover:'#ffea46', msgUser:'#fada16', msgAssistant:'#141414' },
-  monokai:        { bg:'#2d2a2e', sidebar:'#3d3a3e', cardBorder:'#4d4a4e', textPrimary:'#f8f8f2', textSecondary:'rgba(248,248,242,0.6)', accent:'#f92672', accentHover:'#ff4692', msgUser:'#f92672', msgAssistant:'#3d3a3e' },
-  redStone:       { bg:'#161616', sidebar:'#262626', cardBorder:'#363636', textPrimary:'#e8d8e0', textSecondary:'rgba(232,216,224,0.6)', accent:'#EE5396', accentHover:'#ff73b6', msgUser:'#EE5396', msgAssistant:'#262626' },
-  soulsborne:     { bg:'#0D0D0D', sidebar:'#1d1d1d', cardBorder:'#2d2d2d', textPrimary:'#e8d8c8', textSecondary:'rgba(232,216,200,0.6)', accent:'#E0701E', accentHover:'#ff903e', msgUser:'#E0701E', msgAssistant:'#1d1d1d' },
-  doomBringers:   { bg:'#351810', sidebar:'#452820', cardBorder:'#553830', textPrimary:'#f0e0c8', textSecondary:'rgba(240,224,200,0.6)', accent:'#FABD2F', accentHover:'#ffdd4f', msgUser:'#FABD2F', msgAssistant:'#452820' },
-  nightbrew:      { bg:'#821595', sidebar:'#9225a5', cardBorder:'#a235b5', textPrimary:'#e0f0f0', textSecondary:'rgba(224,240,240,0.6)', accent:'#259E9C', accentHover:'#45bebc', msgUser:'#259E9C', msgAssistant:'#9225a5' },
-  joker:          { bg:'#4B0082', sidebar:'#5b1092', cardBorder:'#6b20a2', textPrimary:'#d8f8e0', textSecondary:'rgba(216,248,224,0.6)', accent:'#00FF66', accentHover:'#33ff88', msgUser:'#00FF66', msgAssistant:'#5b1092' },
-  nordicBlue:     { bg:'#2E3440', sidebar:'#3b4252', cardBorder:'#434c5e', textPrimary:'#eceff4', textSecondary:'#d8dee9', accent:'#88C0D0', accentHover:'#a8e0f0', msgUser:'#88C0D0', msgAssistant:'#3b4252' },
+  // Gallery
+  monochrome:     { bg:'#131313', sidebar:'#222222', cardBorder:'#333333', textPrimary:'#e0e0e0', textSecondary:'rgba(224,224,224,0.6)', accent:'#FCFCFC', accentHover:'#ffffff', msgUser:'#FCFCFC', msgAssistant:'#222222' },
+  pewter:         { bg:'#222222', sidebar:'#333333', cardBorder:'#444444', textPrimary:'#e0e0e0', textSecondary:'rgba(224,224,224,0.6)', accent:'#D9D9D9', accentHover:'#eeeeee', msgUser:'#D9D9D9', msgAssistant:'#333333' },
+  deepSea:        { bg:'#061234', sidebar:'#0f1e44', cardBorder:'#182a54', textPrimary:'#d0e0d0', textSecondary:'rgba(208,224,208,0.6)', accent:'#50AA09', accentHover:'#6ec42a', msgUser:'#50AA09', msgAssistant:'#0f1e44' },
+  gunmetal:       { bg:'#1E212B', sidebar:'#2a2e3a', cardBorder:'#363a48', textPrimary:'#c8cdd2', textSecondary:'rgba(200,205,210,0.6)', accent:'#5B6B76', accentHover:'#7b8b96', msgUser:'#5B6B76', msgAssistant:'#2a2e3a' },
+  clearSky:       { bg:'#1e4c84', sidebar:'#2a5a94', cardBorder:'#3668a4', textPrimary:'#e0f0ff', textSecondary:'rgba(224,240,255,0.6)', accent:'#7ed6ff', accentHover:'#9ee6ff', msgUser:'#7ed6ff', msgAssistant:'#2a5a94' },
+  cobalt:         { bg:'#0D55B2', sidebar:'#1a64c0', cardBorder:'#2874d0', textPrimary:'#e0f0f8', textSecondary:'rgba(224,240,248,0.6)', accent:'#249CB6', accentHover:'#44bcd6', msgUser:'#249CB6', msgAssistant:'#1a64c0' },
+  nightshade:     { bg:'#07040C', sidebar:'#16121e', cardBorder:'#251e30', textPrimary:'#e0d8e8', textSecondary:'rgba(224,216,232,0.6)', accent:'#BDA8DC', accentHover:'#ddc8fc', msgUser:'#BDA8DC', msgAssistant:'#16121e' },
+  plumWine:       { bg:'#1E2233', sidebar:'#2a2e44', cardBorder:'#363a54', textPrimary:'#dcd0e0', textSecondary:'rgba(220,208,224,0.6)', accent:'#822195', accentHover:'#a241b5', msgUser:'#822195', msgAssistant:'#2a2e44' },
+  neonDusk:       { bg:'#495495', sidebar:'#5a64a5', cardBorder:'#6a74b5', textPrimary:'#f0e0f8', textSecondary:'rgba(240,224,248,0.6)', accent:'#ff7edb', accentHover:'#ff9eeb', msgUser:'#ff7edb', msgAssistant:'#5a64a5' },
+  lavenderHaze:   { bg:'#5D69CE', sidebar:'#6d79de', cardBorder:'#7d89ee', textPrimary:'#f0e8f0', textSecondary:'rgba(240,232,240,0.6)', accent:'#A45785', accentHover:'#c477a5', msgUser:'#A45785', msgAssistant:'#6d79de' },
+  jadeMist:       { bg:'#14161E', sidebar:'#20222e', cardBorder:'#2c2e3e', textPrimary:'#d8e8e0', textSecondary:'rgba(216,232,224,0.6)', accent:'#95D3AF', accentHover:'#b5f3cf', msgUser:'#95D3AF', msgAssistant:'#20222e' },
+  mossStone:      { bg:'#373C3F', sidebar:'#454b4f', cardBorder:'#555b5f', textPrimary:'#d8e8d8', textSecondary:'rgba(216,232,216,0.6)', accent:'#83B38E', accentHover:'#a3d3ae', msgUser:'#83B38E', msgAssistant:'#454b4f' },
+  emeraldForest:  { bg:'#295233', sidebar:'#376243', cardBorder:'#457253', textPrimary:'#d8f0d0', textSecondary:'rgba(216,240,208,0.6)', accent:'#89E574', accentHover:'#a9ff94', msgUser:'#89E574', msgAssistant:'#376243' },
+  winterBreeze:   { bg:'#141b1e', sidebar:'#20282e', cardBorder:'#2c343e', textPrimary:'#d0e0f0', textSecondary:'rgba(208,224,240,0.6)', accent:'#67b0e8', accentHover:'#87d0ff', msgUser:'#67b0e8', msgAssistant:'#20282e' },
+  neonNoir:       { bg:'#000000', sidebar:'#141414', cardBorder:'#282828', textPrimary:'#e0e0e0', textSecondary:'rgba(224,224,224,0.6)', accent:'#fada16', accentHover:'#ffea46', msgUser:'#fada16', msgAssistant:'#141414' },
+  hotPink:        { bg:'#2d2a2e', sidebar:'#3d3a3e', cardBorder:'#4d4a4e', textPrimary:'#f8f8f2', textSecondary:'rgba(248,248,242,0.6)', accent:'#f92672', accentHover:'#ff4692', msgUser:'#f92672', msgAssistant:'#3d3a3e' },
+  roseQuartz:     { bg:'#161616', sidebar:'#262626', cardBorder:'#363636', textPrimary:'#e8d8e0', textSecondary:'rgba(232,216,224,0.6)', accent:'#EE5396', accentHover:'#ff73b6', msgUser:'#EE5396', msgAssistant:'#262626' },
+  ember:          { bg:'#0D0D0D', sidebar:'#1d1d1d', cardBorder:'#2d2d2d', textPrimary:'#e8d8c8', textSecondary:'rgba(232,216,200,0.6)', accent:'#E0701E', accentHover:'#ff903e', msgUser:'#E0701E', msgAssistant:'#1d1d1d' },
+  moltenCore:     { bg:'#351810', sidebar:'#452820', cardBorder:'#553830', textPrimary:'#f0e0c8', textSecondary:'rgba(240,224,200,0.6)', accent:'#FABD2F', accentHover:'#ffdd4f', msgUser:'#FABD2F', msgAssistant:'#452820' },
+  orchidTeal:     { bg:'#821595', sidebar:'#9225a5', cardBorder:'#a235b5', textPrimary:'#e0f0f0', textSecondary:'rgba(224,240,240,0.6)', accent:'#259E9C', accentHover:'#45bebc', msgUser:'#259E9C', msgAssistant:'#9225a5' },
+  acidGlow:       { bg:'#4B0082', sidebar:'#5b1092', cardBorder:'#6b20a2', textPrimary:'#d8f8e0', textSecondary:'rgba(216,248,224,0.6)', accent:'#00FF66', accentHover:'#33ff88', msgUser:'#00FF66', msgAssistant:'#5b1092' },
+  fjord:          { bg:'#2E3440', sidebar:'#3b4252', cardBorder:'#434c5e', textPrimary:'#eceff4', textSecondary:'#d8dee9', accent:'#88C0D0', accentHover:'#a8e0f0', msgUser:'#88C0D0', msgAssistant:'#3b4252' },
   claude:         { bg:'#FAF9F5', sidebar:'#EBE7DF', cardBorder:'rgba(0,0,0,0.08)', textPrimary:'#1a1915', textSecondary:'rgba(26,25,21,0.55)', accent:'#D97757', accentHover:'#C4684A', msgUser:'#D97757', msgAssistant:'#F3F0E8', borderRadius:'24px', msgMaxWidth:'70%', codeBg:'rgba(0,0,0,0.04)' },
   claudeDark:     { bg:'#1a1915', sidebar:'#1a1915', cardBorder:'rgba(255,255,255,0.08)', textPrimary:'#e8e4db', textSecondary:'rgba(232,228,219,0.5)', accent:'#D97757', accentHover:'#C4684A', msgUser:'#D97757', msgAssistant:'#2b2a27', borderRadius:'24px', msgMaxWidth:'70%', codeBg:'rgba(0,0,0,0.3)' }
 };
 
-const themeOrder = ['dark','light','nord','catppuccin','dracula','gruvbox','tokyonight','solarized','onedark','rosepine','oneBit','graphiteMono','abyssalWave','cosmicBlue','pixelDream','anotherWorld','obsidianPurple','scarletNight','synthWave','amethystAura','decayGreen','greenLush','rainDark','everBlushing','edgeRunner','monokai','redStone','soulsborne','doomBringers','nightbrew','joker','nordicBlue','claude','claudeDark'];
+const themeOrder = ['dark','light','nord','catppuccin','dracula','gruvbox','tokyonight','solarized','onedark','rosepine','monochrome','pewter','deepSea','gunmetal','clearSky','cobalt','nightshade','plumWine','neonDusk','lavenderHaze','jadeMist','mossStone','emeraldForest','winterBreeze','neonNoir','hotPink','roseQuartz','ember','moltenCore','orchidTeal','acidGlow','fjord','claude','claudeDark'];
 
 // ============================================
 // Utility
@@ -1463,7 +1461,16 @@ function toggleTheme() {
 }
 
 function loadTheme() {
-  const name = localStorage.getItem('assistantTheme') || 'dark';
+  const migrationMap = {
+    oneBit:'monochrome', graphiteMono:'pewter', abyssalWave:'deepSea', cosmicBlue:'gunmetal',
+    pixelDream:'clearSky', anotherWorld:'cobalt', obsidianPurple:'nightshade', scarletNight:'plumWine',
+    synthWave:'neonDusk', amethystAura:'lavenderHaze', decayGreen:'jadeMist', greenLush:'mossStone',
+    rainDark:'emeraldForest', everBlushing:'winterBreeze', edgeRunner:'neonNoir', monokai:'hotPink',
+    redStone:'roseQuartz', soulsborne:'ember', doomBringers:'moltenCore', nightbrew:'orchidTeal',
+    joker:'acidGlow', nordicBlue:'fjord'
+  };
+  let name = localStorage.getItem('assistantTheme') || 'dark';
+  if (migrationMap[name]) { name = migrationMap[name]; localStorage.setItem('assistantTheme', name); }
   applyTheme(name);
 }
 
