@@ -1208,6 +1208,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     </div>
     <label>Font</label>
     <input type="text" id="setFont" placeholder="e.g. Inter, Poppins, JetBrains Mono">
+    <label>Message Font Size</label>
+    <input type="text" id="setMsgFontSize" placeholder="0.95em (default)">
+    <label>Message Width</label>
+    <input type="text" id="setMsgMaxWidth" placeholder="75% (default)">
 
     <div class="modal-section">Tools</div>
     <label class="toggle-row">
@@ -1402,6 +1406,15 @@ function applyTheme(name) {
     btn.innerHTML = isLightColor(t.bg) ? '&#9728;' : '&#9790;';
     btn.title = 'Theme: ' + name;
   }
+  applyMsgOverrides();
+}
+
+function applyMsgOverrides() {
+  const s = document.documentElement.style;
+  const fs = localStorage.getItem('assistantMsgFontSize');
+  const mw = localStorage.getItem('assistantMsgMaxWidth');
+  if (fs) s.setProperty('--msg-font-size', fs);
+  if (mw) s.setProperty('--msg-max-width', mw);
 }
 
 function toggleTheme() {
@@ -2588,6 +2601,8 @@ function openSettings() {
   document.getElementById('setInputCost').value = localStorage.getItem('llmInputCost') || '';
   document.getElementById('setOutputCost').value = localStorage.getItem('llmOutputCost') || '';
   document.getElementById('setFont').value = localStorage.getItem('assistantFont') || '';
+  document.getElementById('setMsgFontSize').value = localStorage.getItem('assistantMsgFontSize') || '';
+  document.getElementById('setMsgMaxWidth').value = localStorage.getItem('assistantMsgMaxWidth') || '';
   document.getElementById('setWebSearch').checked = localStorage.getItem('llmWebSearch') === 'true';
   document.getElementById('setMemory').checked = localStorage.getItem('llmMemoryEnabled') === 'true';
 
@@ -2653,6 +2668,13 @@ function saveSettings() {
     localStorage.setItem('assistantCustomTheme', JSON.stringify(getCustomThemeFromPickers()));
   }
   applyTheme(themeName);
+
+  // Message overrides
+  const msgFs = document.getElementById('setMsgFontSize').value.trim();
+  const msgMw = document.getElementById('setMsgMaxWidth').value.trim();
+  msgFs ? localStorage.setItem('assistantMsgFontSize', msgFs) : localStorage.removeItem('assistantMsgFontSize');
+  msgMw ? localStorage.setItem('assistantMsgMaxWidth', msgMw) : localStorage.removeItem('assistantMsgMaxWidth');
+  applyMsgOverrides();
 
   // Font
   const fontName = document.getElementById('setFont').value.trim();
