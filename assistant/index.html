@@ -3390,6 +3390,28 @@ function renderMessages() {
       actions.appendChild(forkBtn);
     }
 
+    if (msg.role === 'assistant' && msg.swipes && msg.swipes.length > 1) {
+      const delSwipeBtn = document.createElement('button');
+      delSwipeBtn.className = 'msg-action-btn';
+      delSwipeBtn.textContent = 'Delete Swipe';
+      delSwipeBtn.setAttribute('aria-label', 'Delete current swipe');
+      delSwipeBtn.onclick = () => {
+        if (!confirm('Delete this swipe?')) return;
+        const si = msg.swipeIndex;
+        msg.swipes.splice(si, 1);
+        if (msg.swipeThinking) msg.swipeThinking.splice(si, 1);
+        if (msg.swipeToolUse) msg.swipeToolUse.splice(si, 1);
+        if (msg.swipeImages) msg.swipeImages.splice(si, 1);
+        msg.swipeIndex = Math.min(si, msg.swipes.length - 1);
+        msg.content = msg.swipes[msg.swipeIndex];
+        if (msg.swipeImages) msg.images = msg.swipeImages[msg.swipeIndex] || [];
+        saveConversations();
+        renderMessages();
+        updateTokenInfo();
+      };
+      actions.appendChild(delSwipeBtn);
+    }
+
     const delBtn = document.createElement('button');
     delBtn.className = 'msg-action-btn';
     delBtn.textContent = 'Delete';
