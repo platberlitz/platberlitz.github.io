@@ -3629,7 +3629,22 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + apiKey
       };
-      body = { model, messages: apiMessages, stream: useStream, ...extra };
+      const processedMessages = apiMessages.map(m => {
+        if (!Array.isArray(m.content)) return m;
+        return {
+          ...m,
+          content: m.content.map(part => {
+            if (part.type === 'image_url' && part.image_url) {
+              return { type: 'image_url', image_url: { url: part.image_url.url, detail: 'auto' } };
+            }
+            if (part.type === 'file') {
+              return { type: 'text', text: `[Attached file: ${part.file?.name || 'file'}]` };
+            }
+            return part;
+          })
+        };
+      });
+      body = { model, messages: processedMessages, stream: useStream, ...extra };
     }
     if (!('temperature' in body)) {
       const temp = parseFloat(localStorage.getItem('llmTemperature'));
@@ -3792,6 +3807,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           lastRender = now;
         }
       }
+      if (!fullText && !thinkingText) fullText = 'No response.';
       if (thinkingText) {
         assistantMsg.swipeThinking = assistantMsg.swipeThinking || [];
         assistantMsg.swipeThinking[swipeIdx] = thinkingText;
@@ -3873,7 +3889,7 @@ async function sendMessage() {
       if (text) userContent.push({ type: 'text', text });
       pendingAttachments.forEach(att => {
         if (att.type === 'image') {
-          userContent.push({ type: 'image_url', image_url: { url: att.dataUrl } });
+          userContent.push({ type: 'image_url', image_url: { url: att.dataUrl, detail: 'auto' } });
         } else {
           userContent.push({ type: 'file', file: { url: att.dataUrl, name: att.name, mime: att.mime } });
         }
