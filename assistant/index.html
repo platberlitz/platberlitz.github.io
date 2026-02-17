@@ -1321,6 +1321,7 @@ let activeConvId = null;
 let messages = [];
 let abortController = null;
 let streaming = false;
+let userScrolledAway = false;
 let pendingAttachments = [];
 let voiceRec = null;
 let modelOverride = null;
@@ -2031,6 +2032,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   msgsArea.addEventListener('scroll', () => {
     const atBottom = msgsArea.scrollHeight - msgsArea.scrollTop - msgsArea.clientHeight < 100;
     scrollFab.classList.toggle('visible', !atBottom);
+    if (streaming) {
+      if (atBottom) userScrolledAway = false;
+      else userScrolledAway = true;
+    }
   });
 
   // Initialize mermaid
@@ -3722,6 +3727,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
 
   abortController = new AbortController();
   streaming = true;
+  userScrolledAway = false;
   const btn = document.getElementById('sendBtn');
   btn.textContent = 'Stop';
   btn.classList.add('streaming');
@@ -3949,6 +3955,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         assistantMsg.content = fullText;
         const now = Date.now();
         if (now - lastRender > 80) {
+          // Preserve scroll position when user has scrolled away
+          const msgsArea = document.getElementById('messagesArea');
+          const savedScrollTop = userScrolledAway ? msgsArea.scrollTop : null;
           // Preserve open/closed state of thinking & tool blocks
           const thinkingOpen = bubbleEl.querySelector('.thinking-content.open') !== null;
           const toolOpen = Array.from(bubbleEl.querySelectorAll('.tool-use-results')).map(el => el.classList.contains('open'));
@@ -3967,9 +3976,11 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               if (arrow) arrow.textContent = '\u25BE';
             }
           });
-          const msgsArea = document.getElementById('messagesArea');
-          const isNearBottom = msgsArea.scrollHeight - msgsArea.scrollTop - msgsArea.clientHeight < 150;
-          if (isNearBottom) msgsArea.scrollTop = msgsArea.scrollHeight;
+          if (savedScrollTop !== null) {
+            msgsArea.scrollTop = savedScrollTop;
+          } else {
+            msgsArea.scrollTop = msgsArea.scrollHeight;
+          }
           lastRender = now;
         }
       }
