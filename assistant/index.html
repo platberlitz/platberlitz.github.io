@@ -1136,6 +1136,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     <textarea id="setExtraParams" placeholder='{"temperature": 0.7, "max_tokens": 4096}'></textarea>
     <label>Exclude Parameters (comma-separated)</label>
     <input type="text" id="setExcludeParams" placeholder="e.g. stream,model">
+    <label>Assistant Prefill</label>
+    <input type="text" id="setPrefill" placeholder="e.g. Sure! Here's">
 
     <div class="modal-section">Appearance</div>
     <label>Theme</label>
@@ -2536,6 +2538,7 @@ function openSettings() {
   renderPromptEntries();
   document.getElementById('setExtraParams').value = localStorage.getItem('llmExtraParams') || '';
   document.getElementById('setExcludeParams').value = localStorage.getItem('llmExcludeParams') || '';
+  document.getElementById('setPrefill').value = localStorage.getItem('llmPrefill') || '';
   document.getElementById('setStreaming').checked = localStorage.getItem('llmStreaming') !== 'false';
   document.getElementById('setEnterSend').checked = localStorage.getItem('llmEnterSend') !== 'false';
   document.getElementById('setTemperature').value = localStorage.getItem('llmTemperature') || '';
@@ -2591,6 +2594,7 @@ function saveSettings() {
   localStorage.setItem('llmApiFormat', document.getElementById('setApiFormat').value);
   localStorage.setItem('llmExtraParams', extraParamsVal);
   localStorage.setItem('llmExcludeParams', document.getElementById('setExcludeParams').value.trim());
+  localStorage.setItem('llmPrefill', document.getElementById('setPrefill').value);
   localStorage.setItem('llmStreaming', document.getElementById('setStreaming').checked ? 'true' : 'false');
   localStorage.setItem('llmEnterSend', document.getElementById('setEnterSend').checked ? 'true' : 'false');
   const tempVal = document.getElementById('setTemperature').value.trim();
@@ -3449,6 +3453,13 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
   try {
     let url, headers, body;
     const useStream = localStorage.getItem('llmStreaming') !== 'false';
+
+    // Assistant prefill
+    const prefill = localStorage.getItem('llmPrefill') || '';
+    if (prefill && !prefixText) {
+      apiMessages.push({ role: 'assistant', content: prefill });
+      fullText = prefill;
+    }
 
     if (format === 'anthropic') {
       url = baseUrl + '/messages';
