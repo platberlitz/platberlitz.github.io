@@ -3645,12 +3645,6 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         };
       });
       body = { model, messages: processedMessages, stream: useStream, ...extra };
-      // Debug: log outgoing request shape
-      const debugMsgs = processedMessages.map(m => {
-        if (!Array.isArray(m.content)) return { role: m.role, content: typeof m.content === 'string' ? m.content.slice(0, 80) : m.content };
-        return { role: m.role, content: m.content.map(p => p.type === 'image_url' ? { type: 'image_url', urlPrefix: p.image_url.url.slice(0, 60), detail: p.image_url.detail, urlLen: p.image_url.url.length } : p) };
-      });
-      console.log('[IMG-DEBUG] OpenAI request:', { model, stream: useStream, messageShapes: debugMsgs, payloadSize: JSON.stringify(body).length });
     }
     if (!('temperature' in body)) {
       const temp = parseFloat(localStorage.getItem('llmTemperature'));
@@ -3672,11 +3666,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
     }
 
     const ct = resp.headers.get('content-type') || '';
-    console.log('[IMG-DEBUG] Response status:', resp.status, 'content-type:', ct);
 
     if (ct.includes('application/json')) {
       const data = await resp.json();
-      console.log('[IMG-DEBUG] JSON response:', JSON.stringify(data).slice(0, 500));
       if (format === 'anthropic') {
         fullText = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || 'No response.';
         // Extract thinking blocks from non-streaming response
@@ -3776,16 +3768,14 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             // OpenAI format
             if (!trimmed.startsWith('data:')) continue;
             const payload = trimmed.slice(5).trim();
-            if (payload === '[DONE]') { console.log('[IMG-DEBUG] SSE stream done. fullText length:', fullText.length); continue; }
+            if (payload === '[DONE]') continue;
             try {
               const json = JSON.parse(payload);
-              if (!json.choices?.length) console.log('[IMG-DEBUG] SSE chunk no choices:', JSON.stringify(json).slice(0, 300));
               const delta = json.choices?.[0]?.delta?.content;
               if (delta) fullText += delta;
               const reasoning = json.choices?.[0]?.delta?.reasoning_content;
               if (reasoning) thinkingText += reasoning;
-              if (!delta && !reasoning) console.log('[IMG-DEBUG] SSE chunk empty delta:', JSON.stringify(json.choices?.[0]).slice(0, 200));
-            } catch(e) { console.log('[IMG-DEBUG] SSE parse error:', e.message, 'payload:', payload.slice(0, 200)); }
+            } catch(e) {}
           }
         }
 
@@ -3817,7 +3807,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           lastRender = now;
         }
       }
-      if (!fullText && !thinkingText) { console.warn('[IMG-DEBUG] Stream ended with empty response — applying fallback'); fullText = 'No response.'; }
+      if (!fullText && !thinkingText) fullText = 'No response.';
       assistantMsg.swipes[swipeIdx] = fullText;
       assistantMsg.content = fullText;
       if (thinkingText) {
@@ -4233,14 +4223,51 @@ function navigateChatSearch(dir) {
 // ============================================
 // File Attachments
 // ============================================
+function resizeImageIfNeeded(file, maxDim, quality) {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) { resolve(null); return; }
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(img.src);
+      let { width, height } = img;
+      if (width <= maxDim && height <= maxDim) { resolve(null); return; }
+      const scale = maxDim / Math.max(width, height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(img.src); resolve(null); };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 function readAttachmentFile(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const isImage = file.type.startsWith('image/');
-    pendingAttachments.push({ type: isImage ? 'image' : 'file', dataUrl: e.target.result, name: file.name, mime: file.type });
-    renderPreviews();
-  };
-  reader.readAsDataURL(file);
+  const isImage = file.type.startsWith('image/');
+  if (isImage) {
+    resizeImageIfNeeded(file, 1536, 0.85).then(resizedUrl => {
+      if (resizedUrl) {
+        pendingAttachments.push({ type: 'image', dataUrl: resizedUrl, name: file.name, mime: 'image/jpeg' });
+        renderPreviews();
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          pendingAttachments.push({ type: 'image', dataUrl: e.target.result, name: file.name, mime: file.type });
+          renderPreviews();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  } else {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      pendingAttachments.push({ type: 'file', dataUrl: e.target.result, name: file.name, mime: file.type });
+      renderPreviews();
+    };
+    reader.readAsDataURL(file);
+  }
 }
 
 function handleFileSelect(event) {
