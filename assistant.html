@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>AI Assistant</title>
+<title>Synapse</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1007,7 +1007,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   <div class="toolbar">
     <div class="toolbar-left">
       <button class="toolbar-toggle" onclick="toggleSidebar()" title="Toggle sidebar" aria-label="Toggle sidebar">&#9776;</button>
-      <span class="toolbar-title">AI Assistant</span>
+      <span class="toolbar-title">Synapse</span>
     </div>
     <div class="toolbar-right">
       <div class="toolbar-more">
@@ -1064,7 +1064,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 <!-- Setup Modal -->
 <div class="modal-overlay" id="setupModal">
   <div class="modal">
-    <h2>Welcome to AI Assistant</h2>
+    <h2>Welcome to Synapse</h2>
     <p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:20px">Enter your API settings to get started. Your keys are stored locally and never sent to any server except your configured proxy.</p>
     <label>Base URL</label>
     <input type="text" id="setupProxy" placeholder="https://api.openai.com/v1">
@@ -1803,6 +1803,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     clearTimeout(tokenDebounce);
     tokenDebounce = setTimeout(updateTokenInfo, 300);
     handleMentionInput(ta);
+    updateSendBtnState();
   });
 
   // Send on Enter (with mention dropdown handling)
@@ -3177,6 +3178,15 @@ function renderMessages() {
       regen.setAttribute('aria-label', 'Regenerate response');
       regen.onclick = () => regenerate();
       wrapper.appendChild(regen);
+
+      if (idx === messages.length - 1) {
+        const continueBtn = document.createElement('button');
+        continueBtn.className = 'msg-action-btn';
+        continueBtn.textContent = 'Continue';
+        continueBtn.setAttribute('aria-label', 'Continue generation');
+        continueBtn.onclick = () => continueMessage();
+        wrapper.appendChild(continueBtn);
+      }
     }
 
     // Fade-in on last message only
@@ -3186,6 +3196,7 @@ function renderMessages() {
   });
 
   area.scrollTop = area.scrollHeight;
+  updateSendBtnState();
 }
 
 function renderEditMode(area, msg, idx) {
@@ -3196,6 +3207,23 @@ function renderEditMode(area, msg, idx) {
   ta.className = 'msg-edit-textarea';
   ta.value = getMsgText(msg);
   wrapper.appendChild(ta);
+
+  if (Array.isArray(msg.content)) {
+    const images = msg.content.filter(c => c.type === 'image_url');
+    if (images.length > 0) {
+      const imgPreview = document.createElement('div');
+      imgPreview.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;padding:4px 0';
+      images.forEach(imgPart => {
+        const img = document.createElement('img');
+        img.src = imgPart.image_url.url;
+        img.className = 'chat-inline-img';
+        img.style.cssText = 'max-width:80px;max-height:80px;border-radius:6px;opacity:0.8';
+        img.alt = 'Attached image';
+        imgPreview.appendChild(img);
+      });
+      wrapper.appendChild(imgPreview);
+    }
+  }
 
   const editActions = document.createElement('div');
   editActions.className = 'msg-edit-actions';
@@ -3220,7 +3248,16 @@ function renderEditMode(area, msg, idx) {
       msg.branches[msg.branchIndex] = oldBranch;
     }
 
-    msg.content = editedText;
+    if (Array.isArray(msg.content)) {
+      const images = msg.content.filter(c => c.type === 'image_url');
+      if (images.length > 0) {
+        msg.content = [{ type: 'text', text: editedText }, ...images];
+      } else {
+        msg.content = editedText;
+      }
+    } else {
+      msg.content = editedText;
+    }
     messages.length = idx + 1;
     // Create new branch slot and switch to it
     msg.branchIndex = msg.branches.length;
@@ -3308,24 +3345,29 @@ function switchBranch(msgIdx, dir) {
 
 function forkBranch(msgIdx) {
   if (streaming) return;
-  const msg = messages[msgIdx];
-  if (!msg || msg.role !== 'user') return;
+  const conv = getActiveConv();
+  if (!conv) return;
 
-  // Save current continuation as a branch (deep clone)
-  const currentBranch = JSON.parse(JSON.stringify(messages.slice(msgIdx)));
-  if (!msg.branches) {
-    msg.branches = [currentBranch];
-  } else {
-    msg.branches[msg.branchIndex] = currentBranch;
-  }
+  const forkedMessages = JSON.parse(JSON.stringify(messages.slice(0, msgIdx + 1)));
 
-  // Create new empty branch (just the user message) and switch to it
-  messages.length = msgIdx + 1;
-  const newBranch = JSON.parse(JSON.stringify(messages.slice(msgIdx)));
-  msg.branches.push(newBranch);
-  msg.branchIndex = msg.branches.length - 1;
-  debouncedSave();
+  const newConv = {
+    id: genId(),
+    title: conv.title + ' (fork)',
+    messages: forkedMessages,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+  if (conv.characterAvatar) newConv.characterAvatar = conv.characterAvatar;
+  if (conv.characterData) newConv.characterData = JSON.parse(JSON.stringify(conv.characterData));
+
+  conversations.unshift(newConv);
+  activeConvId = newConv.id;
+  messages = newConv.messages;
+  saveConversations();
+  renderSidebar();
   renderMessages();
+  updateTokenInfo();
+  updateCharacterUI();
 }
 
 // ============================================
@@ -3373,7 +3415,7 @@ function renderToolBlocksHTML(toolBlocks) {
 // ============================================
 // Streaming
 // ============================================
-async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, overrideModel) {
+async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, overrideModel, prefixText) {
   const baseUrl = (localStorage.getItem('llmProxyUrl') || '').replace(/\/+$/, '');
   const apiKey = localStorage.getItem('llmApiKey');
   const model = overrideModel || localStorage.getItem('llmModel') || 'gpt-4o';
@@ -3391,7 +3433,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
   btn.classList.add('streaming');
   btn.disabled = false;
 
-  let fullText = '';
+  let fullText = prefixText || '';
   let thinkingText = '';
   let lastRender = 0;
   let toolBlocks = [];
@@ -3612,9 +3654,25 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
   } finally {
     streaming = false;
     abortController = null;
-    btn.textContent = 'Send';
     btn.classList.remove('streaming');
     btn.disabled = false;
+    updateSendBtnState();
+  }
+}
+
+// ============================================
+// Send Button State
+// ============================================
+function updateSendBtnState() {
+  const btn = document.getElementById('sendBtn');
+  if (streaming) return;
+  const input = document.getElementById('chatInput');
+  const hasInput = input.value.trim() || pendingImages.length > 0;
+  const lastMsg = messages[messages.length - 1];
+  if (!hasInput && lastMsg && lastMsg.role === 'user') {
+    btn.textContent = 'Regenerate';
+  } else {
+    btn.textContent = 'Send';
   }
 }
 
@@ -3626,7 +3684,9 @@ async function sendMessage() {
 
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
-  if (!text && pendingImages.length === 0) return;
+  const lastMsg = messages[messages.length - 1];
+  const isRegenFromFork = !text && pendingImages.length === 0 && lastMsg && lastMsg.role === 'user';
+  if (!text && pendingImages.length === 0 && !isRegenFromFork) return;
 
   const proxyUrl = localStorage.getItem('llmProxyUrl');
   const apiKey = localStorage.getItem('llmApiKey');
@@ -3637,26 +3697,28 @@ async function sendMessage() {
     return;
   }
 
-  let userContent;
-  if (pendingImages.length > 0) {
-    userContent = [];
-    if (text) userContent.push({ type: 'text', text });
-    pendingImages.forEach(img => userContent.push({ type: 'image_url', image_url: { url: img } }));
-    pendingImages = [];
-    document.getElementById('imagePreview').innerHTML = '';
-  } else {
-    userContent = text;
-  }
+  if (!isRegenFromFork) {
+    let userContent;
+    if (pendingImages.length > 0) {
+      userContent = [];
+      if (text) userContent.push({ type: 'text', text });
+      pendingImages.forEach(img => userContent.push({ type: 'image_url', image_url: { url: img } }));
+      pendingImages = [];
+      document.getElementById('imagePreview').innerHTML = '';
+    } else {
+      userContent = text;
+    }
 
-  messages.push({ role: 'user', content: userContent, timestamp: Date.now() });
-  input.value = '';
-  input.style.height = 'auto';
+    messages.push({ role: 'user', content: userContent, timestamp: Date.now() });
+    input.value = '';
+    input.style.height = 'auto';
 
-  // Auto-title
-  if (conv && conv.title === 'New Chat') {
-    conv.title = (text || 'Image chat').slice(0, 40);
-    conv.updatedAt = Date.now();
-    renderSidebar();
+    // Auto-title
+    if (conv && conv.title === 'New Chat') {
+      conv.title = (text || 'Image chat').slice(0, 40);
+      conv.updatedAt = Date.now();
+      renderSidebar();
+    }
   }
 
   renderMessages();
@@ -3722,6 +3784,42 @@ async function regenerate() {
   }
 
   await streamResponse(apiMessages, msg, msg.swipeIndex, bubble);
+
+  if (conv) conv.updatedAt = Date.now();
+  debouncedSave();
+  renderMessages();
+  updateTokenInfo();
+}
+
+// ============================================
+// Continue Message
+// ============================================
+async function continueMessage() {
+  if (streaming) return;
+  let lastIdx = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'assistant') { lastIdx = i; break; }
+  }
+  if (lastIdx === -1) return;
+
+  const msg = messages[lastIdx];
+  const existingText = typeof msg.content === 'string' ? msg.content : '';
+  if (!existingText.trim()) return;
+
+  const conv = getActiveConv();
+  const apiMessages = await buildSystemMessages(conv);
+  for (let i = 0; i <= lastIdx; i++) {
+    if (messages[i].role !== 'system') {
+      apiMessages.push({ role: messages[i].role, content: messages[i].content });
+    }
+  }
+
+  const area = document.getElementById('messagesArea');
+  const wrappers = area.querySelectorAll('.msg-wrapper.assistant');
+  const lastWrapper = wrappers[wrappers.length - 1];
+  const bubble = lastWrapper.querySelector('.msg-bubble');
+
+  await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, existingText);
 
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
@@ -4181,7 +4279,7 @@ function updateCharacterUI() {
     titleEl.textContent = conv.characterCard.name || conv.title;
   } else {
     infoBtn.style.display = 'none';
-    titleEl.textContent = 'AI Assistant';
+    titleEl.textContent = 'Synapse';
   }
 }
 
