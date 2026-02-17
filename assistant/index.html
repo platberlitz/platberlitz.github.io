@@ -3712,6 +3712,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
 
     if (ct.includes('application/json')) {
       const data = await resp.json();
+      console.log('[Synapse] Non-streaming response:', JSON.stringify(data).slice(0, 2000));
       if (format === 'anthropic') {
         fullText = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || 'No response.';
         // Extract thinking blocks from non-streaming response
@@ -3831,6 +3832,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             if (payload === '[DONE]') continue;
             try {
               const json = JSON.parse(payload);
+              if (!json.choices?.[0]?.delta?.role) console.log('[Synapse] SSE chunk:', JSON.stringify(json).slice(0, 1000));
               const delta = json.choices?.[0]?.delta?.content;
               if (typeof delta === 'string') {
                 fullText += delta;
