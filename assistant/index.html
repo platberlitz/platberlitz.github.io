@@ -29,6 +29,11 @@
   --overlay-10: rgba(255, 255, 255, 0.1);
   --overlay-15: rgba(255, 255, 255, 0.15);
   --overlay-25: rgba(255, 255, 255, 0.25);
+  --border-radius: 16px;
+  --msg-max-width: 75%;
+  --msg-padding: 12px 16px;
+  --msg-font-size: 0.95em;
+  --code-bg: rgba(0,0,0,0.3);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -252,15 +257,15 @@ body {
 
 /* Message styles */
 .msg-wrapper { display: flex; flex-direction: column; position: relative; }
-.msg-wrapper.user { align-self: flex-end; max-width: 75%; }
-.msg-wrapper.assistant { align-self: flex-start; max-width: 75%; }
+.msg-wrapper.user { align-self: flex-end; max-width: var(--msg-max-width); }
+.msg-wrapper.assistant { align-self: flex-start; max-width: var(--msg-max-width); }
 .msg-wrapper.assistant.has-avatar { flex-direction: row; align-items: flex-start; }
 .msg-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin-right: 8px; margin-top: 2px; }
 
 .msg-bubble {
-  padding: 12px 16px;
-  border-radius: 16px;
-  font-size: 0.95em;
+  padding: var(--msg-padding);
+  border-radius: var(--border-radius);
+  font-size: var(--msg-font-size);
   line-height: 1.6;
   word-wrap: break-word;
 }
@@ -277,7 +282,7 @@ body {
 }
 
 /* Markdown in messages */
-.msg-bubble pre { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; overflow-x: auto; margin: 6px 0; white-space: pre; }
+.msg-bubble pre { background: var(--code-bg); padding: 10px; border-radius: 8px; overflow-x: auto; margin: 6px 0; white-space: pre; }
 .msg-bubble code { background: var(--overlay-10); padding: 2px 5px; border-radius: 4px; font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: 0.9em; }
 .msg-bubble pre code { background: none; padding: 0; }
 .msg-bubble blockquote { border-left: 3px solid var(--accent); padding-left: 10px; color: var(--text-secondary); margin: 6px 0; }
@@ -398,7 +403,7 @@ body {
   font-size: 0.95em;
   font-family: inherit;
   background: var(--hover);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid var(--card-border);
   border-radius: 12px;
   color: var(--text-primary);
   outline: none;
@@ -461,7 +466,7 @@ body {
 .modal {
   background: var(--sidebar-bg);
   border: 1px solid var(--card-border);
-  border-radius: 16px;
+  border-radius: var(--border-radius);
   padding: 28px;
   width: 90%;
   max-width: 520px;
@@ -601,7 +606,7 @@ body {
 @media (max-width: 768px) {
   .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 500; }
   .sidebar.collapsed { margin-left: -260px; }
-  .msg-wrapper.user, .msg-wrapper.assistant { max-width: 95%; }
+  .msg-wrapper.user, .msg-wrapper.assistant { max-width: 95% !important; }
   .msg-avatar { width: 26px; height: 26px; margin-right: 6px; }
   .toolbar-title { font-size: 0.85em; }
   .input-area { padding: 8px 12px 12px; }
@@ -1153,6 +1158,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
         <option value="solarized">Solarized</option>
         <option value="onedark">One Dark</option>
         <option value="rosepine">Rose Pine</option>
+        <option value="claude">Claude</option>
       </optgroup>
       <optgroup label="HyDE Gallery">
         <option value="oneBit">1-Bit</option>
@@ -1190,6 +1196,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <div class="theme-color-item"><input type="color" id="cAccentHover" oninput="liveCustomTheme()"><span>Accent Hover</span></div>
       <div class="theme-color-item"><input type="color" id="cMsgUser" oninput="liveCustomTheme()"><span>User Bubble</span></div>
       <div class="theme-color-item"><input type="color" id="cMsgAssistant" oninput="liveCustomTheme()"><span>Assistant Bubble</span></div>
+      <div class="theme-color-item"><input type="text" id="cBorderRadius" oninput="liveCustomTheme()" placeholder="16px" style="width:60px"><span>Radius</span></div>
+      <div class="theme-color-item"><input type="text" id="cMsgMaxWidth" oninput="liveCustomTheme()" placeholder="75%" style="width:60px"><span>Msg Width</span></div>
+      <div class="theme-color-item"><input type="text" id="cMsgFontSize" oninput="liveCustomTheme()" placeholder="0.95em" style="width:60px"><span>Font Size</span></div>
+      <div class="theme-color-item"><input type="color" id="cCodeBg" oninput="liveCustomTheme()"><span>Code BG</span></div>
     </div>
     <label>Font</label>
     <input type="text" id="setFont" placeholder="e.g. Inter, Poppins, JetBrains Mono">
@@ -1322,10 +1332,11 @@ const themePresets = {
   doomBringers:   { bg:'#351810', sidebar:'#452820', cardBorder:'#553830', textPrimary:'#f0e0c8', textSecondary:'rgba(240,224,200,0.6)', accent:'#FABD2F', accentHover:'#ffdd4f', msgUser:'#FABD2F', msgAssistant:'#452820' },
   nightbrew:      { bg:'#821595', sidebar:'#9225a5', cardBorder:'#a235b5', textPrimary:'#e0f0f0', textSecondary:'rgba(224,240,240,0.6)', accent:'#259E9C', accentHover:'#45bebc', msgUser:'#259E9C', msgAssistant:'#9225a5' },
   joker:          { bg:'#4B0082', sidebar:'#5b1092', cardBorder:'#6b20a2', textPrimary:'#d8f8e0', textSecondary:'rgba(216,248,224,0.6)', accent:'#00FF66', accentHover:'#33ff88', msgUser:'#00FF66', msgAssistant:'#5b1092' },
-  nordicBlue:     { bg:'#2E3440', sidebar:'#3b4252', cardBorder:'#434c5e', textPrimary:'#eceff4', textSecondary:'#d8dee9', accent:'#88C0D0', accentHover:'#a8e0f0', msgUser:'#88C0D0', msgAssistant:'#3b4252' }
+  nordicBlue:     { bg:'#2E3440', sidebar:'#3b4252', cardBorder:'#434c5e', textPrimary:'#eceff4', textSecondary:'#d8dee9', accent:'#88C0D0', accentHover:'#a8e0f0', msgUser:'#88C0D0', msgAssistant:'#3b4252' },
+  claude:         { bg:'#FAF9F5', sidebar:'#EBE7DF', cardBorder:'rgba(0,0,0,0.08)', textPrimary:'#1a1915', textSecondary:'rgba(26,25,21,0.55)', accent:'#D97757', accentHover:'#C4684A', msgUser:'#D97757', msgAssistant:'#F3F0E8', borderRadius:'24px', msgMaxWidth:'70%', codeBg:'rgba(0,0,0,0.04)' }
 };
 
-const themeOrder = ['dark','light','nord','catppuccin','dracula','gruvbox','tokyonight','solarized','onedark','rosepine','oneBit','graphiteMono','abyssalWave','cosmicBlue','pixelDream','anotherWorld','obsidianPurple','scarletNight','synthWave','amethystAura','decayGreen','greenLush','rainDark','everBlushing','edgeRunner','monokai','redStone','soulsborne','doomBringers','nightbrew','joker','nordicBlue'];
+const themeOrder = ['dark','light','nord','catppuccin','dracula','gruvbox','tokyonight','solarized','onedark','rosepine','oneBit','graphiteMono','abyssalWave','cosmicBlue','pixelDream','anotherWorld','obsidianPurple','scarletNight','synthWave','amethystAura','decayGreen','greenLush','rainDark','everBlushing','edgeRunner','monokai','redStone','soulsborne','doomBringers','nightbrew','joker','nordicBlue','claude'];
 
 // ============================================
 // Utility
@@ -1374,6 +1385,11 @@ function applyTheme(name) {
   s.setProperty('--overlay-10', bgLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)');
   s.setProperty('--overlay-15', bgLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)');
   s.setProperty('--overlay-25', bgLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)');
+  s.setProperty('--border-radius', t.borderRadius || '16px');
+  s.setProperty('--msg-max-width', t.msgMaxWidth || '75%');
+  s.setProperty('--msg-padding', t.msgPadding || '12px 16px');
+  s.setProperty('--msg-font-size', t.msgFontSize || '0.95em');
+  s.setProperty('--code-bg', t.codeBg || (bgLight ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.3)'));
   localStorage.setItem('assistantTheme', name);
 
   const btn = document.getElementById('themeToggle');
@@ -1442,10 +1458,14 @@ function loadCustomColorPickers() {
   document.getElementById('cAccentHover').value = toHex(t.accentHover);
   document.getElementById('cMsgUser').value = toHex(t.msgUser);
   document.getElementById('cMsgAssistant').value = toHex(t.msgAssistant);
+  document.getElementById('cBorderRadius').value = t.borderRadius || '';
+  document.getElementById('cMsgMaxWidth').value = t.msgMaxWidth || '';
+  document.getElementById('cMsgFontSize').value = t.msgFontSize || '';
+  document.getElementById('cCodeBg').value = t.codeBg ? toHex(t.codeBg) : '#000000';
 }
 
 function getCustomThemeFromPickers() {
-  return {
+  const t = {
     bg: document.getElementById('cBg').value,
     sidebar: document.getElementById('cSidebar').value,
     cardBorder: document.getElementById('cBorder').value,
@@ -1456,6 +1476,15 @@ function getCustomThemeFromPickers() {
     msgUser: document.getElementById('cMsgUser').value,
     msgAssistant: document.getElementById('cMsgAssistant').value
   };
+  const br = document.getElementById('cBorderRadius').value.trim();
+  const mw = document.getElementById('cMsgMaxWidth').value.trim();
+  const fs = document.getElementById('cMsgFontSize').value.trim();
+  const cb = document.getElementById('cCodeBg').value;
+  if (br) t.borderRadius = br;
+  if (mw) t.msgMaxWidth = mw;
+  if (fs) t.msgFontSize = fs;
+  if (cb && cb !== '#000000') t.codeBg = cb;
+  return t;
 }
 
 function liveCustomTheme() {
