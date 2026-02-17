@@ -3792,7 +3792,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           }
         }
       } else {
-        const extracted = extractImages(data.choices[0].message);
+        const extracted = extractImages(data.choices?.[0]?.message || data);
         fullText = extracted.text || 'No response.';
         if (extracted.images.length) {
           assistantMsg.swipeImages = assistantMsg.swipeImages || [];
