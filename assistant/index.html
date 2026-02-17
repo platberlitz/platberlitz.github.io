@@ -296,6 +296,8 @@ body {
 .msg-bubble th, .msg-bubble td { border: 1px solid var(--card-border); padding: 4px 8px; }
 .msg-bubble th { background: var(--hover); }
 .msg-bubble img.chat-inline-img { max-width: min(300px, 100%); max-height: 300px; border-radius: 8px; margin-top: 6px; display: block; }
+.chat-file-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; background: var(--card-bg); border: 1px solid var(--card-border); font-size: 0.82em; color: var(--text-secondary); text-decoration: none; margin-top: 6px; cursor: pointer; }
+.chat-file-badge:hover { background: var(--card-border); }
 
 /* Code copy button */
 .code-block-wrapper { position: relative; }
@@ -395,6 +397,8 @@ body {
 .img-thumb { position: relative; width: 56px; height: 56px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
 .img-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .img-thumb .remove-thumb { position: absolute; top: -2px; right: -2px; background: #ef4444; border: none; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.file-thumb { position: relative; height: 56px; border-radius: 8px; padding: 0 12px; background: var(--card-bg); border: 1px solid var(--card-border); display: flex; align-items: center; font-size: 0.78em; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; flex-shrink: 0; }
+.file-thumb .remove-thumb { position: absolute; top: -2px; right: -2px; background: #ef4444; border: none; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
 .input-row { display: flex; gap: 8px; align-items: flex-end; }
 .input-row textarea {
@@ -619,6 +623,7 @@ body {
   .toolbar-toggle { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
   .input-btn { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
   .img-thumb .remove-thumb { width: 28px; height: 28px; font-size: 14px; top: -4px; right: -4px; }
+  .file-thumb .remove-thumb { width: 28px; height: 28px; font-size: 14px; top: -4px; right: -4px; }
   .msg-action-btn { padding: 8px 12px; font-size: 0.8em; min-height: 36px; }
   .swipe-controls button { padding: 8px 14px; min-height: 36px; }
   .regen-btn { padding: 10px 16px; min-height: 36px; }
@@ -1056,8 +1061,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     </div>
     <div class="input-row" style="position:relative">
       <div class="mention-dropdown" id="mentionDropdown"></div>
-      <button class="input-btn" onclick="document.getElementById('fileInput').click()" title="Attach image" aria-label="Attach image">&#128206;</button>
-      <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFileSelect(event)">
+      <button class="input-btn" onclick="document.getElementById('fileInput').click()" title="Attach file" aria-label="Attach file">&#128206;</button>
+      <input type="file" id="fileInput" accept="image/*,.pdf,.txt,.csv,.html,.md" multiple style="display:none" onchange="handleFileSelect(event)">
       <textarea id="chatInput" placeholder="Type a message..." rows="1"></textarea>
       <button class="input-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input" aria-label="Voice input">&#127908;</button>
       <button class="send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Send message">Send</button>
@@ -1260,7 +1265,7 @@ let activeConvId = null;
 let messages = [];
 let abortController = null;
 let streaming = false;
-let pendingImages = [];
+let pendingAttachments = [];
 let voiceRec = null;
 let modelOverride = null;
 let mentionActive = false;
@@ -1764,7 +1769,7 @@ function prepareAnthropicMessages(apiMessages) {
       merged.push({ role: m.role, content: m.content });
     }
   }
-  // Convert image content for Anthropic format
+  // Convert image/file content for Anthropic format
   const converted = merged.map(m => {
     if (Array.isArray(m.content)) {
       const parts = m.content.map(part => {
@@ -1776,6 +1781,14 @@ function prepareAnthropicMessages(apiMessages) {
             if (match) return { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } };
           }
           return { type: 'image', source: { type: 'url', url: url } };
+        }
+        if (part.type === 'file') {
+          const url = part.file.url;
+          if (url.startsWith('data:')) {
+            const match = url.match(/^data:([^;]+);base64,(.+)$/);
+            if (match) return { type: 'document', source: { type: 'base64', media_type: match[1], data: match[2] } };
+          }
+          return part;
         }
         return part;
       });
@@ -1903,12 +1916,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Drag & drop images
+  // Drag & drop files
+  const DOCUMENT_MIMES = ['application/pdf', 'text/plain', 'text/csv', 'text/html', 'text/markdown'];
   const main = document.querySelector('.main');
   main.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
   main.addEventListener('drop', (e) => {
     e.preventDefault();
-    Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')).forEach(readImageFile);
+    Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/') || DOCUMENT_MIMES.includes(f.type)).forEach(readAttachmentFile);
   });
 
   // Paste images
@@ -1916,7 +1930,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     Array.from(e.clipboardData?.items || []).forEach(item => {
       if (item.type.startsWith('image/')) {
         e.preventDefault();
-        readImageFile(item.getAsFile());
+        readAttachmentFile(item.getAsFile());
       }
     });
   });
@@ -3091,6 +3105,14 @@ function renderMessages() {
             img.className = 'chat-inline-img';
             img.alt = 'User uploaded image';
             bubble.appendChild(img);
+          } else if (part.type === 'file') {
+            const badge = document.createElement('a');
+            badge.className = 'chat-file-badge';
+            badge.textContent = '\u{1F4C4} ' + (part.file.name || 'file');
+            badge.href = part.file.url;
+            badge.download = part.file.name || 'file';
+            badge.title = 'Download ' + (part.file.name || 'file');
+            bubble.appendChild(badge);
           }
         });
       } else {
@@ -3248,19 +3270,27 @@ function renderEditMode(area, msg, idx) {
   wrapper.appendChild(ta);
 
   if (Array.isArray(msg.content)) {
-    const images = msg.content.filter(c => c.type === 'image_url');
-    if (images.length > 0) {
-      const imgPreview = document.createElement('div');
-      imgPreview.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;padding:4px 0';
-      images.forEach(imgPart => {
-        const img = document.createElement('img');
-        img.src = imgPart.image_url.url;
-        img.className = 'chat-inline-img';
-        img.style.cssText = 'max-width:80px;max-height:80px;border-radius:6px;opacity:0.8';
-        img.alt = 'Attached image';
-        imgPreview.appendChild(img);
+    const attachments = msg.content.filter(c => c.type === 'image_url' || c.type === 'file');
+    if (attachments.length > 0) {
+      const attPreview = document.createElement('div');
+      attPreview.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;padding:4px 0';
+      attachments.forEach(part => {
+        if (part.type === 'image_url') {
+          const img = document.createElement('img');
+          img.src = part.image_url.url;
+          img.className = 'chat-inline-img';
+          img.style.cssText = 'max-width:80px;max-height:80px;border-radius:6px;opacity:0.8';
+          img.alt = 'Attached image';
+          attPreview.appendChild(img);
+        } else if (part.type === 'file') {
+          const badge = document.createElement('span');
+          badge.className = 'chat-file-badge';
+          badge.style.opacity = '0.8';
+          badge.textContent = '\u{1F4C4} ' + (part.file.name || 'file');
+          attPreview.appendChild(badge);
+        }
       });
-      wrapper.appendChild(imgPreview);
+      wrapper.appendChild(attPreview);
     }
   }
 
@@ -3288,9 +3318,9 @@ function renderEditMode(area, msg, idx) {
     }
 
     if (Array.isArray(msg.content)) {
-      const images = msg.content.filter(c => c.type === 'image_url');
-      if (images.length > 0) {
-        msg.content = [{ type: 'text', text: editedText }, ...images];
+      const attachments = msg.content.filter(c => c.type === 'image_url' || c.type === 'file');
+      if (attachments.length > 0) {
+        msg.content = [{ type: 'text', text: editedText }, ...attachments];
       } else {
         msg.content = editedText;
       }
@@ -3713,7 +3743,7 @@ function updateSendBtnState() {
   const btn = document.getElementById('sendBtn');
   if (streaming) return;
   const input = document.getElementById('chatInput');
-  const hasInput = input.value.trim() || pendingImages.length > 0;
+  const hasInput = input.value.trim() || pendingAttachments.length > 0;
   const lastMsg = messages[messages.length - 1];
   if (!hasInput && lastMsg && lastMsg.role === 'user') {
     btn.textContent = 'Regenerate';
@@ -3731,8 +3761,8 @@ async function sendMessage() {
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
   const lastMsg = messages[messages.length - 1];
-  const isRegenFromFork = !text && pendingImages.length === 0 && lastMsg && lastMsg.role === 'user';
-  if (!text && pendingImages.length === 0 && !isRegenFromFork) return;
+  const isRegenFromFork = !text && pendingAttachments.length === 0 && lastMsg && lastMsg.role === 'user';
+  if (!text && pendingAttachments.length === 0 && !isRegenFromFork) return;
 
   const proxyUrl = localStorage.getItem('llmProxyUrl');
   const apiKey = localStorage.getItem('llmApiKey');
@@ -3745,11 +3775,17 @@ async function sendMessage() {
 
   if (!isRegenFromFork) {
     let userContent;
-    if (pendingImages.length > 0) {
+    if (pendingAttachments.length > 0) {
       userContent = [];
       if (text) userContent.push({ type: 'text', text });
-      pendingImages.forEach(img => userContent.push({ type: 'image_url', image_url: { url: img } }));
-      pendingImages = [];
+      pendingAttachments.forEach(att => {
+        if (att.type === 'image') {
+          userContent.push({ type: 'image_url', image_url: { url: att.dataUrl } });
+        } else {
+          userContent.push({ type: 'file', file: { url: att.dataUrl, name: att.name, mime: att.mime } });
+        }
+      });
+      pendingAttachments = [];
       document.getElementById('imagePreview').innerHTML = '';
     } else {
       userContent = text;
@@ -3761,7 +3797,7 @@ async function sendMessage() {
 
     // Auto-title
     if (conv && conv.title === 'New Chat') {
-      conv.title = (text || 'Image chat').slice(0, 40);
+      conv.title = (text || 'Attachment chat').slice(0, 40);
       conv.updatedAt = Date.now();
       renderSidebar();
     }
@@ -3969,6 +4005,7 @@ function exportMarkdown() {
         m.content.forEach(p => {
           if (p.type === 'text') md += p.text + '\n\n';
           else if (p.type === 'image_url') md += '_[Image attachment]_\n\n';
+          else if (p.type === 'file') md += '_[File: ' + (p.file.name || 'attachment') + ']_\n\n';
         });
       } else {
         md += text + '\n\n';
@@ -4073,32 +4110,40 @@ function navigateChatSearch(dir) {
 }
 
 // ============================================
-// Image Attachments
+// File Attachments
 // ============================================
-function readImageFile(file) {
+function readAttachmentFile(file) {
   const reader = new FileReader();
-  reader.onload = (e) => { pendingImages.push(e.target.result); renderPreviews(); };
+  reader.onload = (e) => {
+    const isImage = file.type.startsWith('image/');
+    pendingAttachments.push({ type: isImage ? 'image' : 'file', dataUrl: e.target.result, name: file.name, mime: file.type });
+    renderPreviews();
+  };
   reader.readAsDataURL(file);
 }
 
 function handleFileSelect(event) {
-  Array.from(event.target.files).filter(f => f.type.startsWith('image/')).forEach(readImageFile);
+  Array.from(event.target.files).forEach(readAttachmentFile);
   event.target.value = '';
 }
 
 function renderPreviews() {
   const container = document.getElementById('imagePreview');
   container.innerHTML = '';
-  pendingImages.forEach((img, idx) => {
+  pendingAttachments.forEach((att, idx) => {
     const thumb = document.createElement('div');
-    thumb.className = 'img-thumb';
-    const imgEl = document.createElement('img');
-    imgEl.src = img;
+    thumb.className = att.type === 'image' ? 'img-thumb' : 'file-thumb';
+    if (att.type === 'image') {
+      const imgEl = document.createElement('img');
+      imgEl.src = att.dataUrl;
+      thumb.appendChild(imgEl);
+    } else {
+      thumb.textContent = '\u{1F4C4} ' + (att.name || 'file');
+    }
     const rm = document.createElement('button');
     rm.className = 'remove-thumb';
     rm.innerHTML = '&times;';
-    rm.onclick = () => { pendingImages.splice(idx, 1); renderPreviews(); };
-    thumb.appendChild(imgEl);
+    rm.onclick = () => { pendingAttachments.splice(idx, 1); renderPreviews(); };
     thumb.appendChild(rm);
     container.appendChild(thumb);
   });
