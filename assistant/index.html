@@ -1322,6 +1322,7 @@ let messages = [];
 let abortController = null;
 let streaming = false;
 let userScrolledAway = false;
+let _suppressScrollFlag = false;
 let pendingAttachments = [];
 let voiceRec = null;
 let modelOverride = null;
@@ -2036,9 +2037,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   msgsArea.addEventListener('scroll', () => {
     const atBottom = msgsArea.scrollHeight - msgsArea.scrollTop - msgsArea.clientHeight < 100;
     scrollFab.classList.toggle('visible', !atBottom);
-    if (streaming) {
-      if (atBottom) userScrolledAway = false;
-      else userScrolledAway = true;
+    if (streaming && !_suppressScrollFlag) {
+      userScrolledAway = !atBottom;
     }
   });
 
@@ -3992,6 +3992,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           // Preserve open/closed state of thinking & tool blocks
           const thinkingOpen = bubbleEl.querySelector('.thinking-content.open') !== null;
           const toolOpen = Array.from(bubbleEl.querySelectorAll('.tool-use-results')).map(el => el.classList.contains('open'));
+          _suppressScrollFlag = true;
           bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
           if (thinkingOpen) {
             const tc = bubbleEl.querySelector('.thinking-content');
@@ -4012,6 +4013,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           } else {
             msgsArea.scrollTop = msgsArea.scrollHeight;
           }
+          _suppressScrollFlag = false;
           lastRender = now;
         }
       }
@@ -4031,8 +4033,17 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
         assistantMsg.swipeToolUse[swipeIdx] = toolBlocks;
       }
+      const msgsArea = document.getElementById('messagesArea');
+      const savedScrollTop = userScrolledAway ? msgsArea.scrollTop : null;
+      _suppressScrollFlag = true;
       bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
       postRenderProcessing(bubbleEl);
+      if (savedScrollTop !== null) {
+        msgsArea.scrollTop = savedScrollTop;
+      } else {
+        msgsArea.scrollTop = msgsArea.scrollHeight;
+      }
+      _suppressScrollFlag = false;
     }
   } catch (e) {
     if (e.name === 'AbortError') {
@@ -4050,7 +4061,16 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
       assistantMsg.swipeToolUse[swipeIdx] = toolBlocks;
     }
+    const msgsArea = document.getElementById('messagesArea');
+    const savedScrollTop = userScrolledAway ? msgsArea.scrollTop : null;
+    _suppressScrollFlag = true;
     bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+    if (savedScrollTop !== null) {
+      msgsArea.scrollTop = savedScrollTop;
+    } else {
+      msgsArea.scrollTop = msgsArea.scrollHeight;
+    }
+    _suppressScrollFlag = false;
   } finally {
     streaming = false;
     abortController = null;
