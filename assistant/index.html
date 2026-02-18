@@ -1869,8 +1869,12 @@ function prepareAnthropicMessages(apiMessages) {
           return { type: 'image', source: { type: 'url', url: url } };
         }
         if (part.type === 'file') {
+          if (part.file.textContent) {
+            const name = part.file.name || 'file';
+            return { type: 'text', text: `--- ${name} ---\n${part.file.textContent}\n--- end ${name} ---` };
+          }
           const url = part.file.url;
-          if (url.startsWith('data:')) {
+          if (url && url.startsWith('data:')) {
             const match = url.match(/^data:([^;]+);base64,(.+)$/);
             if (match) return { type: 'document', source: { type: 'base64', media_type: match[1], data: match[2] } };
           }
@@ -3808,7 +3812,12 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               return { type: 'image_url', image_url: { url: part.image_url.url, detail: 'auto' } };
             }
             if (part.type === 'file') {
-              return { type: 'text', text: `[Attached file: ${part.file?.name || 'file'}]` };
+              const name = part.file?.name || 'file';
+              const text = part.file?.textContent;
+              if (text) {
+                return { type: 'text', text: `--- ${name} ---\n${text}\n--- end ${name} ---` };
+              }
+              return { type: 'text', text: `[Attached file: ${name}]` };
             }
             return part;
           })
@@ -4096,6 +4105,8 @@ async function sendMessage() {
       pendingAttachments.forEach(att => {
         if (att.type === 'image') {
           userContent.push({ type: 'image_url', image_url: { url: att.dataUrl, detail: 'auto' } });
+        } else if (att.textContent) {
+          userContent.push({ type: 'file', file: { name: att.name, mime: att.mime, textContent: att.textContent } });
         } else {
           userContent.push({ type: 'file', file: { url: att.dataUrl, name: att.name, mime: att.mime } });
         }
@@ -4448,6 +4459,21 @@ function resizeImageIfNeeded(file, maxDim, quality) {
   });
 }
 
+async function extractPdfText(arrayBuffer) {
+  const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    pages.push(tc.items.map(item => item.str).join(' '));
+  }
+  return pages.join('\n\n');
+}
+
+const TEXT_MIMES = ['text/plain', 'text/csv', 'text/html', 'text/markdown'];
+
 function readAttachmentFile(file) {
   const isImage = file.type.startsWith('image/');
   if (isImage) {
@@ -4464,6 +4490,22 @@ function readAttachmentFile(file) {
         reader.readAsDataURL(file);
       }
     });
+  } else if (file.type === 'application/pdf') {
+    file.arrayBuffer().then(buf => extractPdfText(buf)).then(text => {
+      pendingAttachments.push({ type: 'file', name: file.name, mime: file.type, textContent: text });
+      renderPreviews();
+    }).catch(e => {
+      console.error('PDF extraction failed:', e);
+      pendingAttachments.push({ type: 'file', name: file.name, mime: file.type, textContent: '[PDF could not be read]' });
+      renderPreviews();
+    });
+  } else if (TEXT_MIMES.includes(file.type) || file.name.match(/\.(txt|csv|html|md)$/i)) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      pendingAttachments.push({ type: 'file', name: file.name, mime: file.type, textContent: e.target.result });
+      renderPreviews();
+    };
+    reader.readAsText(file);
   } else {
     const reader = new FileReader();
     reader.onload = (e) => {
