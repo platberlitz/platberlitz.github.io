@@ -376,6 +376,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  touch-action: pan-y;
 }
 .chat-placeholder {
   color: var(--text-secondary);
@@ -388,7 +389,7 @@ body {
 /* Message styles */
 .msg-wrapper { display: flex; flex-direction: column; position: relative; }
 .msg-wrapper.user { align-self: flex-end; max-width: var(--msg-max-width); }
-.msg-wrapper.assistant { align-self: flex-start; max-width: var(--msg-max-width); touch-action: pan-y; }
+.msg-wrapper.assistant { align-self: flex-start; max-width: var(--msg-max-width); }
 .msg-wrapper.assistant.has-avatar { flex-direction: row; align-items: flex-start; }
 .msg-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin-right: 8px; margin-top: 2px; }
 
@@ -2217,7 +2218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Mobile swipe gestures for assistant message alternatives
-  let _touchStartX = 0, _touchStartY = 0, _touchLastX = 0, _touchMsgIdx = null, _swiping = false;
+  let _touchStartX = 0, _touchStartY = 0, _touchLastX = 0, _touchMsgIdx = null, _swiping = false, _touchDecided = false;
   msgsArea.addEventListener('touchstart', e => {
     const wrapper = e.target.closest('.msg-wrapper.assistant');
     if (!wrapper) { _touchMsgIdx = null; return; }
@@ -2225,14 +2226,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     _touchStartX = _touchLastX = e.touches[0].clientX;
     _touchStartY = e.touches[0].clientY;
     _swiping = false;
+    _touchDecided = false;
   }, { passive: true });
   msgsArea.addEventListener('touchmove', e => {
     if (_touchMsgIdx === null || isNaN(_touchMsgIdx)) return;
     _touchLastX = e.touches[0].clientX;
+    if (_touchDecided) { if (_swiping) e.preventDefault(); return; }
     const dx = Math.abs(_touchLastX - _touchStartX);
     const dy = Math.abs(e.touches[0].clientY - _touchStartY);
-    if (!_swiping && dx > 15 && dx > dy * 1.2) {
-      _swiping = true;
+    if (dx > 10 || dy > 10) {
+      _touchDecided = true;
+      _swiping = dx > dy;
     }
     if (_swiping) e.preventDefault();
   }, { passive: false });
@@ -2240,10 +2244,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!_swiping || _touchMsgIdx === null || isNaN(_touchMsgIdx)) {
       _touchMsgIdx = null;
       _swiping = false;
+      _touchDecided = false;
       return;
     }
     const dx = _touchLastX - _touchStartX;
-    if (Math.abs(dx) > 40) {
+    if (Math.abs(dx) > 30) {
       const msg = messages[_touchMsgIdx];
       if (msg && msg.swipes && msg.swipes.length > 1) {
         swipeMsg(_touchMsgIdx, dx < 0 ? 1 : -1);
@@ -2251,6 +2256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     _touchMsgIdx = null;
     _swiping = false;
+    _touchDecided = false;
   }, { passive: true });
 
   // Image lightbox for generated images
