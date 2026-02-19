@@ -914,6 +914,47 @@ body {
 .scroll-fab:hover { background: var(--accent-hover); transform: scale(1.1); }
 .scroll-fab.visible { display: flex; }
 
+/* Select mode for screenshot */
+.messages-area.select-mode .msg-wrapper { cursor: pointer; -webkit-user-select: none; user-select: none; }
+.messages-area.select-mode .msg-wrapper.selected .msg-bubble { box-shadow: 0 0 0 2px var(--accent); }
+.messages-area.select-mode .msg-actions,
+.messages-area.select-mode .regen-btn,
+.messages-area.select-mode .swipe-nav,
+.messages-area.select-mode .branch-controls { display: none !important; }
+.select-toolbar {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  z-index: 20;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+.select-toolbar.visible { display: flex; }
+.select-toolbar .select-count { color: var(--text-secondary); min-width: 70px; }
+.select-toolbar button {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9em;
+  transition: background 0.2s;
+}
+.select-toolbar .ss-btn { background: var(--accent); color: var(--accent-text); }
+.select-toolbar .ss-btn:hover { background: var(--accent-hover); }
+.select-toolbar .ss-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.select-toolbar .ss-cancel { background: var(--hover); color: var(--text-primary); }
+.select-toolbar .ss-cancel:hover { background: var(--overlay-10); }
+
 /* Toast notifications */
 .toast-container { position: fixed; top: 16px; right: 16px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
 .toast {
@@ -1199,6 +1240,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
           <button onclick="exportAllConversations();closeToolbarMenu()">&#8659; Export all chats</button>
           <button onclick="document.getElementById('importInput').click();closeToolbarMenu()">&#8613; Import chat</button>
           <button onclick="clearChat();closeToolbarMenu()">&#128465; Clear chat</button>
+          <button onclick="enterSelectMode();closeToolbarMenu()">&#128247; Screenshot messages</button>
         </div>
       </div>
       <input type="file" id="importInput" accept=".json" style="display:none" onchange="importConversation(event)">
@@ -1222,6 +1264,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     <div class="chat-placeholder">Start a conversation...</div>
   </div>
   <button class="scroll-fab" id="scrollFab" onclick="document.getElementById('messagesArea').scrollTo({top:document.getElementById('messagesArea').scrollHeight,behavior:'smooth'})" title="Scroll to bottom" aria-label="Scroll to bottom">&#8595;</button>
+  <div class="select-toolbar" id="selectToolbar">
+    <span class="select-count" id="selectCount">0 selected</span>
+    <button class="ss-btn" id="ssBtn" onclick="screenshotSelected()" disabled>Screenshot</button>
+    <button class="ss-cancel" onclick="exitSelectMode()">Cancel</button>
+  </div>
 
   <!-- Input -->
   <div class="input-area">
@@ -2221,7 +2268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let _touchStartX = 0, _touchStartY = 0, _touchLastX = 0, _touchMsgIdx = null, _swiping = false, _touchDecided = false;
   msgsArea.addEventListener('touchstart', e => {
     const wrapper = e.target.closest('.msg-wrapper.assistant');
-    if (!wrapper) { _touchMsgIdx = null; return; }
+    if (!wrapper || _selectMode) { _touchMsgIdx = null; return; }
     _touchMsgIdx = parseInt(wrapper.dataset.msgIdx);
     _touchStartX = _touchLastX = e.touches[0].clientX;
     _touchStartY = e.touches[0].clientY;
@@ -2260,6 +2307,55 @@ document.addEventListener('DOMContentLoaded', async () => {
     _swiping = false;
     _touchDecided = false;
   }, { passive: true });
+
+  // Select mode: click to toggle message selection (capture phase)
+  msgsArea.addEventListener('click', e => {
+    if (!_selectMode) return;
+    if (_justEnteredSelectMode) { _justEnteredSelectMode = false; e.preventDefault(); e.stopPropagation(); return; }
+    const wrapper = e.target.closest('.msg-wrapper');
+    if (!wrapper) return;
+    e.preventDefault();
+    e.stopPropagation();
+    toggleMsgSelect(parseInt(wrapper.dataset.msgIdx));
+  }, true);
+
+  // Long-press to enter select mode (desktop)
+  let _longPressTimer = null;
+  msgsArea.addEventListener('mousedown', e => {
+    if (_selectMode || e.target.closest('.msg-action-btn, .regen-btn')) return;
+    const wrapper = e.target.closest('.msg-wrapper');
+    if (!wrapper) return;
+    _longPressTimer = setTimeout(() => {
+      _longPressTimer = null;
+      enterSelectMode();
+      toggleMsgSelect(parseInt(wrapper.dataset.msgIdx));
+    }, 500);
+  });
+  document.addEventListener('mouseup', () => { if (_longPressTimer) { clearTimeout(_longPressTimer); _longPressTimer = null; } });
+
+  // Long-press to enter select mode (touch)
+  let _lpTouchTimer = null, _lpTouchX = 0, _lpTouchY = 0;
+  msgsArea.addEventListener('touchstart', e => {
+    if (_selectMode) return;
+    const wrapper = e.target.closest('.msg-wrapper');
+    if (!wrapper) return;
+    _lpTouchX = e.touches[0].clientX;
+    _lpTouchY = e.touches[0].clientY;
+    _lpTouchTimer = setTimeout(() => {
+      if (navigator.vibrate) navigator.vibrate(50);
+      enterSelectMode();
+      toggleMsgSelect(parseInt(wrapper.dataset.msgIdx));
+      _lpTouchTimer = null;
+    }, 500);
+  }, { passive: true });
+  msgsArea.addEventListener('touchmove', e => {
+    if (!_lpTouchTimer) return;
+    const dx = Math.abs(e.touches[0].clientX - _lpTouchX);
+    const dy = Math.abs(e.touches[0].clientY - _lpTouchY);
+    if (dx > 10 || dy > 10) { clearTimeout(_lpTouchTimer); _lpTouchTimer = null; }
+  }, { passive: true });
+  msgsArea.addEventListener('touchend', () => { if (_lpTouchTimer) { clearTimeout(_lpTouchTimer); _lpTouchTimer = null; } }, { passive: true });
+  msgsArea.addEventListener('contextmenu', e => { if (_longPressTimer || _lpTouchTimer) e.preventDefault(); });
 
   // Image lightbox for generated images
   msgsArea.addEventListener('click', e => {
@@ -3830,6 +3926,15 @@ function renderMessages() {
 
   area.scrollTop = area.scrollHeight;
   updateSendBtnState();
+
+  // Restore select mode state if active
+  if (_selectMode) {
+    area.classList.add('select-mode');
+    _selectedMsgs.forEach(idx => {
+      const w = area.querySelector('.msg-wrapper[data-msg-idx="' + idx + '"]');
+      if (w) w.classList.add('selected');
+    });
+  }
 }
 
 function renderEditMode(area, msg, idx) {
@@ -4712,6 +4817,92 @@ function exportMarkdown() {
   a.download = (conv.title || 'chat') + '.md';
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+// ============================================
+// Screenshot Select Mode
+// ============================================
+let _selectMode = false;
+const _selectedMsgs = new Set();
+let _justEnteredSelectMode = false;
+
+function enterSelectMode() {
+  if (messages.length === 0) { showToast('No messages to screenshot.', 'info'); return; }
+  _selectMode = true;
+  _justEnteredSelectMode = true;
+  _selectedMsgs.clear();
+  document.getElementById('messagesArea').classList.add('select-mode');
+  document.getElementById('selectToolbar').classList.add('visible');
+  updateSelectCount();
+}
+
+function exitSelectMode() {
+  _selectMode = false;
+  _selectedMsgs.clear();
+  const area = document.getElementById('messagesArea');
+  area.classList.remove('select-mode');
+  area.querySelectorAll('.msg-wrapper.selected').forEach(el => el.classList.remove('selected'));
+  document.getElementById('selectToolbar').classList.remove('visible');
+}
+
+function toggleMsgSelect(idx) {
+  if (idx < 0 || idx >= messages.length) return;
+  if (_selectedMsgs.has(idx)) _selectedMsgs.delete(idx);
+  else _selectedMsgs.add(idx);
+  const wrapper = document.querySelector('.msg-wrapper[data-msg-idx="' + idx + '"]');
+  if (wrapper) wrapper.classList.toggle('selected', _selectedMsgs.has(idx));
+  updateSelectCount();
+}
+
+function updateSelectCount() {
+  document.getElementById('selectCount').textContent = _selectedMsgs.size + ' selected';
+  document.getElementById('ssBtn').disabled = _selectedMsgs.size === 0;
+}
+
+async function screenshotSelected() {
+  if (_selectedMsgs.size === 0) return;
+  const btn = document.getElementById('ssBtn');
+  btn.disabled = true;
+  btn.textContent = 'Rendering...';
+  try {
+    if (!window.html2canvas) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Failed to load html2canvas'));
+        document.head.appendChild(s);
+      });
+    }
+    const indices = [..._selectedMsgs].sort((a, b) => a - b);
+    const area = document.getElementById('messagesArea');
+    const cs = getComputedStyle(document.documentElement);
+    const bgColor = cs.getPropertyValue('--bg').trim();
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + Math.min(area.offsetWidth, 800) + 'px;background:' + bgColor + ';padding:20px;display:flex;flex-direction:column;gap:12px;';
+    indices.forEach(idx => {
+      const wrapper = area.querySelector('.msg-wrapper[data-msg-idx="' + idx + '"]');
+      if (!wrapper) return;
+      const clone = wrapper.cloneNode(true);
+      clone.querySelectorAll('.msg-actions, .regen-btn, .swipe-nav, .branch-controls, .msg-timestamp').forEach(el => el.remove());
+      clone.classList.remove('selected');
+      container.appendChild(clone);
+    });
+    document.body.appendChild(container);
+    const canvas = await html2canvas(container, { backgroundColor: bgColor, scale: 2, useCORS: true, logging: false });
+    document.body.removeChild(container);
+    const link = document.createElement('a');
+    link.download = 'chat-screenshot.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    exitSelectMode();
+  } catch (err) {
+    console.error('Screenshot failed:', err);
+    showToast('Screenshot failed: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Screenshot';
+  }
 }
 
 // ============================================
