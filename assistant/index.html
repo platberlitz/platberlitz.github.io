@@ -388,7 +388,7 @@ body {
 /* Message styles */
 .msg-wrapper { display: flex; flex-direction: column; position: relative; }
 .msg-wrapper.user { align-self: flex-end; max-width: var(--msg-max-width); }
-.msg-wrapper.assistant { align-self: flex-start; max-width: var(--msg-max-width); }
+.msg-wrapper.assistant { align-self: flex-start; max-width: var(--msg-max-width); touch-action: pan-y; }
 .msg-wrapper.assistant.has-avatar { flex-direction: row; align-items: flex-start; }
 .msg-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin-right: 8px; margin-top: 2px; }
 
@@ -2217,18 +2217,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Mobile swipe gestures for assistant message alternatives
-  let _touchStartX = 0, _touchStartY = 0, _touchMsgIdx = null, _swiping = false;
+  let _touchStartX = 0, _touchStartY = 0, _touchLastX = 0, _touchMsgIdx = null, _swiping = false;
   msgsArea.addEventListener('touchstart', e => {
     const wrapper = e.target.closest('.msg-wrapper.assistant');
     if (!wrapper) { _touchMsgIdx = null; return; }
     _touchMsgIdx = parseInt(wrapper.dataset.msgIdx);
-    _touchStartX = e.touches[0].clientX;
+    _touchStartX = _touchLastX = e.touches[0].clientX;
     _touchStartY = e.touches[0].clientY;
     _swiping = false;
   }, { passive: true });
   msgsArea.addEventListener('touchmove', e => {
     if (_touchMsgIdx === null || isNaN(_touchMsgIdx)) return;
-    const dx = Math.abs(e.touches[0].clientX - _touchStartX);
+    _touchLastX = e.touches[0].clientX;
+    const dx = Math.abs(_touchLastX - _touchStartX);
     const dy = Math.abs(e.touches[0].clientY - _touchStartY);
     if (!_swiping && dx > 15 && dx > dy * 1.2) {
       _swiping = true;
@@ -2241,7 +2242,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       _swiping = false;
       return;
     }
-    const dx = e.changedTouches[0].clientX - _touchStartX;
+    const dx = _touchLastX - _touchStartX;
     if (Math.abs(dx) > 40) {
       const msg = messages[_touchMsgIdx];
       if (msg && msg.swipes && msg.swipes.length > 1) {
