@@ -2217,25 +2217,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Mobile swipe gestures for assistant message alternatives
-  let _touchStartX = 0, _touchStartY = 0, _touchMsgIdx = null;
+  let _touchStartX = 0, _touchStartY = 0, _touchMsgIdx = null, _swiping = false;
   msgsArea.addEventListener('touchstart', e => {
     const wrapper = e.target.closest('.msg-wrapper.assistant');
     if (!wrapper) { _touchMsgIdx = null; return; }
     _touchMsgIdx = parseInt(wrapper.dataset.msgIdx);
     _touchStartX = e.touches[0].clientX;
     _touchStartY = e.touches[0].clientY;
+    _swiping = false;
   }, { passive: true });
-  msgsArea.addEventListener('touchend', e => {
+  msgsArea.addEventListener('touchmove', e => {
     if (_touchMsgIdx === null || isNaN(_touchMsgIdx)) return;
+    const dx = Math.abs(e.touches[0].clientX - _touchStartX);
+    const dy = Math.abs(e.touches[0].clientY - _touchStartY);
+    if (!_swiping && dx > 15 && dx > dy * 1.2) {
+      _swiping = true;
+    }
+    if (_swiping) e.preventDefault();
+  }, { passive: false });
+  msgsArea.addEventListener('touchend', e => {
+    if (!_swiping || _touchMsgIdx === null || isNaN(_touchMsgIdx)) {
+      _touchMsgIdx = null;
+      _swiping = false;
+      return;
+    }
     const dx = e.changedTouches[0].clientX - _touchStartX;
-    const dy = e.changedTouches[0].clientY - _touchStartY;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    if (Math.abs(dx) > 40) {
       const msg = messages[_touchMsgIdx];
       if (msg && msg.swipes && msg.swipes.length > 1) {
         swipeMsg(_touchMsgIdx, dx < 0 ? 1 : -1);
       }
     }
     _touchMsgIdx = null;
+    _swiping = false;
   }, { passive: true });
 
   // Image lightbox for generated images
