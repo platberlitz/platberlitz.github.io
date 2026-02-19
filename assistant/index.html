@@ -106,6 +106,96 @@ body {
   font-size: 16px; padding: 4px; display: none;
 }
 .sidebar-search input:not(:placeholder-shown) + .search-clear-btn { display: block; }
+.global-search-btn {
+  width: 100%;
+  padding: 6px;
+  font-family: inherit;
+  font-size: 0.78em;
+  background: none;
+  border: 1px dashed var(--card-border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin: 4px 8px 0;
+  width: calc(100% - 16px);
+  transition: color 0.2s, border-color 0.2s;
+}
+.global-search-btn:hover { color: var(--text-primary); border-color: var(--accent); }
+.global-search-results {
+  max-height: 60vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.global-search-result {
+  padding: 10px;
+  background: var(--hover);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background 0.2s;
+}
+.global-search-result:hover { background: var(--overlay-10); }
+.global-search-result-title { font-weight: 600; color: var(--text-primary); margin-bottom: 4px; font-size: 0.9em; }
+.global-search-result-snippet { color: var(--text-secondary); font-size: 0.85em; }
+.global-search-result-snippet mark { background: var(--accent); color: var(--accent-text); border-radius: 2px; padding: 0 2px; }
+
+/* Conversation tags */
+.conv-tag {
+  display: inline-block;
+  font-size: 0.7em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+  font-weight: 600;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+.tag-filter-bar {
+  display: flex;
+  gap: 4px;
+  padding: 4px 8px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.tag-filter-btn {
+  padding: 3px 8px;
+  font-family: inherit;
+  font-size: 0.72em;
+  font-weight: 600;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.tag-filter-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+.tag-filter-btn.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.tag-picker {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 6px;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  position: absolute;
+  z-index: 200;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.tag-picker-item {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.tag-picker-item:hover { transform: scale(1.2); }
+.tag-picker-item.active { border-color: var(--text-primary); }
 
 .conv-list {
   flex: 1;
@@ -605,6 +695,34 @@ body {
   flex-shrink: 0;
 }
 .model-refresh-btn:hover { background: var(--overlay-10); }
+.model-refresh-btn.spinning { animation: spin 0.8s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Settings tabs */
+.settings-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--card-border);
+  overflow-x: auto;
+}
+.settings-tab {
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 0.8em;
+  font-weight: 600;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+.settings-tab:hover { color: var(--text-primary); }
+.settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.settings-tab-content { display: none; }
+.settings-tab-content.active { display: block; }
 
 /* Theme color pickers */
 .theme-colors {
@@ -1054,6 +1172,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     <input type="text" id="sidebarSearch" placeholder="Search conversations..." oninput="filterConversations()">
     <button class="search-clear-btn" onclick="document.getElementById('sidebarSearch').value='';filterConversations()" aria-label="Clear search">&times;</button>
   </div>
+  <button class="global-search-btn" onclick="openGlobalSearch()">&#128269; Search all messages</button>
+  <div class="tag-filter-bar" id="tagFilterBar"></div>
   <div class="conv-list" id="convList"></div>
   <div class="sidebar-footer">
     made by <a href="https://platberlitz.github.io/" target="_blank">purachina</a> and 100% claude
@@ -1133,7 +1253,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     <label>Model</label>
     <div class="model-selector-row">
       <select id="setupModelSelect" onchange="document.getElementById('setupModelManual').value=''"><option value="">-- Fetch models first --</option></select>
-      <button class="model-refresh-btn" onclick="refreshModels('setup')" title="Refresh model list">&#x1F504;</button>
+      <button class="model-refresh-btn" onclick="refreshModels('setup', this)" title="Refresh model list">&#x1F504;</button>
     </div>
     <input type="text" id="setupModelManual" placeholder="Or type model name manually" value="gpt-4o" oninput="document.getElementById('setupModelSelect').value=''">
     <div class="modal-actions">
@@ -1147,61 +1267,70 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   <div class="modal">
     <h2>Settings</h2>
 
-    <div class="modal-section">API Configuration</div>
-    <label>Base URL</label>
-    <input type="text" id="setProxy" placeholder="https://api.openai.com/v1">
-    <label>API Key</label>
-    <input type="password" id="setKey">
-    <label>Model</label>
-    <div class="model-selector-row">
-      <select id="setModelSelect" onchange="document.getElementById('setModelManual').value=''"><option value="">-- Fetch models first --</option></select>
-      <button class="model-refresh-btn" onclick="refreshModels('settings')" title="Refresh model list">&#x1F504;</button>
+    <div class="settings-tabs">
+      <button class="settings-tab active" onclick="switchSettingsTab('api', this)">API</button>
+      <button class="settings-tab" onclick="switchSettingsTab('prompts', this)">Prompts</button>
+      <button class="settings-tab" onclick="switchSettingsTab('appearance', this)">Appearance</button>
+      <button class="settings-tab" onclick="switchSettingsTab('tools', this)">Tools</button>
     </div>
-    <input type="text" id="setModelManual" placeholder="Or type model name manually" oninput="document.getElementById('setModelSelect').value=''">
-    <label>API Format</label>
-    <select id="setApiFormat">
-      <option value="auto">Auto-detect</option>
-      <option value="openai">OpenAI</option>
-      <option value="anthropic">Anthropic</option>
-    </select>
 
-    <div class="modal-section">Prompts</div>
-    <label>Preset</label>
-    <div class="model-selector-row">
-      <select id="setPresetSelect" onchange="applyPreset(this.value)">
-        <option value="">-- Custom --</option>
+    <div class="settings-tab-content active" id="settingsTab-api">
+      <label>Base URL</label>
+      <input type="text" id="setProxy" placeholder="https://api.openai.com/v1">
+      <label>API Key</label>
+      <input type="password" id="setKey">
+      <label>Model</label>
+      <div class="model-selector-row">
+        <select id="setModelSelect" onchange="document.getElementById('setModelManual').value=''"><option value="">-- Fetch models first --</option></select>
+        <button class="model-refresh-btn" onclick="refreshModels('settings', this)" title="Refresh model list">&#x1F504;</button>
+      </div>
+      <input type="text" id="setModelManual" placeholder="Or type model name manually" oninput="document.getElementById('setModelSelect').value=''">
+      <label>API Format</label>
+      <select id="setApiFormat">
+        <option value="auto">Auto-detect</option>
+        <option value="openai">OpenAI</option>
+        <option value="anthropic">Anthropic</option>
       </select>
-      <button class="model-refresh-btn" onclick="saveCurrentAsPreset()" title="Save as preset">&#128190;</button>
-      <button class="model-refresh-btn" onclick="deleteSelectedPreset()" title="Delete preset">&#128465;</button>
-      <button class="model-refresh-btn" onclick="document.getElementById('stPresetFile').click()" title="Import SillyTavern preset">&#128228;</button>
-      <input type="file" id="stPresetFile" accept=".json" style="display:none" onchange="importSTPreset(event)">
+      <div class="modal-section">Request Parameters</div>
+      <label class="toggle-row">
+        <input type="checkbox" id="setStreaming" checked> Streaming
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="setEnterSend" checked> Enter sends message
+        <span class="toggle-hint">Ctrl+Enter if off</span>
+      </label>
+      <label>Temperature</label>
+      <input type="number" id="setTemperature" step="0.1" min="0" max="2" placeholder="e.g. 0.7 (leave empty for default)">
+      <label>Extra Parameters (JSON)</label>
+      <textarea id="setExtraParams" placeholder='{"temperature": 0.7, "max_tokens": 4096}'></textarea>
+      <label>Exclude Parameters (comma-separated)</label>
+      <input type="text" id="setExcludeParams" placeholder="e.g. stream,model">
+      <label>Assistant Prefill</label>
+      <input type="text" id="setPrefill" placeholder="e.g. Sure! Here's">
     </div>
-    <label style="display:flex;align-items:center;justify-content:space-between">
-      Prompt Entries
-      <button class="model-refresh-btn" onclick="addPromptEntry()" title="Add prompt entry">+</button>
-    </label>
-    <div id="promptEntryList" class="prompt-entry-list"></div>
 
-    <div class="modal-section">Request Parameters</div>
-    <label class="toggle-row">
-      <input type="checkbox" id="setStreaming" checked> Streaming
-    </label>
-    <label class="toggle-row">
-      <input type="checkbox" id="setEnterSend" checked> Enter sends message
-      <span class="toggle-hint">Ctrl+Enter if off</span>
-    </label>
-    <label>Temperature</label>
-    <input type="number" id="setTemperature" step="0.1" min="0" max="2" placeholder="e.g. 0.7 (leave empty for default)">
-    <label>Extra Parameters (JSON)</label>
-    <textarea id="setExtraParams" placeholder='{"temperature": 0.7, "max_tokens": 4096}'></textarea>
-    <label>Exclude Parameters (comma-separated)</label>
-    <input type="text" id="setExcludeParams" placeholder="e.g. stream,model">
-    <label>Assistant Prefill</label>
-    <input type="text" id="setPrefill" placeholder="e.g. Sure! Here's">
+    <div class="settings-tab-content" id="settingsTab-prompts">
+      <label>Preset</label>
+      <div class="model-selector-row">
+        <select id="setPresetSelect" onchange="applyPreset(this.value)">
+          <option value="">-- Custom --</option>
+        </select>
+        <button class="model-refresh-btn" onclick="saveCurrentAsPreset()" title="Save as preset">&#128190;</button>
+        <button class="model-refresh-btn" onclick="deleteSelectedPreset()" title="Delete preset">&#128465;</button>
+        <button class="model-refresh-btn" onclick="document.getElementById('stPresetFile').click()" title="Import SillyTavern preset">&#128228;</button>
+        <input type="file" id="stPresetFile" accept=".json" style="display:none" onchange="importSTPreset(event)">
+      </div>
+      <label style="display:flex;align-items:center;justify-content:space-between">
+        Prompt Entries
+        <button class="model-refresh-btn" onclick="addPromptEntry()" title="Add prompt entry">+</button>
+      </label>
+      <div id="promptEntryList" class="prompt-entry-list"></div>
+    </div>
 
-    <div class="modal-section">Appearance</div>
+    <div class="settings-tab-content" id="settingsTab-appearance">
     <label>Theme</label>
     <select id="setTheme" onchange="onThemeSelectChange()">
+      <option value="system">System (Auto)</option>
       <optgroup label="Classic">
         <option value="dark">Dark</option>
         <option value="light">Light</option>
@@ -1264,8 +1393,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     <input type="text" id="setMsgFontSize" placeholder="0.95em (default)">
     <label>Message Width</label>
     <input type="text" id="setMsgMaxWidth" placeholder="75% (default)">
+    </div>
 
-    <div class="modal-section">Tools</div>
+    <div class="settings-tab-content" id="settingsTab-tools">
     <label class="toggle-row">
       <input type="checkbox" id="setWebSearch"> Web Search
       <span class="toggle-hint">Anthropic only</span>
@@ -1281,6 +1411,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     <input type="number" id="setInputCost" step="0.01" placeholder="e.g. 2.50">
     <label>Output Cost per 1M tokens</label>
     <input type="number" id="setOutputCost" step="0.01" placeholder="e.g. 10.00">
+    </div>
 
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
@@ -1302,6 +1433,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+K</kbd><span>Search conversations</span>
       <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+F</kbd><span>Search in current chat</span>
       <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+Shift+E</kbd><span>Export all conversations</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+Shift+R</kbd><span>Regenerate last response</span>
       <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Escape</kbd><span>Close modal / Stop streaming</span>
       <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+Shift+?</kbd><span>Show this help</span>
       <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">@model</kbd><span>Override model for one message</span>
@@ -1328,6 +1460,18 @@ let voiceRec = null;
 let modelOverride = null;
 let mentionActive = false;
 let mentionIdx = 0;
+let activeTagFilter = null;
+
+const TAG_COLORS = [
+  { name: 'Red', color: '#ef4444' },
+  { name: 'Orange', color: '#f97316' },
+  { name: 'Yellow', color: '#eab308' },
+  { name: 'Green', color: '#22c55e' },
+  { name: 'Blue', color: '#3b82f6' },
+  { name: 'Purple', color: '#a855f7' },
+  { name: 'Pink', color: '#ec4899' },
+  { name: 'Teal', color: '#14b8a6' }
+];
 
 function formatRelativeTime(ts) {
   if (!ts) return '';
@@ -1426,7 +1570,10 @@ function isLightColor(color) {
 // ============================================
 function applyTheme(name) {
   let t;
-  if (name === 'custom') {
+  if (name === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    t = prefersDark ? themePresets.dark : themePresets.light;
+  } else if (name === 'custom') {
     try { t = JSON.parse(localStorage.getItem('assistantCustomTheme') || 'null'); } catch(e) { console.warn('Custom theme parse error:', e); }
     if (!t) t = themePresets.dark;
   } else {
@@ -1462,6 +1609,11 @@ function applyTheme(name) {
     btn.title = 'Theme: ' + name;
   }
   applyMsgOverrides();
+  // Sync mermaid theme with app theme
+  if (typeof mermaid !== 'undefined') {
+    const mermaidTheme = isLightColor(t.bg) ? 'default' : 'dark';
+    mermaid.initialize({ startOnLoad: false, theme: mermaidTheme });
+  }
 }
 
 function applyMsgOverrides() {
@@ -1572,7 +1724,7 @@ function getCustomThemeFromPickers() {
   if (br) t.borderRadius = br;
   if (mw) t.msgMaxWidth = mw;
   if (fs) t.msgFontSize = fs;
-  if (cb && cb !== '#000000') t.codeBg = cb;
+  if (cb) t.codeBg = cb;
   return t;
 }
 
@@ -1626,14 +1778,14 @@ function populateModelSelect(target, models) {
   });
 }
 
-async function refreshModels(target) {
+async function refreshModels(target, btnEl) {
   const proxyInput = document.getElementById(target === 'setup' ? 'setupProxy' : 'setProxy');
   const keyInput = document.getElementById(target === 'setup' ? 'setupKey' : 'setKey');
   let baseUrl = proxyInput.value.trim().replace(/\/(chat\/completions|messages)\/?$/, '');
   const apiKey = keyInput.value.trim();
   if (!baseUrl || !apiKey) { showToast('Enter Base URL and API Key first.', 'error'); return; }
-  const btn = event.target;
-  btn.textContent = '...';
+  const btn = btnEl || document.activeElement;
+  btn.classList.add('spinning');
   btn.disabled = true;
   try {
     const models = await fetchAvailableModels(baseUrl, apiKey);
@@ -1642,7 +1794,7 @@ async function refreshModels(target) {
   } catch (e) {
     showToast('Failed to fetch models: ' + e.message, 'error');
   } finally {
-    btn.textContent = '\u{1F504}';
+    btn.classList.remove('spinning');
     btn.disabled = false;
   }
 }
@@ -1795,7 +1947,7 @@ function openManageMemories() {
       memories.forEach(m => {
         html += '<div style="display:flex;align-items:center;gap:8px;font-size:0.85em;background:var(--hover);padding:8px 10px;border-radius:8px">' +
           '<span style="flex:1;color:var(--text-secondary)">' + m.text.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>' +
-          '<button onclick="deleteMemory(\'' + m.id + '\')" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;flex-shrink:0;padding:2px 4px" title="Delete">✕</button>' +
+          '<button data-memory-id="' + m.id.replace(/"/g, '&quot;') + '" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;flex-shrink:0;padding:2px 4px" title="Delete">✕</button>' +
           '</div>';
       });
       html += '</div>';
@@ -1803,6 +1955,9 @@ function openManageMemories() {
     }
     html += '<button class="btn btn-primary" style="width:100%;padding:8px" onclick="this.closest(\'.char-info-popup\').previousElementSibling.click()">Close</button>';
     popup.innerHTML = html;
+    popup.querySelectorAll('[data-memory-id]').forEach(btn => {
+      btn.addEventListener('click', () => deleteMemory(btn.dataset.memoryId));
+    });
   }
 
   overlay.onclick = () => { overlay.remove(); popup.remove(); };
@@ -1913,10 +2068,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('beforeunload', () => {
     clearTimeout(_saveDebounceTimer);
     saveConversations();
-    try {
-      localStorage.setItem('assistantConversations', JSON.stringify(conversations));
-      localStorage.setItem('assistantActiveConvId', activeConvId || '');
-    } catch(e) {}
+    // Only write to localStorage as fallback if IndexedDB is not available
+    if (!db) {
+      try {
+        localStorage.setItem('assistantConversations', JSON.stringify(conversations));
+        localStorage.setItem('assistantActiveConvId', activeConvId || '');
+      } catch(e) {}
+    }
   });
 
   // Show setup modal if no API key
@@ -2000,6 +2158,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       e.preventDefault();
       openChatSearch();
     }
+    // Ctrl+Shift+R - regenerate last response
+    if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+      e.preventDefault();
+      regenerate();
+    }
     // Ctrl+Shift+? - shortcut help
     if (e.ctrlKey && e.shiftKey && e.key === '?') {
       e.preventDefault();
@@ -2042,10 +2205,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Initialize mermaid
+  // Initialize mermaid with theme matching current app theme
   if (typeof mermaid !== 'undefined') {
-    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    const mermaidTheme = isLightColor(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()) ? 'default' : 'dark';
+    mermaid.initialize({ startOnLoad: false, theme: mermaidTheme });
   }
+
+  // Listen for OS color scheme changes when using system theme
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if ((localStorage.getItem('assistantTheme') || 'dark') === 'system') applyTheme('system');
+  });
+
+  // Mobile swipe gestures for assistant message alternatives
+  let _touchStartX = 0, _touchStartY = 0, _touchMsgIdx = null;
+  msgsArea.addEventListener('touchstart', e => {
+    const wrapper = e.target.closest('.msg-wrapper.assistant');
+    if (!wrapper) { _touchMsgIdx = null; return; }
+    _touchMsgIdx = parseInt(wrapper.dataset.msgIdx);
+    _touchStartX = e.touches[0].clientX;
+    _touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  msgsArea.addEventListener('touchend', e => {
+    if (_touchMsgIdx === null || isNaN(_touchMsgIdx)) return;
+    const dx = e.changedTouches[0].clientX - _touchStartX;
+    const dy = e.changedTouches[0].clientY - _touchStartY;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      const msg = messages[_touchMsgIdx];
+      if (msg && msg.swipes && msg.swipes.length > 1) {
+        swipeMsg(_touchMsgIdx, dx < 0 ? 1 : -1);
+      }
+    }
+    _touchMsgIdx = null;
+  }, { passive: true });
 
   // Image lightbox for generated images
   msgsArea.addEventListener('click', e => {
@@ -2191,9 +2382,10 @@ function renderMarkdown(text) {
   s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
   s = s.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-  s = s.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
-  s = s.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
-  s = s.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  s = s.replace(/^[\-\*] (.+)$/gm, '<li class="ul-li">$1</li>');
+  s = s.replace(/((?:<li class="ul-li">.*<\/li>\n?)+)/g, function(m) { return '<ul>' + m.replace(/ class="ul-li"/g, '') + '</ul>'; });
+  s = s.replace(/^\d+\. (.+)$/gm, '<li class="ol-li">$1</li>');
+  s = s.replace(/((?:<li class="ol-li">.*<\/li>\n?)+)/g, function(m) { return '<ol>' + m.replace(/ class="ol-li"/g, '') + '</ol>'; });
   s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="chat-inline-img chat-gen-img" loading="lazy">');
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
   s = s.replace(/^---$/gm, '<hr>');
@@ -2562,6 +2754,7 @@ function switchConversation(id) {
   if (!conv) return;
   activeConvId = id;
   messages = conv.messages;
+  userScrolledAway = false;
   saveConversations();
   renderSidebar();
   renderMessages();
@@ -2572,15 +2765,37 @@ function switchConversation(id) {
 
 function deleteConversation(id, e) {
   e.stopPropagation();
-  if (!confirm('Delete this conversation?')) return;
-  conversations = conversations.filter(c => c.id !== id);
+  const conv = conversations.find(c => c.id === id);
+  if (!conv) return;
+  const idx = conversations.indexOf(conv);
+  conversations.splice(idx, 1);
   if (conversations.length === 0) {
     createConversation();
-    return;
+  } else if (activeConvId === id) {
+    switchConversation(conversations[0].id);
   }
-  if (activeConvId === id) switchConversation(conversations[0].id);
   saveConversations();
   renderSidebar();
+  // Show undo toast
+  const toast = document.createElement('div');
+  toast.className = 'toast info';
+  toast.innerHTML = 'Conversation deleted. <button style="background:var(--accent);color:var(--accent-text);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit;font-size:0.85em;margin-left:8px" class="undo-delete-btn">Undo</button>';
+  const container = document.getElementById('toastContainer');
+  container.appendChild(toast);
+  const undoBtn = toast.querySelector('.undo-delete-btn');
+  const timer = setTimeout(() => { toast.remove(); }, 5000);
+  undoBtn.onclick = () => {
+    clearTimeout(timer);
+    conversations.splice(idx, 0, conv);
+    activeConvId = conv.id;
+    messages = conv.messages;
+    saveConversations();
+    renderSidebar();
+    renderMessages();
+    updateTokenInfo();
+    toast.remove();
+    showToast('Conversation restored.', 'success');
+  };
 }
 
 function clearAllConversations() {
@@ -2716,9 +2931,75 @@ function renderSidebar() {
       div.appendChild(avatar);
     }
     div.appendChild(title);
+    if (c.tag) {
+      const tagEl = document.createElement('span');
+      tagEl.className = 'conv-tag';
+      const tagColor = TAG_COLORS.find(t => t.name === c.tag);
+      tagEl.style.background = tagColor ? tagColor.color : 'var(--accent)';
+      tagEl.style.color = '#fff';
+      tagEl.textContent = c.tag;
+      div.appendChild(tagEl);
+    }
+    const tagBtn = document.createElement('button');
+    tagBtn.className = 'conv-delete';
+    tagBtn.innerHTML = '&#127991;';
+    tagBtn.title = 'Tag';
+    tagBtn.style.fontSize = '12px';
+    tagBtn.setAttribute('aria-label', 'Tag conversation');
+    tagBtn.onclick = (e) => { e.stopPropagation(); showTagPicker(c, tagBtn); };
+    div.appendChild(tagBtn);
     div.appendChild(del);
     list.appendChild(div);
   });
+  renderTagFilterBar();
+  filterConversations();
+}
+
+// ============================================
+// Conversation Tags
+// ============================================
+function showTagPicker(conv, anchorEl) {
+  document.querySelectorAll('.tag-picker').forEach(p => p.remove());
+  const picker = document.createElement('div');
+  picker.className = 'tag-picker';
+  const rect = anchorEl.getBoundingClientRect();
+  picker.style.top = rect.bottom + 4 + 'px';
+  picker.style.left = rect.left + 'px';
+  // "None" option
+  const none = document.createElement('button');
+  none.className = 'tag-picker-item' + (!conv.tag ? ' active' : '');
+  none.style.background = 'var(--hover)';
+  none.title = 'None';
+  none.onclick = () => { delete conv.tag; saveConversations(); renderSidebar(); picker.remove(); };
+  picker.appendChild(none);
+  TAG_COLORS.forEach(tc => {
+    const btn = document.createElement('button');
+    btn.className = 'tag-picker-item' + (conv.tag === tc.name ? ' active' : '');
+    btn.style.background = tc.color;
+    btn.title = tc.name;
+    btn.onclick = () => { conv.tag = tc.name; saveConversations(); renderSidebar(); picker.remove(); };
+    picker.appendChild(btn);
+  });
+  document.body.appendChild(picker);
+  const closePicker = (e) => { if (!picker.contains(e.target) && e.target !== anchorEl) { picker.remove(); document.removeEventListener('click', closePicker); } };
+  setTimeout(() => document.addEventListener('click', closePicker), 0);
+}
+
+function renderTagFilterBar() {
+  const bar = document.getElementById('tagFilterBar');
+  const usedTags = [...new Set(conversations.filter(c => c.tag).map(c => c.tag))];
+  if (usedTags.length === 0) { bar.innerHTML = ''; return; }
+  let html = '<button class="tag-filter-btn' + (!activeTagFilter ? ' active' : '') + '" onclick="setTagFilter(null)">All</button>';
+  usedTags.forEach(tag => {
+    const tc = TAG_COLORS.find(t => t.name === tag);
+    html += '<button class="tag-filter-btn' + (activeTagFilter === tag ? ' active' : '') + '" style="' + (activeTagFilter === tag ? 'background:' + (tc ? tc.color : 'var(--accent)') + ';border-color:' + (tc ? tc.color : 'var(--accent)') : '') + '" onclick="setTagFilter(\'' + tag + '\')">' + tag + '</button>';
+  });
+  bar.innerHTML = html;
+}
+
+function setTagFilter(tag) {
+  activeTagFilter = tag;
+  renderTagFilterBar();
   filterConversations();
 }
 
@@ -2731,7 +3012,11 @@ function filterConversations() {
   const items = document.querySelectorAll('.conv-item');
   items.forEach(item => {
     const title = item.querySelector('.conv-title').textContent.toLowerCase();
-    item.style.display = (!query || title.includes(query)) ? '' : 'none';
+    const convId = item.dataset.convId;
+    const conv = conversations.find(c => c.id === convId);
+    const matchesSearch = !query || title.includes(query);
+    const matchesTag = !activeTagFilter || (conv && conv.tag === activeTagFilter);
+    item.style.display = (matchesSearch && matchesTag) ? '' : 'none';
   });
   // Hide empty group headers
   document.querySelectorAll('.conv-group-header').forEach(header => {
@@ -2793,6 +3078,13 @@ function saveSetup() {
     localStorage.setItem('llmModelList', JSON.stringify(models));
     loadCachedModels('settings');
   }).catch(() => {});
+}
+
+function switchSettingsTab(tabName, btn) {
+  document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.settings-tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('settingsTab-' + tabName).classList.add('active');
 }
 
 function openSettings() {
@@ -3320,6 +3612,7 @@ function renderMessages() {
 
     const wrapper = document.createElement('div');
     wrapper.className = 'msg-wrapper ' + msg.role;
+    wrapper.dataset.msgIdx = idx;
 
     const bubble = document.createElement('div');
     bubble.className = 'msg-bubble ' + msg.role;
@@ -3436,6 +3729,7 @@ function renderMessages() {
       const tsEl = document.createElement('div');
       tsEl.className = 'msg-timestamp';
       tsEl.textContent = formatRelativeTime(msg.timestamp);
+      tsEl.title = new Date(msg.timestamp).toLocaleString();
       wrapper.appendChild(tsEl);
     }
 
@@ -4278,7 +4572,7 @@ function clearChat() {
 function exportConversation() {
   const conv = getActiveConv();
   if (!conv) return;
-  const data = { title: conv.title, messages: conv.messages, model: localStorage.getItem('llmModel') || '', systemPrompt: localStorage.getItem('llmSystemPrompt') || '', exportedAt: new Date().toISOString() };
+  const data = { title: conv.title, messages: conv.messages, model: localStorage.getItem('llmModel') || '', promptEntries: loadPromptEntries(), exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -4295,7 +4589,6 @@ function exportAllConversations() {
     settings: {
       model: localStorage.getItem('llmModel') || '',
       promptEntries: loadPromptEntries(),
-      systemPrompt: localStorage.getItem('llmSystemPrompt') || '',
       persona: localStorage.getItem('llmPersona') || '',
       apiFormat: localStorage.getItem('llmApiFormat') || 'auto',
       theme: localStorage.getItem('assistantTheme') || 'dark',
@@ -4318,6 +4611,34 @@ function importConversation(event) {
   reader.onload = (e) => {
     try {
       const data = JSON.parse(e.target.result);
+      // Handle bulk export format { conversations: [...] }
+      if (data.conversations && Array.isArray(data.conversations)) {
+        let count = 0;
+        data.conversations.forEach(conv => {
+          conv.id = conv.id || genId();
+          conv.createdAt = conv.createdAt || Date.now();
+          conv.updatedAt = conv.updatedAt || Date.now();
+          conv.messages = conv.messages || [];
+          conv.messages.forEach(m => {
+            if (m.role === 'assistant' && !m.swipes) { m.swipes = [m.content]; m.swipeIndex = 0; }
+          });
+          conversations.unshift(conv);
+          count++;
+        });
+        if (count > 0) {
+          activeConvId = conversations[0].id;
+          messages = getActiveConv().messages;
+          saveConversations();
+          renderSidebar();
+          renderMessages();
+          updateTokenInfo();
+          showToast('Imported ' + count + ' conversations.', 'success');
+        } else {
+          showToast('No conversations found in file.', 'error');
+        }
+        return;
+      }
+      // Handle single conversation format { messages: [...] }
       if (!data.messages || !Array.isArray(data.messages)) throw new Error('Invalid format');
       const conv = { id: genId(), title: data.title || 'Imported Chat', messages: data.messages, createdAt: Date.now(), updatedAt: Date.now() };
       conv.messages.forEach(m => {
@@ -4357,6 +4678,8 @@ function exportMarkdown() {
         md += text + '\n\n';
       }
     } else if (m.role === 'assistant') {
+      const thinking = m.swipeThinking && m.swipeThinking[m.swipeIndex || 0];
+      if (thinking) md += '<details>\n<summary>Thinking</summary>\n\n' + thinking + '\n\n</details>\n\n';
       md += '## Assistant\n\n' + (m.content || '') + '\n\n';
     }
   });
@@ -4374,6 +4697,71 @@ function exportMarkdown() {
 let chatSearchMatches = [];
 let chatSearchIdx = -1;
 let chatSearchDebounce = null;
+
+// ============================================
+// Global Message Search
+// ============================================
+function openGlobalSearch() {
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+  popup.style.width = '500px';
+  popup.innerHTML = '<h3>Search All Messages</h3>' +
+    '<input type="text" id="globalSearchInput" placeholder="Type to search across all conversations..." style="width:100%;padding:10px;font-family:inherit;font-size:0.9em;background:var(--hover);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);margin-bottom:12px;outline:none">' +
+    '<div class="global-search-results" id="globalSearchResults"><div style="color:var(--text-secondary);font-size:0.85em;text-align:center;padding:20px">Start typing to search</div></div>';
+  overlay.onclick = () => { overlay.remove(); popup.remove(); };
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+  const input = document.getElementById('globalSearchInput');
+  input.focus();
+  let debounce;
+  input.addEventListener('input', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => performGlobalSearch(input.value.trim()), 200);
+  });
+}
+
+function performGlobalSearch(query) {
+  const container = document.getElementById('globalSearchResults');
+  if (!query || query.length < 2) {
+    container.innerHTML = '<div style="color:var(--text-secondary);font-size:0.85em;text-align:center;padding:20px">Type at least 2 characters</div>';
+    return;
+  }
+  const results = [];
+  const lq = query.toLowerCase();
+  conversations.forEach(conv => {
+    conv.messages.forEach((msg, msgIdx) => {
+      const text = typeof msg.content === 'string' ? msg.content : (Array.isArray(msg.content) ? msg.content.filter(p => p.type === 'text').map(p => p.text).join(' ') : '');
+      const idx = text.toLowerCase().indexOf(lq);
+      if (idx !== -1) {
+        const start = Math.max(0, idx - 40);
+        const end = Math.min(text.length, idx + query.length + 40);
+        const snippet = (start > 0 ? '...' : '') +
+          text.slice(start, idx).replace(/</g, '&lt;') +
+          '<mark>' + text.slice(idx, idx + query.length).replace(/</g, '&lt;') + '</mark>' +
+          text.slice(idx + query.length, end).replace(/</g, '&lt;') +
+          (end < text.length ? '...' : '');
+        results.push({ convId: conv.id, convTitle: conv.title, role: msg.role, snippet });
+      }
+    });
+  });
+  if (results.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-secondary);font-size:0.85em;text-align:center;padding:20px">No results found</div>';
+    return;
+  }
+  container.innerHTML = results.slice(0, 50).map(r =>
+    '<div class="global-search-result" data-conv-id="' + r.convId + '">' +
+    '<div class="global-search-result-title">' + r.convTitle.replace(/</g, '&lt;') + ' <span style="font-weight:400;color:var(--text-secondary)">(' + r.role + ')</span></div>' +
+    '<div class="global-search-result-snippet">' + r.snippet + '</div></div>'
+  ).join('') + (results.length > 50 ? '<div style="color:var(--text-secondary);font-size:0.8em;text-align:center;padding:8px">Showing 50 of ' + results.length + ' results</div>' : '');
+  container.querySelectorAll('.global-search-result').forEach(el => {
+    el.addEventListener('click', () => {
+      switchConversation(el.dataset.convId);
+      document.querySelector('.char-info-overlay')?.click();
+    });
+  });
+}
 
 function openChatSearch() {
   const bar = document.getElementById('chatSearchBar');
@@ -4772,7 +5160,9 @@ async function importCharacterCard(event) {
 
 function getConversationSystemPrompt(conv) {
   if (conv && conv.characterSystemPrompt) return conv.characterSystemPrompt;
-  return localStorage.getItem('llmSystemPrompt') || 'You are a helpful assistant.';
+  const entries = loadPromptEntries();
+  const sys = entries.find(e => e.enabled && e.content);
+  return sys ? sys.content : 'You are a helpful assistant.';
 }
 
 function updateCharacterUI() {
