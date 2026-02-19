@@ -2250,7 +2250,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dx = _touchLastX - _touchStartX;
     if (Math.abs(dx) > 30) {
       const msg = messages[_touchMsgIdx];
-      if (msg && msg.swipes && msg.swipes.length > 1) {
+      if (msg && dx < 0 && _touchMsgIdx === messages.length - 1 && (!msg.swipes || msg.swipeIndex >= msg.swipes.length - 1)) {
+        regenerate();
+      } else if (msg && msg.swipes && msg.swipes.length > 1) {
         swipeMsg(_touchMsgIdx, dx < 0 ? 1 : -1);
       }
     }
