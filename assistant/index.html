@@ -2219,8 +2219,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Mobile swipe gestures for assistant message alternatives
   let _touchStartX = 0, _touchStartY = 0, _touchLastX = 0, _touchMsgIdx = null, _swiping = false, _touchDecided = false;
+  const _dbg = document.createElement('div');
+  _dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.8);color:#0f0;font:12px monospace;padding:6px;z-index:99999;pointer-events:none;white-space:pre-wrap';
+  document.body.appendChild(_dbg);
+  function _dbgLog(s) { _dbg.textContent = s + '\n' + (_dbg.textContent || '').split('\n').slice(0, 8).join('\n'); }
   msgsArea.addEventListener('touchstart', e => {
     const wrapper = e.target.closest('.msg-wrapper.assistant');
+    _dbgLog('tstart: wrapper=' + !!wrapper + ' tag=' + e.target.tagName + ' cls=' + (e.target.className || '').substring(0, 40));
     if (!wrapper) { _touchMsgIdx = null; return; }
     _touchMsgIdx = parseInt(wrapper.dataset.msgIdx);
     _touchStartX = _touchLastX = e.touches[0].clientX;
@@ -2237,25 +2242,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (dx > 10 || dy > 10) {
       _touchDecided = true;
       _swiping = dx > dy;
+      _dbgLog('decided: swiping=' + _swiping + ' dx=' + dx.toFixed(0) + ' dy=' + dy.toFixed(0));
     }
     if (_swiping) e.preventDefault();
   }, { passive: false });
   msgsArea.addEventListener('touchend', e => {
+    const dx = _touchLastX - _touchStartX;
+    _dbgLog('tend: swiping=' + _swiping + ' idx=' + _touchMsgIdx + ' dx=' + dx.toFixed(0));
     if (!_swiping || _touchMsgIdx === null || isNaN(_touchMsgIdx)) {
       _touchMsgIdx = null;
       _swiping = false;
       _touchDecided = false;
       return;
     }
-    const dx = _touchLastX - _touchStartX;
     if (Math.abs(dx) > 30) {
       const msg = messages[_touchMsgIdx];
+      _dbgLog('swipe! msg=' + !!msg + ' swipes=' + (msg && msg.swipes ? msg.swipes.length : 0));
       if (msg && msg.swipes && msg.swipes.length > 1) {
         swipeMsg(_touchMsgIdx, dx < 0 ? 1 : -1);
       }
     }
     _touchMsgIdx = null;
     _swiping = false;
+    _touchDecided = false;
+  }, { passive: true });
     _touchDecided = false;
   }, { passive: true });
 
