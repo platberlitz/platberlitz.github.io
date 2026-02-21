@@ -1446,8 +1446,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     <div class="settings-tab-content" id="settingsTab-tools">
     <label class="toggle-row">
       <input type="checkbox" id="setWebSearch"> Web Search
-      <span class="toggle-hint">Anthropic only</span>
+      <span class="toggle-hint">Anthropic native · OpenAI via search API</span>
     </label>
+    <label>Search API URL <span class="toggle-hint">for OpenAI-compatible models (e.g. SearXNG)</span></label>
+    <input type="text" id="setSearchApiUrl" placeholder="https://searx.example.com/search">
+    <label>Search API Key <span class="toggle-hint">optional</span></label>
+    <input type="password" id="setSearchApiKey" placeholder="Bearer token (if required)">
     <label class="toggle-row">
       <input type="checkbox" id="setMemory"> Memory
       <span class="toggle-hint">Remember info across chats</span>
@@ -3225,6 +3229,8 @@ function openSettings() {
   document.getElementById('setMsgFontSize').value = localStorage.getItem('assistantMsgFontSize') || '';
   document.getElementById('setMsgMaxWidth').value = localStorage.getItem('assistantMsgMaxWidth') || '';
   document.getElementById('setWebSearch').checked = localStorage.getItem('llmWebSearch') === 'true';
+  document.getElementById('setSearchApiUrl').value = localStorage.getItem('llmSearchApiUrl') || '';
+  document.getElementById('setSearchApiKey').value = localStorage.getItem('llmSearchApiKey') || '';
   document.getElementById('setMemory').checked = localStorage.getItem('llmMemoryEnabled') === 'true';
 
   // Presets
@@ -3281,7 +3287,18 @@ function saveSettings() {
   localStorage.setItem('llmInputCost', document.getElementById('setInputCost').value.trim());
   localStorage.setItem('llmOutputCost', document.getElementById('setOutputCost').value.trim());
   localStorage.setItem('llmWebSearch', document.getElementById('setWebSearch').checked ? 'true' : 'false');
+  localStorage.setItem('llmSearchApiUrl', document.getElementById('setSearchApiUrl').value.trim());
+  localStorage.setItem('llmSearchApiKey', document.getElementById('setSearchApiKey').value.trim());
   localStorage.setItem('llmMemoryEnabled', document.getElementById('setMemory').checked ? 'true' : 'false');
+
+  // Warn if web search enabled for non-Anthropic without search URL
+  if (document.getElementById('setWebSearch').checked) {
+    const fmt = document.getElementById('setApiFormat').value;
+    const searchUrl = document.getElementById('setSearchApiUrl').value.trim();
+    if (fmt !== 'anthropic' && fmt !== 'auto' && !searchUrl) {
+      showToast('Web search enabled but no Search API URL set — search won\'t work for OpenAI-compatible models.', 'error');
+    }
+  }
 
   // Theme
   const themeName = document.getElementById('setTheme').value;
@@ -4160,6 +4177,59 @@ function renderToolBlocksHTML(toolBlocks) {
 }
 
 // ============================================
+// OpenAI Web Search Function Calling
+// ============================================
+const OPENAI_WEB_SEARCH_TOOL = {
+  type: 'function',
+  function: {
+    name: 'web_search',
+    description: 'Search the web for current information. Use this when the user asks about recent events, real-time data, or anything that may require up-to-date information.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'The search query' }
+      },
+      required: ['query']
+    }
+  }
+};
+
+async function executeWebSearch(query, signal) {
+  const searchUrl = localStorage.getItem('llmSearchApiUrl') || '';
+  const searchKey = localStorage.getItem('llmSearchApiKey') || '';
+  if (!searchUrl) {
+    return { results: [], error: 'No search API URL configured. Set one in Settings > Tools.' };
+  }
+  try {
+    const sep = searchUrl.includes('?') ? '&' : '?';
+    const fetchUrl = searchUrl + sep + 'q=' + encodeURIComponent(query) + '&format=json';
+    const fetchHeaders = {};
+    if (searchKey) fetchHeaders['Authorization'] = 'Bearer ' + searchKey;
+    const resp = await fetch(fetchUrl, { headers: fetchHeaders, signal });
+    if (!resp.ok) throw new Error('Search API returned ' + resp.status);
+    const data = await resp.json();
+    const raw = data.results || data.items || data.data || [];
+    const results = raw.slice(0, 10).map(r => ({
+      title: r.title || '',
+      url: r.url || r.link || '',
+      snippet: r.content || r.snippet || r.description || ''
+    }));
+    return { results, error: null };
+  } catch (e) {
+    if (e.name === 'AbortError') throw e;
+    return { results: [], error: 'Search failed: ' + e.message };
+  }
+}
+
+function formatSearchResultsForModel(results, error) {
+  if (error) return 'Web search error: ' + error;
+  if (!results.length) return 'No search results found.';
+  return results.map((r, i) =>
+    (i + 1) + '. ' + r.title + '\n   URL: ' + r.url + (r.snippet ? '\n   ' + r.snippet : '')
+  ).join('\n\n');
+}
+
+// ============================================
 // Streaming
 // ============================================
 async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, overrideModel, prefixText) {
@@ -4187,6 +4257,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
   let toolBlocks = [];
   let currentBlockType = null;
   let inputJsonBuf = '';
+  let toolCallBuffers = {};
 
   try {
     let url, headers, body;
@@ -4246,6 +4317,10 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         };
       });
       body = { model, messages: processedMessages, stream: useStream, ...extra };
+      // Inject web search tool for OpenAI-compatible models
+      if (localStorage.getItem('llmWebSearch') === 'true' && localStorage.getItem('llmSearchApiUrl')) {
+        body.tools = (body.tools || []).concat([OPENAI_WEB_SEARCH_TOOL]);
+      }
     }
     if (!('temperature' in body)) {
       const temp = parseFloat(localStorage.getItem('llmTemperature'));
@@ -4287,13 +4362,70 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         }
       } else {
         const extracted = extractImages(data.choices?.[0]?.message || data);
-        fullText = extracted.text || 'No response.';
+        fullText = extracted.text || '';
         if (extracted.images.length) {
           assistantMsg.swipeImages = assistantMsg.swipeImages || [];
           assistantMsg.swipeImages[swipeIdx] = extracted.images;
           assistantMsg.images = extracted.images;
         }
         thinkingText = data.choices?.[0]?.message?.reasoning_content || '';
+        // Handle OpenAI tool calls (non-streaming)
+        const msgToolCalls = (data.choices?.[0]?.message?.tool_calls || []).filter(tc => tc.function?.name === 'web_search');
+        if (msgToolCalls.length > 0) {
+          const assistantToolMsg = {
+            role: 'assistant',
+            content: fullText || null,
+            tool_calls: msgToolCalls.map(tc => ({
+              id: tc.id,
+              type: 'function',
+              function: { name: tc.function.name, arguments: tc.function.arguments }
+            }))
+          };
+          const toolResultMsgs = [];
+          for (const tc of msgToolCalls) {
+            let query = '';
+            try { query = JSON.parse(tc.function.arguments).query || ''; } catch(e) { query = tc.function.arguments; }
+            toolBlocks.push({ query, results: [], searching: true });
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+            const { results, error } = await executeWebSearch(query, abortController.signal);
+            const tb = toolBlocks[toolBlocks.length - 1];
+            tb.results = results.map(r => ({ title: r.title, url: r.url }));
+            tb.searching = false;
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+            toolResultMsgs.push({
+              role: 'tool',
+              tool_call_id: tc.id,
+              content: formatSearchResultsForModel(results, error)
+            });
+          }
+          // Follow-up non-streaming request
+          const followUpMessages = [...body.messages, assistantToolMsg, ...toolResultMsgs];
+          const followUpBody = { ...body, messages: followUpMessages, stream: false };
+          delete followUpBody.tools;
+          exclude.forEach(k => delete followUpBody[k]);
+          const followUpResp = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(followUpBody),
+            signal: abortController.signal
+          });
+          if (!followUpResp.ok) {
+            let errText = '';
+            try { errText = await followUpResp.text(); } catch(e) {}
+            throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+          }
+          const followUpData = await followUpResp.json();
+          const followExtracted = extractImages(followUpData.choices?.[0]?.message || followUpData);
+          fullText = followExtracted.text || 'No response.';
+          if (followExtracted.images.length) {
+            assistantMsg.swipeImages = assistantMsg.swipeImages || [];
+            assistantMsg.swipeImages[swipeIdx] = followExtracted.images;
+            assistantMsg.images = followExtracted.images;
+          }
+          const followThinking = followUpData.choices?.[0]?.message?.reasoning_content || '';
+          if (followThinking) thinkingText += followThinking;
+        }
+        if (!fullText) fullText = 'No response.';
       }
       assistantMsg.swipes[swipeIdx] = fullText;
       assistantMsg.content = fullText;
@@ -4400,6 +4532,17 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               }
               const reasoning = json.choices?.[0]?.delta?.reasoning_content;
               if (reasoning) thinkingText += reasoning;
+              // Accumulate tool call fragments
+              const deltaToolCalls = json.choices?.[0]?.delta?.tool_calls;
+              if (deltaToolCalls) {
+                for (const tc of deltaToolCalls) {
+                  const idx = tc.index ?? 0;
+                  if (!toolCallBuffers[idx]) toolCallBuffers[idx] = { id: '', name: '', arguments: '' };
+                  if (tc.id) toolCallBuffers[idx].id = tc.id;
+                  if (tc.function?.name) toolCallBuffers[idx].name = tc.function.name;
+                  if (tc.function?.arguments) toolCallBuffers[idx].arguments += tc.function.arguments;
+                }
+              }
             } catch(e) {}
           }
         }
@@ -4438,6 +4581,96 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           _suppressScrollFlag = false;
           lastRender = now;
         }
+      }
+      // === OpenAI tool call execution loop ===
+      const pendingToolCalls = Object.values(toolCallBuffers).filter(tc => tc.name === 'web_search');
+      if (pendingToolCalls.length > 0 && format !== 'anthropic') {
+        // Build the assistant message with tool_calls
+        const assistantToolMsg = {
+          role: 'assistant',
+          content: fullText || null,
+          tool_calls: pendingToolCalls.map(tc => ({
+            id: tc.id,
+            type: 'function',
+            function: { name: tc.name, arguments: tc.arguments }
+          }))
+        };
+        const toolResultMsgs = [];
+        for (const tc of pendingToolCalls) {
+          let query = '';
+          try { query = JSON.parse(tc.arguments).query || ''; } catch(e) { query = tc.arguments; }
+          // Show searching state
+          toolBlocks.push({ query, results: [], searching: true });
+          bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+          const msgsAreaTmp = document.getElementById('messagesArea');
+          if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+          // Execute search
+          const { results, error } = await executeWebSearch(query, abortController.signal);
+          const tb = toolBlocks[toolBlocks.length - 1];
+          tb.results = results.map(r => ({ title: r.title, url: r.url }));
+          tb.searching = false;
+          bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+          if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+          toolResultMsgs.push({
+            role: 'tool',
+            tool_call_id: tc.id,
+            content: formatSearchResultsForModel(results, error)
+          });
+        }
+        // Follow-up streaming request with tool results
+        const followUpMessages = [...body.messages, assistantToolMsg, ...toolResultMsgs];
+        const followUpBody = { ...body, messages: followUpMessages, stream: true };
+        delete followUpBody.tools;
+        exclude.forEach(k => delete followUpBody[k]);
+        const followUpResp = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(followUpBody),
+          signal: abortController.signal
+        });
+        if (!followUpResp.ok) {
+          let errText = '';
+          try { errText = await followUpResp.text(); } catch(e) {}
+          throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+        }
+        fullText = '';
+        const followReader = followUpResp.body.getReader();
+        const followDecoder = new TextDecoder();
+        let followBuffer = '';
+        while (true) {
+          const { done, value } = await followReader.read();
+          if (done) break;
+          followBuffer += followDecoder.decode(value, { stream: true });
+          const fLines = followBuffer.split('\n');
+          followBuffer = fLines.pop() || '';
+          for (const fLine of fLines) {
+            const ft = fLine.trim();
+            if (!ft.startsWith('data:')) continue;
+            const fp = ft.slice(5).trim();
+            if (fp === '[DONE]') continue;
+            try {
+              const fj = JSON.parse(fp);
+              const fd = fj.choices?.[0]?.delta?.content;
+              if (typeof fd === 'string') fullText += fd;
+              const fr = fj.choices?.[0]?.delta?.reasoning_content;
+              if (fr) thinkingText += fr;
+            } catch(e) {}
+          }
+          assistantMsg.swipes[swipeIdx] = fullText;
+          assistantMsg.content = fullText;
+          const now2 = Date.now();
+          if (now2 - lastRender > 80) {
+            const msgsArea2 = document.getElementById('messagesArea');
+            const savedST = userScrolledAway ? msgsArea2.scrollTop : null;
+            _suppressScrollFlag = true;
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (savedST !== null) msgsArea2.scrollTop = savedST;
+            else msgsArea2.scrollTop = msgsArea2.scrollHeight;
+            _suppressScrollFlag = false;
+            lastRender = now2;
+          }
+        }
+        toolCallBuffers = {};
       }
       if (!fullText && !thinkingText) fullText = 'No response.';
       assistantMsg.swipes[swipeIdx] = fullText;
