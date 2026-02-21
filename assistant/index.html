@@ -4213,7 +4213,7 @@ const OPENAI_WEB_SEARCH_TOOL = {
 function proxiedFetch(url, options) {
   const proxy = localStorage.getItem('llmCorsProxy') || '';
   if (!proxy) return fetch(url, options);
-  return fetch(proxy + url, options);
+  return fetch(proxy + encodeURIComponent(url), options);
 }
 
 async function executeWebSearch(query, signal) {
