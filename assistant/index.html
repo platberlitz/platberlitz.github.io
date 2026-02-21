@@ -1448,9 +1448,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <input type="checkbox" id="setWebSearch"> Web Search
       <span class="toggle-hint">Anthropic native · OpenAI via search API</span>
     </label>
-    <label>Search API URL <span class="toggle-hint">for OpenAI-compatible models (e.g. SearXNG)</span></label>
-    <input type="text" id="setSearchApiUrl" placeholder="https://searx.example.com/search">
-    <label>Search API Key <span class="toggle-hint">optional</span></label>
+    <label>Search API URL <span class="toggle-hint">SearXNG or Brave Search API</span></label>
+    <input type="text" id="setSearchApiUrl" placeholder="https://api.search.brave.com/res/v1/web/search">
+    <label>Search API Key <span class="toggle-hint">optional for SearXNG · required for Brave</span></label>
     <input type="password" id="setSearchApiKey" placeholder="Bearer token (if required)">
     <label>CORS Proxy URL <span class="toggle-hint">prefix for cross-origin requests</span></label>
     <input type="text" id="setCorsProxy" placeholder="https://corsproxy.io/?url=">
@@ -4222,17 +4222,24 @@ async function executeWebSearch(query, signal) {
   if (!searchUrl) {
     return { results: [], error: 'No search API URL configured. Set one in Settings > Tools.' };
   }
+  const isBrave = searchUrl.includes('api.search.brave.com');
   try {
     const sep = searchUrl.includes('?') ? '&' : '?';
-    const fetchUrl = searchUrl + sep + 'q=' + encodeURIComponent(query) + '&format=json';
+    const fetchUrl = searchUrl + sep + 'q=' + encodeURIComponent(query) + (isBrave ? '' : '&format=json');
     const fetchHeaders = {};
-    if (searchKey) fetchHeaders['Authorization'] = 'Bearer ' + searchKey;
-    const resp = await proxiedFetch(fetchUrl, { headers: fetchHeaders, signal });
+    if (isBrave) {
+      fetchHeaders['Accept'] = 'application/json';
+      if (searchKey) fetchHeaders['X-Subscription-Token'] = searchKey;
+    } else {
+      if (searchKey) fetchHeaders['Authorization'] = 'Bearer ' + searchKey;
+    }
+    const useFetch = isBrave ? fetch : proxiedFetch;
+    const resp = await useFetch(fetchUrl, { headers: fetchHeaders, signal });
     if (!resp.ok) throw new Error(resp.status + ' ' + (resp.statusText || 'Error'));
     const ct = resp.headers.get('content-type') || '';
     if (!ct.includes('json')) throw new Error('Expected JSON but got ' + (ct.split(';')[0] || 'unknown content type'));
     const data = await resp.json();
-    const raw = data.results || data.items || data.data || [];
+    const raw = (isBrave ? data.web?.results : null) || data.results || data.items || data.data || [];
     const results = raw.slice(0, 10).map(r => ({
       title: r.title || '',
       url: r.url || r.link || '',
