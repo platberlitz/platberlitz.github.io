@@ -1452,6 +1452,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     <input type="text" id="setSearchApiUrl" placeholder="https://searx.example.com/search">
     <label>Search API Key <span class="toggle-hint">optional</span></label>
     <input type="password" id="setSearchApiKey" placeholder="Bearer token (if required)">
+    <label>CORS Proxy URL <span class="toggle-hint">prefix for cross-origin requests</span></label>
+    <input type="text" id="setCorsProxy" placeholder="https://corsproxy.io/?url=">
     <label class="toggle-row">
       <input type="checkbox" id="setMemory"> Memory
       <span class="toggle-hint">Remember info across chats</span>
@@ -3237,6 +3239,7 @@ function openSettings() {
   document.getElementById('setWebSearch').checked = localStorage.getItem('llmWebSearch') === 'true';
   document.getElementById('setSearchApiUrl').value = localStorage.getItem('llmSearchApiUrl') || '';
   document.getElementById('setSearchApiKey').value = localStorage.getItem('llmSearchApiKey') || '';
+  document.getElementById('setCorsProxy').value = localStorage.getItem('llmCorsProxy') || '';
   document.getElementById('setMemory').checked = localStorage.getItem('llmMemoryEnabled') === 'true';
   document.getElementById('setHoldScreenshot').checked = localStorage.getItem('llmHoldScreenshot') === 'true';
 
@@ -3296,6 +3299,7 @@ function saveSettings() {
   localStorage.setItem('llmWebSearch', document.getElementById('setWebSearch').checked ? 'true' : 'false');
   localStorage.setItem('llmSearchApiUrl', document.getElementById('setSearchApiUrl').value.trim());
   localStorage.setItem('llmSearchApiKey', document.getElementById('setSearchApiKey').value.trim());
+  localStorage.setItem('llmCorsProxy', document.getElementById('setCorsProxy').value.trim());
   localStorage.setItem('llmMemoryEnabled', document.getElementById('setMemory').checked ? 'true' : 'false');
   localStorage.setItem('llmHoldScreenshot', document.getElementById('setHoldScreenshot').checked ? 'true' : 'false');
 
@@ -4206,6 +4210,13 @@ const OPENAI_WEB_SEARCH_TOOL = {
   }
 };
 
+function proxiedFetch(url, options) {
+  const proxy = (localStorage.getItem('llmCorsProxy') || '').replace(/\/+$/, '');
+  if (!proxy) return fetch(url, options);
+  const sep = proxy.includes('?') ? '' : '/';
+  return fetch(proxy + sep + encodeURIComponent(url), options);
+}
+
 async function executeWebSearch(query, signal) {
   const searchUrl = localStorage.getItem('llmSearchApiUrl') || '';
   const searchKey = localStorage.getItem('llmSearchApiKey') || '';
@@ -4217,7 +4228,7 @@ async function executeWebSearch(query, signal) {
     const fetchUrl = searchUrl + sep + 'q=' + encodeURIComponent(query) + '&format=json';
     const fetchHeaders = {};
     if (searchKey) fetchHeaders['Authorization'] = 'Bearer ' + searchKey;
-    const resp = await fetch(fetchUrl, { headers: fetchHeaders, signal });
+    const resp = await proxiedFetch(fetchUrl, { headers: fetchHeaders, signal });
     if (!resp.ok) throw new Error(resp.status + ' ' + resp.statusText);
     const data = await resp.json();
     const raw = data.results || data.items || data.data || [];
