@@ -1454,6 +1454,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     <input type="password" id="setSearchApiKey" placeholder="token or X-API-Key: value">
     <label>CORS Proxy URL <span class="toggle-hint">prefix for cross-origin requests</span></label>
     <input type="text" id="setCorsProxy" placeholder="https://corsproxy.io/?url=">
+    <button class="btn btn-secondary" style="width:100%;padding:8px;font-size:0.8em;margin-bottom:14px" onclick="openSearchTest()">Test Search</button>
     <label class="toggle-row">
       <input type="checkbox" id="setMemory"> Memory
       <span class="toggle-hint">Remember info across chats</span>
@@ -2022,6 +2023,93 @@ function openManageMemories() {
   renderMemoryList();
   document.body.appendChild(overlay);
   document.body.appendChild(popup);
+}
+
+function openSearchTest() {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  popup.innerHTML =
+    '<h3>Search Test</h3>' +
+    '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">Runs a live query using your Search API settings.</div>' +
+    '<input type="text" id="searchTestInput" placeholder="Search query..." style="width:100%;padding:10px;font-family:inherit;font-size:0.9em;background:var(--hover);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);outline:none">' +
+    '<div style="display:flex;gap:8px;margin-top:10px">' +
+      '<button class="btn btn-primary" id="searchTestRun" style="flex:1;padding:8px">Run</button>' +
+      '<button class="btn btn-secondary" id="searchTestClose" style="flex:1;padding:8px">Close</button>' +
+    '</div>' +
+    '<div id="searchTestStatus" style="margin-top:12px;font-size:0.85em;color:var(--text-secondary)"></div>' +
+    '<div id="searchTestResults" style="margin-top:8px;display:flex;flex-direction:column;gap:8px"></div>';
+
+  const close = () => { overlay.remove(); popup.remove(); };
+  overlay.onclick = close;
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+
+  const input = popup.querySelector('#searchTestInput');
+  const runBtn = popup.querySelector('#searchTestRun');
+  const closeBtn = popup.querySelector('#searchTestClose');
+  const statusEl = popup.querySelector('#searchTestStatus');
+  const resultsEl = popup.querySelector('#searchTestResults');
+
+  closeBtn.onclick = close;
+
+  const esc = (s) => String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const renderResults = (results) => {
+    if (!results.length) {
+      resultsEl.innerHTML = '<div style="color:var(--text-secondary);font-size:0.85em">No results found.</div>';
+      return;
+    }
+    resultsEl.innerHTML = results.map(r => {
+      const title = esc(r.title || r.url || 'Result');
+      const url = esc(r.url || '#');
+      const snippet = esc(r.snippet || '');
+      const displayUrl = esc((r.url || '').replace(/^https?:\/\//, '').replace(/\/+$/, ''));
+      return '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover)">' +
+        '<a href="' + url + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:600">' + title + '</a>' +
+        (displayUrl ? '<div style="color:var(--text-secondary);font-size:0.75em;margin-top:4px">' + displayUrl + '</div>' : '') +
+        (snippet ? '<div style="color:var(--text-secondary);font-size:0.85em;margin-top:6px">' + snippet + '</div>' : '') +
+      '</div>';
+    }).join('');
+  };
+
+  const runSearch = async () => {
+    const q = input.value.trim();
+    if (!q) { statusEl.textContent = 'Enter a query to test.'; resultsEl.innerHTML = ''; return; }
+    statusEl.textContent = 'Searching...';
+    resultsEl.innerHTML = '';
+    runBtn.disabled = true;
+    try {
+      const { results, error } = await executeWebSearch(q);
+      if (error) {
+        statusEl.textContent = 'Error: ' + error;
+      } else {
+        statusEl.textContent = 'Found ' + results.length + ' result' + (results.length === 1 ? '' : 's') + '.';
+      }
+      renderResults(results);
+    } catch (e) {
+      statusEl.textContent = 'Error: ' + (e.message || 'Unknown error');
+    } finally {
+      runBtn.disabled = false;
+    }
+  };
+
+  runBtn.onclick = runSearch;
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') runSearch();
+  });
+
+  input.focus();
 }
 
 async function deleteMemory(id) {
