@@ -4228,7 +4228,9 @@ async function executeWebSearch(query, signal) {
     const fetchHeaders = {};
     if (searchKey) fetchHeaders['Authorization'] = 'Bearer ' + searchKey;
     const resp = await proxiedFetch(fetchUrl, { headers: fetchHeaders, signal });
-    if (!resp.ok) throw new Error(resp.status + ' ' + resp.statusText);
+    if (!resp.ok) throw new Error(resp.status + ' ' + (resp.statusText || 'Error'));
+    const ct = resp.headers.get('content-type') || '';
+    if (!ct.includes('json')) throw new Error('Expected JSON but got ' + (ct.split(';')[0] || 'unknown content type'));
     const data = await resp.json();
     const raw = data.results || data.items || data.data || [];
     const results = raw.slice(0, 10).map(r => ({
