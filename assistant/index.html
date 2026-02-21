@@ -567,6 +567,25 @@ body {
 }
 .input-btn:hover { color: var(--text-primary); }
 .input-btn.recording { color: #ef4444; animation: voicePulse 1s ease-in-out infinite; }
+.input-btn.web-toggle {
+  font-size: 0.75em;
+  padding: 6px 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  background: var(--hover);
+  color: var(--text-secondary);
+}
+.input-btn.web-toggle.on {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: transparent;
+}
+.input-btn.web-toggle.off {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--card-border);
+  opacity: 0.8;
+}
 @keyframes voicePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
 .send-btn {
@@ -829,10 +848,12 @@ body {
 }
 .tool-use-results.open { display: block; }
 .tool-use-result { margin: 4px 0; }
-.tool-use-result a {
+.tool-use-result a,
+.tool-use-result .tool-result-title {
   color: var(--accent);
   text-decoration: none;
   font-size: 0.85em;
+  font-weight: 600;
 }
 .tool-use-result a:hover { text-decoration: underline; }
 .tool-use-result .tool-result-url {
@@ -845,6 +866,15 @@ body {
   font-size: 0.82em;
   margin-top: 4px;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: pointer;
+}
+.tool-use-result .tool-result-snippet.open {
+  -webkit-line-clamp: initial;
+  max-height: none;
 }
 
 /* Settings toggle row */
@@ -1251,6 +1281,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
           <button onclick="exportMarkdown();closeToolbarMenu()">&#128221; Export as Markdown</button>
           <button onclick="exportAllConversations();closeToolbarMenu()">&#8659; Export all chats</button>
           <button onclick="document.getElementById('importInput').click();closeToolbarMenu()">&#8613; Import chat</button>
+          <button onclick="openFileSearch();closeToolbarMenu()">&#128270; Search files</button>
+          <button onclick="openSummaryModal();closeToolbarMenu()">&#128220; Conversation summary</button>
+          <button onclick="openStatusPanel();closeToolbarMenu()">&#9888; Status / diagnostics</button>
           <button onclick="clearChat();closeToolbarMenu()">&#128465; Clear chat</button>
           <button onclick="enterSelectMode();closeToolbarMenu()">&#128247; Screenshot messages</button>
         </div>
@@ -1295,6 +1328,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <input type="file" id="fileInput" accept="image/*,.pdf,.txt,.csv,.html,.md" multiple style="display:none" onchange="handleFileSelect(event)">
       <textarea id="chatInput" placeholder="Type a message..." rows="1"></textarea>
       <button class="input-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input" aria-label="Voice input">&#127908;</button>
+      <button class="input-btn web-toggle" id="webToggleBtn" onclick="toggleWebSearchOverride()" title="Web search: Auto" aria-label="Web search toggle">Web</button>
       <button class="send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Send message">Send</button>
     </div>
     <div class="token-info" id="tokenInfo"></div>
@@ -1345,6 +1379,14 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
         <button class="model-refresh-btn" onclick="refreshModels('settings', this)" title="Refresh model list">&#x1F504;</button>
       </div>
       <input type="text" id="setModelManual" placeholder="Or type model name manually" oninput="document.getElementById('setModelSelect').value=''">
+      <div class="modal-section">Profiles</div>
+      <label>Profile</label>
+      <div class="model-selector-row">
+        <select id="profileSelect" onchange="applyProfileFromSelect()"><option value="">-- Select profile --</option></select>
+        <button class="model-refresh-btn" onclick="saveCurrentAsProfile()" title="Save profile">&#128190;</button>
+        <button class="model-refresh-btn" onclick="deleteSelectedProfile()" title="Delete profile">&#128465;</button>
+      </div>
+      <input type="text" id="profileName" placeholder="New profile name">
       <label>API Format</label>
       <select id="setApiFormat">
         <option value="auto">Auto-detect</option>
@@ -1533,6 +1575,8 @@ let modelOverride = null;
 let mentionActive = false;
 let mentionIdx = 0;
 let activeTagFilter = null;
+let nextWebSearchOverride = null;
+let lastSearchStatus = { ok: null, error: null, at: null, query: '' };
 
 const TAG_COLORS = [
   { name: 'Red', color: '#ef4444' },
@@ -1573,6 +1617,14 @@ function showToast(message, type = 'info', duration = 3000) {
     toast.classList.add('removing');
     setTimeout(() => toast.remove(), 300);
   }, duration);
+}
+
+function escapeHTML(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // ============================================
@@ -2125,6 +2177,348 @@ function openSearchTest() {
   input.focus();
 }
 
+function openSourcesDrawer(msg) {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+  const toolBlocks = msg?.swipeToolUse?.[msg.swipeIndex] || [];
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  let html = '<h3>Sources</h3>';
+  if (!toolBlocks.length || toolBlocks.every(tb => !(tb.results || []).length)) {
+    html += '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">No sources available.</div>';
+  } else {
+    toolBlocks.forEach(tb => {
+      const results = tb.results || [];
+      if (!results.length) return;
+      const q = escapeHTML(tb.query || 'Search');
+      html += '<div style="margin:10px 0 6px;font-weight:600;font-size:0.9em">🔎 ' + q + '</div>';
+      results.forEach(r => {
+        const title = escapeHTML(r.title || r.url || 'Result');
+        const url = escapeHTML(r.url || '#');
+        const displayUrl = escapeHTML((r.url || '').replace(/^https?:\/\//, '').replace(/\/+$/, ''));
+        const snippet = r.snippet ? escapeHTML(r.snippet) : '';
+        html += '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover);margin-bottom:8px">' +
+          '<a href="' + url + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:600">' + title + '</a>' +
+          (displayUrl ? '<div style="color:var(--text-secondary);font-size:0.75em;margin-top:4px">' + displayUrl + '</div>' : '') +
+          (snippet ? '<div style="color:var(--text-secondary);font-size:0.85em;margin-top:6px">' + snippet + '</div>' : '') +
+        '</div>';
+      });
+    });
+  }
+
+  html += '<button class="btn btn-primary" style="width:100%;padding:8px" onclick="this.closest(\'.char-info-popup\').previousElementSibling.click()">Close</button>';
+  popup.innerHTML = html;
+
+  overlay.onclick = () => { overlay.remove(); popup.remove(); };
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+}
+
+function buildSnippet(text, idx, windowSize = 90) {
+  const start = Math.max(0, idx - windowSize);
+  const end = Math.min(text.length, idx + windowSize);
+  const prefix = start > 0 ? '…' : '';
+  const suffix = end < text.length ? '…' : '';
+  return prefix + text.slice(start, end).trim() + suffix;
+}
+
+function searchLocalDocs(query, conv) {
+  const docs = (conv && conv.docs) || [];
+  if (!query || !docs.length) return [];
+  const q = query.toLowerCase();
+  const terms = q.split(/\s+/).filter(Boolean);
+  const results = [];
+  docs.forEach(doc => {
+    const text = (doc.text || '');
+    const hay = text.toLowerCase();
+    let score = 0;
+    let firstIdx = -1;
+    terms.forEach(t => {
+      const idx = hay.indexOf(t);
+      if (idx !== -1) {
+        score += 1;
+        if (firstIdx === -1 || idx < firstIdx) firstIdx = idx;
+      }
+    });
+    if (score > 0 && firstIdx !== -1) {
+      results.push({
+        id: doc.id,
+        name: doc.name || 'Document',
+        snippet: buildSnippet(text, firstIdx),
+        score
+      });
+    }
+  });
+  return results.sort((a, b) => b.score - a.score).slice(0, 20);
+}
+
+function openFileSearch() {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  popup.innerHTML =
+    '<h3>Search Files</h3>' +
+    '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">Searches text from files you attached in this conversation.</div>' +
+    '<input type="text" id="fileSearchInput" placeholder="Search files..." style="width:100%;padding:10px;font-family:inherit;font-size:0.9em;background:var(--hover);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);outline:none">' +
+    '<div style="display:flex;gap:8px;margin-top:10px">' +
+      '<button class="btn btn-primary" id="fileSearchRun" style="flex:1;padding:8px">Search</button>' +
+      '<button class="btn btn-secondary" id="fileSearchClose" style="flex:1;padding:8px">Close</button>' +
+    '</div>' +
+    '<div id="fileSearchStatus" style="margin-top:12px;font-size:0.85em;color:var(--text-secondary)"></div>' +
+    '<div id="fileSearchResults" style="margin-top:8px;display:flex;flex-direction:column;gap:8px"></div>';
+
+  const close = () => { overlay.remove(); popup.remove(); };
+  overlay.onclick = close;
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+
+  const input = popup.querySelector('#fileSearchInput');
+  const runBtn = popup.querySelector('#fileSearchRun');
+  const closeBtn = popup.querySelector('#fileSearchClose');
+  const statusEl = popup.querySelector('#fileSearchStatus');
+  const resultsEl = popup.querySelector('#fileSearchResults');
+
+  closeBtn.onclick = close;
+
+  const renderResults = (results) => {
+    if (!results.length) {
+      resultsEl.innerHTML = '<div style="color:var(--text-secondary);font-size:0.85em">No matches found.</div>';
+      return;
+    }
+    resultsEl.innerHTML = results.map(r => {
+      return '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover)">' +
+        '<div style="font-weight:600;color:var(--text-primary)">' + escapeHTML(r.name) + '</div>' +
+        '<div style="color:var(--text-secondary);font-size:0.85em;margin-top:6px">' + escapeHTML(r.snippet) + '</div>' +
+      '</div>';
+    }).join('');
+  };
+
+  const runSearch = () => {
+    const q = input.value.trim();
+    if (!q) { statusEl.textContent = 'Enter a query to search.'; resultsEl.innerHTML = ''; return; }
+    const conv = getActiveConv();
+    const results = searchLocalDocs(q, conv);
+    statusEl.textContent = results.length ? ('Found ' + results.length + ' match' + (results.length === 1 ? '' : 'es') + '.') : 'No matches found.';
+    renderResults(results);
+  };
+
+  runBtn.onclick = runSearch;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') runSearch(); });
+  input.focus();
+}
+
+function openSummaryModal() {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+  const conv = getActiveConv();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  popup.innerHTML =
+    '<h3>Conversation Summary</h3>' +
+    '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">Generate a compact summary and keep it in the system prompt for this chat.</div>' +
+    '<textarea id="summaryText" style="width:100%;min-height:160px;resize:vertical;font-family:inherit;font-size:0.9em;background:var(--hover);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);padding:10px;outline:none"></textarea>' +
+    '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+      '<button class="btn btn-primary" id="summaryGen" style="flex:1;padding:8px">Generate</button>' +
+      '<button class="btn btn-secondary" id="summarySave" style="flex:1;padding:8px">Save</button>' +
+      '<button class="btn btn-secondary" id="summaryClear" style="flex:1;padding:8px">Clear</button>' +
+      '<button class="btn btn-secondary" id="summaryClose" style="flex:1;padding:8px">Close</button>' +
+    '</div>';
+
+  const close = () => { overlay.remove(); popup.remove(); };
+  overlay.onclick = close;
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+
+  const ta = popup.querySelector('#summaryText');
+  const genBtn = popup.querySelector('#summaryGen');
+  const saveBtn = popup.querySelector('#summarySave');
+  const clearBtn = popup.querySelector('#summaryClear');
+  const closeBtn = popup.querySelector('#summaryClose');
+
+  ta.value = conv?.summary || '';
+
+  closeBtn.onclick = close;
+  clearBtn.onclick = () => {
+    if (!conv) return;
+    conv.summary = '';
+    conv.summaryUpdatedAt = null;
+    saveConversations();
+    ta.value = '';
+    showToast('Summary cleared.', 'info');
+  };
+  saveBtn.onclick = () => {
+    if (!conv) return;
+    conv.summary = ta.value.trim();
+    conv.summaryUpdatedAt = Date.now();
+    saveConversations();
+    showToast('Summary saved.', 'success');
+  };
+  genBtn.onclick = async () => {
+    if (!conv) return;
+    const baseUrl = (localStorage.getItem('llmProxyUrl') || '').trim();
+    const apiKey = (localStorage.getItem('llmApiKey') || '').trim();
+    if (!baseUrl || !apiKey) { showToast('Set API Base URL and Key first.', 'error'); return; }
+    genBtn.disabled = true;
+    genBtn.textContent = 'Generating...';
+    try {
+      const transcript = buildConversationTranscript(40);
+      const prompt = [
+        { role: 'system', content: 'Summarize the conversation into a concise, structured note the assistant can use for context. Focus on facts, preferences, and open tasks. Keep it under 200 words.' },
+        { role: 'user', content: transcript }
+      ];
+      const summary = await callApiNonStreaming(prompt);
+      const cleaned = (summary || '').trim();
+      ta.value = cleaned;
+      conv.summary = cleaned;
+      conv.summaryUpdatedAt = Date.now();
+      saveConversations();
+      showToast('Summary updated.', 'success');
+    } catch (e) {
+      showToast('Summary failed: ' + (e.message || 'Unknown error'), 'error');
+    } finally {
+      genBtn.disabled = false;
+      genBtn.textContent = 'Generate';
+    }
+  };
+}
+
+function openStatusPanel() {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  const render = () => {
+    const baseUrl = localStorage.getItem('llmProxyUrl') || '(not set)';
+    const model = localStorage.getItem('llmModel') || '(not set)';
+    const searchUrl = localStorage.getItem('llmSearchApiUrl') || '(not set)';
+    const searchOn = localStorage.getItem('llmWebSearch') === 'true' ? 'Enabled' : 'Disabled';
+    const last = lastSearchStatus;
+    const lastText = last.ok == null ? 'No searches yet.' : (last.ok ? 'OK' : 'Error: ' + last.error);
+    const lastTime = last.at ? formatRelativeTime(last.at) : '';
+
+    popup.innerHTML =
+      '<h3>Status / Diagnostics</h3>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;font-size:0.85em;color:var(--text-secondary)">' +
+        '<div><strong style="color:var(--text-primary)">LLM Base URL:</strong> ' + escapeHTML(baseUrl) + '</div>' +
+        '<div><strong style="color:var(--text-primary)">Model:</strong> ' + escapeHTML(model) + '</div>' +
+        '<div><strong style="color:var(--text-primary)">Web Search:</strong> ' + searchOn + '</div>' +
+        '<div><strong style="color:var(--text-primary)">Search API URL:</strong> ' + escapeHTML(searchUrl) + '</div>' +
+        '<div><strong style="color:var(--text-primary)">Last Search:</strong> ' + escapeHTML(lastText) + (lastTime ? ' · ' + lastTime : '') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:12px">' +
+        '<button class="btn btn-primary" id="statusTestBtn" style="flex:1;padding:8px">Test Search</button>' +
+        '<button class="btn btn-secondary" id="statusCloseBtn" style="flex:1;padding:8px">Close</button>' +
+      '</div>';
+
+    const closeBtn = popup.querySelector('#statusCloseBtn');
+    const testBtn = popup.querySelector('#statusTestBtn');
+    closeBtn.onclick = () => { overlay.remove(); popup.remove(); };
+    testBtn.onclick = async () => {
+      testBtn.disabled = true;
+      testBtn.textContent = 'Testing...';
+      try { await executeWebSearch('test'); } catch(e) {}
+      testBtn.disabled = false;
+      testBtn.textContent = 'Test Search';
+      render();
+    };
+  };
+
+  overlay.onclick = () => { overlay.remove(); popup.remove(); };
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+  render();
+}
+
+function parseCommand(text) {
+  const match = text.trim().match(/^\/(search|web|s|files|file|docs|doc)\s+(.+)/i);
+  if (!match) return null;
+  const cmd = match[1].toLowerCase();
+  const query = match[2].trim();
+  return { cmd, query };
+}
+
+async function handleCommand(cmd, conv) {
+  if (!cmd || !cmd.query) return;
+  if (['search', 'web', 's'].includes(cmd.cmd)) {
+    await handleManualSearch(cmd.query, conv);
+  } else if (['files', 'file', 'docs', 'doc'].includes(cmd.cmd)) {
+    await handleFileSearch(cmd.query, conv);
+  }
+}
+
+async function handleManualSearch(query, conv) {
+  const ts = Date.now();
+  messages.push({ role: 'user', content: '/search ' + query, timestamp: ts });
+  const assistantMsg = {
+    role: 'assistant',
+    content: '',
+    swipes: [''],
+    swipeIndex: 0,
+    timestamp: Date.now(),
+    swipeToolUse: [[{ query, results: [], searching: true }]]
+  };
+  messages.push(assistantMsg);
+  renderMessages();
+
+  try {
+    const { results, error } = await executeWebSearch(query);
+    const tb = assistantMsg.swipeToolUse[0][0];
+    tb.results = results;
+    tb.searching = false;
+    if (error) tb.error = error;
+    assistantMsg.content = error ? ('Search error: ' + error) : ('Search results for "' + query + '".');
+  } catch (e) {
+    const tb = assistantMsg.swipeToolUse[0][0];
+    tb.searching = false;
+    tb.error = e.message || 'Search failed';
+    assistantMsg.content = 'Search error: ' + (e.message || 'Unknown error');
+  }
+
+  if (conv) conv.updatedAt = Date.now();
+  debouncedSave();
+  renderMessages();
+  updateTokenInfo();
+}
+
+async function handleFileSearch(query, conv) {
+  const ts = Date.now();
+  messages.push({ role: 'user', content: '/files ' + query, timestamp: ts });
+  const results = searchLocalDocs(query, conv);
+  const toolResults = results.map(r => ({ title: r.name, url: '', snippet: r.snippet }));
+  const assistantMsg = {
+    role: 'assistant',
+    content: results.length ? ('Found ' + results.length + ' matching file snippet' + (results.length === 1 ? '' : 's') + '.') : 'No matching file snippets found.',
+    swipes: [''],
+    swipeIndex: 0,
+    timestamp: Date.now(),
+    swipeToolUse: [[{ query, results: toolResults, searching: false }]]
+  };
+  messages.push(assistantMsg);
+  if (conv) conv.updatedAt = Date.now();
+  debouncedSave();
+  renderMessages();
+  updateTokenInfo();
+}
+
+function buildConversationTranscript(limit = 40) {
+  const slice = messages.filter(m => m.role !== 'system');
+  const recent = slice.slice(Math.max(0, slice.length - limit));
+  return recent.map(m => (m.role === 'assistant' ? 'Assistant: ' : 'User: ') + getMsgText(m)).join('\n');
+}
+
 async function deleteMemory(id) {
   const memories = (await loadMemories()).filter(m => m.id !== id);
   await saveMemories(memories);
@@ -2245,6 +2639,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
     document.getElementById('voiceBtn').style.display = 'none';
   }
+
+  updateWebToggleBtn();
 
   // Auto-resize textarea + character count + @model mentions
   const ta = document.getElementById('chatInput');
@@ -3344,6 +3740,13 @@ function openSettings() {
   document.getElementById('setMemory').checked = localStorage.getItem('llmMemoryEnabled') === 'true';
   document.getElementById('setHoldScreenshot').checked = localStorage.getItem('llmHoldScreenshot') === 'true';
 
+  renderProfileSelect();
+  const activeProfileId = localStorage.getItem('assistantActiveProfileId') || '';
+  const profileSelect = document.getElementById('profileSelect');
+  if (profileSelect) profileSelect.value = activeProfileId;
+  const profileName = document.getElementById('profileName');
+  if (profileName) profileName.value = '';
+
   // Presets
   loadPresets();
 
@@ -3363,6 +3766,146 @@ function openSettings() {
   }
 
   document.getElementById('settingsModal').classList.add('open');
+}
+
+function loadProfiles() {
+  try { return JSON.parse(localStorage.getItem('assistantProfiles') || '[]'); } catch(e) { return []; }
+}
+
+function saveProfiles(profiles) {
+  localStorage.setItem('assistantProfiles', JSON.stringify(profiles));
+}
+
+function renderProfileSelect() {
+  const select = document.getElementById('profileSelect');
+  if (!select) return;
+  const profiles = loadProfiles();
+  select.innerHTML = '<option value="">-- Select profile --</option>';
+  profiles.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    select.appendChild(opt);
+  });
+}
+
+function collectProfileSettingsFromInputs() {
+  return {
+    llmProxyUrl: document.getElementById('setProxy').value.trim(),
+    llmApiKey: document.getElementById('setKey').value.trim(),
+    llmModel: getSelectedModel('settings'),
+    llmApiFormat: document.getElementById('setApiFormat').value,
+    llmStreaming: document.getElementById('setStreaming').checked ? 'true' : 'false',
+    llmEnterSend: document.getElementById('setEnterSend').checked ? 'true' : 'false',
+    llmTemperature: document.getElementById('setTemperature').value.trim(),
+    llmExtraParams: document.getElementById('setExtraParams').value.trim(),
+    llmExcludeParams: document.getElementById('setExcludeParams').value.trim(),
+    llmPrefill: document.getElementById('setPrefill').value,
+    llmWebSearch: document.getElementById('setWebSearch').checked ? 'true' : 'false',
+    llmSearchApiUrl: document.getElementById('setSearchApiUrl').value.trim(),
+    llmSearchApiKey: document.getElementById('setSearchApiKey').value.trim(),
+    llmCorsProxy: document.getElementById('setCorsProxy').value.trim(),
+    llmMemoryEnabled: document.getElementById('setMemory').checked ? 'true' : 'false',
+    llmHoldScreenshot: document.getElementById('setHoldScreenshot').checked ? 'true' : 'false',
+    llmInputCost: document.getElementById('setInputCost').value.trim(),
+    llmOutputCost: document.getElementById('setOutputCost').value.trim()
+  };
+}
+
+function applyProfileToInputs(settings) {
+  document.getElementById('setProxy').value = settings.llmProxyUrl || '';
+  document.getElementById('setKey').value = settings.llmApiKey || '';
+  document.getElementById('setApiFormat').value = settings.llmApiFormat || 'auto';
+  document.getElementById('setStreaming').checked = settings.llmStreaming !== 'false';
+  document.getElementById('setEnterSend').checked = settings.llmEnterSend !== 'false';
+  document.getElementById('setTemperature').value = settings.llmTemperature || '';
+  document.getElementById('setExtraParams').value = settings.llmExtraParams || '';
+  document.getElementById('setExcludeParams').value = settings.llmExcludeParams || '';
+  document.getElementById('setPrefill').value = settings.llmPrefill || '';
+  document.getElementById('setWebSearch').checked = settings.llmWebSearch === 'true';
+  document.getElementById('setSearchApiUrl').value = settings.llmSearchApiUrl || '';
+  document.getElementById('setSearchApiKey').value = settings.llmSearchApiKey || '';
+  document.getElementById('setCorsProxy').value = settings.llmCorsProxy || '';
+  document.getElementById('setMemory').checked = settings.llmMemoryEnabled === 'true';
+  document.getElementById('setHoldScreenshot').checked = settings.llmHoldScreenshot === 'true';
+  document.getElementById('setInputCost').value = settings.llmInputCost || '';
+  document.getElementById('setOutputCost').value = settings.llmOutputCost || '';
+
+  const model = settings.llmModel || '';
+  document.getElementById('setModelManual').value = model;
+  document.getElementById('setModelSelect').value = '';
+  const selectEl = document.getElementById('setModelSelect');
+  for (const opt of selectEl.options) {
+    if (opt.value === model) { opt.selected = true; break; }
+  }
+}
+
+function applyProfile(profile) {
+  if (!profile) return;
+  const settings = profile.settings || {};
+  Object.entries(settings).forEach(([k, v]) => {
+    if (v === null || v === undefined) return;
+    localStorage.setItem(k, v);
+  });
+  localStorage.setItem('assistantActiveProfileId', profile.id);
+  applyProfileToInputs(settings);
+  showToast('Profile applied: ' + profile.name, 'success');
+}
+
+function applyProfileFromSelect() {
+  const select = document.getElementById('profileSelect');
+  if (!select) return;
+  const id = select.value;
+  if (!id) return;
+  const profiles = loadProfiles();
+  const profile = profiles.find(p => p.id === id);
+  if (profile) applyProfile(profile);
+}
+
+function saveCurrentAsProfile() {
+  const select = document.getElementById('profileSelect');
+  const nameInput = document.getElementById('profileName');
+  const desiredName = (nameInput && nameInput.value.trim()) || '';
+  const profiles = loadProfiles();
+  const settings = collectProfileSettingsFromInputs();
+  let profile = null;
+
+  if (select && select.value) {
+    profile = profiles.find(p => p.id === select.value);
+  }
+
+  if (!profile && !desiredName) {
+    showToast('Enter a profile name.', 'error');
+    return;
+  }
+
+  if (profile) {
+    profile.name = desiredName || profile.name;
+    profile.settings = settings;
+  } else {
+    profile = { id: 'profile_' + Date.now(), name: desiredName, settings };
+    profiles.push(profile);
+  }
+
+  saveProfiles(profiles);
+  renderProfileSelect();
+  if (select) select.value = profile.id;
+  localStorage.setItem('assistantActiveProfileId', profile.id);
+  if (nameInput) nameInput.value = '';
+  showToast('Profile saved.', 'success');
+}
+
+function deleteSelectedProfile() {
+  const select = document.getElementById('profileSelect');
+  if (!select || !select.value) { showToast('Select a profile to delete.', 'info'); return; }
+  if (!confirm('Delete this profile?')) return;
+  let profiles = loadProfiles();
+  profiles = profiles.filter(p => p.id !== select.value);
+  saveProfiles(profiles);
+  localStorage.removeItem('assistantActiveProfileId');
+  renderProfileSelect();
+  select.value = '';
+  showToast('Profile deleted.', 'info');
 }
 
 function saveSettings() {
@@ -3822,6 +4365,10 @@ async function buildSystemMessages(conv) {
   if (msgs.length === 0) {
     msgs.push({ role: 'system', content: 'You are a helpful assistant.' });
   }
+  // Conversation summary
+  if (conv && conv.summary) {
+    msgs.push({ role: 'system', content: 'Conversation summary:\n' + conv.summary });
+  }
   // Memory prompt
   const mem = await getMemoryPrompt();
   if (mem) msgs.push({ role: 'system', content: mem });
@@ -3919,6 +4466,19 @@ function renderMessages() {
       setTimeout(() => copyBtn.textContent = 'Copy', 1500);
     };
     actions.appendChild(copyBtn);
+
+    if (msg.role === 'assistant') {
+      const toolData = msg.swipeToolUse && msg.swipeToolUse[msg.swipeIndex];
+      const hasSources = toolData && toolData.some(tb => (tb.results || []).some(r => r.url));
+      if (hasSources) {
+        const srcBtn = document.createElement('button');
+        srcBtn.className = 'msg-action-btn';
+        srcBtn.textContent = 'Sources';
+        srcBtn.setAttribute('aria-label', 'View sources');
+        srcBtn.onclick = () => openSourcesDrawer(msg);
+        actions.appendChild(srcBtn);
+      }
+    }
 
     if (msg.role === 'user') {
       const editBtn = document.createElement('button');
@@ -4177,7 +4737,7 @@ async function resendAfterEdit() {
   const apiMessages = await buildSystemMessages(conv);
   messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: buildApiContent(m) }); });
 
-  await streamResponse(apiMessages, assistantMsg, 0, bubble);
+  await streamResponse(apiMessages, assistantMsg, 0, bubble, null, null, null);
 
   extractMemories(apiMessages);
   if (conv) conv.updatedAt = Date.now();
@@ -4271,23 +4831,27 @@ function renderToolBlocksHTML(toolBlocks) {
     if (searching) {
       return '<div class="tool-use-block"><div class="tool-use-header">\u{1F50D} Searching\u2026</div></div>';
     }
-    const escapedQuery = query.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    const escapedQuery = escapeHTML(query);
     if (tb.error) {
-      return '<div class="tool-use-block"><div class="tool-use-header">\u{1F50D} Searched "' + escapedQuery + '" \u00B7 <span style="color:var(--error-color,#f66)">' + tb.error.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span></div></div>';
+      return '<div class="tool-use-block"><div class="tool-use-header">\u{1F50D} Searched "' + escapedQuery + '" \u00B7 <span style="color:var(--error-color,#f66)">' + escapeHTML(tb.error) + '</span></div></div>';
     }
     const count = results.length;
     const resultsHTML = results.map(r => {
       const title = r.title || r.url || 'Result';
-      const url = r.url || '#';
-      const displayUrl = url.replace(/^https?:\/\//, '').replace(/\/+$/, '');
-      const snippetText = r.snippet ? r.snippet.replace(/&/g, '&amp;').replace(/</g, '&lt;') : '';
-      const snippetHtml = snippetText ? '<div class="tool-result-snippet">' + snippetText + '</div>' : '';
-      return '<div class="tool-use-result"><a href="' + url.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">' +
-        title.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</a>' +
-        '<span class="tool-result-url">' + displayUrl.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>' +
+      const url = r.url || '';
+      const hasUrl = url && url !== '#';
+      const displayUrl = hasUrl ? url.replace(/^https?:\/\//, '').replace(/\/+$/, '') : '';
+      const snippetText = r.snippet ? escapeHTML(r.snippet) : '';
+      const snippetHtml = snippetText ? '<div class="tool-result-snippet" title="Click to expand" onclick="this.classList.toggle(\'open\')">' + snippetText + '</div>' : '';
+      const titleHtml = hasUrl
+        ? '<a href="' + escapeHTML(url) + '" target="_blank" rel="noopener">' + escapeHTML(title) + '</a>'
+        : '<span class="tool-result-title">' + escapeHTML(title) + '</span>';
+      return '<div class="tool-use-result">' +
+        titleHtml +
+        (displayUrl ? '<span class="tool-result-url">' + escapeHTML(displayUrl) + '</span>' : '') +
         snippetHtml + '</div>';
     }).join('');
-    const headerText = '\u{1F50D} Searched "' + query.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;') + '" \u00B7 ' + count + ' result' + (count !== 1 ? 's' : '');
+    const headerText = '\u{1F50D} Searched "' + escapedQuery + '" \u00B7 ' + count + ' result' + (count !== 1 ? 's' : '');
     return '<div class="tool-use-block">' +
       '<div class="tool-use-header" onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.tool-use-arrow\').textContent=this.nextElementSibling.classList.contains(\'open\')?\'\u25BE\':\'\u25B8\'">' +
       headerText +
@@ -4324,6 +4888,7 @@ async function executeWebSearch(query, signal) {
   const searchUrl = (localStorage.getItem('llmSearchApiUrl') || '').trim();
   const searchKey = (localStorage.getItem('llmSearchApiKey') || '').trim();
   if (!searchUrl) {
+    lastSearchStatus = { ok: false, error: 'No search API URL configured.', at: Date.now(), query };
     return { results: [], error: 'No search API URL configured. Set one in Settings > Tools.' };
   }
   const isBrave = searchUrl.includes('api.search.brave.com');
@@ -4331,6 +4896,7 @@ async function executeWebSearch(query, signal) {
   const hasQueryTpl = /{query}|\{\{query\}\}|%s/i.test(searchUrl);
   const hasKeyTpl = /{key}|\{\{key\}\}/i.test(searchUrl);
   if (hasKeyTpl && !searchKey) {
+    lastSearchStatus = { ok: false, error: 'Search API key required for this URL template.', at: Date.now(), query };
     return { results: [], error: 'Search API key required for this URL template.' };
   }
   try {
@@ -4405,11 +4971,13 @@ async function executeWebSearch(query, signal) {
       snippet: r.content || r.snippet || r.description || r.summary || ''
     })).filter(r => r.title || r.url);
 
+    lastSearchStatus = { ok: true, error: null, at: Date.now(), query };
     return { results, error: null };
   } catch (e) {
     if (e.name === 'AbortError') throw e;
     let msg = e.message || 'Unknown error';
     if (msg === 'Failed to fetch' || msg.includes('NetworkError')) msg = 'Network error — CORS may be blocked by this search instance';
+    lastSearchStatus = { ok: false, error: msg, at: Date.now(), query };
     return { results: [], error: msg };
   }
 }
@@ -4425,7 +4993,7 @@ function formatSearchResultsForModel(results, error) {
 // ============================================
 // Streaming
 // ============================================
-async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, overrideModel, prefixText) {
+async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, overrideModel, prefixText, webSearchOverride) {
   const baseUrl = (localStorage.getItem('llmProxyUrl') || '').replace(/\/+$/, '');
   const apiKey = localStorage.getItem('llmApiKey');
   const model = overrideModel || localStorage.getItem('llmModel') || 'gpt-4o';
@@ -4472,7 +5040,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       };
       const prepared = prepareAnthropicMessages(apiMessages);
       body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 4096, stream: useStream, ...extra };
-      if (localStorage.getItem('llmWebSearch') === 'true') {
+      if (resolveWebSearchEnabled(webSearchOverride)) {
         body.tools = (body.tools || []).concat([{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }]);
       }
     } else {
@@ -4511,7 +5079,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       });
       body = { model, messages: processedMessages, stream: useStream, ...extra };
       // Inject web search tool for OpenAI-compatible models
-      if (localStorage.getItem('llmWebSearch') === 'true' && localStorage.getItem('llmSearchApiUrl')) {
+      if (resolveWebSearchEnabled(webSearchOverride) && localStorage.getItem('llmSearchApiUrl')) {
         body.tools = (body.tools || []).concat([OPENAI_WEB_SEARCH_TOOL]);
       }
     }
@@ -4954,6 +5522,38 @@ function updateSendBtnState() {
   }
 }
 
+function resolveWebSearchEnabled(override) {
+  if (override === true) return true;
+  if (override === false) return false;
+  return localStorage.getItem('llmWebSearch') === 'true';
+}
+
+function toggleWebSearchOverride() {
+  if (nextWebSearchOverride === null) nextWebSearchOverride = true;
+  else if (nextWebSearchOverride === true) nextWebSearchOverride = false;
+  else nextWebSearchOverride = null;
+  updateWebToggleBtn();
+}
+
+function updateWebToggleBtn() {
+  const btn = document.getElementById('webToggleBtn');
+  if (!btn) return;
+  const state = nextWebSearchOverride;
+  btn.classList.remove('on', 'off');
+  if (state === true) {
+    btn.textContent = 'Web On';
+    btn.title = 'Web search: On (this message)';
+    btn.classList.add('on');
+  } else if (state === false) {
+    btn.textContent = 'Web Off';
+    btn.title = 'Web search: Off (this message)';
+    btn.classList.add('off');
+  } else {
+    btn.textContent = 'Web Auto';
+    btn.title = 'Web search: Auto';
+  }
+}
+
 // ============================================
 // Send Message
 // ============================================
@@ -4970,6 +5570,19 @@ async function sendMessage() {
   const apiKey = localStorage.getItem('llmApiKey');
   const conv = getActiveConv();
 
+  if (!isRegenFromFork) {
+    const cmd = parseCommand(text);
+    if (cmd) {
+      if (pendingAttachments.length > 0) { showToast('Commands cannot include attachments.', 'error'); return; }
+      input.value = '';
+      input.style.height = 'auto';
+      nextWebSearchOverride = null;
+      updateWebToggleBtn();
+      await handleCommand(cmd, conv);
+      return;
+    }
+  }
+
   if (!proxyUrl || !apiKey) {
     document.getElementById('setupModal').classList.add('open');
     return;
@@ -4978,6 +5591,20 @@ async function sendMessage() {
   if (!isRegenFromFork) {
     let userContent;
     if (pendingAttachments.length > 0) {
+      if (conv) {
+        const docs = conv.docs || (conv.docs = []);
+        pendingAttachments.forEach(att => {
+          if (att && att.textContent) {
+            const text = att.textContent.length > 20000 ? att.textContent.slice(0, 20000) : att.textContent;
+            docs.push({
+              id: 'doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+              name: att.name || 'file',
+              text: text,
+              createdAt: Date.now()
+            });
+          }
+        });
+      }
       userContent = [];
       if (text) userContent.push({ type: 'text', text });
       pendingAttachments.forEach(att => {
@@ -5030,7 +5657,11 @@ async function sendMessage() {
   const overrideModel = modelOverride;
   clearModelOverride();
 
-  await streamResponse(apiMessages, assistantMsg, 0, bubble, overrideModel);
+  const webOverride = nextWebSearchOverride;
+  nextWebSearchOverride = null;
+  updateWebToggleBtn();
+
+  await streamResponse(apiMessages, assistantMsg, 0, bubble, overrideModel, null, webOverride);
 
   extractMemories(apiMessages);
   if (conv) conv.updatedAt = Date.now();
@@ -5069,7 +5700,7 @@ async function regenerate() {
     if (messages[i].role !== 'system') apiMessages.push({ role: messages[i].role, content: buildApiContent(messages[i]) });
   }
 
-  await streamResponse(apiMessages, msg, msg.swipeIndex, bubble);
+  await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, null, null);
 
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
@@ -5105,7 +5736,7 @@ async function continueMessage() {
   const lastWrapper = wrappers[wrappers.length - 1];
   const bubble = lastWrapper.querySelector('.msg-bubble');
 
-  await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, existingText);
+  await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, existingText, null);
 
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
@@ -5122,6 +5753,9 @@ function clearChat() {
   if (conv) {
     conv.messages = [];
     conv.title = 'New Chat';
+    conv.summary = '';
+    conv.summaryUpdatedAt = null;
+    conv.docs = [];
     messages = conv.messages;
     saveConversations();
     renderSidebar();
