@@ -4211,10 +4211,9 @@ const OPENAI_WEB_SEARCH_TOOL = {
 };
 
 function proxiedFetch(url, options) {
-  const proxy = (localStorage.getItem('llmCorsProxy') || '').replace(/\/+$/, '');
+  const proxy = localStorage.getItem('llmCorsProxy') || '';
   if (!proxy) return fetch(url, options);
-  const sep = proxy.includes('?') ? '' : '/';
-  return fetch(proxy + sep + encodeURIComponent(url), options);
+  return fetch(proxy + url, options);
 }
 
 async function executeWebSearch(query, signal) {
