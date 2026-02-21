@@ -4429,7 +4429,9 @@ function renderMessages() {
       const thinkData = msg.swipeThinking && msg.swipeThinking[msg.swipeIndex];
       const toolData = msg.swipeToolUse && msg.swipeToolUse[msg.swipeIndex];
       const imgData = msg.swipeImages && msg.swipeImages[msg.swipeIndex];
-      bubble.innerHTML = renderThinkingHTML(thinkData || '') + renderToolBlocksHTML(toolData || []) + renderMarkdown(msg.content) + renderGenImages(imgData);
+      const _h = stripThinkTags(msg.content);
+      const _hThink = _h.thinking ? (thinkData || '') + _h.thinking : (thinkData || '');
+      bubble.innerHTML = renderThinkingHTML(_hThink) + renderToolBlocksHTML(toolData || []) + renderMarkdown(_h.content) + renderGenImages(imgData);
       postRenderProcessing(bubble);
     } else {
       bubble.textContent = msg.content;
@@ -4805,6 +4807,23 @@ function renderThinkingHTML(text) {
     '<div class="thinking-content">' + escaped + '</div></div>';
 }
 
+function stripThinkTags(text) {
+  if (!text) return { thinking: '', content: '' };
+  let thinking = '';
+  let content = text;
+  // Extract closed <think>...</think> and <thinking>...</thinking> blocks
+  content = content.replace(/<think(?:ing)?>([\s\S]*?)<\/think(?:ing)?>/gi, (_, inner) => {
+    thinking += inner;
+    return '';
+  });
+  // Handle unclosed <think> or <thinking> at end of string (mid-stream)
+  content = content.replace(/<think(?:ing)?>([\s\S]*)$/i, (_, inner) => {
+    thinking += inner;
+    return '';
+  });
+  return { thinking, content };
+}
+
 // ============================================
 // Tool Use Rendering
 // ============================================
@@ -5119,7 +5138,8 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           assistantMsg.swipeImages[swipeIdx] = extracted.images;
           assistantMsg.images = extracted.images;
         }
-        thinkingText = data.choices?.[0]?.message?.reasoning_content || '';
+        thinkingText = data.choices?.[0]?.message?.reasoning_content
+          || data.choices?.[0]?.message?.reasoning || '';
         // Handle OpenAI tool calls (non-streaming)
         const msgToolCalls = (data.choices?.[0]?.message?.tool_calls || []).filter(tc => tc.function?.name === 'web_search');
         if (msgToolCalls.length > 0) {
@@ -5174,11 +5194,15 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             assistantMsg.swipeImages[swipeIdx] = followExtracted.images;
             assistantMsg.images = followExtracted.images;
           }
-          const followThinking = followUpData.choices?.[0]?.message?.reasoning_content || '';
+          const followThinking = followUpData.choices?.[0]?.message?.reasoning_content
+            || followUpData.choices?.[0]?.message?.reasoning || '';
           if (followThinking) thinkingText += followThinking;
         }
         if (!fullText) fullText = 'No response.';
       }
+      const stripped = stripThinkTags(fullText);
+      if (stripped.thinking) thinkingText += stripped.thinking;
+      fullText = stripped.content;
       assistantMsg.swipes[swipeIdx] = fullText;
       assistantMsg.content = fullText;
       if (thinkingText) {
@@ -5286,8 +5310,15 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
                 if (ex.images.length) streamImages.push(...ex.images);
                 if (ex.text && !fullText) fullText = ex.text;
               }
-              const reasoning = json.choices?.[0]?.delta?.reasoning_content;
+              const reasoning = json.choices?.[0]?.delta?.reasoning_content
+                || json.choices?.[0]?.delta?.reasoning;
               if (reasoning) thinkingText += reasoning;
+              const reasoningDetails = json.choices?.[0]?.delta?.reasoning_details;
+              if (Array.isArray(reasoningDetails)) {
+                for (const rd of reasoningDetails) {
+                  if (rd.type === 'reasoning.text' && rd.text) thinkingText += rd.text;
+                }
+              }
               // Accumulate tool call fragments
               const deltaToolCalls = json.choices?.[0]?.delta?.tool_calls;
               if (deltaToolCalls) {
@@ -5314,7 +5345,10 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           const thinkingOpen = bubbleEl.querySelector('.thinking-content.open') !== null;
           const toolOpen = Array.from(bubbleEl.querySelectorAll('.tool-use-results')).map(el => el.classList.contains('open'));
           _suppressScrollFlag = true;
-          bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+          const _st = stripThinkTags(fullText);
+          const _displayText = _st.content;
+          const _displayThinking = _st.thinking ? thinkingText + _st.thinking : thinkingText;
+          bubbleEl.innerHTML = renderThinkingHTML(_displayThinking) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(_displayText) + renderGenImages(streamImages);
           if (thinkingOpen) {
             const tc = bubbleEl.querySelector('.thinking-content');
             const ta = bubbleEl.querySelector('.thinking-arrow');
@@ -5409,8 +5443,15 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               const fj = JSON.parse(fp);
               const fd = fj.choices?.[0]?.delta?.content;
               if (typeof fd === 'string') fullText += fd;
-              const fr = fj.choices?.[0]?.delta?.reasoning_content;
+              const fr = fj.choices?.[0]?.delta?.reasoning_content
+                || fj.choices?.[0]?.delta?.reasoning;
               if (fr) thinkingText += fr;
+              const frd = fj.choices?.[0]?.delta?.reasoning_details;
+              if (Array.isArray(frd)) {
+                for (const rd of frd) {
+                  if (rd.type === 'reasoning.text' && rd.text) thinkingText += rd.text;
+                }
+              }
             } catch(e) {}
           }
           assistantMsg.swipes[swipeIdx] = fullText;
@@ -5420,7 +5461,10 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             const msgsArea2 = document.getElementById('messagesArea');
             const savedST = userScrolledAway ? msgsArea2.scrollTop : null;
             _suppressScrollFlag = true;
-            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            const _st2 = stripThinkTags(fullText);
+            const _displayText2 = _st2.content;
+            const _displayThinking2 = _st2.thinking ? thinkingText + _st2.thinking : thinkingText;
+            bubbleEl.innerHTML = renderThinkingHTML(_displayThinking2) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(_displayText2) + renderGenImages(streamImages);
             if (savedST !== null) msgsArea2.scrollTop = savedST;
             else msgsArea2.scrollTop = msgsArea2.scrollHeight;
             _suppressScrollFlag = false;
@@ -5430,6 +5474,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         toolCallBuffers = {};
       }
       if (!fullText && !thinkingText) fullText = 'No response.';
+      const stripped = stripThinkTags(fullText);
+      if (stripped.thinking) thinkingText += stripped.thinking;
+      fullText = stripped.content;
       assistantMsg.swipes[swipeIdx] = fullText;
       assistantMsg.content = fullText;
       if (streamImages.length) {
@@ -5463,6 +5510,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
     } else {
       fullText = 'Error: ' + e.message;
     }
+    const strippedErr = stripThinkTags(fullText);
+    if (strippedErr.thinking) thinkingText += strippedErr.thinking;
+    fullText = strippedErr.content;
     assistantMsg.swipes[swipeIdx] = fullText;
     assistantMsg.content = fullText;
     if (thinkingText) {
