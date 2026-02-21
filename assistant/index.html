@@ -4230,7 +4230,7 @@ async function executeWebSearch(query, signal) {
   } catch (e) {
     if (e.name === 'AbortError') throw e;
     let msg = e.message || 'Unknown error';
-    if (msg === 'Failed to fetch') msg = 'Network error — CORS may be blocked by this search instance';
+    if (msg === 'Failed to fetch' || msg.includes('NetworkError')) msg = 'Network error — CORS may be blocked by this search instance';
     return { results: [], error: msg };
   }
 }
