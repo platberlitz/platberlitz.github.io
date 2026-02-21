@@ -1457,6 +1457,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <span class="toggle-hint">Remember info across chats</span>
     </label>
     <button class="btn btn-secondary" style="width:100%;padding:8px;font-size:0.8em;margin-bottom:14px" onclick="openManageMemories()">Manage Memories</button>
+    <label class="toggle-row">
+      <input type="checkbox" id="setHoldScreenshot"> Hold to Screenshot
+      <span class="toggle-hint">Long-press messages to screenshot</span>
+    </label>
 
     <div class="modal-section">Cost Tracking</div>
     <label>Input Cost per 1M tokens</label>
@@ -2326,6 +2330,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Long-press to enter select mode (desktop)
   let _longPressTimer = null;
   msgsArea.addEventListener('mousedown', e => {
+    if (localStorage.getItem('llmHoldScreenshot') !== 'true') return;
     if (_selectMode || e.target.closest('.msg-action-btn, .regen-btn')) return;
     const wrapper = e.target.closest('.msg-wrapper');
     if (!wrapper) return;
@@ -2340,6 +2345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Long-press to enter select mode (touch)
   let _lpTouchTimer = null, _lpTouchX = 0, _lpTouchY = 0;
   msgsArea.addEventListener('touchstart', e => {
+    if (localStorage.getItem('llmHoldScreenshot') !== 'true') return;
     if (_selectMode) return;
     const wrapper = e.target.closest('.msg-wrapper');
     if (!wrapper) return;
@@ -2506,9 +2512,9 @@ function renderMarkdown(text) {
   s = s.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
   s = s.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
   s = s.replace(/^[\-\*] (.+)$/gm, '<li class="ul-li">$1</li>');
-  s = s.replace(/((?:<li class="ul-li">.*<\/li>\n?)+)/g, function(m) { return '<ul>' + m.replace(/ class="ul-li"/g, '') + '</ul>'; });
+  s = s.replace(/((?:<li class="ul-li">.*<\/li>\n*)+)/g, function(m) { return '<ul>' + m.replace(/ class="ul-li"/g, '') + '</ul>'; });
   s = s.replace(/^\d+\. (.+)$/gm, '<li class="ol-li">$1</li>');
-  s = s.replace(/((?:<li class="ol-li">.*<\/li>\n?)+)/g, function(m) { return '<ol>' + m.replace(/ class="ol-li"/g, '') + '</ol>'; });
+  s = s.replace(/((?:<li class="ol-li">.*<\/li>\n*)+)/g, function(m) { return '<ol>' + m.replace(/ class="ol-li"/g, '') + '</ol>'; });
   s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="chat-inline-img chat-gen-img" loading="lazy">');
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
   s = s.replace(/^---$/gm, '<hr>');
@@ -3232,6 +3238,7 @@ function openSettings() {
   document.getElementById('setSearchApiUrl').value = localStorage.getItem('llmSearchApiUrl') || '';
   document.getElementById('setSearchApiKey').value = localStorage.getItem('llmSearchApiKey') || '';
   document.getElementById('setMemory').checked = localStorage.getItem('llmMemoryEnabled') === 'true';
+  document.getElementById('setHoldScreenshot').checked = localStorage.getItem('llmHoldScreenshot') === 'true';
 
   // Presets
   loadPresets();
@@ -3290,6 +3297,7 @@ function saveSettings() {
   localStorage.setItem('llmSearchApiUrl', document.getElementById('setSearchApiUrl').value.trim());
   localStorage.setItem('llmSearchApiKey', document.getElementById('setSearchApiKey').value.trim());
   localStorage.setItem('llmMemoryEnabled', document.getElementById('setMemory').checked ? 'true' : 'false');
+  localStorage.setItem('llmHoldScreenshot', document.getElementById('setHoldScreenshot').checked ? 'true' : 'false');
 
   // Warn if web search enabled for non-Anthropic without search URL
   if (document.getElementById('setWebSearch').checked) {
