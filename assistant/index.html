@@ -4166,6 +4166,10 @@ function renderToolBlocksHTML(toolBlocks) {
     if (searching) {
       return '<div class="tool-use-block"><div class="tool-use-header">\u{1F50D} Searching\u2026</div></div>';
     }
+    const escapedQuery = query.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    if (tb.error) {
+      return '<div class="tool-use-block"><div class="tool-use-header">\u{1F50D} Searched "' + escapedQuery + '" \u00B7 <span style="color:var(--error-color,#f66)">' + tb.error.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span></div></div>';
+    }
     const count = results.length;
     const resultsHTML = results.map(r => {
       const title = r.title || r.url || 'Result';
@@ -4214,7 +4218,7 @@ async function executeWebSearch(query, signal) {
     const fetchHeaders = {};
     if (searchKey) fetchHeaders['Authorization'] = 'Bearer ' + searchKey;
     const resp = await fetch(fetchUrl, { headers: fetchHeaders, signal });
-    if (!resp.ok) throw new Error('Search API returned ' + resp.status);
+    if (!resp.ok) throw new Error(resp.status + ' ' + resp.statusText);
     const data = await resp.json();
     const raw = data.results || data.items || data.data || [];
     const results = raw.slice(0, 10).map(r => ({
@@ -4225,7 +4229,9 @@ async function executeWebSearch(query, signal) {
     return { results, error: null };
   } catch (e) {
     if (e.name === 'AbortError') throw e;
-    return { results: [], error: 'Search failed: ' + e.message };
+    let msg = e.message || 'Unknown error';
+    if (msg === 'Failed to fetch') msg = 'Network error — CORS may be blocked by this search instance';
+    return { results: [], error: msg };
   }
 }
 
@@ -4399,6 +4405,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             const tb = toolBlocks[toolBlocks.length - 1];
             tb.results = results.map(r => ({ title: r.title, url: r.url }));
             tb.searching = false;
+            if (error) tb.error = error;
             bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
             toolResultMsgs.push({
               role: 'tool',
@@ -4617,6 +4624,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           const tb = toolBlocks[toolBlocks.length - 1];
           tb.results = results.map(r => ({ title: r.title, url: r.url }));
           tb.searching = false;
+          if (error) tb.error = error;
           bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
           if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
           toolResultMsgs.push({
