@@ -2174,10 +2174,27 @@ function openSourcesDrawer(msg) {
   popup.className = 'char-info-popup';
 
   let html = '<h3>Sources</h3>';
-  if (!toolBlocks.length || toolBlocks.every(tb => !(tb.results || []).length)) {
+  if (!toolBlocks.length || toolBlocks.every(tb => tb.type === 'url_fetch' ? (!tb.content && !tb.error) : !(tb.results || []).length)) {
     html += '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">No sources available.</div>';
   } else {
     toolBlocks.forEach(tb => {
+      // --- url_fetch blocks ---
+      if (tb.type === 'url_fetch') {
+        const escapedUrl = escapeHTML(tb.url || '');
+        const displayUrl = escapeHTML((tb.url || '').replace(/^https?:\/\//, '').replace(/\/+$/, ''));
+        html += '<div style="margin:10px 0 6px;font-weight:600;font-size:0.9em">\u{1F310} ' + displayUrl + '</div>';
+        if (tb.error) {
+          html += '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover);margin-bottom:8px;color:var(--error-color,#f66);font-size:0.85em">' + escapeHTML(tb.error) + '</div>';
+        } else if (tb.content) {
+          const preview = escapeHTML(tb.content.slice(0, 500));
+          html += '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover);margin-bottom:8px">' +
+            '<a href="' + escapedUrl + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:600">' + displayUrl + '</a>' +
+            '<div style="color:var(--text-secondary);font-size:0.8em;margin-top:6px;white-space:pre-wrap;max-height:150px;overflow-y:auto">' + preview + (tb.content.length > 500 ? '\u2026' : '') + '</div>' +
+          '</div>';
+        }
+        return;
+      }
+      // --- web_search blocks ---
       const results = tb.results || [];
       if (!results.length) return;
       const q = escapeHTML(tb.query || 'Search');
@@ -4457,7 +4474,10 @@ function renderMessages() {
 
     if (msg.role === 'assistant') {
       const toolData = msg.swipeToolUse && msg.swipeToolUse[msg.swipeIndex];
-      const hasSources = toolData && toolData.some(tb => (tb.results || []).some(r => r.url));
+      const hasSources = toolData && toolData.some(tb =>
+        (tb.type === 'url_fetch' && (tb.content || tb.url)) ||
+        (tb.results || []).some(r => r.url)
+      );
       if (hasSources) {
         const srcBtn = document.createElement('button');
         srcBtn.className = 'msg-action-btn';
@@ -4830,6 +4850,25 @@ function stripThinkTags(text) {
 function renderToolBlocksHTML(toolBlocks) {
   if (!toolBlocks || toolBlocks.length === 0) return '';
   return toolBlocks.map((tb, i) => {
+    // --- url_fetch blocks ---
+    if (tb.type === 'url_fetch') {
+      const escapedUrl = escapeHTML(tb.url || '');
+      const displayUrl = escapeHTML((tb.url || '').replace(/^https?:\/\//, '').replace(/\/+$/, ''));
+      if (tb.searching) {
+        return '<div class="tool-use-block"><div class="tool-use-header">\u{1F310} Reading ' + displayUrl + '\u2026</div></div>';
+      }
+      if (tb.error) {
+        return '<div class="tool-use-block"><div class="tool-use-header">\u{1F310} ' + displayUrl + ' \u00B7 <span style="color:var(--error-color,#f66)">' + escapeHTML(tb.error) + '</span></div></div>';
+      }
+      const charCount = (tb.content || '').length;
+      const preview = escapeHTML((tb.content || '').slice(0, 300));
+      return '<div class="tool-use-block">' +
+        '<div class="tool-use-header" onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.tool-use-arrow\').textContent=this.nextElementSibling.classList.contains(\'open\')?\'\u25BE\':\'\u25B8\'">' +
+        '\u{1F310} Fetched ' + displayUrl + ' \u00B7 ' + charCount.toLocaleString() + ' chars' +
+        ' <span class="tool-use-arrow">\u25B8</span></div>' +
+        '<div class="tool-use-results"><div class="tool-result-snippet" style="max-height:200px;overflow-y:auto;white-space:pre-wrap;font-size:0.8em;padding:8px">' + preview + (charCount > 300 ? '\u2026' : '') + '</div></div></div>';
+    }
+    // --- web_search blocks (default) ---
     const query = tb.query || '';
     const results = tb.results || [];
     const searching = tb.searching;
@@ -4996,6 +5035,77 @@ function formatSearchResultsForModel(results, error) {
 }
 
 // ============================================
+// URL Fetch Tool
+// ============================================
+const URL_FETCH_MAX_CHARS = 18000;
+
+const OPENAI_URL_FETCH_TOOL = {
+  type: 'function',
+  function: {
+    name: 'url_fetch',
+    description: 'Fetch the full content of a web page given its URL. Use this to read articles, documentation, or any web page the user shares or that appeared in search results.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'The URL to fetch' }
+      },
+      required: ['url']
+    }
+  }
+};
+
+const ANTHROPIC_URL_FETCH_TOOL = {
+  name: 'url_fetch',
+  description: 'Fetch the full content of a web page given its URL. Use this to read articles, documentation, or any web page the user shares or that appeared in search results.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      url: { type: 'string', description: 'The URL to fetch' }
+    },
+    required: ['url']
+  }
+};
+
+const HANDLED_TOOLS = new Set(['web_search', 'url_fetch']);
+
+async function executeUrlFetch(url, signal) {
+  try {
+    const resp = await proxiedFetch(url, { signal });
+    if (!resp.ok) return { content: '', error: resp.status + ' ' + (resp.statusText || 'Error') };
+    const ct = resp.headers.get('content-type') || '';
+    const raw = await resp.text();
+    if (!ct.includes('html')) {
+      // Plain text / JSON / etc — return directly
+      return { content: raw.slice(0, URL_FETCH_MAX_CHARS), error: null };
+    }
+    // Parse HTML and extract readable text
+    const doc = new DOMParser().parseFromString(raw, 'text/html');
+    // Remove noise elements
+    for (const sel of ['script','style','nav','footer','header','aside','iframe','noscript','svg','[role="navigation"]','[role="banner"]','[role="contentinfo"]']) {
+      doc.querySelectorAll(sel).forEach(el => el.remove());
+    }
+    // Prefer article/main content, fall back to body
+    const root = doc.querySelector('article') || doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.body;
+    let text = (root ? root.textContent : doc.body?.textContent) || '';
+    // Collapse whitespace
+    text = text.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    if (!text) return { content: '', error: 'Page returned no readable text.' };
+    return { content: text.slice(0, URL_FETCH_MAX_CHARS), error: null };
+  } catch (e) {
+    if (e.name === 'AbortError') throw e;
+    let msg = e.message || 'Unknown error';
+    if (msg === 'Failed to fetch' || msg.includes('NetworkError')) msg = 'Network error — CORS proxy may be required';
+    return { content: '', error: msg };
+  }
+}
+
+function formatUrlFetchResultForModel(content, error, url) {
+  if (error) return 'Error fetching ' + url + ': ' + error;
+  if (!content) return 'No content found at ' + url;
+  return 'Content from ' + url + ':\n\n' + content;
+}
+
+// ============================================
 // Streaming
 // ============================================
 async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, overrideModel, prefixText) {
@@ -5024,6 +5134,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
   let currentBlockType = null;
   let inputJsonBuf = '';
   let toolCallBuffers = {};
+  let currentToolUseId = null;
+  let currentToolUseName = null;
+  let pendingAnthropicToolCalls = [];
 
   try {
     let url, headers, body;
@@ -5046,7 +5159,10 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       const prepared = prepareAnthropicMessages(apiMessages);
       body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 4096, stream: useStream, ...extra };
       if (resolveWebSearchEnabled()) {
-        body.tools = (body.tools || []).concat([{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }]);
+        body.tools = (body.tools || []).concat([
+          { type: 'web_search_20250305', name: 'web_search', max_uses: 5 },
+          ANTHROPIC_URL_FETCH_TOOL
+        ]);
       }
     } else {
       url = baseUrl + '/chat/completions';
@@ -5084,8 +5200,11 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       });
       body = { model, messages: processedMessages, stream: useStream, ...extra };
       // Inject web search tool for OpenAI-compatible models
-      if (resolveWebSearchEnabled() && localStorage.getItem('llmSearchApiUrl')) {
-        body.tools = (body.tools || []).concat([OPENAI_WEB_SEARCH_TOOL]);
+      if (resolveWebSearchEnabled()) {
+        if (localStorage.getItem('llmSearchApiUrl')) {
+          body.tools = (body.tools || []).concat([OPENAI_WEB_SEARCH_TOOL]);
+        }
+        body.tools = (body.tools || []).concat([OPENAI_URL_FETCH_TOOL]);
       }
     }
     if (!('temperature' in body)) {
@@ -5128,7 +5247,68 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               snippet: r.snippet || r.content || r.description || r.summary || ''
             }));
             tb.searching = false;
+          } else if (block.type === 'tool_use' && HANDLED_TOOLS.has(block.name)) {
+            if (block.name === 'url_fetch') {
+              toolBlocks.push({ type: 'url_fetch', url: block.input?.url || '', content: '', searching: true });
+            } else {
+              toolBlocks.push({ query: block.input?.query || '', results: [], searching: true });
+            }
+            pendingAnthropicToolCalls.push({ id: block.id, name: block.name, input: block.input || {}, toolBlockIndex: toolBlocks.length - 1 });
           }
+        }
+        // Execute pending Anthropic custom tool calls (non-streaming)
+        if (pendingAnthropicToolCalls.length > 0) {
+          const toolUseContentBlocks = [];
+          const toolResultBlocks = [];
+          for (const call of pendingAnthropicToolCalls) {
+            toolUseContentBlocks.push({ type: 'tool_use', id: call.id, name: call.name, input: call.input });
+            if (call.name === 'url_fetch') {
+              const tb = toolBlocks[call.toolBlockIndex];
+              const fetchUrl = call.input?.url || '';
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+              if (tb) { tb.content = content; tb.searching = false; if (error) tb.error = error; }
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              toolResultBlocks.push({ type: 'tool_result', tool_use_id: call.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
+            } else if (call.name === 'web_search') {
+              const tb = toolBlocks[call.toolBlockIndex];
+              const query = call.input?.query || '';
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { results, error } = await executeWebSearch(query, abortController.signal);
+              if (tb) { tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet })); tb.searching = false; if (error) tb.error = error; }
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              toolResultBlocks.push({ type: 'tool_result', tool_use_id: call.id, content: formatSearchResultsForModel(results, error) });
+            }
+          }
+          // Follow-up non-streaming request
+          const prepared = prepareAnthropicMessages(apiMessages);
+          const followUpMessages = [
+            ...prepared.messages,
+            { role: 'assistant', content: [
+              ...(fullText && fullText !== 'No response.' ? [{ type: 'text', text: fullText }] : []),
+              ...toolUseContentBlocks
+            ]},
+            { role: 'user', content: toolResultBlocks }
+          ];
+          const followUpBody = { ...body, messages: followUpMessages, stream: false };
+          delete followUpBody.tools;
+          exclude.forEach(k => delete followUpBody[k]);
+          const followUpResp = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(followUpBody),
+            signal: abortController.signal
+          });
+          if (!followUpResp.ok) {
+            let errText = '';
+            try { errText = await followUpResp.text(); } catch(e) {}
+            throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+          }
+          const followUpData = await followUpResp.json();
+          fullText = (followUpData.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || 'No response.';
+          const followThink = (followUpData.content || []).filter(c => c.type === 'thinking').map(c => c.thinking).join('');
+          if (followThink) thinkingText += followThink;
+          pendingAnthropicToolCalls = [];
         }
       } else {
         const extracted = extractImages(data.choices?.[0]?.message || data);
@@ -5141,7 +5321,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         thinkingText = data.choices?.[0]?.message?.reasoning_content
           || data.choices?.[0]?.message?.reasoning || '';
         // Handle OpenAI tool calls (non-streaming)
-        const msgToolCalls = (data.choices?.[0]?.message?.tool_calls || []).filter(tc => tc.function?.name === 'web_search');
+        const msgToolCalls = (data.choices?.[0]?.message?.tool_calls || []).filter(tc => HANDLED_TOOLS.has(tc.function?.name));
         if (msgToolCalls.length > 0) {
           const assistantToolMsg = {
             role: 'assistant',
@@ -5154,21 +5334,32 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           };
           const toolResultMsgs = [];
           for (const tc of msgToolCalls) {
-            let query = '';
-            try { query = JSON.parse(tc.function.arguments).query || ''; } catch(e) { query = tc.function.arguments; }
-            toolBlocks.push({ query, results: [], searching: true });
-            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
-            const { results, error } = await executeWebSearch(query, abortController.signal);
-            const tb = toolBlocks[toolBlocks.length - 1];
-            tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
-            tb.searching = false;
-            if (error) tb.error = error;
-            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
-            toolResultMsgs.push({
-              role: 'tool',
-              tool_call_id: tc.id,
-              content: formatSearchResultsForModel(results, error)
-            });
+            const toolName = tc.function?.name;
+            let args = {};
+            try { args = JSON.parse(tc.function.arguments); } catch(e) {}
+            if (toolName === 'url_fetch') {
+              const fetchUrl = args.url || '';
+              toolBlocks.push({ type: 'url_fetch', url: fetchUrl, content: '', searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.content = content;
+              tb.searching = false;
+              if (error) tb.error = error;
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              toolResultMsgs.push({ role: 'tool', tool_call_id: tc.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
+            } else {
+              const query = args.query || '';
+              toolBlocks.push({ query, results: [], searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { results, error } = await executeWebSearch(query, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
+              tb.searching = false;
+              if (error) tb.error = error;
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              toolResultMsgs.push({ role: 'tool', tool_call_id: tc.id, content: formatSearchResultsForModel(results, error) });
+            }
           }
           // Follow-up non-streaming request
           const followUpMessages = [...body.messages, assistantToolMsg, ...toolResultMsgs];
@@ -5244,6 +5435,16 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
                   currentBlockType = 'server_tool_use';
                   inputJsonBuf = '';
                   toolBlocks.push({ query: '', results: [], searching: true });
+                } else if (cb && cb.type === 'tool_use' && HANDLED_TOOLS.has(cb.name)) {
+                  currentBlockType = 'tool_use';
+                  currentToolUseId = cb.id || '';
+                  currentToolUseName = cb.name;
+                  inputJsonBuf = '';
+                  if (cb.name === 'url_fetch') {
+                    toolBlocks.push({ type: 'url_fetch', url: '', content: '', searching: true });
+                  } else {
+                    toolBlocks.push({ query: '', results: [], searching: true });
+                  }
                 } else if (cb && cb.type === 'web_search_tool_result') {
                   currentBlockType = 'web_search_tool_result';
                   const tb = toolBlocks[toolBlocks.length - 1];
@@ -5276,6 +5477,20 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
                     if (tb && parsed.query) tb.query = parsed.query;
                   } catch(e) {}
                   inputJsonBuf = '';
+                } else if (currentBlockType === 'tool_use' && currentToolUseName && inputJsonBuf) {
+                  try {
+                    const parsed = JSON.parse(inputJsonBuf);
+                    const tb = toolBlocks[toolBlocks.length - 1];
+                    if (currentToolUseName === 'url_fetch') {
+                      if (tb) tb.url = parsed.url || '';
+                    } else if (tb && parsed.query) {
+                      tb.query = parsed.query;
+                    }
+                    pendingAnthropicToolCalls.push({ id: currentToolUseId, name: currentToolUseName, input: parsed, toolBlockIndex: toolBlocks.length - 1 });
+                  } catch(e) {}
+                  inputJsonBuf = '';
+                  currentToolUseId = null;
+                  currentToolUseName = null;
                 }
                 currentBlockType = null;
               } else if (json.type === 'message_stop') {
@@ -5372,8 +5587,120 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           lastRender = now;
         }
       }
+      // === Anthropic custom tool call execution (url_fetch etc.) ===
+      if (pendingAnthropicToolCalls.length > 0 && format === 'anthropic') {
+        const toolUseContentBlocks = [];
+        const toolResultBlocks = [];
+        for (const call of pendingAnthropicToolCalls) {
+          toolUseContentBlocks.push({ type: 'tool_use', id: call.id, name: call.name, input: call.input });
+          if (call.name === 'url_fetch') {
+            const tb = toolBlocks[call.toolBlockIndex];
+            const fetchUrl = call.input?.url || '';
+            if (tb) tb.url = fetchUrl;
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            const msgsAreaTmp = document.getElementById('messagesArea');
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+            if (tb) {
+              tb.content = content;
+              tb.searching = false;
+              if (error) tb.error = error;
+            }
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            toolResultBlocks.push({ type: 'tool_result', tool_use_id: call.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
+          } else if (call.name === 'web_search') {
+            const tb = toolBlocks[call.toolBlockIndex];
+            const query = call.input?.query || '';
+            if (tb) tb.query = query;
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            const msgsAreaTmp = document.getElementById('messagesArea');
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            const { results, error } = await executeWebSearch(query, abortController.signal);
+            if (tb) {
+              tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
+              tb.searching = false;
+              if (error) tb.error = error;
+            }
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            toolResultBlocks.push({ type: 'tool_result', tool_use_id: call.id, content: formatSearchResultsForModel(results, error) });
+          }
+        }
+        // Build follow-up request
+        const prepared = prepareAnthropicMessages(apiMessages);
+        const followUpMessages = [
+          ...prepared.messages,
+          { role: 'assistant', content: [
+            ...(fullText ? [{ type: 'text', text: fullText }] : []),
+            ...toolUseContentBlocks
+          ]},
+          { role: 'user', content: toolResultBlocks }
+        ];
+        const followUpBody = { ...body, messages: followUpMessages, stream: true };
+        delete followUpBody.tools;
+        exclude.forEach(k => delete followUpBody[k]);
+        const followUpResp = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(followUpBody),
+          signal: abortController.signal
+        });
+        if (!followUpResp.ok) {
+          let errText = '';
+          try { errText = await followUpResp.text(); } catch(e) {}
+          throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+        }
+        fullText = '';
+        const followCt = followUpResp.headers.get('content-type') || '';
+        if (followCt.includes('application/json')) {
+          const followData = await followUpResp.json();
+          fullText = (followData.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || '';
+          const followThink = (followData.content || []).filter(c => c.type === 'thinking').map(c => c.thinking).join('');
+          if (followThink) thinkingText += followThink;
+        } else {
+          const followReader = followUpResp.body.getReader();
+          const followDecoder = new TextDecoder();
+          let followBuffer = '';
+          while (true) {
+            const { done, value } = await followReader.read();
+            if (done) break;
+            followBuffer += followDecoder.decode(value, { stream: true });
+            const fLines = followBuffer.split('\n');
+            followBuffer = fLines.pop() || '';
+            for (const fLine of fLines) {
+              const ft = fLine.trim();
+              if (!ft.startsWith('data:')) continue;
+              const fp = ft.slice(5).trim();
+              if (!fp) continue;
+              try {
+                const fj = JSON.parse(fp);
+                if (fj.type === 'content_block_delta') {
+                  if (fj.delta?.type === 'text_delta' && fj.delta?.text) fullText += fj.delta.text;
+                  else if (fj.delta?.type === 'thinking_delta' && fj.delta?.thinking) thinkingText += fj.delta.thinking;
+                }
+              } catch(e) {}
+            }
+            assistantMsg.swipes[swipeIdx] = fullText;
+            assistantMsg.content = fullText;
+            const now2 = Date.now();
+            if (now2 - lastRender > 80) {
+              const msgsArea2 = document.getElementById('messagesArea');
+              const savedST = userScrolledAway ? msgsArea2.scrollTop : null;
+              _suppressScrollFlag = true;
+              const _st2 = stripThinkTags(fullText);
+              bubbleEl.innerHTML = renderThinkingHTML(_st2.thinking ? thinkingText + _st2.thinking : thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(_st2.content) + renderGenImages(streamImages);
+              if (savedST !== null) msgsArea2.scrollTop = savedST;
+              else msgsArea2.scrollTop = msgsArea2.scrollHeight;
+              _suppressScrollFlag = false;
+              lastRender = now2;
+            }
+          }
+        }
+        pendingAnthropicToolCalls = [];
+      }
       // === OpenAI tool call execution loop ===
-      const pendingToolCalls = Object.values(toolCallBuffers).filter(tc => tc.name === 'web_search');
+      const pendingToolCalls = Object.values(toolCallBuffers).filter(tc => HANDLED_TOOLS.has(tc.name));
       if (pendingToolCalls.length > 0 && format !== 'anthropic') {
         // Build the assistant message with tool_calls
         const assistantToolMsg = {
@@ -5387,26 +5714,39 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         };
         const toolResultMsgs = [];
         for (const tc of pendingToolCalls) {
-          let query = '';
-          try { query = JSON.parse(tc.arguments).query || ''; } catch(e) { query = tc.arguments; }
-          // Show searching state
-          toolBlocks.push({ query, results: [], searching: true });
-          bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+          const toolName = tc.name;
+          let args = {};
+          try { args = JSON.parse(tc.arguments); } catch(e) {}
           const msgsAreaTmp = document.getElementById('messagesArea');
-          if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
-          // Execute search
-          const { results, error } = await executeWebSearch(query, abortController.signal);
-          const tb = toolBlocks[toolBlocks.length - 1];
-          tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
-          tb.searching = false;
-          if (error) tb.error = error;
-          bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
-          if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
-          toolResultMsgs.push({
-            role: 'tool',
-            tool_call_id: tc.id,
-            content: formatSearchResultsForModel(results, error)
-          });
+          if (toolName === 'url_fetch') {
+            const fetchUrl = args.url || '';
+            toolBlocks.push({ type: 'url_fetch', url: fetchUrl, content: '', searching: true });
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+            const tb = toolBlocks[toolBlocks.length - 1];
+            tb.content = content;
+            tb.searching = false;
+            if (error) tb.error = error;
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            toolResultMsgs.push({ role: 'tool', tool_call_id: tc.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
+          } else {
+            const query = args.query || '';
+            // Show searching state
+            toolBlocks.push({ query, results: [], searching: true });
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            // Execute search
+            const { results, error } = await executeWebSearch(query, abortController.signal);
+            const tb = toolBlocks[toolBlocks.length - 1];
+            tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
+            tb.searching = false;
+            if (error) tb.error = error;
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            toolResultMsgs.push({ role: 'tool', tool_call_id: tc.id, content: formatSearchResultsForModel(results, error) });
+          }
         }
         // Follow-up streaming request with tool results
         const followUpMessages = [...body.messages, assistantToolMsg, ...toolResultMsgs];
