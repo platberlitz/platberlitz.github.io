@@ -567,25 +567,6 @@ body {
 }
 .input-btn:hover { color: var(--text-primary); }
 .input-btn.recording { color: #ef4444; animation: voicePulse 1s ease-in-out infinite; }
-.input-btn.web-toggle {
-  font-size: 0.75em;
-  padding: 6px 10px;
-  border: 1px solid var(--card-border);
-  border-radius: 999px;
-  background: var(--hover);
-  color: var(--text-secondary);
-}
-.input-btn.web-toggle.on {
-  background: var(--accent);
-  color: var(--accent-text);
-  border-color: transparent;
-}
-.input-btn.web-toggle.off {
-  background: transparent;
-  color: var(--text-secondary);
-  border-color: var(--card-border);
-  opacity: 0.8;
-}
 @keyframes voicePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
 .send-btn {
@@ -804,7 +785,6 @@ body {
   .toolbar-btn { padding: 10px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
   .toolbar-toggle { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
   .input-btn { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
-  .input-btn.web-toggle { min-width: unset; min-height: unset; padding: 4px 8px; font-size: 0.7em; }
   .img-thumb .remove-thumb { width: 28px; height: 28px; font-size: 14px; top: -4px; right: -4px; }
   .file-thumb .remove-thumb { width: 28px; height: 28px; font-size: 14px; top: -4px; right: -4px; }
   .msg-action-btn { padding: 8px 12px; font-size: 0.8em; min-height: 36px; }
@@ -1329,7 +1309,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <input type="file" id="fileInput" accept="image/*,.pdf,.txt,.csv,.html,.md" multiple style="display:none" onchange="handleFileSelect(event)">
       <textarea id="chatInput" placeholder="Type a message..." rows="1"></textarea>
       <button class="input-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input" aria-label="Voice input">&#127908;</button>
-      <button class="input-btn web-toggle" id="webToggleBtn" onclick="toggleWebSearchOverride()" title="Web search: Auto" aria-label="Web search toggle">Web</button>
       <button class="send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Send message">Send</button>
     </div>
     <div class="token-info" id="tokenInfo"></div>
@@ -1580,7 +1559,6 @@ let modelOverride = null;
 let mentionActive = false;
 let mentionIdx = 0;
 let activeTagFilter = null;
-let nextWebSearchOverride = null;
 let lastSearchStatus = { ok: null, error: null, at: null, query: '' };
 
 const TAG_COLORS = [
@@ -2649,7 +2627,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('voiceBtn').style.display = 'none';
   }
 
-  updateWebToggleBtn();
 
   // Auto-resize textarea + character count + @model mentions
   const ta = document.getElementById('chatInput');
@@ -4746,7 +4723,7 @@ async function resendAfterEdit() {
   const apiMessages = await buildSystemMessages(conv);
   messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: buildApiContent(m) }); });
 
-  await streamResponse(apiMessages, assistantMsg, 0, bubble, null, null, null);
+  await streamResponse(apiMessages, assistantMsg, 0, bubble, null, null);
 
   extractMemories(apiMessages);
   if (conv) conv.updatedAt = Date.now();
@@ -5002,7 +4979,7 @@ function formatSearchResultsForModel(results, error) {
 // ============================================
 // Streaming
 // ============================================
-async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, overrideModel, prefixText, webSearchOverride) {
+async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, overrideModel, prefixText) {
   const baseUrl = (localStorage.getItem('llmProxyUrl') || '').replace(/\/+$/, '');
   const apiKey = localStorage.getItem('llmApiKey');
   const model = overrideModel || localStorage.getItem('llmModel') || 'gpt-4o';
@@ -5049,7 +5026,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       };
       const prepared = prepareAnthropicMessages(apiMessages);
       body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 4096, stream: useStream, ...extra };
-      if (resolveWebSearchEnabled(webSearchOverride)) {
+      if (resolveWebSearchEnabled()) {
         body.tools = (body.tools || []).concat([{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }]);
       }
     } else {
@@ -5088,7 +5065,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       });
       body = { model, messages: processedMessages, stream: useStream, ...extra };
       // Inject web search tool for OpenAI-compatible models
-      if (resolveWebSearchEnabled(webSearchOverride) && localStorage.getItem('llmSearchApiUrl')) {
+      if (resolveWebSearchEnabled() && localStorage.getItem('llmSearchApiUrl')) {
         body.tools = (body.tools || []).concat([OPENAI_WEB_SEARCH_TOOL]);
       }
     }
@@ -5531,36 +5508,8 @@ function updateSendBtnState() {
   }
 }
 
-function resolveWebSearchEnabled(override) {
-  if (override === true) return true;
-  if (override === false) return false;
+function resolveWebSearchEnabled() {
   return localStorage.getItem('llmWebSearch') === 'true';
-}
-
-function toggleWebSearchOverride() {
-  if (nextWebSearchOverride === null) nextWebSearchOverride = true;
-  else if (nextWebSearchOverride === true) nextWebSearchOverride = false;
-  else nextWebSearchOverride = null;
-  updateWebToggleBtn();
-}
-
-function updateWebToggleBtn() {
-  const btn = document.getElementById('webToggleBtn');
-  if (!btn) return;
-  const state = nextWebSearchOverride;
-  btn.classList.remove('on', 'off');
-  if (state === true) {
-    btn.textContent = 'Web On';
-    btn.title = 'Web search: On (this message)';
-    btn.classList.add('on');
-  } else if (state === false) {
-    btn.textContent = 'Web Off';
-    btn.title = 'Web search: Off (this message)';
-    btn.classList.add('off');
-  } else {
-    btn.textContent = 'Web Auto';
-    btn.title = 'Web search: Auto';
-  }
 }
 
 // ============================================
@@ -5585,8 +5534,6 @@ async function sendMessage() {
       if (pendingAttachments.length > 0) { showToast('Commands cannot include attachments.', 'error'); return; }
       input.value = '';
       input.style.height = 'auto';
-      nextWebSearchOverride = null;
-      updateWebToggleBtn();
       await handleCommand(cmd, conv);
       return;
     }
@@ -5666,11 +5613,7 @@ async function sendMessage() {
   const overrideModel = modelOverride;
   clearModelOverride();
 
-  const webOverride = nextWebSearchOverride;
-  nextWebSearchOverride = null;
-  updateWebToggleBtn();
-
-  await streamResponse(apiMessages, assistantMsg, 0, bubble, overrideModel, null, webOverride);
+  await streamResponse(apiMessages, assistantMsg, 0, bubble, overrideModel, null);
 
   extractMemories(apiMessages);
   if (conv) conv.updatedAt = Date.now();
@@ -5709,7 +5652,7 @@ async function regenerate() {
     if (messages[i].role !== 'system') apiMessages.push({ role: messages[i].role, content: buildApiContent(messages[i]) });
   }
 
-  await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, null, null);
+  await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, null);
 
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
@@ -5745,7 +5688,7 @@ async function continueMessage() {
   const lastWrapper = wrappers[wrappers.length - 1];
   const bubble = lastWrapper.querySelector('.msg-bubble');
 
-  await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, existingText, null);
+  await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, existingText);
 
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
