@@ -868,6 +868,12 @@ body {
   font-size: 0.8em;
   margin-left: auto;
 }
+.settings-note {
+  color: var(--text-secondary);
+  font-size: 0.8em;
+  margin: -4px 0 10px;
+  line-height: 1.4;
+}
 
 /* Prompt entry list */
 .prompt-entry-list { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
@@ -1454,6 +1460,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <input type="checkbox" id="setWebSearch"> Web Search
       <span class="toggle-hint">Anthropic native · OpenAI via search API</span>
     </label>
+    <div class="settings-note">Note: This page is public, so web search requires each user to provide their own search endpoint. Shared keys/endpoints can't be safely hidden in a static page.</div>
     <label>Search API URL <span class="toggle-hint">SearXNG, Brave, or custom with {query}/{key}</span></label>
     <input type="text" id="setSearchApiUrl" placeholder="https://api.search.brave.com/res/v1/web/search or https://example.com/search?q={query}&key={key}">
     <label>Search API Key <span class="toggle-hint">optional for SearXNG · required for Brave · supports Header: value</span></label>
