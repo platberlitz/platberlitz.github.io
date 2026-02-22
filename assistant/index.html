@@ -5082,6 +5082,56 @@ const ANTHROPIC_URL_FETCH_TOOL = {
 
 const HANDLED_TOOLS = new Set(['web_search', 'url_fetch']);
 
+// Parse tool calls that models output as text instead of using the proper API mechanism
+// Matches: <tool_call>{"name":"web_search",...}</tool_call>, ```json\n{"name":...}\n```, etc.
+function parseTextToolCalls(text) {
+  const calls = [];
+  // Pattern 1: <tool_call>...</tool_call>
+  const tagPattern = /<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/gi;
+  let m;
+  while ((m = tagPattern.exec(text)) !== null) {
+    try {
+      const parsed = JSON.parse(m[1]);
+      if (parsed.name && HANDLED_TOOLS.has(parsed.name)) {
+        calls.push({ id: 'text_tc_' + calls.length, name: parsed.name, arguments: JSON.stringify(parsed.arguments || {}) });
+      }
+    } catch(e) {}
+  }
+  // Pattern 2: ```json\n{"name":"web_search",...}\n``` or ```\n{"name":...}\n```
+  if (calls.length === 0) {
+    const codePattern = /```(?:json)?\s*\n?\s*(\{[\s\S]*?\})\s*\n?\s*```/gi;
+    while ((m = codePattern.exec(text)) !== null) {
+      try {
+        const parsed = JSON.parse(m[1]);
+        if (parsed.name && HANDLED_TOOLS.has(parsed.name)) {
+          calls.push({ id: 'text_tc_' + calls.length, name: parsed.name, arguments: JSON.stringify(parsed.arguments || {}) });
+        }
+      } catch(e) {}
+    }
+  }
+  // Pattern 3: {"name": "web_search", "arguments": {...}} as bare JSON in text
+  if (calls.length === 0) {
+    const jsonPattern = /\{\s*"name"\s*:\s*"(web_search|url_fetch)"[\s\S]*?"arguments"\s*:\s*(\{[^}]*\})\s*\}/gi;
+    while ((m = jsonPattern.exec(text)) !== null) {
+      try {
+        const args = JSON.parse(m[2]);
+        if (HANDLED_TOOLS.has(m[1])) {
+          calls.push({ id: 'text_tc_' + calls.length, name: m[1], arguments: JSON.stringify(args) });
+        }
+      } catch(e) {}
+    }
+  }
+  return calls;
+}
+
+function stripTextToolCalls(text) {
+  return text
+    .replace(/<tool_call>\s*[\s\S]*?\s*<\/tool_call>/gi, '')
+    .replace(/```(?:json)?\s*\n?\s*\{\s*"name"\s*:\s*"(?:web_search|url_fetch)"[\s\S]*?\}\s*\n?\s*```/gi, '')
+    .replace(/\{\s*"name"\s*:\s*"(?:web_search|url_fetch)"[\s\S]*?"arguments"\s*:\s*\{[^}]*\}\s*\}/gi, '')
+    .trim();
+}
+
 async function executeUrlFetch(url, signal) {
   try {
     const resp = await proxiedFetch(url, { signal });
@@ -5362,7 +5412,15 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         thinkingText = data.choices?.[0]?.message?.reasoning_content
           || data.choices?.[0]?.message?.reasoning || '';
         // Handle OpenAI tool calls (non-streaming)
-        const msgToolCalls = (data.choices?.[0]?.message?.tool_calls || []).filter(tc => HANDLED_TOOLS.has(tc.function?.name));
+        let msgToolCalls = (data.choices?.[0]?.message?.tool_calls || []).filter(tc => HANDLED_TOOLS.has(tc.function?.name));
+        // Fallback: parse text-based tool calls
+        if (msgToolCalls.length === 0 && fullText) {
+          const textCalls = parseTextToolCalls(fullText);
+          if (textCalls.length > 0) {
+            msgToolCalls = textCalls.map(tc => ({ id: tc.id, function: { name: tc.name, arguments: tc.arguments } }));
+            fullText = stripTextToolCalls(fullText);
+          }
+        }
         if (msgToolCalls.length > 0) {
           const assistantToolMsg = {
             role: 'assistant',
@@ -5819,6 +5877,17 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         }
         if (!fullText && preToolText) fullText = preToolText;
         pendingAnthropicToolCalls = [];
+      }
+      // === Parse text-based tool calls (models like Gemini output tool calls as text) ===
+      if (format !== 'anthropic' && Object.keys(toolCallBuffers).length === 0) {
+        const textToolCalls = parseTextToolCalls(fullText);
+        if (textToolCalls.length > 0) {
+          for (let i = 0; i < textToolCalls.length; i++) {
+            toolCallBuffers[i] = textToolCalls[i];
+          }
+          // Strip tool call text from displayed response
+          fullText = stripTextToolCalls(fullText);
+        }
       }
       // === OpenAI tool call execution loop ===
       let openaiToolRound = 0;
