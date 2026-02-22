@@ -4924,8 +4924,17 @@ const OPENAI_WEB_SEARCH_TOOL = {
 
 function proxiedFetch(url, options) {
   const proxy = localStorage.getItem('llmCorsProxy') || '';
-  if (!proxy) return fetch(url, options);
-  return fetch(proxy + encodeURIComponent(url), options);
+  if (proxy) return fetch(proxy + encodeURIComponent(url), options);
+  // Try direct fetch first, then auto-fallback to CORS proxy
+  return fetch(url, options).catch(err => {
+    if (err.name === 'AbortError') throw err;
+    const msg = err.message || '';
+    if (msg === 'Failed to fetch' || msg === 'Load failed' || msg.includes('NetworkError') || msg.includes('CORS')) {
+      const fallbackProxy = 'https://api.allorigins.win/raw?url=';
+      return fetch(fallbackProxy + encodeURIComponent(url), options);
+    }
+    throw err;
+  });
 }
 
 async function executeWebSearch(query, signal) {
@@ -5094,7 +5103,7 @@ async function executeUrlFetch(url, signal) {
   } catch (e) {
     if (e.name === 'AbortError') throw e;
     let msg = e.message || 'Unknown error';
-    if (msg === 'Failed to fetch' || msg.includes('NetworkError')) msg = 'Network error — CORS proxy may be required';
+    if (msg === 'Failed to fetch' || msg === 'Load failed' || msg.includes('NetworkError')) msg = 'Network error — CORS proxy may be required';
     return { content: '', error: msg };
   }
 }
