@@ -5595,7 +5595,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         }
       }
       // === Anthropic custom tool call execution (url_fetch etc.) ===
-      if (pendingAnthropicToolCalls.length > 0 && format === 'anthropic') {
+      let anthropicToolRound = 0;
+      while (pendingAnthropicToolCalls.length > 0 && format === 'anthropic' && anthropicToolRound < 5) {
+        anthropicToolRound++;
         const toolUseContentBlocks = [];
         const toolResultBlocks = [];
         for (const call of pendingAnthropicToolCalls) {
@@ -5645,7 +5647,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           { role: 'user', content: toolResultBlocks }
         ];
         const followUpBody = { ...body, messages: followUpMessages, stream: true };
-        delete followUpBody.tools;
+        if (anthropicToolRound >= 5) delete followUpBody.tools;
         exclude.forEach(k => delete followUpBody[k]);
         const followUpResp = await fetch(url, {
           method: 'POST',
@@ -5660,6 +5662,11 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         }
         const preToolText = fullText;
         fullText = '';
+        pendingAnthropicToolCalls = [];
+        let followInputJsonBuf = '';
+        let followBlockType = null;
+        let followToolUseId = null;
+        let followToolUseName = null;
         const followCt = followUpResp.headers.get('content-type') || '';
         if (followCt.includes('application/json')) {
           const followData = await followUpResp.json();
@@ -5669,6 +5676,16 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           fullText = (followData.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || '';
           const followThink = (followData.content || []).filter(c => c.type === 'thinking').map(c => c.thinking).join('');
           if (followThink) thinkingText += followThink;
+          for (const block of (followData.content || [])) {
+            if (block.type === 'tool_use' && HANDLED_TOOLS.has(block.name)) {
+              if (block.name === 'url_fetch') {
+                toolBlocks.push({ type: 'url_fetch', url: block.input?.url || '', content: '', searching: true });
+              } else {
+                toolBlocks.push({ query: block.input?.query || '', results: [], searching: true });
+              }
+              pendingAnthropicToolCalls.push({ id: block.id, name: block.name, input: block.input || {}, toolBlockIndex: toolBlocks.length - 1 });
+            }
+          }
         } else {
           const followReader = followUpResp.body.getReader();
           const followDecoder = new TextDecoder();
@@ -5688,9 +5705,62 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
                 const fj = JSON.parse(fp);
                 if (fj.type === 'error') {
                   console.warn('Follow-up stream error:', fj.error?.message || JSON.stringify(fj.error));
+                } else if (fj.type === 'content_block_start') {
+                  const cb = fj.content_block;
+                  if (cb && cb.type === 'tool_use' && HANDLED_TOOLS.has(cb.name)) {
+                    followBlockType = 'tool_use';
+                    followToolUseId = cb.id || '';
+                    followToolUseName = cb.name;
+                    followInputJsonBuf = '';
+                    if (cb.name === 'url_fetch') {
+                      toolBlocks.push({ type: 'url_fetch', url: '', content: '', searching: true });
+                    } else {
+                      toolBlocks.push({ query: '', results: [], searching: true });
+                    }
+                  } else if (cb && cb.type === 'server_tool_use') {
+                    followBlockType = 'server_tool_use';
+                    followInputJsonBuf = '';
+                    toolBlocks.push({ query: '', results: [], searching: true });
+                  } else if (cb && cb.type === 'web_search_tool_result') {
+                    followBlockType = 'web_search_tool_result';
+                    const tb = toolBlocks[toolBlocks.length - 1];
+                    if (tb) {
+                      tb.results = (cb.content || []).filter(r => r.type === 'web_search_result').map(r => ({
+                        title: r.title, url: r.url, snippet: r.snippet || r.content || r.description || r.summary || ''
+                      }));
+                      tb.searching = false;
+                    }
+                  } else if (cb && (cb.type === 'text' || cb.type === 'thinking')) {
+                    followBlockType = cb.type;
+                  }
                 } else if (fj.type === 'content_block_delta') {
                   if (fj.delta?.type === 'text_delta' && fj.delta?.text) fullText += fj.delta.text;
                   else if (fj.delta?.type === 'thinking_delta' && fj.delta?.thinking) thinkingText += fj.delta.thinking;
+                  else if (fj.delta?.type === 'input_json_delta' && fj.delta?.partial_json) followInputJsonBuf += fj.delta.partial_json;
+                } else if (fj.type === 'content_block_stop') {
+                  if (followBlockType === 'server_tool_use' && followInputJsonBuf) {
+                    try {
+                      const parsed = JSON.parse(followInputJsonBuf);
+                      const tb = toolBlocks[toolBlocks.length - 1];
+                      if (tb && parsed.query) tb.query = parsed.query;
+                    } catch(e) {}
+                    followInputJsonBuf = '';
+                  } else if (followBlockType === 'tool_use' && followToolUseName && followInputJsonBuf) {
+                    try {
+                      const parsed = JSON.parse(followInputJsonBuf);
+                      const tb = toolBlocks[toolBlocks.length - 1];
+                      if (followToolUseName === 'url_fetch') {
+                        if (tb) tb.url = parsed.url || '';
+                      } else if (tb && parsed.query) {
+                        tb.query = parsed.query;
+                      }
+                      pendingAnthropicToolCalls.push({ id: followToolUseId, name: followToolUseName, input: parsed, toolBlockIndex: toolBlocks.length - 1 });
+                    } catch(e) {}
+                    followInputJsonBuf = '';
+                    followToolUseId = null;
+                    followToolUseName = null;
+                  }
+                  followBlockType = null;
                 }
               } catch(e) {}
             }
@@ -5714,20 +5784,23 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         pendingAnthropicToolCalls = [];
       }
       // === OpenAI tool call execution loop ===
-      const pendingToolCalls = Object.values(toolCallBuffers).filter(tc => HANDLED_TOOLS.has(tc.name));
-      if (pendingToolCalls.length > 0 && format !== 'anthropic') {
+      let openaiToolRound = 0;
+      let openaiPendingToolCalls = Object.values(toolCallBuffers).filter(tc => HANDLED_TOOLS.has(tc.name));
+      let openaiRunningMessages = body.messages ? [...body.messages] : [];
+      while (openaiPendingToolCalls.length > 0 && format !== 'anthropic' && openaiToolRound < 5) {
+        openaiToolRound++;
         // Build the assistant message with tool_calls
         const assistantToolMsg = {
           role: 'assistant',
           content: fullText || null,
-          tool_calls: pendingToolCalls.map(tc => ({
+          tool_calls: openaiPendingToolCalls.map(tc => ({
             id: tc.id,
             type: 'function',
             function: { name: tc.name, arguments: tc.arguments }
           }))
         };
         const toolResultMsgs = [];
-        for (const tc of pendingToolCalls) {
+        for (const tc of openaiPendingToolCalls) {
           const toolName = tc.name;
           let args = {};
           try { args = JSON.parse(tc.arguments); } catch(e) {}
@@ -5763,9 +5836,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           }
         }
         // Follow-up streaming request with tool results
-        const followUpMessages = [...body.messages, assistantToolMsg, ...toolResultMsgs];
-        const followUpBody = { ...body, messages: followUpMessages, stream: true };
-        delete followUpBody.tools;
+        openaiRunningMessages = [...openaiRunningMessages, assistantToolMsg, ...toolResultMsgs];
+        const followUpBody = { ...body, messages: openaiRunningMessages, stream: true };
+        if (openaiToolRound >= 5) delete followUpBody.tools;
         exclude.forEach(k => delete followUpBody[k]);
         const followUpResp = await fetch(url, {
           method: 'POST',
@@ -5780,6 +5853,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         }
         const preToolText = fullText;
         fullText = '';
+        toolCallBuffers = {};
         const followReader = followUpResp.body.getReader();
         const followDecoder = new TextDecoder();
         let followBuffer = '';
@@ -5810,6 +5884,16 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
                   if (rd.type === 'reasoning.text' && rd.text) thinkingText += rd.text;
                 }
               }
+              const deltaToolCalls = fj.choices?.[0]?.delta?.tool_calls;
+              if (deltaToolCalls) {
+                for (const tc of deltaToolCalls) {
+                  const idx = tc.index ?? 0;
+                  if (!toolCallBuffers[idx]) toolCallBuffers[idx] = { id: '', name: '', arguments: '' };
+                  if (tc.id) toolCallBuffers[idx].id = tc.id;
+                  if (tc.function?.name) toolCallBuffers[idx].name = tc.function.name;
+                  if (tc.function?.arguments) toolCallBuffers[idx].arguments += tc.function.arguments;
+                }
+              }
             } catch(e) {}
           }
           assistantMsg.swipes[swipeIdx] = fullText;
@@ -5830,7 +5914,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           }
         }
         if (!fullText && preToolText) fullText = preToolText;
-        toolCallBuffers = {};
+        openaiPendingToolCalls = Object.values(toolCallBuffers).filter(tc => HANDLED_TOOLS.has(tc.name));
       }
       if (!fullText && !thinkingText) fullText = 'No response.';
       const stripped = stripThinkTags(fullText);
