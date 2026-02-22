@@ -5179,6 +5179,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         ]);
         if (localStorage.getItem('llmForceSearch') === 'true') {
           body.tool_choice = { type: 'any' };
+          body.system = (body.system || '') + '\n\nIMPORTANT: You MUST call the web_search tool to look up information before answering. Do NOT answer from memory or training data. Always search first, then synthesize your answer from the results.';
         }
       }
     } else {
@@ -5222,6 +5223,11 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         body.tools = (body.tools || []).concat([OPENAI_URL_FETCH_TOOL]);
         if (localStorage.getItem('llmForceSearch') === 'true') {
           body.tool_choice = 'required';
+          // Reinforce via system prompt — some providers (e.g. Gemini) ignore tool_choice
+          body.messages = body.messages.concat([{
+            role: 'system',
+            content: 'IMPORTANT: You MUST call the web_search tool to look up information before answering. Do NOT answer from memory or training data. Always search first, then synthesize your answer from the results.'
+          }]);
         }
       }
     }
@@ -5231,12 +5237,25 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
     }
     exclude.forEach(k => delete body[k]);
 
-    const resp = await fetch(url, {
+    let resp = await fetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
       signal: abortController.signal
     });
+
+    // If tool_choice caused a 400 (e.g. Gemini doesn't support "required"), retry without it
+    if (!resp.ok && resp.status === 400 && body.tool_choice) {
+      const saved = body.tool_choice;
+      delete body.tool_choice;
+      console.warn('Retrying without tool_choice (was:', saved, ')');
+      resp = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: abortController.signal
+      });
+    }
 
     if (!resp.ok) {
       let errText = '';
