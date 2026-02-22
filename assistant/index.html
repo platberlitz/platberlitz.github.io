@@ -5412,14 +5412,12 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         thinkingText = data.choices?.[0]?.message?.reasoning_content
           || data.choices?.[0]?.message?.reasoning || '';
         // Handle OpenAI tool calls (non-streaming)
-        let msgToolCalls = (data.choices?.[0]?.message?.tool_calls || []).filter(tc => HANDLED_TOOLS.has(tc.function?.name));
-        // Fallback: parse text-based tool calls
+        const msgToolCalls = (data.choices?.[0]?.message?.tool_calls || []).filter(tc => HANDLED_TOOLS.has(tc.function?.name));
+        // Fallback: parse text-based tool calls (separate path — uses user message follow-up)
+        let textBasedToolCalls = [];
         if (msgToolCalls.length === 0 && fullText) {
           const textCalls = parseTextToolCalls(fullText);
-          if (textCalls.length > 0) {
-            msgToolCalls = textCalls.map(tc => ({ id: tc.id, function: { name: tc.name, arguments: tc.arguments } }));
-            fullText = stripTextToolCalls(fullText);
-          }
+          if (textCalls.length > 0) textBasedToolCalls = textCalls;
         }
         if (msgToolCalls.length > 0) {
           const assistantToolMsg = {
@@ -5490,6 +5488,54 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           const followThinking = followUpData.choices?.[0]?.message?.reasoning_content
             || followUpData.choices?.[0]?.message?.reasoning || '';
           if (followThinking) thinkingText += followThinking;
+        }
+        // Handle text-based tool calls (separate from API tool calls — uses user message follow-up)
+        if (textBasedToolCalls.length > 0 && msgToolCalls.length === 0) {
+          const savedText = fullText;
+          fullText = stripTextToolCalls(fullText);
+          const textToolResults = [];
+          for (const tc of textBasedToolCalls) {
+            let args = {};
+            try { args = JSON.parse(tc.arguments); } catch(e) {}
+            if (tc.name === 'url_fetch') {
+              const fetchUrl = args.url || '';
+              toolBlocks.push({ type: 'url_fetch', url: fetchUrl, content: '', searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.content = content; tb.searching = false;
+              if (error) tb.error = error;
+              textToolResults.push('URL Fetch (' + fetchUrl + '):\n' + formatUrlFetchResultForModel(content, error, fetchUrl));
+            } else {
+              const query = args.query || '';
+              toolBlocks.push({ query, results: [], searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { results, error } = await executeWebSearch(query, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
+              tb.searching = false;
+              if (error) tb.error = error;
+              textToolResults.push('Web Search (' + query + '):\n' + formatSearchResultsForModel(results, error));
+            }
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+          }
+          const followUpMessages = [...body.messages,
+            { role: 'assistant', content: savedText },
+            { role: 'user', content: 'Here are the tool results:\n\n' + textToolResults.join('\n\n') + '\n\nPlease synthesize a response using these results.' }
+          ];
+          const followUpBody = { ...body, messages: followUpMessages, stream: false };
+          delete followUpBody.tools;
+          delete followUpBody.tool_choice;
+          exclude.forEach(k => delete followUpBody[k]);
+          try {
+            const followUpResp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(followUpBody), signal: abortController.signal });
+            if (followUpResp.ok) {
+              const followUpData = await followUpResp.json();
+              const followText = followUpData.choices?.[0]?.message?.content || '';
+              if (followText) fullText = followText;
+            }
+          } catch(e) { console.warn('Text tool call follow-up failed:', e); }
+          if (!fullText) fullText = savedText;
         }
         if (!fullText) fullText = 'No response.';
       }
@@ -5879,14 +5925,85 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         pendingAnthropicToolCalls = [];
       }
       // === Parse text-based tool calls (models like Gemini output tool calls as text) ===
+      // These can't use the standard OpenAI tool loop because the API never produced real
+      // tool_calls — fake IDs get rejected. Instead, execute directly and follow up as a user message.
       if (format !== 'anthropic' && Object.keys(toolCallBuffers).length === 0) {
         const textToolCalls = parseTextToolCalls(fullText);
         if (textToolCalls.length > 0) {
-          for (let i = 0; i < textToolCalls.length; i++) {
-            toolCallBuffers[i] = textToolCalls[i];
-          }
-          // Strip tool call text from displayed response
+          const savedText = fullText;
           fullText = stripTextToolCalls(fullText);
+          const textToolResults = [];
+          for (const tc of textToolCalls) {
+            let args = {};
+            try { args = JSON.parse(tc.arguments); } catch(e) {}
+            if (tc.name === 'url_fetch') {
+              const fetchUrl = args.url || '';
+              toolBlocks.push({ type: 'url_fetch', url: fetchUrl, content: '', searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+              const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.content = content; tb.searching = false;
+              if (error) tb.error = error;
+              textToolResults.push('URL Fetch (' + fetchUrl + '):\n' + formatUrlFetchResultForModel(content, error, fetchUrl));
+            } else {
+              const query = args.query || '';
+              toolBlocks.push({ query, results: [], searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+              const { results, error } = await executeWebSearch(query, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
+              tb.searching = false;
+              if (error) tb.error = error;
+              textToolResults.push('Web Search (' + query + '):\n' + formatSearchResultsForModel(results, error));
+            }
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+          }
+          // Follow up with results as a user message (compatible with all APIs)
+          const followUpMessages = [...(body.messages || []),
+            { role: 'assistant', content: savedText },
+            { role: 'user', content: 'Here are the tool results:\n\n' + textToolResults.join('\n\n') + '\n\nPlease synthesize a response using these results.' }
+          ];
+          const followUpBody = { ...body, messages: followUpMessages, stream: true };
+          delete followUpBody.tools;
+          delete followUpBody.tool_choice;
+          exclude.forEach(k => delete followUpBody[k]);
+          try {
+            const followUpResp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(followUpBody), signal: abortController.signal });
+            if (followUpResp.ok && followUpResp.body) {
+              fullText = '';
+              const fReader = followUpResp.body.getReader();
+              const fDecoder = new TextDecoder();
+              let fBuf = '';
+              while (true) {
+                const { done, value } = await fReader.read();
+                if (done) break;
+                fBuf += fDecoder.decode(value, { stream: true });
+                const fLines = fBuf.split('\n');
+                fBuf = fLines.pop() || '';
+                for (const fl of fLines) {
+                  const ft = fl.trim();
+                  if (!ft.startsWith('data:')) continue;
+                  const fp = ft.slice(5).trim();
+                  if (fp === '[DONE]') continue;
+                  try {
+                    const fj = JSON.parse(fp);
+                    const fd = fj.choices?.[0]?.delta?.content;
+                    if (typeof fd === 'string') fullText += fd;
+                  } catch(e) {}
+                }
+                assistantMsg.swipes[swipeIdx] = fullText;
+                assistantMsg.content = fullText;
+                const now = Date.now();
+                if (now - lastRender > 80) {
+                  bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+                  lastRender = now;
+                }
+              }
+            }
+          } catch(e) {
+            console.warn('Text tool call follow-up failed:', e);
+          }
+          if (!fullText) fullText = savedText;
         }
       }
       // === OpenAI tool call execution loop ===
