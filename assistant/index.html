@@ -1490,9 +1490,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <input type="checkbox" id="setForceSearch"> Force tool use
       <span class="toggle-hint">Always call tools · prevents hallucinating answers</span>
     </label>
-    <div class="settings-note">Note: This page is public, so web search requires each user to provide their own search endpoint. Shared keys/endpoints can't be safely hidden in a static page.</div>
     <label>Search API URL <span class="toggle-hint">SearXNG, Brave, or custom with {query}/{key}</span></label>
-    <input type="text" id="setSearchApiUrl" placeholder="https://api.search.brave.com/res/v1/web/search or https://example.com/search?q={query}&key={key}">
+    <input type="text" id="setSearchApiUrl" placeholder="https://purasearx.duckdns.org/search?format=json">
     <label>Search API Key <span class="toggle-hint">optional for SearXNG · required for Brave · supports Header: value</span></label>
     <input type="password" id="setSearchApiKey" placeholder="token or X-API-Key: value">
     <label>CORS Proxy URL <span class="toggle-hint">prefix for cross-origin requests</span></label>
@@ -2411,7 +2410,7 @@ function openStatusPanel() {
   const render = () => {
     const baseUrl = localStorage.getItem('llmProxyUrl') || '(not set)';
     const model = localStorage.getItem('llmModel') || '(not set)';
-    const searchUrl = localStorage.getItem('llmSearchApiUrl') || '(not set)';
+    const searchUrl = localStorage.getItem('llmSearchApiUrl') || 'https://purasearx.duckdns.org/search?format=json (default)';
     const searchOn = localStorage.getItem('llmWebSearch') === 'true' ? 'Enabled' : 'Disabled';
     const last = lastSearchStatus;
     const lastText = last.ok == null ? 'No searches yet.' : (last.ok ? 'OK' : 'Error: ' + last.error);
@@ -4944,7 +4943,7 @@ function proxiedFetch(url, options) {
 }
 
 async function executeWebSearch(query, signal) {
-  const searchUrl = (localStorage.getItem('llmSearchApiUrl') || '').trim();
+  const searchUrl = (localStorage.getItem('llmSearchApiUrl') || 'https://purasearx.duckdns.org/search?format=json').trim();
   const searchKey = (localStorage.getItem('llmSearchApiKey') || '').trim();
   if (!searchUrl) {
     lastSearchStatus = { ok: false, error: 'No search API URL configured.', at: Date.now(), query };
@@ -5219,9 +5218,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       body = { model, messages: processedMessages, stream: useStream, ...extra };
       // Inject web search tool for OpenAI-compatible models
       if (resolveWebSearchEnabled()) {
-        if (localStorage.getItem('llmSearchApiUrl')) {
-          body.tools = (body.tools || []).concat([OPENAI_WEB_SEARCH_TOOL]);
-        }
+        body.tools = (body.tools || []).concat([OPENAI_WEB_SEARCH_TOOL]);
         body.tools = (body.tools || []).concat([OPENAI_URL_FETCH_TOOL]);
         if (localStorage.getItem('llmForceSearch') === 'true') {
           body.tool_choice = 'required';
