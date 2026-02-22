@@ -5305,7 +5305,11 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
           }
           const followUpData = await followUpResp.json();
-          fullText = (followUpData.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || 'No response.';
+          if (followUpData.type === 'error' || followUpData.error) {
+            console.warn('Follow-up API error:', followUpData.error?.message || JSON.stringify(followUpData.error));
+          }
+          const followUpText = (followUpData.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
+          if (followUpText) fullText = followUpText;
           const followThink = (followUpData.content || []).filter(c => c.type === 'thinking').map(c => c.thinking).join('');
           if (followThink) thinkingText += followThink;
           pendingAnthropicToolCalls = [];
@@ -5378,8 +5382,11 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
           }
           const followUpData = await followUpResp.json();
+          if (followUpData.error) {
+            console.warn('Follow-up API error:', followUpData.error?.message || JSON.stringify(followUpData.error));
+          }
           const followExtracted = extractImages(followUpData.choices?.[0]?.message || followUpData);
-          fullText = followExtracted.text || 'No response.';
+          if (followExtracted.text) fullText = followExtracted.text;
           if (followExtracted.images.length) {
             assistantMsg.swipeImages = assistantMsg.swipeImages || [];
             assistantMsg.swipeImages[swipeIdx] = followExtracted.images;
@@ -5651,10 +5658,14 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           try { errText = await followUpResp.text(); } catch(e) {}
           throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
         }
+        const preToolText = fullText;
         fullText = '';
         const followCt = followUpResp.headers.get('content-type') || '';
         if (followCt.includes('application/json')) {
           const followData = await followUpResp.json();
+          if (followData.type === 'error' || followData.error) {
+            console.warn('Follow-up API error:', followData.error?.message || JSON.stringify(followData.error));
+          }
           fullText = (followData.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || '';
           const followThink = (followData.content || []).filter(c => c.type === 'thinking').map(c => c.thinking).join('');
           if (followThink) thinkingText += followThink;
@@ -5675,7 +5686,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               if (!fp) continue;
               try {
                 const fj = JSON.parse(fp);
-                if (fj.type === 'content_block_delta') {
+                if (fj.type === 'error') {
+                  console.warn('Follow-up stream error:', fj.error?.message || JSON.stringify(fj.error));
+                } else if (fj.type === 'content_block_delta') {
                   if (fj.delta?.type === 'text_delta' && fj.delta?.text) fullText += fj.delta.text;
                   else if (fj.delta?.type === 'thinking_delta' && fj.delta?.thinking) thinkingText += fj.delta.thinking;
                 }
@@ -5697,6 +5710,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             }
           }
         }
+        if (!fullText && preToolText) fullText = preToolText;
         pendingAnthropicToolCalls = [];
       }
       // === OpenAI tool call execution loop ===
@@ -5764,6 +5778,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           try { errText = await followUpResp.text(); } catch(e) {}
           throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
         }
+        const preToolText = fullText;
         fullText = '';
         const followReader = followUpResp.body.getReader();
         const followDecoder = new TextDecoder();
@@ -5781,6 +5796,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             if (fp === '[DONE]') continue;
             try {
               const fj = JSON.parse(fp);
+              if (fj.error) {
+                console.warn('Follow-up stream error:', fj.error?.message || JSON.stringify(fj.error));
+              }
               const fd = fj.choices?.[0]?.delta?.content;
               if (typeof fd === 'string') fullText += fd;
               const fr = fj.choices?.[0]?.delta?.reasoning_content
@@ -5811,6 +5829,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             lastRender = now2;
           }
         }
+        if (!fullText && preToolText) fullText = preToolText;
         toolCallBuffers = {};
       }
       if (!fullText && !thinkingText) fullText = 'No response.';
