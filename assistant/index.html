@@ -1403,8 +1403,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
         <input type="file" id="stPresetFile" accept=".json" style="display:none" onchange="importSTPreset(event)">
       </div>
       <label for="setPersona">Persona</label>
-      <small style="opacity:.7;margin-bottom:4px;display:block">Describes who the assistant is. Sent separately from the system prompt.</small>
-      <textarea id="setPersona" rows="3" placeholder="e.g. You are a cheerful medieval bard named Lute…"></textarea>
+      <small style="opacity:.7;margin-bottom:4px;display:block">Describes who you (the user) are. Sent as context to the assistant.</small>
+      <textarea id="setPersona" rows="3" placeholder="e.g. I am a traveling merchant named Kael…"></textarea>
       <label style="display:flex;align-items:center;justify-content:space-between">
         Prompt Entries
         <button class="model-refresh-btn" onclick="addPromptEntry()" title="Add prompt entry">+</button>
@@ -3304,14 +3304,14 @@ function debouncedSave() {
 function migratePersonaField(convs) {
   let changed = false;
   convs.forEach(c => {
-    if (c.characterSystemPrompt && !c.persona) {
-      // If we have the original card, rebuild persona and system prompt properly
+    if (c.characterSystemPrompt && !c.characterDescription) {
+      // If we have the original card, rebuild character description and system prompt properly
       if (c.characterCard) {
-        c.persona = buildCharaPersona(c.characterCard);
+        c.characterDescription = buildCharaDescription(c.characterCard);
         c.characterSystemPrompt = c.characterCard.system_prompt || '';
         if (!c.characterSystemPrompt) delete c.characterSystemPrompt;
       } else {
-        c.persona = c.characterSystemPrompt;
+        c.characterDescription = c.characterSystemPrompt;
         delete c.characterSystemPrompt;
       }
       changed = true;
@@ -4402,14 +4402,18 @@ async function buildSystemMessages(conv) {
   if (msgs.length === 0) {
     msgs.push({ role: 'system', content: 'You are a helpful assistant.' });
   }
-  // Character card system_prompt (actual instructions from the card, not persona)
+  // Character card system_prompt (actual instructions from the card)
   if (conv && conv.characterSystemPrompt && conv.characterSystemPrompt.trim()) {
     msgs.push({ role: 'system', content: conv.characterSystemPrompt });
   }
-  // Persona — injected as a clearly-framed separate message
+  // Character description — who the assistant is (from character cards)
+  if (conv && conv.characterDescription && conv.characterDescription.trim()) {
+    msgs.push({ role: 'system', content: 'The following describes your character \u2014 this is who YOU are, not the user:\n\n' + conv.characterDescription });
+  }
+  // Persona — who the user is
   const persona = (conv && conv.persona) || localStorage.getItem('llmPersona') || '';
   if (persona.trim()) {
-    msgs.push({ role: 'system', content: 'The following describes your character \u2014 this is who YOU are, not the user:\n\n' + persona });
+    msgs.push({ role: 'system', content: 'The following describes the user you are speaking with:\n\n' + persona });
   }
   // Conversation summary
   if (conv && conv.summary) {
@@ -7064,7 +7068,7 @@ function normalizeCharaCard(raw) {
   return raw;
 }
 
-function buildCharaPersona(card) {
+function buildCharaDescription(card) {
   let parts = [];
   if (card.name) parts.push('Character: ' + card.name);
   if (card.description) parts.push(card.description);
@@ -7104,7 +7108,7 @@ async function importCharacterCard(event) {
 
     const card = normalizeCharaCard(rawCard);
     const charName = card.name || 'Character';
-    const persona = buildCharaPersona(card);
+    const charDescription = buildCharaDescription(card);
 
     // Create a new conversation
     const conv = {
@@ -7114,7 +7118,7 @@ async function importCharacterCard(event) {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       characterCard: card,
-      persona: persona
+      characterDescription: charDescription
     };
 
     // Store card's system_prompt as actual system instructions (separate from persona)
