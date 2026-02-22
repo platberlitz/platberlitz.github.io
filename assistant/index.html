@@ -1402,6 +1402,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
         <button class="model-refresh-btn" onclick="document.getElementById('stPresetFile').click()" title="Import SillyTavern preset">&#128228;</button>
         <input type="file" id="stPresetFile" accept=".json" style="display:none" onchange="importSTPreset(event)">
       </div>
+      <label for="setPersona">Persona</label>
+      <small style="opacity:.7;margin-bottom:4px;display:block">Describes who the assistant is. Sent separately from the system prompt.</small>
+      <textarea id="setPersona" rows="3" placeholder="e.g. You are a cheerful medieval bard named Lute…"></textarea>
       <label style="display:flex;align-items:center;justify-content:space-between">
         Prompt Entries
         <button class="model-refresh-btn" onclick="addPromptEntry()" title="Add prompt entry">+</button>
@@ -3298,6 +3301,25 @@ function debouncedSave() {
   _saveDebounceTimer = setTimeout(saveConversations, 1000);
 }
 
+function migratePersonaField(convs) {
+  let changed = false;
+  convs.forEach(c => {
+    if (c.characterSystemPrompt && !c.persona) {
+      // If we have the original card, rebuild persona and system prompt properly
+      if (c.characterCard) {
+        c.persona = buildCharaPersona(c.characterCard);
+        c.characterSystemPrompt = c.characterCard.system_prompt || '';
+        if (!c.characterSystemPrompt) delete c.characterSystemPrompt;
+      } else {
+        c.persona = c.characterSystemPrompt;
+        delete c.characterSystemPrompt;
+      }
+      changed = true;
+    }
+  });
+  if (changed) saveConversations();
+}
+
 async function loadConversations() {
   // Try IndexedDB first
   try {
@@ -3314,6 +3336,8 @@ async function loadConversations() {
       conversations.forEach(c => c.messages.forEach(m => {
         if (m.role === 'assistant' && !m.swipes) { m.swipes = [typeof m.content === 'string' ? m.content : '']; m.swipeIndex = 0; }
       }));
+      // Migrate characterSystemPrompt → persona
+      migratePersonaField(conversations);
       activeConvId = (conversations.find(c => c.id === activeConvId)) ? activeConvId : conversations[0].id;
       messages = getActiveConv().messages;
       renderSidebar();
@@ -3348,6 +3372,9 @@ async function loadConversations() {
   conversations.forEach(c => c.messages.forEach(m => {
     if (m.role === 'assistant' && !m.swipes) { m.swipes = [typeof m.content === 'string' ? m.content : '']; m.swipeIndex = 0; }
   }));
+
+  // Migrate characterSystemPrompt → persona
+  migratePersonaField(conversations);
 
   const savedActive = localStorage.getItem('assistantActiveConvId');
   activeConvId = (savedActive && conversations.find(c => c.id === savedActive)) ? savedActive : conversations[0].id;
@@ -3728,6 +3755,8 @@ function openSettings() {
   document.getElementById('setModelManual').value = currentModel;
   document.getElementById('setApiFormat').value = localStorage.getItem('llmApiFormat') || 'auto';
   renderPromptEntries();
+  const conv = getActiveConv();
+  document.getElementById('setPersona').value = (conv && conv.persona) || localStorage.getItem('llmPersona') || '';
   document.getElementById('setExtraParams').value = localStorage.getItem('llmExtraParams') || '';
   document.getElementById('setExcludeParams').value = localStorage.getItem('llmExcludeParams') || '';
   document.getElementById('setPrefill').value = localStorage.getItem('llmPrefill') || '';
@@ -3940,6 +3969,12 @@ function saveSettings() {
   localStorage.setItem('llmApiFormat', document.getElementById('setApiFormat').value);
   localStorage.setItem('llmExtraParams', extraParamsVal);
   localStorage.setItem('llmExcludeParams', document.getElementById('setExcludeParams').value.trim());
+  const personaVal = document.getElementById('setPersona').value;
+  { const c = getActiveConv();
+    if (c) { c.persona = personaVal; saveConversations(); }
+    // Only update global default if this is not a character-card conversation
+    if (!c || !c.characterCard) localStorage.setItem('llmPersona', personaVal);
+  }
   localStorage.setItem('llmPrefill', document.getElementById('setPrefill').value);
   localStorage.setItem('llmStreaming', document.getElementById('setStreaming').checked ? 'true' : 'false');
   localStorage.setItem('llmEnterSend', document.getElementById('setEnterSend').checked ? 'true' : 'false');
@@ -4026,6 +4061,7 @@ function applyPreset(id) {
   // Prompt entries (new format) or legacy fallback
   if (preset.promptEntries) {
     savePromptEntries(preset.promptEntries);
+    if ('persona' in preset) document.getElementById('setPersona').value = preset.persona || '';
   } else {
     const entries = [];
     if (preset.systemPrompt) entries.push({ id: 'pe_' + Date.now() + '_sys', name: 'System Prompt', content: preset.systemPrompt, enabled: true });
@@ -4046,6 +4082,7 @@ function saveCurrentAsPreset() {
     id: 'preset_' + Date.now(),
     name: name,
     promptEntries: loadPromptEntries(),
+    persona: document.getElementById('setPersona').value,
     temperature: document.getElementById('setTemperature').value.trim(),
     extraParams: document.getElementById('setExtraParams').value.trim()
   };
@@ -4074,6 +4111,7 @@ function deleteSelectedPreset() {
   renderPromptEntries();
   document.getElementById('setTemperature').value = '';
   document.getElementById('setExtraParams').value = '';
+  document.getElementById('setPersona').value = '';
 
   showToast('Preset deleted.', 'info');
 }
@@ -4355,23 +4393,23 @@ function updatePromptEntry(id, field, value) {
 
 async function buildSystemMessages(conv) {
   const msgs = [];
-  // Character system prompt override takes priority for the first entry
-  const hasCharOverride = conv && conv.characterSystemPrompt;
+  // Prompt entries (never overridden by character cards)
   const entries = loadPromptEntries();
-  entries.forEach((entry, i) => {
-    if (!entry.enabled) return;
-    let content = entry.content;
-    // If the conversation has a character system prompt, override the first enabled entry
-    if (hasCharOverride && i === 0) content = conv.characterSystemPrompt;
-    if (content.trim()) msgs.push({ role: 'system', content });
+  entries.forEach(entry => {
+    if (entry.enabled && entry.content.trim()) msgs.push({ role: 'system', content: entry.content });
   });
-  // If no entries enabled but character override exists, add it
-  if (msgs.length === 0 && hasCharOverride) {
-    msgs.push({ role: 'system', content: conv.characterSystemPrompt });
-  }
   // Fallback if completely empty
   if (msgs.length === 0) {
     msgs.push({ role: 'system', content: 'You are a helpful assistant.' });
+  }
+  // Character card system_prompt (actual instructions from the card, not persona)
+  if (conv && conv.characterSystemPrompt && conv.characterSystemPrompt.trim()) {
+    msgs.push({ role: 'system', content: conv.characterSystemPrompt });
+  }
+  // Persona — injected as a clearly-framed separate message
+  const persona = (conv && conv.persona) || localStorage.getItem('llmPersona') || '';
+  if (persona.trim()) {
+    msgs.push({ role: 'system', content: 'The following describes your character \u2014 this is who YOU are, not the user:\n\n' + persona });
   }
   // Conversation summary
   if (conv && conv.summary) {
@@ -7026,11 +7064,8 @@ function normalizeCharaCard(raw) {
   return raw;
 }
 
-function buildCharaSystemPrompt(card) {
+function buildCharaPersona(card) {
   let parts = [];
-  if (card.system_prompt) {
-    parts.push(card.system_prompt);
-  }
   if (card.name) parts.push('Character: ' + card.name);
   if (card.description) parts.push(card.description);
   if (card.personality) parts.push('Personality: ' + card.personality);
@@ -7069,7 +7104,7 @@ async function importCharacterCard(event) {
 
     const card = normalizeCharaCard(rawCard);
     const charName = card.name || 'Character';
-    const systemPrompt = buildCharaSystemPrompt(card);
+    const persona = buildCharaPersona(card);
 
     // Create a new conversation
     const conv = {
@@ -7079,8 +7114,11 @@ async function importCharacterCard(event) {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       characterCard: card,
-      characterSystemPrompt: systemPrompt
+      persona: persona
     };
+
+    // Store card's system_prompt as actual system instructions (separate from persona)
+    if (card.system_prompt) conv.characterSystemPrompt = card.system_prompt;
 
     if (avatarDataUrl) conv.characterAvatar = avatarDataUrl;
 
@@ -7108,13 +7146,6 @@ async function importCharacterCard(event) {
   } catch (err) {
     showToast('Error importing character: ' + err.message, 'error');
   }
-}
-
-function getConversationSystemPrompt(conv) {
-  if (conv && conv.characterSystemPrompt) return conv.characterSystemPrompt;
-  const entries = loadPromptEntries();
-  const sys = entries.find(e => e.enabled && e.content);
-  return sys ? sys.content : 'You are a helpful assistant.';
 }
 
 function updateCharacterUI() {
