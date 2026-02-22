@@ -1486,6 +1486,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <input type="checkbox" id="setWebSearch"> Web Search
       <span class="toggle-hint">Anthropic native · OpenAI via search API</span>
     </label>
+    <label class="toggle-row">
+      <input type="checkbox" id="setForceSearch"> Force tool use
+      <span class="toggle-hint">Always call tools · prevents hallucinating answers</span>
+    </label>
     <div class="settings-note">Note: This page is public, so web search requires each user to provide their own search endpoint. Shared keys/endpoints can't be safely hidden in a static page.</div>
     <label>Search API URL <span class="toggle-hint">SearXNG, Brave, or custom with {query}/{key}</span></label>
     <input type="text" id="setSearchApiUrl" placeholder="https://api.search.brave.com/res/v1/web/search or https://example.com/search?q={query}&key={key}">
@@ -3737,6 +3741,7 @@ function openSettings() {
   document.getElementById('setMsgFontSize').value = localStorage.getItem('assistantMsgFontSize') || '';
   document.getElementById('setMsgMaxWidth').value = localStorage.getItem('assistantMsgMaxWidth') || '';
   document.getElementById('setWebSearch').checked = localStorage.getItem('llmWebSearch') === 'true';
+  document.getElementById('setForceSearch').checked = localStorage.getItem('llmForceSearch') === 'true';
   document.getElementById('setSearchApiUrl').value = localStorage.getItem('llmSearchApiUrl') || '';
   document.getElementById('setSearchApiKey').value = localStorage.getItem('llmSearchApiKey') || '';
   document.getElementById('setCorsProxy').value = localStorage.getItem('llmCorsProxy') || '';
@@ -3944,6 +3949,7 @@ function saveSettings() {
   localStorage.setItem('llmInputCost', document.getElementById('setInputCost').value.trim());
   localStorage.setItem('llmOutputCost', document.getElementById('setOutputCost').value.trim());
   localStorage.setItem('llmWebSearch', document.getElementById('setWebSearch').checked ? 'true' : 'false');
+  localStorage.setItem('llmForceSearch', document.getElementById('setForceSearch').checked ? 'true' : 'false');
   localStorage.setItem('llmSearchApiUrl', document.getElementById('setSearchApiUrl').value.trim());
   localStorage.setItem('llmSearchApiKey', document.getElementById('setSearchApiKey').value.trim());
   localStorage.setItem('llmCorsProxy', document.getElementById('setCorsProxy').value.trim());
@@ -5172,6 +5178,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           { type: 'web_search_20250305', name: 'web_search', max_uses: 5 },
           ANTHROPIC_URL_FETCH_TOOL
         ]);
+        if (localStorage.getItem('llmForceSearch') === 'true') {
+          body.tool_choice = { type: 'any' };
+        }
       }
     } else {
       url = baseUrl + '/chat/completions';
@@ -5214,6 +5223,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           body.tools = (body.tools || []).concat([OPENAI_WEB_SEARCH_TOOL]);
         }
         body.tools = (body.tools || []).concat([OPENAI_URL_FETCH_TOOL]);
+        if (localStorage.getItem('llmForceSearch') === 'true') {
+          body.tool_choice = 'required';
+        }
       }
     }
     if (!('temperature' in body)) {
