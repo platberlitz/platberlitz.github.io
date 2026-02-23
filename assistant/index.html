@@ -5518,6 +5518,17 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           const followUpBody = { ...body, messages: followUpMessages, stream: false };
           delete followUpBody.tools;
           exclude.forEach(k => delete followUpBody[k]);
+          // DEBUG: log follow-up message structures
+          console.log('=== FOLLOW-UP PAYLOAD DEBUG ===');
+          followUpBody.messages.forEach((m, i) => {
+            const contentSummary = Array.isArray(m.content)
+              ? m.content.map(p => ({ type: p.type, keys: Object.keys(p) }))
+              : (m.content === null ? 'null' : typeof m.content);
+            console.log(`msg[${i}] role=${m.role}`, JSON.stringify(contentSummary));
+            if (m.tool_calls) console.log(`  tool_calls:`, JSON.stringify(m.tool_calls));
+            if (m.tool_call_id) console.log(`  tool_call_id:`, m.tool_call_id);
+          });
+          console.log('=== END FOLLOW-UP DEBUG ===');
           const followUpResp = await fetch(url, {
             method: 'POST',
             headers,
