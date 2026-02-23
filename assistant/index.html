@@ -5329,6 +5329,19 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
     }
     exclude.forEach(k => delete body[k]);
 
+    // DEBUG: log message structures before sending
+    if (body.messages) {
+      console.log('=== API PAYLOAD DEBUG ===');
+      body.messages.forEach((m, i) => {
+        const contentSummary = Array.isArray(m.content)
+          ? m.content.map(p => ({ type: p.type, keys: Object.keys(p) }))
+          : typeof m.content;
+        console.log(`msg[${i}] role=${m.role}`, JSON.stringify(contentSummary));
+        if (m.tool_calls) console.log(`  tool_calls:`, JSON.stringify(m.tool_calls));
+      });
+      console.log('=== END DEBUG ===');
+    }
+
     let resp = await fetch(url, {
       method: 'POST',
       headers,
