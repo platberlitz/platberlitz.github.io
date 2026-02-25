@@ -1474,6 +1474,21 @@ function extractImages(msg) {
 function renderMarkdown(text) {
   if (!text) return '';
 
+  function restoreAllowedInlineHtml(input) {
+    // Allow a small, attribute-free inline HTML subset for formatting.
+    // Keep all attributes escaped to avoid script/style injection vectors.
+    const allowedTags = ['strong', 'b', 'em', 'i', 'u', 's', 'del', 'mark', 'small', 'sub', 'sup', 'code', 'kbd'];
+    let out = input;
+    allowedTags.forEach(tag => {
+      const open = new RegExp('&lt;\\s*' + tag + '\\s*&gt;', 'gi');
+      const close = new RegExp('&lt;\\s*\\/\\s*' + tag + '\\s*&gt;', 'gi');
+      out = out.replace(open, '<' + tag + '>');
+      out = out.replace(close, '</' + tag + '>');
+    });
+    out = out.replace(/&lt;\s*br\s*\/?\s*&gt;/gi, '<br>');
+    return out;
+  }
+
   // Fix UTF-8 text that was decoded as Latin-1 (smart quotes, em dashes, etc. showing as â + boxes)
   text = text.replace(/[\xC0-\xF4][\x80-\xBF]{1,3}/g, function(m) {
     try {
@@ -1502,6 +1517,7 @@ function renderMarkdown(text) {
   // Decode HTML entities that models sometimes output before escaping
   s = s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
   s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  s = restoreAllowedInlineHtml(s);
   // Spoiler tags >!hidden text!<
   s = s.replace(/&gt;!([\s\S]*?)!&lt;/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
   // Mermaid code blocks
@@ -1516,7 +1532,11 @@ function renderMarkdown(text) {
   s = s.replace(/^# (.+)$/gm, '<h1>$1</h1>');
   s = s.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
   s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/__(.+?)__/g, '<strong>$1</strong>');
   s = s.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
+  s = s.replace(/(^|[^\w])_([^_\n]+)_([^\w]|$)/g, '$1<em>$2</em>$3');
+  s = s.replace(/~~(.+?)~~/g, '<del>$1</del>');
+  s = s.replace(/==(.+?)==/g, '<mark>$1</mark>');
   s = s.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
   s = s.replace(/^[\-\*] (.+)$/gm, '<li class="ul-li">$1</li>');
   s = s.replace(/((?:<li class="ul-li">.*<\/li>\n*)+)/g, function(m) { return '<ul>' + m.replace(/ class="ul-li"/g, '') + '</ul>'; });
