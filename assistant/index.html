@@ -5270,7 +5270,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 4096, stream: useStream, ...extra };
       if (resolveWebSearchEnabled()) {
         body.tools = (body.tools || []).concat([
-          { type: 'web_search_20250305', name: 'web_search', max_uses: 5 },
+          { type: 'web_search_20250305', name: 'web_search', max_uses: 20 },
           ANTHROPIC_URL_FETCH_TOOL
         ]);
         if (localStorage.getItem('llmForceSearch') === 'true') {
@@ -5813,7 +5813,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       }
       // === Anthropic custom tool call execution (url_fetch etc.) ===
       let anthropicToolRound = 0;
-      while (pendingAnthropicToolCalls.length > 0 && format === 'anthropic' && anthropicToolRound < 5) {
+      while (pendingAnthropicToolCalls.length > 0 && format === 'anthropic' && anthropicToolRound < 20) {
         anthropicToolRound++;
         const toolUseContentBlocks = [];
         const toolResultBlocks = [];
@@ -5864,7 +5864,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           { role: 'user', content: toolResultBlocks }
         ];
         const followUpBody = { ...body, messages: followUpMessages, stream: true };
-        if (anthropicToolRound >= 5) delete followUpBody.tools;
+        if (anthropicToolRound >= 20) delete followUpBody.tools;
         exclude.forEach(k => delete followUpBody[k]);
         const followUpResp = await fetch(url, {
           method: 'POST',
@@ -6086,7 +6086,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       let openaiToolRound = 0;
       let openaiPendingToolCalls = Object.values(toolCallBuffers).filter(tc => HANDLED_TOOLS.has(tc.name));
       let openaiRunningMessages = body.messages ? [...body.messages] : [];
-      while (openaiPendingToolCalls.length > 0 && format !== 'anthropic' && openaiToolRound < 5) {
+      while (openaiPendingToolCalls.length > 0 && format !== 'anthropic' && openaiToolRound < 20) {
         openaiToolRound++;
         // Build the assistant message with tool_calls
         const assistantToolMsg = {
@@ -6137,7 +6137,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         // Follow-up streaming request with tool results
         openaiRunningMessages = [...openaiRunningMessages, assistantToolMsg, ...toolResultMsgs];
         const followUpBody = { ...body, messages: openaiRunningMessages, stream: true };
-        if (openaiToolRound >= 5) delete followUpBody.tools;
+        if (openaiToolRound >= 20) delete followUpBody.tools;
         exclude.forEach(k => delete followUpBody[k]);
         const followUpResp = await fetch(url, {
           method: 'POST',
