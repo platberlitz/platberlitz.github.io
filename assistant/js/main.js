@@ -1519,14 +1519,19 @@ function renderMarkdown(text) {
   const looksLikeInlineMath = (math) => {
     const t = String(math || '').trim();
     if (!t) return false;
+    if (t.includes('|')) return false;
+    if (/[€£¥₹]/.test(t)) return false;
+    if (/\b(?:leaked|input|output|premium|price|pricing|tbd)\b/i.test(t)) return false;
+    if (/^[~]?\d/.test(t)) return false;
+    if (/^\d+(?:\.\d+)?\s*\/\s*[A-Za-z][A-Za-z0-9-]*(?:\s*\([^)]*\))?$/.test(t)) return false;
+    if (/\b\d+(?:\.\d+)?\s*\/\s*[kKmM]\b/.test(t)) return false;
     // Explicit LaTeX markers are always treated as math.
     if (/[\\^_{}]/.test(t)) return true;
-    // Avoid accidentally treating pricing/rates as math (e.g. $25/M, $4/M (leaked)).
-    if (/^\d[\d.,\s/%kKmM-]*$/.test(t)) return false;
-    if (/^\d[\d.,\s]*\/\s*[A-Za-z][A-Za-z0-9-]*(?:\s*\([^)]*\))?$/.test(t)) return false;
-    if (/^\d/.test(t)) return false;
-    // Allow variable-like expressions such as x+y, a/b, a=b.
-    return /[A-Za-z]/.test(t) && /[=+\-*/<>]/.test(t);
+    // Accept straightforward symbolic math, reject prose-like text.
+    if (/[=<>]/.test(t)) return true;
+    if (/^[A-Za-z][A-Za-z0-9]*\s*\/\s*[A-Za-z][A-Za-z0-9]*$/.test(t)) return true;
+    if (/^[A-Za-z][A-Za-z0-9]*\s*[+\-*]\s*[A-Za-z0-9]+(?:\s*[+\-*]\s*[A-Za-z0-9]+)*$/.test(t)) return true;
+    return false;
   };
   let s = text;
   // Block math $$...$$
