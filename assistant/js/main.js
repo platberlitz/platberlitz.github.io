@@ -1,0 +1,6003 @@
+import { getFocusableElements, trapFocus } from './lib/dom-utils.js';
+import { escapeHTML, isLightColor } from './lib/text-utils.js';
+// ============================================
+// State
+// ============================================
+let conversations = [];
+let activeConvId = null;
+let messages = [];
+let abortController = null;
+let streaming = false;
+let userScrolledAway = false;
+let _suppressScrollFlag = false;
+let pendingAttachments = [];
+let voiceRec = null;
+let modelOverride = null;
+let mentionActive = false;
+let mentionIdx = 0;
+let activeTagFilter = null;
+let lastSearchStatus = { ok: null, error: null, at: null, query: '' };
+let openModalStack = [];
+const modalFocusReturn = new WeakMap();
+let globalSearchDismiss = null;
+
+const TAG_COLORS = [
+  { name: 'Red', color: '#ef4444' },
+  { name: 'Orange', color: '#f97316' },
+  { name: 'Yellow', color: '#eab308' },
+  { name: 'Green', color: '#22c55e' },
+  { name: 'Blue', color: '#3b82f6' },
+  { name: 'Purple', color: '#a855f7' },
+  { name: 'Pink', color: '#ec4899' },
+  { name: 'Teal', color: '#14b8a6' }
+];
+
+function openModal(modalOrId, focusSelector) {
+  const modal = typeof modalOrId === 'string' ? document.getElementById(modalOrId) : modalOrId;
+  if (!modal) return;
+  const dialog = modal.querySelector('.modal') || modal;
+
+  if (!modal.classList.contains('open')) {
+    modalFocusReturn.set(modal, document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    modal.classList.add('open');
+  }
+  modal.setAttribute('aria-hidden', 'false');
+
+  if (!openModalStack.includes(modal)) openModalStack.push(modal);
+
+  const focusTarget = (focusSelector && modal.querySelector(focusSelector)) || getFocusableElements(dialog)[0] || dialog;
+  requestAnimationFrame(() => {
+    if (focusTarget && typeof focusTarget.focus === 'function') focusTarget.focus();
+  });
+}
+
+function closeModal(modalOrId, restoreFocus = true) {
+  const modal = typeof modalOrId === 'string' ? document.getElementById(modalOrId) : modalOrId;
+  if (!modal) return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  openModalStack = openModalStack.filter(m => m !== modal);
+
+  if (!restoreFocus) return;
+  const prevFocus = modalFocusReturn.get(modal);
+  if (prevFocus && document.contains(prevFocus) && typeof prevFocus.focus === 'function') {
+    prevFocus.focus();
+  }
+}
+
+function closeTopModal(restoreFocus = true) {
+  const modal = openModalStack[openModalStack.length - 1];
+  if (!modal) return false;
+  closeModal(modal, restoreFocus);
+  return true;
+}
+
+function initModalAccessibility() {
+  document.querySelectorAll('.modal-overlay').forEach(modal => {
+    const dialog = modal.querySelector('.modal') || modal;
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    if (!dialog.hasAttribute('tabindex')) dialog.setAttribute('tabindex', '-1');
+    modal.setAttribute('aria-hidden', modal.classList.contains('open') ? 'false' : 'true');
+    if (modal.dataset.a11yInit === '1') return;
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal(modal);
+    });
+    modal.addEventListener('keydown', (e) => trapFocus(dialog, e));
+    modal.dataset.a11yInit = '1';
+  });
+}
+
+function formatRelativeTime(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return 'just now';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return min + 'm ago';
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return hr + 'h ago';
+  const days = Math.floor(hr / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return days + 'd ago';
+  return new Date(ts).toLocaleDateString();
+}
+
+// ============================================
+// Toast Notifications
+// ============================================
+function showToast(message, type = 'info', duration = 3000) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.textContent = message;
+  toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+  toast.setAttribute('aria-atomic', 'true');
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// ============================================
+// Theme Presets
+// ============================================
+const themePresets = {
+  dark:       { bg:'#0a0a0f', sidebar:'#14141a', cardBorder:'rgba(255,255,255,0.08)', textPrimary:'rgba(255,255,255,0.95)', textSecondary:'rgba(255,255,255,0.6)', accent:'#6366f1', accentHover:'#818cf8', msgUser:'#6366f1', msgAssistant:'rgba(255,255,255,0.08)' },
+  light:      { bg:'#f5f5f7', sidebar:'#eeeef2', cardBorder:'rgba(0,0,0,0.1)', textPrimary:'rgba(0,0,0,0.9)', textSecondary:'rgba(0,0,0,0.5)', accent:'#6366f1', accentHover:'#818cf8', msgUser:'#6366f1', msgAssistant:'rgba(0,0,0,0.05)' },
+  nord:       { bg:'#2e3440', sidebar:'#3b4252', cardBorder:'#434c5e', textPrimary:'#eceff4', textSecondary:'#d8dee9', accent:'#88c0d0', accentHover:'#8fbcbb', msgUser:'#5e81ac', msgAssistant:'#3b4252' },
+  catppuccin: { bg:'#1e1e2e', sidebar:'#313244', cardBorder:'#45475a', textPrimary:'#cdd6f4', textSecondary:'#a6adc8', accent:'#cba6f7', accentHover:'#b4befe', msgUser:'#cba6f7', msgAssistant:'#313244' },
+  dracula:    { bg:'#282a36', sidebar:'#44475a', cardBorder:'#6272a4', textPrimary:'#f8f8f2', textSecondary:'#bd93f9', accent:'#bd93f9', accentHover:'#ff79c6', msgUser:'#bd93f9', msgAssistant:'#44475a' },
+  gruvbox:    { bg:'#282828', sidebar:'#3c3836', cardBorder:'#504945', textPrimary:'#ebdbb2', textSecondary:'#a89984', accent:'#fabd2f', accentHover:'#fe8019', msgUser:'#fabd2f', msgAssistant:'#3c3836' },
+  tokyonight: { bg:'#1a1b26', sidebar:'#24283b', cardBorder:'#414868', textPrimary:'#c0caf5', textSecondary:'#565f89', accent:'#7aa2f7', accentHover:'#bb9af7', msgUser:'#7aa2f7', msgAssistant:'#24283b' },
+  solarized:  { bg:'#002b36', sidebar:'#073642', cardBorder:'#586e75', textPrimary:'#fdf6e3', textSecondary:'#93a1a1', accent:'#268bd2', accentHover:'#2aa198', msgUser:'#268bd2', msgAssistant:'#073642' },
+  onedark:    { bg:'#282c34', sidebar:'#21252b', cardBorder:'#3e4451', textPrimary:'#abb2bf', textSecondary:'#5c6370', accent:'#61afef', accentHover:'#c678dd', msgUser:'#61afef', msgAssistant:'#2c313c' },
+  rosepine:   { bg:'#191724', sidebar:'#1f1d2e', cardBorder:'#26233a', textPrimary:'#e0def4', textSecondary:'#908caa', accent:'#c4a7e7', accentHover:'#ebbcba', msgUser:'#c4a7e7', msgAssistant:'#1f1d2e' },
+  // Gallery
+  monochrome:     { bg:'#131313', sidebar:'#222222', cardBorder:'#333333', textPrimary:'#e0e0e0', textSecondary:'rgba(224,224,224,0.6)', accent:'#FCFCFC', accentHover:'#ffffff', msgUser:'#FCFCFC', msgAssistant:'#222222' },
+  pewter:         { bg:'#222222', sidebar:'#333333', cardBorder:'#444444', textPrimary:'#e0e0e0', textSecondary:'rgba(224,224,224,0.6)', accent:'#D9D9D9', accentHover:'#eeeeee', msgUser:'#D9D9D9', msgAssistant:'#333333' },
+  deepSea:        { bg:'#061234', sidebar:'#0f1e44', cardBorder:'#182a54', textPrimary:'#d0e0d0', textSecondary:'rgba(208,224,208,0.6)', accent:'#50AA09', accentHover:'#6ec42a', msgUser:'#50AA09', msgAssistant:'#0f1e44' },
+  gunmetal:       { bg:'#1E212B', sidebar:'#2a2e3a', cardBorder:'#363a48', textPrimary:'#c8cdd2', textSecondary:'rgba(200,205,210,0.6)', accent:'#5B6B76', accentHover:'#7b8b96', msgUser:'#5B6B76', msgAssistant:'#2a2e3a' },
+  clearSky:       { bg:'#1e4c84', sidebar:'#2a5a94', cardBorder:'#3668a4', textPrimary:'#e0f0ff', textSecondary:'rgba(224,240,255,0.6)', accent:'#7ed6ff', accentHover:'#9ee6ff', msgUser:'#7ed6ff', msgAssistant:'#2a5a94' },
+  cobalt:         { bg:'#0D55B2', sidebar:'#1a64c0', cardBorder:'#2874d0', textPrimary:'#e0f0f8', textSecondary:'rgba(224,240,248,0.6)', accent:'#249CB6', accentHover:'#44bcd6', msgUser:'#249CB6', msgAssistant:'#1a64c0' },
+  nightshade:     { bg:'#07040C', sidebar:'#16121e', cardBorder:'#251e30', textPrimary:'#e0d8e8', textSecondary:'rgba(224,216,232,0.6)', accent:'#BDA8DC', accentHover:'#ddc8fc', msgUser:'#BDA8DC', msgAssistant:'#16121e' },
+  plumWine:       { bg:'#1E2233', sidebar:'#2a2e44', cardBorder:'#363a54', textPrimary:'#dcd0e0', textSecondary:'rgba(220,208,224,0.6)', accent:'#822195', accentHover:'#a241b5', msgUser:'#822195', msgAssistant:'#2a2e44' },
+  neonDusk:       { bg:'#495495', sidebar:'#5a64a5', cardBorder:'#6a74b5', textPrimary:'#f0e0f8', textSecondary:'rgba(240,224,248,0.6)', accent:'#ff7edb', accentHover:'#ff9eeb', msgUser:'#ff7edb', msgAssistant:'#5a64a5' },
+  lavenderHaze:   { bg:'#5D69CE', sidebar:'#6d79de', cardBorder:'#7d89ee', textPrimary:'#f0e8f0', textSecondary:'rgba(240,232,240,0.6)', accent:'#A45785', accentHover:'#c477a5', msgUser:'#A45785', msgAssistant:'#6d79de' },
+  jadeMist:       { bg:'#14161E', sidebar:'#20222e', cardBorder:'#2c2e3e', textPrimary:'#d8e8e0', textSecondary:'rgba(216,232,224,0.6)', accent:'#95D3AF', accentHover:'#b5f3cf', msgUser:'#95D3AF', msgAssistant:'#20222e' },
+  mossStone:      { bg:'#373C3F', sidebar:'#454b4f', cardBorder:'#555b5f', textPrimary:'#d8e8d8', textSecondary:'rgba(216,232,216,0.6)', accent:'#83B38E', accentHover:'#a3d3ae', msgUser:'#83B38E', msgAssistant:'#454b4f' },
+  emeraldForest:  { bg:'#295233', sidebar:'#376243', cardBorder:'#457253', textPrimary:'#d8f0d0', textSecondary:'rgba(216,240,208,0.6)', accent:'#89E574', accentHover:'#a9ff94', msgUser:'#89E574', msgAssistant:'#376243' },
+  winterBreeze:   { bg:'#141b1e', sidebar:'#20282e', cardBorder:'#2c343e', textPrimary:'#d0e0f0', textSecondary:'rgba(208,224,240,0.6)', accent:'#67b0e8', accentHover:'#87d0ff', msgUser:'#67b0e8', msgAssistant:'#20282e' },
+  neonNoir:       { bg:'#000000', sidebar:'#141414', cardBorder:'#282828', textPrimary:'#e0e0e0', textSecondary:'rgba(224,224,224,0.6)', accent:'#fada16', accentHover:'#ffea46', msgUser:'#fada16', msgAssistant:'#141414' },
+  hotPink:        { bg:'#2d2a2e', sidebar:'#3d3a3e', cardBorder:'#4d4a4e', textPrimary:'#f8f8f2', textSecondary:'rgba(248,248,242,0.6)', accent:'#f92672', accentHover:'#ff4692', msgUser:'#f92672', msgAssistant:'#3d3a3e' },
+  roseQuartz:     { bg:'#161616', sidebar:'#262626', cardBorder:'#363636', textPrimary:'#e8d8e0', textSecondary:'rgba(232,216,224,0.6)', accent:'#EE5396', accentHover:'#ff73b6', msgUser:'#EE5396', msgAssistant:'#262626' },
+  ember:          { bg:'#0D0D0D', sidebar:'#1d1d1d', cardBorder:'#2d2d2d', textPrimary:'#e8d8c8', textSecondary:'rgba(232,216,200,0.6)', accent:'#E0701E', accentHover:'#ff903e', msgUser:'#E0701E', msgAssistant:'#1d1d1d' },
+  moltenCore:     { bg:'#351810', sidebar:'#452820', cardBorder:'#553830', textPrimary:'#f0e0c8', textSecondary:'rgba(240,224,200,0.6)', accent:'#FABD2F', accentHover:'#ffdd4f', msgUser:'#FABD2F', msgAssistant:'#452820' },
+  orchidTeal:     { bg:'#821595', sidebar:'#9225a5', cardBorder:'#a235b5', textPrimary:'#e0f0f0', textSecondary:'rgba(224,240,240,0.6)', accent:'#259E9C', accentHover:'#45bebc', msgUser:'#259E9C', msgAssistant:'#9225a5' },
+  acidGlow:       { bg:'#4B0082', sidebar:'#5b1092', cardBorder:'#6b20a2', textPrimary:'#d8f8e0', textSecondary:'rgba(216,248,224,0.6)', accent:'#00FF66', accentHover:'#33ff88', msgUser:'#00FF66', msgAssistant:'#5b1092' },
+  fjord:          { bg:'#2E3440', sidebar:'#3b4252', cardBorder:'#434c5e', textPrimary:'#eceff4', textSecondary:'#d8dee9', accent:'#88C0D0', accentHover:'#a8e0f0', msgUser:'#88C0D0', msgAssistant:'#3b4252' },
+  oxide:          { bg:'#0f1115', sidebar:'#151922', cardBorder:'#252a36', textPrimary:'#e8e6e3', textSecondary:'#a8a3a0', accent:'#f26a2e', accentHover:'#ff7b43', msgUser:'#f26a2e', msgAssistant:'#1b202b', borderRadius:'16px', msgMaxWidth:'72%', codeBg:'rgba(242,106,46,0.08)' },
+  blueprint:      { bg:'#0b1220', sidebar:'#101a2e', cardBorder:'#1e2b46', textPrimary:'#e6edf6', textSecondary:'#9fb0c6', accent:'#4aa3ff', accentHover:'#6bb6ff', msgUser:'#4aa3ff', msgAssistant:'#131f33', borderRadius:'18px', msgMaxWidth:'70%', codeBg:'rgba(74,163,255,0.10)' },
+  paperInk:       { bg:'#f6f3ee', sidebar:'#f0ece5', cardBorder:'#d8d3c8', textPrimary:'#1f1b16', textSecondary:'#6e645b', accent:'#2f6fb2', accentHover:'#3f82c8', msgUser:'#2f6fb2', msgAssistant:'#ffffff', borderRadius:'20px', msgMaxWidth:'68%', codeBg:'rgba(47,111,178,0.08)' },
+  moss:           { bg:'#101612', sidebar:'#161d17', cardBorder:'#2a332c', textPrimary:'#e0e7df', textSecondary:'#a6b2a4', accent:'#7ac27b', accentHover:'#8fd990', msgUser:'#7ac27b', msgAssistant:'#1a231c', borderRadius:'16px', msgMaxWidth:'72%', codeBg:'rgba(122,194,123,0.10)' },
+  claude:         { bg:'#FAF9F5', sidebar:'#EBE7DF', cardBorder:'rgba(0,0,0,0.08)', textPrimary:'#1a1915', textSecondary:'rgba(26,25,21,0.55)', accent:'#D97757', accentHover:'#C4684A', msgUser:'#D97757', msgAssistant:'#F3F0E8', borderRadius:'24px', msgMaxWidth:'70%', codeBg:'rgba(0,0,0,0.04)' },
+  claudeDark:     { bg:'#1a1915', sidebar:'#1a1915', cardBorder:'rgba(255,255,255,0.08)', textPrimary:'#e8e4db', textSecondary:'rgba(232,228,219,0.5)', accent:'#D97757', accentHover:'#C4684A', msgUser:'#D97757', msgAssistant:'#2b2a27', borderRadius:'24px', msgMaxWidth:'70%', codeBg:'rgba(0,0,0,0.3)' }
+};
+
+const themeOrder = ['dark','light','nord','catppuccin','dracula','gruvbox','tokyonight','solarized','onedark','rosepine','monochrome','pewter','deepSea','gunmetal','clearSky','cobalt','nightshade','plumWine','neonDusk','lavenderHaze','jadeMist','mossStone','emeraldForest','winterBreeze','neonNoir','hotPink','roseQuartz','ember','moltenCore','orchidTeal','acidGlow','fjord','oxide','blueprint','paperInk','moss','claude','claudeDark'];
+
+// ============================================
+// Utility
+// ============================================
+// ============================================
+// Theme System
+// ============================================
+function applyTheme(name) {
+  let t;
+  if (name === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    t = prefersDark ? themePresets.dark : themePresets.light;
+  } else if (name === 'custom') {
+    try { t = JSON.parse(localStorage.getItem('assistantCustomTheme') || 'null'); } catch(e) { console.warn('Custom theme parse error:', e); }
+    if (!t) t = themePresets.dark;
+  } else {
+    t = themePresets[name] || themePresets.dark;
+  }
+  const s = document.documentElement.style;
+  s.setProperty('--bg', t.bg);
+  s.setProperty('--sidebar-bg', t.sidebar);
+  s.setProperty('--card-border', t.cardBorder);
+  s.setProperty('--text-primary', t.textPrimary);
+  s.setProperty('--text-secondary', t.textSecondary);
+  s.setProperty('--accent', t.accent);
+  s.setProperty('--accent-hover', t.accentHover);
+  s.setProperty('--msg-user', t.msgUser);
+  s.setProperty('--msg-assistant', t.msgAssistant);
+  s.setProperty('--hover', isLightColor(t.bg) ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)');
+  s.setProperty('--accent-text', isLightColor(t.accent) ? '#000000' : '#ffffff');
+  s.setProperty('--msg-user-text', isLightColor(t.msgUser) ? '#000000' : '#ffffff');
+  const bgLight = isLightColor(t.bg);
+  s.setProperty('--overlay-10', bgLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)');
+  s.setProperty('--overlay-15', bgLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)');
+  s.setProperty('--overlay-25', bgLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)');
+  s.setProperty('--border-radius', t.borderRadius || '16px');
+  s.setProperty('--msg-max-width', t.msgMaxWidth || '75%');
+  s.setProperty('--msg-padding', t.msgPadding || '12px 16px');
+  s.setProperty('--msg-font-size', t.msgFontSize || '0.95em');
+  s.setProperty('--code-bg', t.codeBg || (bgLight ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.3)'));
+  s.setProperty('--card-bg', bgLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)');
+  s.setProperty('--error-color', bgLight ? '#dc2626' : '#f66');
+  localStorage.setItem('assistantTheme', name);
+
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.innerHTML = isLightColor(t.bg) ? '&#9728;' : '&#9790;';
+    btn.title = 'Theme: ' + name;
+  }
+  applyMsgOverrides();
+  // Sync mermaid theme with app theme
+  if (typeof mermaid !== 'undefined') {
+    const mermaidTheme = isLightColor(t.bg) ? 'default' : 'dark';
+    mermaid.initialize({ startOnLoad: false, theme: mermaidTheme });
+  }
+}
+
+function applyMsgOverrides() {
+  const s = document.documentElement.style;
+  const fs = localStorage.getItem('assistantMsgFontSize');
+  const mw = localStorage.getItem('assistantMsgMaxWidth');
+  if (fs) s.setProperty('--msg-font-size', fs);
+  if (mw) s.setProperty('--msg-max-width', mw);
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem('assistantTheme') || 'dark';
+  let order = [...themeOrder];
+  const hasCustom = localStorage.getItem('assistantCustomTheme');
+  if (hasCustom) order.push('custom');
+  let idx = order.indexOf(current);
+  const next = order[(idx + 1) % order.length];
+  applyTheme(next);
+
+  // Flash theme name
+  const btn = document.getElementById('themeToggle');
+  const old = btn.querySelector('.theme-flash');
+  if (old) old.remove();
+  const flash = document.createElement('span');
+  flash.className = 'theme-flash';
+  flash.textContent = next;
+  btn.appendChild(flash);
+  setTimeout(() => flash.remove(), 1600);
+}
+
+function loadTheme() {
+  const migrationMap = {
+    oneBit:'monochrome', graphiteMono:'pewter', abyssalWave:'deepSea', cosmicBlue:'gunmetal',
+    pixelDream:'clearSky', anotherWorld:'cobalt', obsidianPurple:'nightshade', scarletNight:'plumWine',
+    synthWave:'neonDusk', amethystAura:'lavenderHaze', decayGreen:'jadeMist', greenLush:'mossStone',
+    rainDark:'emeraldForest', everBlushing:'winterBreeze', edgeRunner:'neonNoir', monokai:'hotPink',
+    redStone:'roseQuartz', soulsborne:'ember', doomBringers:'moltenCore', nightbrew:'orchidTeal',
+    joker:'acidGlow', nordicBlue:'fjord'
+  };
+  let name = localStorage.getItem('assistantTheme') || 'dark';
+  if (migrationMap[name]) { name = migrationMap[name]; localStorage.setItem('assistantTheme', name); }
+  applyTheme(name);
+}
+
+// ============================================
+// Custom Theme Helpers
+// ============================================
+function onThemeSelectChange() {
+  const val = document.getElementById('setTheme').value;
+  document.getElementById('customThemeColors').style.display = val === 'custom' ? 'grid' : 'none';
+  if (val === 'custom') {
+    loadCustomColorPickers();
+  }
+  applyTheme(val);
+}
+
+function loadCustomColorPickers() {
+  let t;
+  try { t = JSON.parse(localStorage.getItem('assistantCustomTheme') || 'null'); } catch(e) { console.warn('Custom theme parse error:', e); }
+  if (!t) t = themePresets.dark;
+  const toHex = (c) => {
+    if (c.startsWith('#') && c.length >= 7) return c.slice(0, 7);
+    if (c.startsWith('#') && c.length === 4) return '#' + c[1]+c[1]+c[2]+c[2]+c[3]+c[3];
+    if (c.startsWith('rgba') || c.startsWith('rgb')) {
+      const m = c.match(/[\d.]+/g);
+      if (m) return '#' + [m[0],m[1],m[2]].map(v => Math.round(parseFloat(v)).toString(16).padStart(2,'0')).join('');
+    }
+    return '#000000';
+  };
+  document.getElementById('cBg').value = toHex(t.bg);
+  document.getElementById('cSidebar').value = toHex(t.sidebar);
+  document.getElementById('cBorder').value = toHex(t.cardBorder);
+  document.getElementById('cText').value = toHex(t.textPrimary);
+  document.getElementById('cTextSec').value = toHex(t.textSecondary);
+  document.getElementById('cAccent').value = toHex(t.accent);
+  document.getElementById('cAccentHover').value = toHex(t.accentHover);
+  document.getElementById('cMsgUser').value = toHex(t.msgUser);
+  document.getElementById('cMsgAssistant').value = toHex(t.msgAssistant);
+  document.getElementById('cBorderRadius').value = t.borderRadius || '';
+  document.getElementById('cMsgMaxWidth').value = t.msgMaxWidth || '';
+  document.getElementById('cMsgFontSize').value = t.msgFontSize || '';
+  document.getElementById('cCodeBg').value = t.codeBg ? toHex(t.codeBg) : '#000000';
+}
+
+function resetCustomTheme() {
+  localStorage.removeItem('assistantCustomTheme');
+  document.getElementById('setTheme').value = 'dark';
+  document.getElementById('customThemeColors').style.display = 'none';
+  applyTheme('dark');
+}
+
+function getCustomThemeFromPickers() {
+  const t = {
+    bg: document.getElementById('cBg').value,
+    sidebar: document.getElementById('cSidebar').value,
+    cardBorder: document.getElementById('cBorder').value,
+    textPrimary: document.getElementById('cText').value,
+    textSecondary: document.getElementById('cTextSec').value,
+    accent: document.getElementById('cAccent').value,
+    accentHover: document.getElementById('cAccentHover').value,
+    msgUser: document.getElementById('cMsgUser').value,
+    msgAssistant: document.getElementById('cMsgAssistant').value
+  };
+  const br = document.getElementById('cBorderRadius').value.trim();
+  const mw = document.getElementById('cMsgMaxWidth').value.trim();
+  const fs = document.getElementById('cMsgFontSize').value.trim();
+  const cb = document.getElementById('cCodeBg').value;
+  if (br) t.borderRadius = br;
+  if (mw) t.msgMaxWidth = mw;
+  if (fs) t.msgFontSize = fs;
+  if (cb) t.codeBg = cb;
+  return t;
+}
+
+function liveCustomTheme() {
+  const t = getCustomThemeFromPickers();
+  localStorage.setItem('assistantCustomTheme', JSON.stringify(t));
+  applyTheme('custom');
+}
+
+// ============================================
+// Custom Google Fonts
+// ============================================
+function loadCustomFont(fontName) {
+  const old = document.getElementById('customFontLink');
+  if (old) old.remove();
+  if (!fontName) {
+    document.body.style.fontFamily = "'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+    return;
+  }
+  const link = document.createElement('link');
+  link.id = 'customFontLink';
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=' + fontName.replace(/ /g, '+') + ':wght@400;500;600;700&display=swap';
+  document.head.appendChild(link);
+  document.body.style.fontFamily = "'" + fontName + "', 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+}
+
+// ============================================
+// Model Fetching
+// ============================================
+async function fetchAvailableModels(baseUrl, apiKey) {
+  const url = baseUrl.replace(/\/+$/, '') + '/models';
+  const resp = await fetch(url, {
+    headers: { 'Authorization': 'Bearer ' + apiKey }
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const data = await resp.json();
+  return data.data?.map(m => m.id) || [];
+}
+
+function populateModelSelect(target, models) {
+  const select = document.getElementById(target === 'setup' ? 'setupModelSelect' : 'setModelSelect');
+  const currentModel = localStorage.getItem('llmModel') || '';
+  select.innerHTML = '<option value="">-- Select a model --</option>';
+  models.sort().forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    if (m === currentModel) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+async function refreshModels(target, btnEl) {
+  const proxyInput = document.getElementById(target === 'setup' ? 'setupProxy' : 'setProxy');
+  const keyInput = document.getElementById(target === 'setup' ? 'setupKey' : 'setKey');
+  let baseUrl = proxyInput.value.trim().replace(/\/(chat\/completions|messages)\/?$/, '');
+  const apiKey = keyInput.value.trim();
+  if (!baseUrl || !apiKey) { showToast('Enter Base URL and API Key first.', 'error'); return; }
+  const btn = btnEl || document.activeElement;
+  btn.classList.add('spinning');
+  btn.disabled = true;
+  try {
+    const models = await fetchAvailableModels(baseUrl, apiKey);
+    localStorage.setItem('llmModelList', JSON.stringify(models));
+    populateModelSelect(target, models);
+  } catch (e) {
+    showToast('Failed to fetch models: ' + e.message, 'error');
+  } finally {
+    btn.classList.remove('spinning');
+    btn.disabled = false;
+  }
+}
+
+function loadCachedModels(target) {
+  try {
+    const cached = JSON.parse(localStorage.getItem('llmModelList') || '[]');
+    if (cached.length > 0) populateModelSelect(target, cached);
+  } catch(e) { console.warn('Cached model list parse error:', e); }
+}
+
+// ============================================
+// Memory System
+// ============================================
+async function loadMemories() {
+  try {
+    const mems = await idbGetAll('memories');
+    if (mems.length > 0) return mems;
+  } catch(e) {}
+  try {
+    const mems = JSON.parse(localStorage.getItem('assistantMemories') || '[]');
+    if (mems.length > 0) {
+      await idbPutAll('memories', mems);
+      localStorage.removeItem('assistantMemories');
+    }
+    return mems;
+  } catch(e) { return []; }
+}
+async function saveMemories(memories) {
+  if (!db) return;
+  await idbClear('memories');
+  await idbPutAll('memories', memories);
+}
+async function getMemoryPrompt() {
+  if (localStorage.getItem('llmMemoryEnabled') !== 'true') return '';
+  const memories = await loadMemories();
+  if (memories.length === 0) return '';
+  return 'User memories (facts learned from previous conversations):\n' +
+    memories.map(m => '- ' + m.text).join('\n');
+}
+
+async function callApiNonStreaming(messages) {
+  const baseUrl = (localStorage.getItem('llmProxyUrl') || '').replace(/\/+$/, '');
+  const apiKey = localStorage.getItem('llmApiKey');
+  const model = localStorage.getItem('llmModel') || 'gpt-4o';
+  const format = detectApiFormat(model);
+
+  let url, headers, body;
+  if (format === 'anthropic') {
+    url = baseUrl + '/messages';
+    headers = { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' };
+    const prepared = prepareAnthropicMessages(messages);
+    body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 512, stream: false };
+  } else {
+    url = baseUrl + '/chat/completions';
+    headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey };
+    body = { model, messages, stream: false, max_tokens: 512 };
+  }
+
+  const resp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const data = await resp.json();
+
+  if (format === 'anthropic') {
+    return (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
+  }
+  return data.choices?.[0]?.message?.content || '';
+}
+
+async function extractMemories(conversationMessages) {
+  if (localStorage.getItem('llmMemoryEnabled') !== 'true') return;
+
+  const existing = await loadMemories();
+  const existingText = existing.map(m => '- ' + m.text).join('\n') || '(none yet)';
+
+  const extractPrompt = [
+    { role: 'system', content: `You are a memory extraction system. Given a conversation, identify important facts about the user worth remembering for future conversations (preferences, personal details, projects, interests, opinions).
+
+Current memories:
+${existingText}
+
+Respond ONLY with a JSON array of new memory strings to add. If there's nothing new worth remembering, respond with []. Do not repeat existing memories. Keep each memory concise (1 sentence). Maximum 3 new memories per extraction.
+
+Example response: ["User prefers TypeScript over JavaScript", "User is building a music app"]` },
+    ...conversationMessages.filter(m => m.role !== 'system').slice(-10)
+  ];
+
+  try {
+    const response = await callApiNonStreaming(extractPrompt);
+    const newMemories = JSON.parse(response);
+    if (Array.isArray(newMemories) && newMemories.length > 0) {
+      const memories = await loadMemories();
+      newMemories.forEach(text => {
+        if (typeof text === 'string' && text.trim()) {
+          memories.push({ id: 'mem_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), text: text.trim(), createdAt: Date.now() });
+        }
+      });
+      await saveMemories(memories);
+      cleanupMemories(); // fire-and-forget, has its own cooldown
+    }
+  } catch(e) { /* silent fail — memory is best-effort */ }
+}
+
+let _lastCleanup = 0;
+async function cleanupMemories() {
+  if (Date.now() - _lastCleanup < 300000) return; // 5-min cooldown
+  const memories = await loadMemories();
+  if (memories.length < 5) return;
+
+  const prompt = [
+    { role: 'system', content: `You are a memory cleanup system. Given a list of user memories (each with an ID), identify contradictions and duplicates.
+
+Rules:
+- If two memories contradict, keep the NEWER one (higher ID number = newer). Mark the older for removal.
+- If two memories say the same thing differently, keep the more specific one. Mark the other for removal.
+- If a memory is outdated or superseded, mark it for removal.
+
+Respond ONLY with a JSON object: {"remove": ["id1", "id2"]}
+If no changes needed: {"remove": []}` },
+    { role: 'user', content: memories.map(m => '[' + m.id + '] ' + m.text).join('\n') }
+  ];
+
+  try {
+    const response = await callApiNonStreaming(prompt);
+    const result = JSON.parse(response);
+    if (result.remove && result.remove.length > 0) {
+      const cleaned = memories.filter(m => !result.remove.includes(m.id));
+      await saveMemories(cleaned);
+    }
+    _lastCleanup = Date.now();
+  } catch(e) { /* silent fail */ }
+}
+
+function openManageMemories() {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  async function renderMemoryList() {
+    const memories = await loadMemories();
+    let html = '<h3>Memories (' + memories.length + ')</h3>';
+    if (memories.length === 0) {
+      html += '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">No memories saved yet. The AI will automatically remember facts about you as you chat.</div>';
+    } else {
+      html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">';
+      memories.forEach(m => {
+        html += '<div style="display:flex;align-items:center;gap:8px;font-size:0.85em;background:var(--hover);padding:8px 10px;border-radius:8px">' +
+          '<span style="flex:1;color:var(--text-secondary)">' + m.text.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>' +
+          '<button data-memory-id="' + m.id.replace(/"/g, '&quot;') + '" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;flex-shrink:0;padding:2px 4px" title="Delete">✕</button>' +
+          '</div>';
+      });
+      html += '</div>';
+      html += '<button class="btn btn-secondary" style="width:100%;margin-bottom:8px;padding:8px;font-size:0.8em" onclick="if(confirm(\'Clear all memories?\')){saveMemories([]).then(()=>openManageMemories())}">Clear All</button>';
+    }
+    html += '<button class="btn btn-primary" style="width:100%;padding:8px" onclick="this.closest(\'.char-info-popup\').previousElementSibling.click()">Close</button>';
+    popup.innerHTML = html;
+    popup.querySelectorAll('[data-memory-id]').forEach(btn => {
+      btn.addEventListener('click', () => deleteMemory(btn.dataset.memoryId));
+    });
+  }
+
+  overlay.onclick = () => { overlay.remove(); popup.remove(); };
+  renderMemoryList();
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+}
+
+function openSearchTest() {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  popup.innerHTML =
+    '<h3>Search Test</h3>' +
+    '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">Runs a live query using your Search API settings.</div>' +
+    '<input type="text" id="searchTestInput" placeholder="Search query..." style="width:100%;padding:10px;font-family:inherit;font-size:0.9em;background:var(--hover);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);outline:none">' +
+    '<div style="display:flex;gap:8px;margin-top:10px">' +
+      '<button class="btn btn-primary" id="searchTestRun" style="flex:1;padding:8px">Run</button>' +
+      '<button class="btn btn-secondary" id="searchTestClose" style="flex:1;padding:8px">Close</button>' +
+    '</div>' +
+    '<div id="searchTestStatus" style="margin-top:12px;font-size:0.85em;color:var(--text-secondary)"></div>' +
+    '<div id="searchTestResults" style="margin-top:8px;display:flex;flex-direction:column;gap:8px"></div>';
+
+  const close = () => { overlay.remove(); popup.remove(); };
+  overlay.onclick = close;
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+
+  const input = popup.querySelector('#searchTestInput');
+  const runBtn = popup.querySelector('#searchTestRun');
+  const closeBtn = popup.querySelector('#searchTestClose');
+  const statusEl = popup.querySelector('#searchTestStatus');
+  const resultsEl = popup.querySelector('#searchTestResults');
+
+  closeBtn.onclick = close;
+
+  const esc = (s) => String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const renderResults = (results) => {
+    if (!results.length) {
+      resultsEl.innerHTML = '<div style="color:var(--text-secondary);font-size:0.85em">No results found.</div>';
+      return;
+    }
+    resultsEl.innerHTML = results.map(r => {
+      const title = esc(r.title || r.url || 'Result');
+      const url = esc(r.url || '#');
+      const snippet = esc(r.snippet || '');
+      const displayUrl = esc((r.url || '').replace(/^https?:\/\//, '').replace(/\/+$/, ''));
+      return '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover)">' +
+        '<a href="' + url + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:600">' + title + '</a>' +
+        (displayUrl ? '<div style="color:var(--text-secondary);font-size:0.75em;margin-top:4px">' + displayUrl + '</div>' : '') +
+        (snippet ? '<div style="color:var(--text-secondary);font-size:0.85em;margin-top:6px">' + snippet + '</div>' : '') +
+      '</div>';
+    }).join('');
+  };
+
+  const runSearch = async () => {
+    const q = input.value.trim();
+    if (!q) { statusEl.textContent = 'Enter a query to test.'; resultsEl.innerHTML = ''; return; }
+    statusEl.textContent = 'Searching...';
+    resultsEl.innerHTML = '';
+    runBtn.disabled = true;
+    try {
+      const { results, error } = await executeWebSearch(q);
+      if (error) {
+        statusEl.textContent = 'Error: ' + error;
+      } else {
+        statusEl.textContent = 'Found ' + results.length + ' result' + (results.length === 1 ? '' : 's') + '.';
+      }
+      renderResults(results);
+    } catch (e) {
+      statusEl.textContent = 'Error: ' + (e.message || 'Unknown error');
+    } finally {
+      runBtn.disabled = false;
+    }
+  };
+
+  runBtn.onclick = runSearch;
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') runSearch();
+  });
+
+  input.focus();
+}
+
+function openSourcesDrawer(msg) {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+  const toolBlocks = msg?.swipeToolUse?.[msg.swipeIndex] || [];
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  let html = '<h3>Sources</h3>';
+  if (!toolBlocks.length || toolBlocks.every(tb => tb.type === 'url_fetch' ? (!tb.content && !tb.error) : !(tb.results || []).length)) {
+    html += '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">No sources available.</div>';
+  } else {
+    toolBlocks.forEach(tb => {
+      // --- url_fetch blocks ---
+      if (tb.type === 'url_fetch') {
+        const escapedUrl = escapeHTML(tb.url || '');
+        const displayUrl = escapeHTML((tb.url || '').replace(/^https?:\/\//, '').replace(/\/+$/, ''));
+        html += '<div style="margin:10px 0 6px;font-weight:600;font-size:0.9em">\u{1F310} ' + displayUrl + '</div>';
+        if (tb.error) {
+          html += '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover);margin-bottom:8px;color:var(--error-color,#f66);font-size:0.85em">' + escapeHTML(tb.error) + '</div>';
+        } else if (tb.content) {
+          const preview = escapeHTML(tb.content.slice(0, 500));
+          html += '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover);margin-bottom:8px">' +
+            '<a href="' + escapedUrl + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:600">' + displayUrl + '</a>' +
+            '<div style="color:var(--text-secondary);font-size:0.8em;margin-top:6px;white-space:pre-wrap;max-height:150px;overflow-y:auto">' + preview + (tb.content.length > 500 ? '\u2026' : '') + '</div>' +
+          '</div>';
+        }
+        return;
+      }
+      // --- web_search blocks ---
+      const results = tb.results || [];
+      if (!results.length) return;
+      const q = escapeHTML(tb.query || 'Search');
+      html += '<div style="margin:10px 0 6px;font-weight:600;font-size:0.9em">🔎 ' + q + '</div>';
+      results.forEach(r => {
+        const title = escapeHTML(r.title || r.url || 'Result');
+        const url = escapeHTML(r.url || '#');
+        const displayUrl = escapeHTML((r.url || '').replace(/^https?:\/\//, '').replace(/\/+$/, ''));
+        const snippet = r.snippet ? escapeHTML(r.snippet) : '';
+        html += '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover);margin-bottom:8px">' +
+          '<a href="' + url + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:600">' + title + '</a>' +
+          (displayUrl ? '<div style="color:var(--text-secondary);font-size:0.75em;margin-top:4px">' + displayUrl + '</div>' : '') +
+          (snippet ? '<div style="color:var(--text-secondary);font-size:0.85em;margin-top:6px">' + snippet + '</div>' : '') +
+        '</div>';
+      });
+    });
+  }
+
+  html += '<button class="btn btn-primary" style="width:100%;padding:8px" onclick="this.closest(\'.char-info-popup\').previousElementSibling.click()">Close</button>';
+  popup.innerHTML = html;
+
+  overlay.onclick = () => { overlay.remove(); popup.remove(); };
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+}
+
+function buildSnippet(text, idx, windowSize = 90) {
+  const start = Math.max(0, idx - windowSize);
+  const end = Math.min(text.length, idx + windowSize);
+  const prefix = start > 0 ? '…' : '';
+  const suffix = end < text.length ? '…' : '';
+  return prefix + text.slice(start, end).trim() + suffix;
+}
+
+function searchLocalDocs(query, conv) {
+  const docs = (conv && conv.docs) || [];
+  if (!query || !docs.length) return [];
+  const q = query.toLowerCase();
+  const terms = q.split(/\s+/).filter(Boolean);
+  const results = [];
+  docs.forEach(doc => {
+    const text = (doc.text || '');
+    const hay = text.toLowerCase();
+    let score = 0;
+    let firstIdx = -1;
+    terms.forEach(t => {
+      const idx = hay.indexOf(t);
+      if (idx !== -1) {
+        score += 1;
+        if (firstIdx === -1 || idx < firstIdx) firstIdx = idx;
+      }
+    });
+    if (score > 0 && firstIdx !== -1) {
+      results.push({
+        id: doc.id,
+        name: doc.name || 'Document',
+        snippet: buildSnippet(text, firstIdx),
+        score
+      });
+    }
+  });
+  return results.sort((a, b) => b.score - a.score).slice(0, 20);
+}
+
+function openFileSearch() {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  popup.innerHTML =
+    '<h3>Search Files</h3>' +
+    '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">Searches text from files you attached in this conversation.</div>' +
+    '<input type="text" id="fileSearchInput" placeholder="Search files..." style="width:100%;padding:10px;font-family:inherit;font-size:0.9em;background:var(--hover);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);outline:none">' +
+    '<div style="display:flex;gap:8px;margin-top:10px">' +
+      '<button class="btn btn-primary" id="fileSearchRun" style="flex:1;padding:8px">Search</button>' +
+      '<button class="btn btn-secondary" id="fileSearchClose" style="flex:1;padding:8px">Close</button>' +
+    '</div>' +
+    '<div id="fileSearchStatus" style="margin-top:12px;font-size:0.85em;color:var(--text-secondary)"></div>' +
+    '<div id="fileSearchResults" style="margin-top:8px;display:flex;flex-direction:column;gap:8px"></div>';
+
+  const close = () => { overlay.remove(); popup.remove(); };
+  overlay.onclick = close;
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+
+  const input = popup.querySelector('#fileSearchInput');
+  const runBtn = popup.querySelector('#fileSearchRun');
+  const closeBtn = popup.querySelector('#fileSearchClose');
+  const statusEl = popup.querySelector('#fileSearchStatus');
+  const resultsEl = popup.querySelector('#fileSearchResults');
+
+  closeBtn.onclick = close;
+
+  const renderResults = (results) => {
+    if (!results.length) {
+      resultsEl.innerHTML = '<div style="color:var(--text-secondary);font-size:0.85em">No matches found.</div>';
+      return;
+    }
+    resultsEl.innerHTML = results.map(r => {
+      return '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover)">' +
+        '<div style="font-weight:600;color:var(--text-primary)">' + escapeHTML(r.name) + '</div>' +
+        '<div style="color:var(--text-secondary);font-size:0.85em;margin-top:6px">' + escapeHTML(r.snippet) + '</div>' +
+      '</div>';
+    }).join('');
+  };
+
+  const runSearch = () => {
+    const q = input.value.trim();
+    if (!q) { statusEl.textContent = 'Enter a query to search.'; resultsEl.innerHTML = ''; return; }
+    const conv = getActiveConv();
+    const results = searchLocalDocs(q, conv);
+    statusEl.textContent = results.length ? ('Found ' + results.length + ' match' + (results.length === 1 ? '' : 'es') + '.') : 'No matches found.';
+    renderResults(results);
+  };
+
+  runBtn.onclick = runSearch;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') runSearch(); });
+  input.focus();
+}
+
+function openSummaryModal() {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+  const conv = getActiveConv();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  popup.innerHTML =
+    '<h3>Conversation Summary</h3>' +
+    '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">Generate a compact summary and keep it in the system prompt for this chat.</div>' +
+    '<textarea id="summaryText" style="width:100%;min-height:160px;resize:vertical;font-family:inherit;font-size:0.9em;background:var(--hover);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);padding:10px;outline:none"></textarea>' +
+    '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+      '<button class="btn btn-primary" id="summaryGen" style="flex:1;padding:8px">Generate</button>' +
+      '<button class="btn btn-secondary" id="summarySave" style="flex:1;padding:8px">Save</button>' +
+      '<button class="btn btn-secondary" id="summaryClear" style="flex:1;padding:8px">Clear</button>' +
+      '<button class="btn btn-secondary" id="summaryClose" style="flex:1;padding:8px">Close</button>' +
+    '</div>';
+
+  const close = () => { overlay.remove(); popup.remove(); };
+  overlay.onclick = close;
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+
+  const ta = popup.querySelector('#summaryText');
+  const genBtn = popup.querySelector('#summaryGen');
+  const saveBtn = popup.querySelector('#summarySave');
+  const clearBtn = popup.querySelector('#summaryClear');
+  const closeBtn = popup.querySelector('#summaryClose');
+
+  ta.value = conv?.summary || '';
+
+  closeBtn.onclick = close;
+  clearBtn.onclick = () => {
+    if (!conv) return;
+    conv.summary = '';
+    conv.summaryUpdatedAt = null;
+    saveConversations();
+    ta.value = '';
+    showToast('Summary cleared.', 'info');
+  };
+  saveBtn.onclick = () => {
+    if (!conv) return;
+    conv.summary = ta.value.trim();
+    conv.summaryUpdatedAt = Date.now();
+    saveConversations();
+    showToast('Summary saved.', 'success');
+  };
+  genBtn.onclick = async () => {
+    if (!conv) return;
+    const baseUrl = (localStorage.getItem('llmProxyUrl') || '').trim();
+    const apiKey = (localStorage.getItem('llmApiKey') || '').trim();
+    if (!baseUrl || !apiKey) { showToast('Set API Base URL and Key first.', 'error'); return; }
+    genBtn.disabled = true;
+    genBtn.textContent = 'Generating...';
+    try {
+      const transcript = buildConversationTranscript(40);
+      const prompt = [
+        { role: 'system', content: 'Summarize the conversation into a concise, structured note the assistant can use for context. Focus on facts, preferences, and open tasks. Keep it under 200 words.' },
+        { role: 'user', content: transcript }
+      ];
+      const summary = await callApiNonStreaming(prompt);
+      const cleaned = (summary || '').trim();
+      ta.value = cleaned;
+      conv.summary = cleaned;
+      conv.summaryUpdatedAt = Date.now();
+      saveConversations();
+      showToast('Summary updated.', 'success');
+    } catch (e) {
+      showToast('Summary failed: ' + (e.message || 'Unknown error'), 'error');
+    } finally {
+      genBtn.disabled = false;
+      genBtn.textContent = 'Generate';
+    }
+  };
+}
+
+function openStatusPanel() {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  const render = () => {
+    const baseUrl = localStorage.getItem('llmProxyUrl') || '(not set)';
+    const model = localStorage.getItem('llmModel') || '(not set)';
+    const searchUrl = localStorage.getItem('llmSearchApiUrl') || 'https://purasearx.duckdns.org/search?format=json (default)';
+    const searchOn = localStorage.getItem('llmWebSearch') === 'true' ? 'Enabled' : 'Disabled';
+    const last = lastSearchStatus;
+    const lastText = last.ok == null ? 'No searches yet.' : (last.ok ? 'OK' : 'Error: ' + last.error);
+    const lastTime = last.at ? formatRelativeTime(last.at) : '';
+
+    popup.innerHTML =
+      '<h3>Status / Diagnostics</h3>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;font-size:0.85em;color:var(--text-secondary)">' +
+        '<div><strong style="color:var(--text-primary)">LLM Base URL:</strong> ' + escapeHTML(baseUrl) + '</div>' +
+        '<div><strong style="color:var(--text-primary)">Model:</strong> ' + escapeHTML(model) + '</div>' +
+        '<div><strong style="color:var(--text-primary)">Web Search:</strong> ' + searchOn + '</div>' +
+        '<div><strong style="color:var(--text-primary)">Search API URL:</strong> ' + escapeHTML(searchUrl) + '</div>' +
+        '<div><strong style="color:var(--text-primary)">Last Search:</strong> ' + escapeHTML(lastText) + (lastTime ? ' · ' + lastTime : '') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:12px">' +
+        '<button class="btn btn-primary" id="statusTestBtn" style="flex:1;padding:8px">Test Search</button>' +
+        '<button class="btn btn-secondary" id="statusCloseBtn" style="flex:1;padding:8px">Close</button>' +
+      '</div>';
+
+    const closeBtn = popup.querySelector('#statusCloseBtn');
+    const testBtn = popup.querySelector('#statusTestBtn');
+    closeBtn.onclick = () => { overlay.remove(); popup.remove(); };
+    testBtn.onclick = async () => {
+      testBtn.disabled = true;
+      testBtn.textContent = 'Testing...';
+      try { await executeWebSearch('test'); } catch(e) {}
+      testBtn.disabled = false;
+      testBtn.textContent = 'Test Search';
+      render();
+    };
+  };
+
+  overlay.onclick = () => { overlay.remove(); popup.remove(); };
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+  render();
+}
+
+function parseCommand(text) {
+  const match = text.trim().match(/^\/(search|web|s|files|file|docs|doc)\s+(.+)/i);
+  if (!match) return null;
+  const cmd = match[1].toLowerCase();
+  const query = match[2].trim();
+  return { cmd, query };
+}
+
+async function handleCommand(cmd, conv) {
+  if (!cmd || !cmd.query) return;
+  if (['search', 'web', 's'].includes(cmd.cmd)) {
+    await handleManualSearch(cmd.query, conv);
+  } else if (['files', 'file', 'docs', 'doc'].includes(cmd.cmd)) {
+    await handleFileSearch(cmd.query, conv);
+  }
+}
+
+async function handleManualSearch(query, conv) {
+  const ts = Date.now();
+  messages.push({ role: 'user', content: '/search ' + query, timestamp: ts });
+  const assistantMsg = {
+    role: 'assistant',
+    content: '',
+    swipes: [''],
+    swipeIndex: 0,
+    timestamp: Date.now(),
+    swipeToolUse: [[{ query, results: [], searching: true }]]
+  };
+  messages.push(assistantMsg);
+  renderMessages();
+
+  try {
+    const { results, error } = await executeWebSearch(query);
+    const tb = assistantMsg.swipeToolUse[0][0];
+    tb.results = results;
+    tb.searching = false;
+    if (error) tb.error = error;
+    assistantMsg.content = error ? ('Search error: ' + error) : ('Search results for "' + query + '".');
+  } catch (e) {
+    const tb = assistantMsg.swipeToolUse[0][0];
+    tb.searching = false;
+    tb.error = e.message || 'Search failed';
+    assistantMsg.content = 'Search error: ' + (e.message || 'Unknown error');
+  }
+
+  if (conv) conv.updatedAt = Date.now();
+  debouncedSave();
+  renderMessages();
+  updateTokenInfo();
+}
+
+async function handleFileSearch(query, conv) {
+  const ts = Date.now();
+  messages.push({ role: 'user', content: '/files ' + query, timestamp: ts });
+  const results = searchLocalDocs(query, conv);
+  const toolResults = results.map(r => ({ title: r.name, url: '', snippet: r.snippet }));
+  const assistantMsg = {
+    role: 'assistant',
+    content: results.length ? ('Found ' + results.length + ' matching file snippet' + (results.length === 1 ? '' : 's') + '.') : 'No matching file snippets found.',
+    swipes: [''],
+    swipeIndex: 0,
+    timestamp: Date.now(),
+    swipeToolUse: [[{ query, results: toolResults, searching: false }]]
+  };
+  messages.push(assistantMsg);
+  if (conv) conv.updatedAt = Date.now();
+  debouncedSave();
+  renderMessages();
+  updateTokenInfo();
+}
+
+function buildConversationTranscript(limit = 40) {
+  const slice = messages.filter(m => m.role !== 'system');
+  const recent = slice.slice(Math.max(0, slice.length - limit));
+  return recent.map(m => (m.role === 'assistant' ? 'Assistant: ' : 'User: ') + getMsgText(m)).join('\n');
+}
+
+async function deleteMemory(id) {
+  const memories = (await loadMemories()).filter(m => m.id !== id);
+  await saveMemories(memories);
+  openManageMemories();
+}
+
+// ============================================
+// API Format Detection
+// ============================================
+function detectApiFormat(model) {
+  const fmt = localStorage.getItem('llmApiFormat') || 'auto';
+  if (fmt !== 'auto') return fmt;
+  if (/^claude/i.test(model)) return 'anthropic';
+  return 'openai';
+}
+
+// ============================================
+// Anthropic Message Conversion
+// ============================================
+function prepareAnthropicMessages(apiMessages) {
+  let systemText = '';
+  const msgs = [];
+  for (const m of apiMessages) {
+    if (m.role === 'system') {
+      const txt = typeof m.content === 'string' ? m.content : '';
+      systemText += (systemText ? '\n\n' : '') + txt;
+    } else {
+      msgs.push({ role: m.role, content: m.content });
+    }
+  }
+  // Merge consecutive same-role messages
+  const merged = [];
+  for (const m of msgs) {
+    if (merged.length > 0 && merged[merged.length - 1].role === m.role) {
+      const prev = merged[merged.length - 1];
+      const toArr = (c) => {
+        if (Array.isArray(c)) return c;
+        if (typeof c === 'string') return [{ type: 'text', text: c }];
+        return [{ type: 'text', text: String(c) }];
+      };
+      prev.content = [...toArr(prev.content), ...toArr(m.content)];
+    } else {
+      merged.push({ role: m.role, content: m.content });
+    }
+  }
+  // Convert image/file content for Anthropic format
+  const converted = merged.map(m => {
+    if (Array.isArray(m.content)) {
+      const parts = m.content.map(part => {
+        if (part.type === 'text') return { type: 'text', text: part.text };
+        if (part.type === 'image_url') {
+          const url = part.image_url.url;
+          if (url.startsWith('data:')) {
+            const match = url.match(/^data:(image\/[^;]+);base64,(.+)$/);
+            if (match) return { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } };
+          }
+          return { type: 'image', source: { type: 'url', url: url } };
+        }
+        if (part.type === 'file') {
+          if (part.file.textContent) {
+            const name = part.file.name || 'file';
+            return { type: 'text', text: `--- ${name} ---\n${part.file.textContent}\n--- end ${name} ---` };
+          }
+          const url = part.file.url;
+          if (url && url.startsWith('data:')) {
+            const match = url.match(/^data:([^;]+);base64,(.+)$/);
+            if (match) return { type: 'document', source: { type: 'base64', media_type: match[1], data: match[2] } };
+          }
+          return part;
+        }
+        return part;
+      });
+      return { role: m.role, content: parts };
+    }
+    return m;
+  });
+  return { system: systemText, messages: converted };
+}
+
+// ============================================
+// Initialization
+// ============================================
+document.addEventListener('DOMContentLoaded', async () => {
+  // Migration: strip endpoint suffix from proxy URL
+  const storedUrl = localStorage.getItem('llmProxyUrl');
+  if (storedUrl) {
+    const cleaned = storedUrl.replace(/\/(chat\/completions|messages)\/?$/, '');
+    if (cleaned !== storedUrl) localStorage.setItem('llmProxyUrl', cleaned);
+  }
+
+  await openDB();
+  migrateToPromptEntries();
+  await loadConversations();
+  loadTheme();
+  loadCustomFont(localStorage.getItem('assistantFont') || '');
+  loadCachedModels('setup');
+  loadCachedModels('settings');
+  initModalAccessibility();
+
+  // Save on page unload — sync fallback since IDB is async
+  window.addEventListener('beforeunload', () => {
+    clearTimeout(_saveDebounceTimer);
+    saveConversations();
+    // Only write to localStorage as fallback if IndexedDB is not available
+    if (!db) {
+      try {
+        localStorage.setItem('assistantConversations', JSON.stringify(conversations));
+        localStorage.setItem('assistantActiveConvId', activeConvId || '');
+      } catch(e) {}
+    }
+  });
+
+  // Show setup modal if no API key
+  if (!localStorage.getItem('llmProxyUrl') || !localStorage.getItem('llmApiKey')) {
+    openModal('setupModal', '#setupProxy');
+  }
+
+  // Hide voice button if unsupported
+  if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+    document.getElementById('voiceBtn').style.display = 'none';
+  }
+
+
+  // Auto-resize textarea + character count + @model mentions
+  const ta = document.getElementById('chatInput');
+  let tokenDebounce;
+  ta.addEventListener('input', () => {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 150) + 'px';
+    clearTimeout(tokenDebounce);
+    tokenDebounce = setTimeout(updateTokenInfo, 300);
+    handleMentionInput(ta);
+    updateSendBtnState();
+  });
+
+  // Send on Enter (with mention dropdown handling)
+  ta.addEventListener('keydown', (e) => {
+    if (mentionActive) {
+      handleMentionKeydown(e, ta);
+      if (e.defaultPrevented) return;
+    }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      const enterSends = localStorage.getItem('llmEnterSend') !== 'false';
+      if (enterSends) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Global keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Escape - close modals / stop streaming
+    if (e.key === 'Escape') {
+      if (globalSearchDismiss) {
+        e.preventDefault();
+        globalSearchDismiss();
+        return;
+      }
+      if (document.getElementById('chatSearchBar').classList.contains('open')) {
+        closeChatSearch();
+        return;
+      }
+      if (closeTopModal()) {
+        e.preventDefault();
+        return;
+      }
+      if (streaming && abortController) { streaming = false; abortController.abort(); }
+    }
+    // Ctrl+N - new conversation
+    if (e.ctrlKey && e.key === 'n') {
+      e.preventDefault();
+      createConversation();
+    }
+    // Ctrl+/ - focus input
+    if (e.ctrlKey && e.key === '/') {
+      e.preventDefault();
+      document.getElementById('chatInput').focus();
+    }
+    // Ctrl+K - focus sidebar search
+    if (e.ctrlKey && e.key === 'k') {
+      e.preventDefault();
+      const sb = document.getElementById('sidebar');
+      if (sb.classList.contains('collapsed')) toggleSidebar();
+      document.getElementById('sidebarSearch').focus();
+    }
+    // Ctrl+Shift+E - export all
+    if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+      e.preventDefault();
+      exportAllConversations();
+    }
+    // Ctrl+F - chat search
+    if (e.ctrlKey && e.key === 'f') {
+      e.preventDefault();
+      openChatSearch();
+    }
+    // Ctrl+Shift+R - regenerate last response
+    if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+      e.preventDefault();
+      regenerate();
+    }
+    // Ctrl+Shift+? - shortcut help
+    if (e.ctrlKey && e.shiftKey && e.key === '?') {
+      e.preventDefault();
+      openModal('shortcutsModal');
+    }
+  });
+
+  // Drag & drop files
+  const DOCUMENT_MIMES = ['application/pdf', 'text/plain', 'text/csv', 'text/html', 'text/markdown'];
+  const main = document.querySelector('.main');
+  main.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+  main.addEventListener('drop', (e) => {
+    e.preventDefault();
+    Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/') || DOCUMENT_MIMES.includes(f.type)).forEach(readAttachmentFile);
+  });
+
+  // Paste images
+  ta.addEventListener('paste', (e) => {
+    Array.from(e.clipboardData?.items || []).forEach(item => {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        readAttachmentFile(item.getAsFile());
+      }
+    });
+  });
+
+  // Mobile: collapse sidebar by default
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.add('collapsed');
+  }
+
+  // Scroll-to-bottom FAB
+  const msgsArea = document.getElementById('messagesArea');
+  const scrollFab = document.getElementById('scrollFab');
+  msgsArea.addEventListener('scroll', () => {
+    const atBottom = msgsArea.scrollHeight - msgsArea.scrollTop - msgsArea.clientHeight < 100;
+    scrollFab.classList.toggle('visible', !atBottom);
+    if (streaming && !_suppressScrollFlag) {
+      userScrolledAway = !atBottom;
+    }
+  });
+
+  // Initialize mermaid with theme matching current app theme
+  if (typeof mermaid !== 'undefined') {
+    const mermaidTheme = isLightColor(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()) ? 'default' : 'dark';
+    mermaid.initialize({ startOnLoad: false, theme: mermaidTheme });
+  }
+
+  // Listen for OS color scheme changes when using system theme
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if ((localStorage.getItem('assistantTheme') || 'dark') === 'system') applyTheme('system');
+  });
+
+  // Mobile swipe gestures for assistant message alternatives
+  let _touchStartX = 0, _touchStartY = 0, _touchLastX = 0, _touchMsgIdx = null, _swiping = false, _touchDecided = false;
+  msgsArea.addEventListener('touchstart', e => {
+    const wrapper = e.target.closest('.msg-wrapper.assistant');
+    if (!wrapper || _selectMode) { _touchMsgIdx = null; return; }
+    _touchMsgIdx = parseInt(wrapper.dataset.msgIdx);
+    _touchStartX = _touchLastX = e.touches[0].clientX;
+    _touchStartY = e.touches[0].clientY;
+    _swiping = false;
+    _touchDecided = false;
+  }, { passive: true });
+  msgsArea.addEventListener('touchmove', e => {
+    if (_touchMsgIdx === null || isNaN(_touchMsgIdx)) return;
+    _touchLastX = e.touches[0].clientX;
+    if (_touchDecided) { if (_swiping) e.preventDefault(); return; }
+    const dx = Math.abs(_touchLastX - _touchStartX);
+    const dy = Math.abs(e.touches[0].clientY - _touchStartY);
+    if (dx > 10 || dy > 10) {
+      _touchDecided = true;
+      _swiping = dx > dy;
+    }
+    if (_swiping) e.preventDefault();
+  }, { passive: false });
+  msgsArea.addEventListener('touchend', e => {
+    if (!_swiping || _touchMsgIdx === null || isNaN(_touchMsgIdx)) {
+      _touchMsgIdx = null;
+      _swiping = false;
+      _touchDecided = false;
+      return;
+    }
+    const dx = _touchLastX - _touchStartX;
+    if (Math.abs(dx) > 30) {
+      const msg = messages[_touchMsgIdx];
+      if (msg && dx < 0 && _touchMsgIdx === messages.length - 1 && (!msg.swipes || msg.swipeIndex >= msg.swipes.length - 1)) {
+        regenerate();
+      } else if (msg && msg.swipes && msg.swipes.length > 1) {
+        swipeMsg(_touchMsgIdx, dx < 0 ? 1 : -1);
+      }
+    }
+    _touchMsgIdx = null;
+    _swiping = false;
+    _touchDecided = false;
+  }, { passive: true });
+
+  // Select mode: click to toggle message selection (capture phase)
+  msgsArea.addEventListener('click', e => {
+    if (!_selectMode) return;
+    if (_justEnteredSelectMode) { _justEnteredSelectMode = false; e.preventDefault(); e.stopPropagation(); return; }
+    const wrapper = e.target.closest('.msg-wrapper');
+    if (!wrapper) return;
+    e.preventDefault();
+    e.stopPropagation();
+    toggleMsgSelect(parseInt(wrapper.dataset.msgIdx));
+  }, true);
+
+  // Long-press to enter select mode (desktop)
+  let _longPressTimer = null;
+  msgsArea.addEventListener('mousedown', e => {
+    if (localStorage.getItem('llmHoldScreenshot') !== 'true') return;
+    if (_selectMode || e.target.closest('.msg-action-btn, .regen-btn')) return;
+    const wrapper = e.target.closest('.msg-wrapper');
+    if (!wrapper) return;
+    _longPressTimer = setTimeout(() => {
+      _longPressTimer = null;
+      enterSelectMode();
+      toggleMsgSelect(parseInt(wrapper.dataset.msgIdx));
+    }, 500);
+  });
+  document.addEventListener('mouseup', () => { if (_longPressTimer) { clearTimeout(_longPressTimer); _longPressTimer = null; } });
+
+  // Long-press to enter select mode (touch)
+  let _lpTouchTimer = null, _lpTouchX = 0, _lpTouchY = 0;
+  msgsArea.addEventListener('touchstart', e => {
+    if (localStorage.getItem('llmHoldScreenshot') !== 'true') return;
+    if (_selectMode) return;
+    const wrapper = e.target.closest('.msg-wrapper');
+    if (!wrapper) return;
+    _lpTouchX = e.touches[0].clientX;
+    _lpTouchY = e.touches[0].clientY;
+    _lpTouchTimer = setTimeout(() => {
+      if (navigator.vibrate) navigator.vibrate(50);
+      enterSelectMode();
+      toggleMsgSelect(parseInt(wrapper.dataset.msgIdx));
+      _lpTouchTimer = null;
+    }, 500);
+  }, { passive: true });
+  msgsArea.addEventListener('touchmove', e => {
+    if (!_lpTouchTimer) return;
+    const dx = Math.abs(e.touches[0].clientX - _lpTouchX);
+    const dy = Math.abs(e.touches[0].clientY - _lpTouchY);
+    if (dx > 10 || dy > 10) { clearTimeout(_lpTouchTimer); _lpTouchTimer = null; }
+  }, { passive: true });
+  msgsArea.addEventListener('touchend', () => { if (_lpTouchTimer) { clearTimeout(_lpTouchTimer); _lpTouchTimer = null; } }, { passive: true });
+  msgsArea.addEventListener('contextmenu', e => { if (_longPressTimer || _lpTouchTimer) e.preventDefault(); });
+
+  // Image lightbox for generated images
+  msgsArea.addEventListener('click', e => {
+    const img = e.target.closest('.chat-gen-img');
+    if (!img) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'img-lightbox';
+    const fullImg = document.createElement('img');
+    fullImg.src = img.src;
+    fullImg.alt = img.alt || 'Generated image';
+    overlay.appendChild(fullImg);
+    overlay.addEventListener('click', e => { if (e.target !== fullImg) overlay.remove(); });
+    const onKey = e => { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+  });
+});
+
+// ============================================
+// Markdown Renderer
+// ============================================
+function renderGenImages(images) {
+  if (!images || !images.length) return '';
+  return images.map(url => '<img src="' + url.replace(/"/g, '&quot;') + '" alt="Generated image" class="chat-inline-img chat-gen-img" loading="lazy">').join('');
+}
+
+function buildApiContent(msg) {
+  if (!msg.images || !msg.images.length) return msg.content;
+  const parts = [];
+  if (msg.content) parts.push({ type: 'text', text: msg.content });
+  msg.images.forEach(url => parts.push({ type: 'image_url', image_url: { url } }));
+  return parts;
+}
+
+function extractImages(msg) {
+  const images = [];
+  // 1. message.images[] array (some proxies put images here)
+  if (msg.images?.length) {
+    for (const img of msg.images) {
+      if (img.image_url?.url) images.push(img.image_url.url);
+      else if (img.url) images.push(img.url);
+      else if (img.b64_json) images.push('data:image/png;base64,' + img.b64_json);
+      else if (typeof img === 'string' && img.length > 100)
+        images.push(img.startsWith('data:') ? img : 'data:image/png;base64,' + img);
+    }
+  }
+  // 2. message.content as array
+  const content = msg.content;
+  let text = '';
+  if (Array.isArray(content)) {
+    for (const item of content) {
+      if (item.type === 'text') { text += item.text; continue; }
+      if (item.type === 'image_url' && item.image_url?.url) { images.push(item.image_url.url); continue; }
+      if (item.type === 'image' && item.source?.data) {
+        images.push('data:' + (item.source.media_type || 'image/png') + ';base64,' + item.source.data);
+        continue;
+      }
+      if (item.image_url?.url) { images.push(item.image_url.url); continue; }
+      if (typeof item === 'string' && item.startsWith('data:image')) { images.push(item); continue; }
+    }
+  } else {
+    text = content || '';
+  }
+  // 3. message.parts[] (Gemini inline_data)
+  if (msg.parts) {
+    for (const part of msg.parts) {
+      if (part.inline_data?.data) {
+        images.push('data:' + (part.inline_data.mime_type || 'image/png') + ';base64,' + part.inline_data.data);
+      }
+      if (part.text && !text) text += part.text;
+    }
+  }
+  // 4. Extract images from text string (data URIs, URLs, raw base64)
+  if (typeof text === 'string' && text && !images.length) {
+    const dataUriMatch = text.match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
+    if (dataUriMatch) {
+      images.push(dataUriMatch[0]);
+      text = text.replace(dataUriMatch[0], '').trim();
+    }
+    if (!images.length) {
+      const urlMatch = text.match(/^https?:\/\/[^\s]+\.(png|jpg|jpeg|webp|gif)(\?[^\s]*)?$/i);
+      if (urlMatch) { images.push(text.trim()); text = ''; }
+    }
+    if (!images.length) {
+      const embeddedMatch = text.match(/(https?:\/\/[^\s]+\.(png|jpg|jpeg|webp|gif)(\?[^\s]*)?)/i);
+      if (embeddedMatch) {
+        images.push(embeddedMatch[1]);
+        text = text.replace(embeddedMatch[1], '').trim();
+      }
+    }
+    if (!images.length) {
+      const rawB64 = text.match(/^[A-Za-z0-9+/]{100,}[=]{0,2}$/);
+      if (rawB64) { images.push('data:image/png;base64,' + rawB64[0]); text = ''; }
+    }
+  }
+  return { text, images };
+}
+
+function renderMarkdown(text) {
+  if (!text) return '';
+
+  // Fix UTF-8 text that was decoded as Latin-1 (smart quotes, em dashes, etc. showing as â + boxes)
+  text = text.replace(/[\xC0-\xF4][\x80-\xBF]{1,3}/g, function(m) {
+    try {
+      const bytes = new Uint8Array(m.length);
+      for (let i = 0; i < m.length; i++) bytes[i] = m.charCodeAt(i);
+      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch(e) { return m; }
+  });
+
+  // Extract KaTeX math before HTML escaping
+  const mathPlaceholders = [];
+  let s = text;
+  // Block math $$...$$
+  s = s.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
+    const idx = mathPlaceholders.length;
+    mathPlaceholders.push({ math, display: true });
+    return '\x00MATH' + idx + '\x00';
+  });
+  // Inline math $...$
+  s = s.replace(/\$([^\$\n]+?)\$/g, (_, math) => {
+    const idx = mathPlaceholders.length;
+    mathPlaceholders.push({ math, display: false });
+    return '\x00MATH' + idx + '\x00';
+  });
+
+  // Decode HTML entities that models sometimes output before escaping
+  s = s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Spoiler tags >!hidden text!<
+  s = s.replace(/&gt;!([\s\S]*?)!&lt;/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+  // Mermaid code blocks
+  s = s.replace(/```mermaid\n([\s\S]*?)```/g, (_, code) =>
+    '<div class="mermaid-container"><pre class="mermaid">' + code.trimEnd() + '</pre></div>');
+  s = s.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+    '<pre><code' + (lang ? ' class="language-' + lang + '"' : '') + '>' + code.trimEnd() + '</code></pre>');
+  s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  s = s.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+  s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  s = s.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  s = s.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  s = s.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
+  s = s.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  s = s.replace(/^[\-\*] (.+)$/gm, '<li class="ul-li">$1</li>');
+  s = s.replace(/((?:<li class="ul-li">.*<\/li>\n*)+)/g, function(m) { return '<ul>' + m.replace(/ class="ul-li"/g, '') + '</ul>'; });
+  s = s.replace(/^\d+\. (.+)$/gm, '<li class="ol-li">$1</li>');
+  s = s.replace(/((?:<li class="ol-li">.*<\/li>\n*)+)/g, function(m) { return '<ol>' + m.replace(/ class="ol-li"/g, '') + '</ol>'; });
+  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="chat-inline-img chat-gen-img" loading="lazy">');
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  s = s.replace(/^---$/gm, '<hr>');
+  // Markdown tables
+  s = s.replace(/(^\|.+\|$\n?)+/gm, match => {
+    const rows = match.trim().split('\n').filter(r => r.trim());
+    if (rows.length < 2) return match;
+    const parseRow = r => r.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+    const isSep = r => /^\|[\s\-:|]+\|$/.test(r.trim());
+    let headerRow = parseRow(rows[0]);
+    let bodyStart = 1;
+    if (isSep(rows[1])) bodyStart = 2;
+    let html = '<table><thead><tr>' + headerRow.map(c => `<th>${escapeHTML(c)}</th>`).join('') + '</tr></thead><tbody>';
+    for (let i = bodyStart; i < rows.length; i++) {
+      if (isSep(rows[i])) continue;
+      const cells = parseRow(rows[i]);
+      html += '<tr>' + cells.map(c => `<td>${escapeHTML(c)}</td>`).join('') + '</tr>';
+    }
+    html += '</tbody></table>';
+    return html;
+  });
+  const parts = s.split(/(<pre>[\s\S]*?<\/pre>|<div class="mermaid-container">[\s\S]*?<\/div>|<table>[\s\S]*?<\/table>)/g);
+  s = parts.map(part => (part.startsWith('<pre>') || part.startsWith('<div class="mermaid') || part.startsWith('<table>')) ? part : part.replace(/\n/g, '<br>')).join('');
+
+  // Restore KaTeX math placeholders
+  s = s.replace(/\x00MATH(\d+)\x00/g, (_, idx) => {
+    const ph = mathPlaceholders[parseInt(idx)];
+    if (typeof katex !== 'undefined') {
+      try { return katex.renderToString(ph.math, { displayMode: ph.display, throwOnError: false }); } catch(e) { console.warn('KaTeX render error:', e); }
+    }
+    return (ph.display ? '$$' : '$') + ph.math.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + (ph.display ? '$$' : '$');
+  });
+
+  return s;
+}
+
+// ============================================
+// Code Copy Buttons
+// ============================================
+function addCodeCopyButtons(container) {
+  const langExtMap = { javascript: 'js', js: 'js', typescript: 'ts', ts: 'ts', python: 'py', py: 'py', java: 'java', c: 'c', cpp: 'cpp', csharp: 'cs', cs: 'cs', go: 'go', rust: 'rs', ruby: 'rb', php: 'php', html: 'html', css: 'css', json: 'json', xml: 'xml', yaml: 'yaml', yml: 'yml', sql: 'sql', bash: 'sh', sh: 'sh', shell: 'sh', markdown: 'md', md: 'md', swift: 'swift', kotlin: 'kt', lua: 'lua', r: 'r', perl: 'pl', scala: 'scala', dart: 'dart', zig: 'zig', nim: 'nim', elixir: 'ex', clojure: 'clj', haskell: 'hs', ocaml: 'ml', toml: 'toml', ini: 'ini', dockerfile: 'dockerfile', makefile: 'makefile' };
+  container.querySelectorAll('pre').forEach(pre => {
+    if (pre.parentElement.classList.contains('code-block-wrapper')) return;
+    if (pre.classList.contains('mermaid')) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-block-wrapper';
+    pre.parentNode.insertBefore(wrapper, pre);
+    wrapper.appendChild(pre);
+    const btn = document.createElement('button');
+    btn.className = 'code-copy-btn';
+    btn.textContent = 'Copy';
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const code = pre.querySelector('code');
+      navigator.clipboard.writeText(code ? code.textContent : pre.textContent);
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    };
+    wrapper.appendChild(btn);
+    // Download button
+    const code = pre.querySelector('code');
+    if (code) {
+      const cls = Array.from(code.classList).find(c => c.startsWith('language-'));
+      const lang = cls ? cls.replace('language-', '') : '';
+      const ext = langExtMap[lang] || lang || 'txt';
+      const dlBtn = document.createElement('button');
+      dlBtn.className = 'code-download-btn';
+      dlBtn.textContent = '\u2913';
+      dlBtn.title = 'Download as .' + ext;
+      dlBtn.onclick = (e) => {
+        e.stopPropagation();
+        const blob = new Blob([code.textContent], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'code.' + ext;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      };
+      wrapper.appendChild(dlBtn);
+    }
+  });
+}
+
+// ============================================
+// Syntax Highlighting
+// ============================================
+function highlightCodeBlocks(container) {
+  if (typeof hljs === 'undefined') return;
+  container.querySelectorAll('pre code[class^="language-"]').forEach(el => {
+    if (el.dataset.highlighted) return;
+    hljs.highlightElement(el);
+    el.dataset.highlighted = 'true';
+  });
+}
+
+// ============================================
+// Line Numbers
+// ============================================
+function addLineNumbers(container) {
+  container.querySelectorAll('pre code').forEach(code => {
+    if (code.parentElement.classList.contains('has-line-numbers')) return;
+    if (code.parentElement.classList.contains('mermaid')) return;
+    const lines = code.innerHTML.split('\n');
+    if (lines.length < 3) return;
+    // Remove trailing empty line if present
+    if (lines[lines.length - 1].trim() === '') lines.pop();
+    code.innerHTML = lines.map(l => '<span class="code-line">' + l + '</span>').join('\n');
+    code.parentElement.classList.add('has-line-numbers');
+  });
+}
+
+// ============================================
+// Mermaid Rendering
+// ============================================
+let mermaidIdCounter = 0;
+async function renderMermaidBlocks(container) {
+  if (typeof mermaid === 'undefined') return;
+  const pres = container.querySelectorAll('pre.mermaid');
+  for (const pre of pres) {
+    if (pre.dataset.rendered) continue;
+    pre.dataset.rendered = 'true';
+    try {
+      const id = 'mermaid-' + (mermaidIdCounter++);
+      const { svg } = await mermaid.render(id, pre.textContent);
+      const div = document.createElement('div');
+      div.innerHTML = svg;
+      pre.replaceWith(div.firstElementChild);
+    } catch (e) {
+      pre.textContent = 'Mermaid error: ' + e.message;
+    }
+  }
+}
+
+// ============================================
+// Post-Render Pipeline
+// ============================================
+function postRenderProcessing(bubble) {
+  addCodeCopyButtons(bubble);
+  highlightCodeBlocks(bubble);
+  addLineNumbers(bubble);
+  renderMermaidBlocks(bubble);
+}
+
+// ============================================
+// Token Estimation
+// ============================================
+function estimateTokens(text) {
+  if (!text) return 0;
+  return Math.ceil(text.split(/[\s,.!?;:'"()\[\]{}]+/).filter(Boolean).length * 1.3);
+}
+
+function getMsgText(msg) {
+  if (typeof msg.content === 'string') return msg.content;
+  if (Array.isArray(msg.content)) return msg.content.filter(c => c.type === 'text').map(c => c.text).join(' ');
+  return '';
+}
+
+function updateTokenInfo() {
+  const el = document.getElementById('tokenInfo');
+  const inputText = document.getElementById('chatInput').value;
+  const inputChars = inputText.length;
+
+  const parts = [];
+  if (inputChars > 0) {
+    const inputTokens = estimateTokens(inputText);
+    parts.push(inputChars + ' chars');
+    parts.push('~' + (inputTokens > 999 ? (inputTokens / 1000).toFixed(1) + 'k' : inputTokens) + ' tokens');
+  }
+
+  let total = 0;
+  messages.forEach(m => { total += estimateTokens(getMsgText(m)); });
+  if (total > 0 || messages.length > 0) {
+    parts.push('Conv: ~' + (total > 999 ? (total / 1000).toFixed(1) + 'k' : total) + ' tokens');
+  }
+
+  const inputCost = parseFloat(localStorage.getItem('llmInputCost') || '0');
+  const outputCost = parseFloat(localStorage.getItem('llmOutputCost') || '0');
+  if ((inputCost > 0 || outputCost > 0) && total > 0) {
+    let cost = 0;
+    messages.forEach(m => {
+      const t = estimateTokens(getMsgText(m));
+      cost += t * ((m.role === 'assistant' ? outputCost : inputCost) / 1000000);
+    });
+    parts.push('~$' + cost.toFixed(4));
+  }
+  el.textContent = parts.join(' | ');
+}
+
+// ============================================
+// IndexedDB Storage Layer
+// ============================================
+const DB_NAME = 'assistantDB';
+const DB_VERSION = 1;
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('conversations')) d.createObjectStore('conversations', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('memories')) d.createObjectStore('memories', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'key' });
+    };
+    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function idbPut(store, data) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const s = tx.objectStore(store);
+    s.put(data);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function idbGetAll(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const s = tx.objectStore(store);
+    const req = s.getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbDelete(store, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const s = tx.objectStore(store);
+    s.delete(key);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function idbClear(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).clear();
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function idbPutAll(store, items) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const s = tx.objectStore(store);
+    s.clear();
+    items.forEach(item => s.put(item));
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// ============================================
+// Conversation Management
+// ============================================
+function genId() { return 'conv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6); }
+
+function saveConversations() {
+  try { localStorage.setItem('assistantActiveConvId', activeConvId || ''); } catch(e) {}
+  if (!db) return;
+  idbPutAll('conversations', conversations)
+    .then(() => idbPut('meta', { key: 'activeConvId', value: activeConvId || '' }))
+    .catch(e => console.error('IDB save error:', e));
+}
+
+let _saveDebounceTimer;
+function debouncedSave() {
+  clearTimeout(_saveDebounceTimer);
+  _saveDebounceTimer = setTimeout(saveConversations, 1000);
+}
+
+function migratePersonaField(convs) {
+  let changed = false;
+  convs.forEach(c => {
+    if (c.characterSystemPrompt && !c.characterDescription) {
+      // If we have the original card, rebuild character description and system prompt properly
+      if (c.characterCard) {
+        c.characterDescription = buildCharaDescription(c.characterCard);
+        c.characterSystemPrompt = c.characterCard.system_prompt || '';
+        if (!c.characterSystemPrompt) delete c.characterSystemPrompt;
+      } else {
+        c.characterDescription = c.characterSystemPrompt;
+        delete c.characterSystemPrompt;
+      }
+      changed = true;
+    }
+  });
+  if (changed) saveConversations();
+}
+
+async function loadConversations() {
+  // Try IndexedDB first
+  try {
+    const convs = await idbGetAll('conversations');
+    if (convs.length > 0) {
+      conversations = convs;
+      const meta = await new Promise((resolve) => {
+        const tx = db.transaction('meta', 'readonly');
+        const req = tx.objectStore('meta').get('activeConvId');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+      activeConvId = meta?.value || conversations[0].id;
+      conversations.forEach(c => c.messages.forEach(m => {
+        if (m.role === 'assistant' && !m.swipes) { m.swipes = [typeof m.content === 'string' ? m.content : '']; m.swipeIndex = 0; }
+      }));
+      // Migrate characterSystemPrompt → persona
+      migratePersonaField(conversations);
+      activeConvId = (conversations.find(c => c.id === activeConvId)) ? activeConvId : conversations[0].id;
+      messages = getActiveConv().messages;
+      renderSidebar();
+      renderMessages();
+      updateTokenInfo();
+      updateCharacterUI();
+      return;
+    }
+  } catch(e) { console.error('IDB load error:', e); }
+
+  // Migrate from localStorage
+  const saved = localStorage.getItem('assistantConversations');
+  if (saved) {
+    try { conversations = JSON.parse(saved); }
+    catch (e) { console.error('Failed to parse conversations, resetting:', e); conversations = []; }
+  }
+
+  // Migrate legacy
+  const legacy = localStorage.getItem('assistantChatHistory');
+  if (legacy && conversations.length === 0) {
+    try {
+      conversations.push({ id: genId(), title: 'Chat', messages: JSON.parse(legacy), createdAt: Date.now(), updatedAt: Date.now() });
+      localStorage.removeItem('assistantChatHistory');
+    } catch (e) { console.error('Failed to parse legacy chat:', e); }
+  }
+
+  if (conversations.length === 0) {
+    conversations.push({ id: genId(), title: 'New Chat', messages: [], createdAt: Date.now(), updatedAt: Date.now() });
+  }
+
+  // Migrate swipes
+  conversations.forEach(c => c.messages.forEach(m => {
+    if (m.role === 'assistant' && !m.swipes) { m.swipes = [typeof m.content === 'string' ? m.content : '']; m.swipeIndex = 0; }
+  }));
+
+  // Migrate characterSystemPrompt → persona
+  migratePersonaField(conversations);
+
+  const savedActive = localStorage.getItem('assistantActiveConvId');
+  activeConvId = (savedActive && conversations.find(c => c.id === savedActive)) ? savedActive : conversations[0].id;
+  messages = getActiveConv().messages;
+
+  // Write migrated data to IndexedDB and clean localStorage
+  try {
+    await idbPutAll('conversations', conversations);
+    await idbPut('meta', { key: 'activeConvId', value: activeConvId || '' });
+    localStorage.removeItem('assistantConversations');
+    localStorage.removeItem('assistantActiveConvId');
+  } catch(e) { console.error('IDB migration error:', e); }
+
+  saveConversations();
+  renderSidebar();
+  renderMessages();
+  updateTokenInfo();
+  updateCharacterUI();
+}
+
+function getActiveConv() { return conversations.find(c => c.id === activeConvId); }
+
+function createConversation() {
+  const conv = { id: genId(), title: 'New Chat', messages: [], createdAt: Date.now(), updatedAt: Date.now() };
+  conversations.unshift(conv);
+  activeConvId = conv.id;
+  messages = conv.messages;
+  saveConversations();
+  renderSidebar();
+  renderMessages();
+  updateTokenInfo();
+  updateCharacterUI();
+  if (window.innerWidth <= 768) toggleSidebar();
+}
+
+function switchConversation(id) {
+  const conv = conversations.find(c => c.id === id);
+  if (!conv) return;
+  activeConvId = id;
+  messages = conv.messages;
+  userScrolledAway = false;
+  saveConversations();
+  renderSidebar();
+  renderMessages();
+  updateTokenInfo();
+  updateCharacterUI();
+  if (window.innerWidth <= 768) toggleSidebar();
+}
+
+function deleteConversation(id, e) {
+  e.stopPropagation();
+  const conv = conversations.find(c => c.id === id);
+  if (!conv) return;
+  const idx = conversations.indexOf(conv);
+  conversations.splice(idx, 1);
+  if (conversations.length === 0) {
+    createConversation();
+  } else if (activeConvId === id) {
+    switchConversation(conversations[0].id);
+  }
+  saveConversations();
+  renderSidebar();
+  // Show undo toast
+  const toast = document.createElement('div');
+  toast.className = 'toast info';
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+  toast.setAttribute('aria-atomic', 'true');
+  toast.innerHTML = 'Conversation deleted. <button style="background:var(--accent);color:var(--accent-text);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit;font-size:0.85em;margin-left:8px" class="undo-delete-btn">Undo</button>';
+  const container = document.getElementById('toastContainer');
+  container.appendChild(toast);
+  const undoBtn = toast.querySelector('.undo-delete-btn');
+  const timer = setTimeout(() => { toast.remove(); }, 5000);
+  undoBtn.onclick = () => {
+    clearTimeout(timer);
+    conversations.splice(idx, 0, conv);
+    activeConvId = conv.id;
+    messages = conv.messages;
+    saveConversations();
+    renderSidebar();
+    renderMessages();
+    updateTokenInfo();
+    toast.remove();
+    showToast('Conversation restored.', 'success');
+  };
+}
+
+function clearAllConversations() {
+  if (!confirm('Delete ALL conversations? This cannot be undone.')) return;
+  conversations = [];
+  createConversation();
+}
+
+function renderSidebar() {
+  const list = document.getElementById('convList');
+  list.innerHTML = '';
+
+  // Sort: pinned first (by updatedAt desc), then unpinned by updatedAt desc
+  // If any have sortOrder, use that instead
+  const hasSortOrder = conversations.some(c => c.sortOrder != null);
+  const sorted = [...conversations].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    if (hasSortOrder && a.sortOrder != null && b.sortOrder != null) return a.sortOrder - b.sortOrder;
+    return (b.updatedAt || 0) - (a.updatedAt || 0);
+  });
+
+  // Date grouping
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterdayStart = todayStart - 86400000;
+  const weekStart = todayStart - 7 * 86400000;
+  const monthStart = todayStart - 30 * 86400000;
+
+  function getGroup(c) {
+    if (c.pinned) return 'Pinned';
+    const t = c.updatedAt || c.createdAt || 0;
+    if (t >= todayStart) return 'Today';
+    if (t >= yesterdayStart) return 'Yesterday';
+    if (t >= weekStart) return 'Last 7 Days';
+    if (t >= monthStart) return 'Last 30 Days';
+    return 'Older';
+  }
+
+  let lastGroup = '';
+  sorted.forEach((c, sortIdx) => {
+    const group = getGroup(c);
+    if (group !== lastGroup) {
+      const header = document.createElement('div');
+      header.className = 'conv-group-header';
+      header.textContent = group;
+      header.dataset.group = group;
+      list.appendChild(header);
+      lastGroup = group;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'conv-item' + (c.id === activeConvId ? ' active' : '');
+    div.onclick = () => switchConversation(c.id);
+    div.dataset.convId = c.id;
+
+    // Drag-and-drop (desktop only)
+    div.draggable = true;
+    div.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', c.id);
+      div.classList.add('dragging');
+    });
+    div.addEventListener('dragend', () => div.classList.remove('dragging'));
+    div.addEventListener('dragover', (e) => { e.preventDefault(); div.classList.add('drag-over'); });
+    div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+    div.addEventListener('drop', (e) => {
+      e.preventDefault();
+      div.classList.remove('drag-over');
+      const draggedId = e.dataTransfer.getData('text/plain');
+      if (draggedId === c.id) return;
+      const fromIdx = conversations.findIndex(x => x.id === draggedId);
+      const toIdx = conversations.findIndex(x => x.id === c.id);
+      if (fromIdx === -1 || toIdx === -1) return;
+      const [moved] = conversations.splice(fromIdx, 1);
+      conversations.splice(toIdx, 0, moved);
+      conversations.forEach((x, i) => x.sortOrder = i);
+      saveConversations();
+      renderSidebar();
+    });
+
+    const pinBtn = document.createElement('button');
+    pinBtn.className = 'conv-pin' + (c.pinned ? ' pinned' : '');
+    pinBtn.innerHTML = '&#128204;';
+    pinBtn.title = c.pinned ? 'Unpin' : 'Pin';
+    pinBtn.setAttribute('aria-label', c.pinned ? 'Unpin conversation' : 'Pin conversation');
+    pinBtn.onclick = (e) => {
+      e.stopPropagation();
+      c.pinned = !c.pinned;
+      saveConversations();
+      renderSidebar();
+    };
+
+    const title = document.createElement('span');
+    title.className = 'conv-title';
+    title.textContent = c.title;
+    title.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'conv-rename-input';
+      input.value = c.title;
+      input.onclick = (ev) => ev.stopPropagation();
+      const commit = () => {
+        const val = input.value.trim();
+        if (val && val !== c.title) {
+          c.title = val;
+          saveConversations();
+        }
+        renderSidebar();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') commit();
+        if (ev.key === 'Escape') renderSidebar();
+      });
+      title.replaceWith(input);
+      input.focus();
+      input.select();
+    });
+
+    const del = document.createElement('button');
+    del.className = 'conv-delete';
+    del.innerHTML = '&times;';
+    del.title = 'Delete';
+    del.setAttribute('aria-label', 'Delete conversation');
+    del.onclick = (e) => deleteConversation(c.id, e);
+
+    div.appendChild(pinBtn);
+    if (c.characterAvatar) {
+      const avatar = document.createElement('img');
+      avatar.className = 'conv-avatar';
+      avatar.src = c.characterAvatar;
+      div.appendChild(avatar);
+    }
+    div.appendChild(title);
+    if (c.tag) {
+      const tagEl = document.createElement('span');
+      tagEl.className = 'conv-tag';
+      const tagColor = TAG_COLORS.find(t => t.name === c.tag);
+      tagEl.style.background = tagColor ? tagColor.color : 'var(--accent)';
+      tagEl.style.color = '#fff';
+      tagEl.textContent = c.tag;
+      div.appendChild(tagEl);
+    }
+    const tagBtn = document.createElement('button');
+    tagBtn.className = 'conv-delete';
+    tagBtn.innerHTML = '&#127991;';
+    tagBtn.title = 'Tag';
+    tagBtn.style.fontSize = '12px';
+    tagBtn.setAttribute('aria-label', 'Tag conversation');
+    tagBtn.onclick = (e) => { e.stopPropagation(); showTagPicker(c, tagBtn); };
+    div.appendChild(tagBtn);
+    div.appendChild(del);
+    list.appendChild(div);
+  });
+  renderTagFilterBar();
+  filterConversations();
+}
+
+// ============================================
+// Conversation Tags
+// ============================================
+function showTagPicker(conv, anchorEl) {
+  document.querySelectorAll('.tag-picker').forEach(p => p.remove());
+  const picker = document.createElement('div');
+  picker.className = 'tag-picker';
+  const rect = anchorEl.getBoundingClientRect();
+  picker.style.top = rect.bottom + 4 + 'px';
+  picker.style.left = rect.left + 'px';
+  // "None" option
+  const none = document.createElement('button');
+  none.className = 'tag-picker-item' + (!conv.tag ? ' active' : '');
+  none.style.background = 'var(--hover)';
+  none.title = 'None';
+  none.onclick = () => { delete conv.tag; saveConversations(); renderSidebar(); picker.remove(); };
+  picker.appendChild(none);
+  TAG_COLORS.forEach(tc => {
+    const btn = document.createElement('button');
+    btn.className = 'tag-picker-item' + (conv.tag === tc.name ? ' active' : '');
+    btn.style.background = tc.color;
+    btn.title = tc.name;
+    btn.onclick = () => { conv.tag = tc.name; saveConversations(); renderSidebar(); picker.remove(); };
+    picker.appendChild(btn);
+  });
+  document.body.appendChild(picker);
+  const closePicker = (e) => { if (!picker.contains(e.target) && e.target !== anchorEl) { picker.remove(); document.removeEventListener('click', closePicker); } };
+  setTimeout(() => document.addEventListener('click', closePicker), 0);
+}
+
+function renderTagFilterBar() {
+  const bar = document.getElementById('tagFilterBar');
+  const usedTags = [...new Set(conversations.filter(c => c.tag).map(c => c.tag))];
+  if (usedTags.length === 0) { bar.innerHTML = ''; return; }
+  let html = '<button class="tag-filter-btn' + (!activeTagFilter ? ' active' : '') + '" onclick="setTagFilter(null)">All</button>';
+  usedTags.forEach(tag => {
+    const tc = TAG_COLORS.find(t => t.name === tag);
+    html += '<button class="tag-filter-btn' + (activeTagFilter === tag ? ' active' : '') + '" style="' + (activeTagFilter === tag ? 'background:' + (tc ? tc.color : 'var(--accent)') + ';border-color:' + (tc ? tc.color : 'var(--accent)') : '') + '" onclick="setTagFilter(\'' + tag + '\')">' + tag + '</button>';
+  });
+  bar.innerHTML = html;
+}
+
+function setTagFilter(tag) {
+  activeTagFilter = tag;
+  renderTagFilterBar();
+  filterConversations();
+}
+
+// ============================================
+// Sidebar Search
+// ============================================
+function filterConversations() {
+  const searchEl = document.getElementById('sidebarSearch');
+  const query = searchEl ? searchEl.value.toLowerCase() : '';
+  const items = document.querySelectorAll('.conv-item');
+  items.forEach(item => {
+    const title = item.querySelector('.conv-title').textContent.toLowerCase();
+    const convId = item.dataset.convId;
+    const conv = conversations.find(c => c.id === convId);
+    const matchesSearch = !query || title.includes(query);
+    const matchesTag = !activeTagFilter || (conv && conv.tag === activeTagFilter);
+    item.style.display = (matchesSearch && matchesTag) ? '' : 'none';
+  });
+  // Hide empty group headers
+  document.querySelectorAll('.conv-group-header').forEach(header => {
+    let next = header.nextElementSibling;
+    let hasVisible = false;
+    while (next && !next.classList.contains('conv-group-header')) {
+      if (next.classList.contains('conv-item') && next.style.display !== 'none') hasVisible = true;
+      next = next.nextElementSibling;
+    }
+    header.style.display = hasVisible ? '' : 'none';
+  });
+}
+
+// ============================================
+// Sidebar Toggle
+// ============================================
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sb.classList.toggle('collapsed');
+  overlay.classList.toggle('open', !sb.classList.contains('collapsed') && window.innerWidth <= 768);
+}
+
+// ============================================
+// Toolbar Menu
+// ============================================
+function toggleToolbarMenu(e) {
+  e.stopPropagation();
+  document.getElementById('toolbarMenu').classList.toggle('open');
+}
+function closeToolbarMenu() {
+  document.getElementById('toolbarMenu').classList.remove('open');
+}
+document.addEventListener('click', () => closeToolbarMenu());
+
+// ============================================
+// Setup & Settings
+// ============================================
+function getSelectedModel(target) {
+  const manualEl = document.getElementById(target === 'setup' ? 'setupModelManual' : 'setModelManual');
+  const selectEl = document.getElementById(target === 'setup' ? 'setupModelSelect' : 'setModelSelect');
+  const manual = manualEl.value.trim();
+  if (manual) return manual;
+  return selectEl.value || 'gpt-4o';
+}
+
+function saveSetup() {
+  let proxy = document.getElementById('setupProxy').value.trim();
+  const key = document.getElementById('setupKey').value.trim();
+  if (!proxy || !key) { showToast('Base URL and API Key are required.', 'error'); return; }
+  proxy = proxy.replace(/\/(chat\/completions|messages)\/?$/, '');
+  const model = getSelectedModel('setup');
+  localStorage.setItem('llmProxyUrl', proxy);
+  localStorage.setItem('llmApiKey', key);
+  localStorage.setItem('llmModel', model);
+  closeModal('setupModal');
+  // Try to fetch models in the background
+  fetchAvailableModels(proxy, key).then(models => {
+    localStorage.setItem('llmModelList', JSON.stringify(models));
+    loadCachedModels('settings');
+  }).catch(() => {});
+}
+
+function switchSettingsTab(tabName, btn) {
+  document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.settings-tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('settingsTab-' + tabName).classList.add('active');
+}
+
+function openSettings() {
+  document.getElementById('setProxy').value = localStorage.getItem('llmProxyUrl') || '';
+  document.getElementById('setKey').value = localStorage.getItem('llmApiKey') || '';
+  const currentModel = localStorage.getItem('llmModel') || '';
+  document.getElementById('setModelManual').value = currentModel;
+  document.getElementById('setApiFormat').value = localStorage.getItem('llmApiFormat') || 'auto';
+  renderPromptEntries();
+  const conv = getActiveConv();
+  document.getElementById('setPersona').value = (conv && conv.persona) || localStorage.getItem('llmPersona') || '';
+  document.getElementById('setExtraParams').value = localStorage.getItem('llmExtraParams') || '';
+  document.getElementById('setExcludeParams').value = localStorage.getItem('llmExcludeParams') || '';
+  document.getElementById('setPrefill').value = localStorage.getItem('llmPrefill') || '';
+  document.getElementById('setStreaming').checked = localStorage.getItem('llmStreaming') !== 'false';
+  document.getElementById('setEnterSend').checked = localStorage.getItem('llmEnterSend') !== 'false';
+  document.getElementById('setTemperature').value = localStorage.getItem('llmTemperature') || '';
+  document.getElementById('setInputCost').value = localStorage.getItem('llmInputCost') || '';
+  document.getElementById('setOutputCost').value = localStorage.getItem('llmOutputCost') || '';
+  document.getElementById('setFont').value = localStorage.getItem('assistantFont') || '';
+  document.getElementById('setMsgFontSize').value = localStorage.getItem('assistantMsgFontSize') || '';
+  document.getElementById('setMsgMaxWidth').value = localStorage.getItem('assistantMsgMaxWidth') || '';
+  document.getElementById('setWebSearch').checked = localStorage.getItem('llmWebSearch') === 'true';
+  document.getElementById('setForceSearch').checked = localStorage.getItem('llmForceSearch') === 'true';
+  document.getElementById('setSearchApiUrl').value = localStorage.getItem('llmSearchApiUrl') || '';
+  document.getElementById('setSearchApiKey').value = localStorage.getItem('llmSearchApiKey') || '';
+  document.getElementById('setCorsProxy').value = localStorage.getItem('llmCorsProxy') || '';
+  document.getElementById('setMemory').checked = localStorage.getItem('llmMemoryEnabled') === 'true';
+  document.getElementById('setHoldScreenshot').checked = localStorage.getItem('llmHoldScreenshot') === 'true';
+
+  renderProfileSelect();
+  const activeProfileId = localStorage.getItem('assistantActiveProfileId') || '';
+  const profileSelect = document.getElementById('profileSelect');
+  if (profileSelect) profileSelect.value = activeProfileId;
+  const profileName = document.getElementById('profileName');
+  if (profileName) profileName.value = '';
+
+  // Presets
+  loadPresets();
+
+  // Theme
+  const currentTheme = localStorage.getItem('assistantTheme') || 'dark';
+  document.getElementById('setTheme').value = currentTheme;
+  document.getElementById('customThemeColors').style.display = currentTheme === 'custom' ? 'grid' : 'none';
+  if (currentTheme === 'custom') loadCustomColorPickers();
+
+  // Model select
+  loadCachedModels('settings');
+  const selectEl = document.getElementById('setModelSelect');
+  if (currentModel) {
+    for (const opt of selectEl.options) {
+      if (opt.value === currentModel) { opt.selected = true; break; }
+    }
+  }
+
+  openModal('settingsModal', '#setProxy');
+}
+
+function loadProfiles() {
+  try { return JSON.parse(localStorage.getItem('assistantProfiles') || '[]'); } catch(e) { return []; }
+}
+
+function saveProfiles(profiles) {
+  localStorage.setItem('assistantProfiles', JSON.stringify(profiles));
+}
+
+function renderProfileSelect() {
+  const select = document.getElementById('profileSelect');
+  if (!select) return;
+  const profiles = loadProfiles();
+  select.innerHTML = '<option value="">-- Select profile --</option>';
+  profiles.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    select.appendChild(opt);
+  });
+}
+
+function collectProfileSettingsFromInputs() {
+  return {
+    llmProxyUrl: document.getElementById('setProxy').value.trim(),
+    llmApiKey: document.getElementById('setKey').value.trim(),
+    llmModel: getSelectedModel('settings'),
+    llmApiFormat: document.getElementById('setApiFormat').value,
+    llmStreaming: document.getElementById('setStreaming').checked ? 'true' : 'false',
+    llmEnterSend: document.getElementById('setEnterSend').checked ? 'true' : 'false',
+    llmTemperature: document.getElementById('setTemperature').value.trim(),
+    llmExtraParams: document.getElementById('setExtraParams').value.trim(),
+    llmExcludeParams: document.getElementById('setExcludeParams').value.trim(),
+    llmPrefill: document.getElementById('setPrefill').value,
+    llmWebSearch: document.getElementById('setWebSearch').checked ? 'true' : 'false',
+    llmSearchApiUrl: document.getElementById('setSearchApiUrl').value.trim(),
+    llmSearchApiKey: document.getElementById('setSearchApiKey').value.trim(),
+    llmCorsProxy: document.getElementById('setCorsProxy').value.trim(),
+    llmMemoryEnabled: document.getElementById('setMemory').checked ? 'true' : 'false',
+    llmHoldScreenshot: document.getElementById('setHoldScreenshot').checked ? 'true' : 'false',
+    llmInputCost: document.getElementById('setInputCost').value.trim(),
+    llmOutputCost: document.getElementById('setOutputCost').value.trim()
+  };
+}
+
+function applyProfileToInputs(settings) {
+  document.getElementById('setProxy').value = settings.llmProxyUrl || '';
+  document.getElementById('setKey').value = settings.llmApiKey || '';
+  document.getElementById('setApiFormat').value = settings.llmApiFormat || 'auto';
+  document.getElementById('setStreaming').checked = settings.llmStreaming !== 'false';
+  document.getElementById('setEnterSend').checked = settings.llmEnterSend !== 'false';
+  document.getElementById('setTemperature').value = settings.llmTemperature || '';
+  document.getElementById('setExtraParams').value = settings.llmExtraParams || '';
+  document.getElementById('setExcludeParams').value = settings.llmExcludeParams || '';
+  document.getElementById('setPrefill').value = settings.llmPrefill || '';
+  document.getElementById('setWebSearch').checked = settings.llmWebSearch === 'true';
+  document.getElementById('setSearchApiUrl').value = settings.llmSearchApiUrl || '';
+  document.getElementById('setSearchApiKey').value = settings.llmSearchApiKey || '';
+  document.getElementById('setCorsProxy').value = settings.llmCorsProxy || '';
+  document.getElementById('setMemory').checked = settings.llmMemoryEnabled === 'true';
+  document.getElementById('setHoldScreenshot').checked = settings.llmHoldScreenshot === 'true';
+  document.getElementById('setInputCost').value = settings.llmInputCost || '';
+  document.getElementById('setOutputCost').value = settings.llmOutputCost || '';
+
+  const model = settings.llmModel || '';
+  document.getElementById('setModelManual').value = model;
+  document.getElementById('setModelSelect').value = '';
+  const selectEl = document.getElementById('setModelSelect');
+  for (const opt of selectEl.options) {
+    if (opt.value === model) { opt.selected = true; break; }
+  }
+}
+
+function applyProfile(profile) {
+  if (!profile) return;
+  const settings = profile.settings || {};
+  Object.entries(settings).forEach(([k, v]) => {
+    if (v === null || v === undefined) return;
+    localStorage.setItem(k, v);
+  });
+  localStorage.setItem('assistantActiveProfileId', profile.id);
+  applyProfileToInputs(settings);
+  showToast('Profile applied: ' + profile.name, 'success');
+}
+
+function applyProfileFromSelect() {
+  const select = document.getElementById('profileSelect');
+  if (!select) return;
+  const id = select.value;
+  if (!id) return;
+  const profiles = loadProfiles();
+  const profile = profiles.find(p => p.id === id);
+  if (profile) applyProfile(profile);
+}
+
+function saveCurrentAsProfile() {
+  const select = document.getElementById('profileSelect');
+  const nameInput = document.getElementById('profileName');
+  const desiredName = (nameInput && nameInput.value.trim()) || '';
+  const profiles = loadProfiles();
+  const settings = collectProfileSettingsFromInputs();
+  let profile = null;
+
+  if (select && select.value) {
+    profile = profiles.find(p => p.id === select.value);
+  }
+
+  if (!profile && !desiredName) {
+    showToast('Enter a profile name.', 'error');
+    return;
+  }
+
+  if (profile) {
+    profile.name = desiredName || profile.name;
+    profile.settings = settings;
+  } else {
+    profile = { id: 'profile_' + Date.now(), name: desiredName, settings };
+    profiles.push(profile);
+  }
+
+  saveProfiles(profiles);
+  renderProfileSelect();
+  if (select) select.value = profile.id;
+  localStorage.setItem('assistantActiveProfileId', profile.id);
+  if (nameInput) nameInput.value = '';
+  showToast('Profile saved.', 'success');
+}
+
+function deleteSelectedProfile() {
+  const select = document.getElementById('profileSelect');
+  if (!select || !select.value) { showToast('Select a profile to delete.', 'info'); return; }
+  if (!confirm('Delete this profile?')) return;
+  let profiles = loadProfiles();
+  profiles = profiles.filter(p => p.id !== select.value);
+  saveProfiles(profiles);
+  localStorage.removeItem('assistantActiveProfileId');
+  renderProfileSelect();
+  select.value = '';
+  showToast('Profile deleted.', 'info');
+}
+
+function saveSettings() {
+  // Validate extra params JSON
+  const extraParamsField = document.getElementById('setExtraParams');
+  const extraParamsVal = extraParamsField.value.trim();
+  if (extraParamsVal) {
+    try {
+      JSON.parse(extraParamsVal);
+      extraParamsField.classList.remove('invalid');
+    } catch(e) {
+      extraParamsField.classList.add('invalid');
+      showToast('Extra Parameters must be valid JSON.', 'error');
+      return;
+    }
+  } else {
+    extraParamsField.classList.remove('invalid');
+  }
+
+  let proxy = document.getElementById('setProxy').value.trim();
+  proxy = proxy.replace(/\/(chat\/completions|messages)\/?$/, '');
+  localStorage.setItem('llmProxyUrl', proxy);
+  localStorage.setItem('llmApiKey', document.getElementById('setKey').value.trim());
+  localStorage.setItem('llmModel', getSelectedModel('settings'));
+  localStorage.setItem('llmApiFormat', document.getElementById('setApiFormat').value);
+  localStorage.setItem('llmExtraParams', extraParamsVal);
+  localStorage.setItem('llmExcludeParams', document.getElementById('setExcludeParams').value.trim());
+  const personaVal = document.getElementById('setPersona').value;
+  { const c = getActiveConv();
+    if (c) { c.persona = personaVal; saveConversations(); }
+    // Only update global default if this is not a character-card conversation
+    if (!c || !c.characterCard) localStorage.setItem('llmPersona', personaVal);
+  }
+  localStorage.setItem('llmPrefill', document.getElementById('setPrefill').value);
+  localStorage.setItem('llmStreaming', document.getElementById('setStreaming').checked ? 'true' : 'false');
+  localStorage.setItem('llmEnterSend', document.getElementById('setEnterSend').checked ? 'true' : 'false');
+  const tempVal = document.getElementById('setTemperature').value.trim();
+  localStorage.setItem('llmTemperature', tempVal);
+  localStorage.setItem('llmInputCost', document.getElementById('setInputCost').value.trim());
+  localStorage.setItem('llmOutputCost', document.getElementById('setOutputCost').value.trim());
+  localStorage.setItem('llmWebSearch', document.getElementById('setWebSearch').checked ? 'true' : 'false');
+  localStorage.setItem('llmForceSearch', document.getElementById('setForceSearch').checked ? 'true' : 'false');
+  localStorage.setItem('llmSearchApiUrl', document.getElementById('setSearchApiUrl').value.trim());
+  localStorage.setItem('llmSearchApiKey', document.getElementById('setSearchApiKey').value.trim());
+  localStorage.setItem('llmCorsProxy', document.getElementById('setCorsProxy').value.trim());
+  localStorage.setItem('llmMemoryEnabled', document.getElementById('setMemory').checked ? 'true' : 'false');
+  localStorage.setItem('llmHoldScreenshot', document.getElementById('setHoldScreenshot').checked ? 'true' : 'false');
+
+  // Warn if web search enabled for non-Anthropic without search URL
+  if (document.getElementById('setWebSearch').checked) {
+    const fmt = document.getElementById('setApiFormat').value;
+    const searchUrl = document.getElementById('setSearchApiUrl').value.trim();
+    if (fmt !== 'anthropic' && fmt !== 'auto' && !searchUrl) {
+      showToast('Web search enabled but no Search API URL set — search won\'t work for OpenAI-compatible models.', 'error');
+    }
+  }
+
+  // Theme
+  const themeName = document.getElementById('setTheme').value;
+  if (themeName === 'custom') {
+    localStorage.setItem('assistantCustomTheme', JSON.stringify(getCustomThemeFromPickers()));
+  }
+  applyTheme(themeName);
+
+  // Message overrides
+  const msgFs = document.getElementById('setMsgFontSize').value.trim();
+  const msgMw = document.getElementById('setMsgMaxWidth').value.trim();
+  msgFs ? localStorage.setItem('assistantMsgFontSize', msgFs) : localStorage.removeItem('assistantMsgFontSize');
+  msgMw ? localStorage.setItem('assistantMsgMaxWidth', msgMw) : localStorage.removeItem('assistantMsgMaxWidth');
+  applyMsgOverrides();
+
+  // Font
+  const fontName = document.getElementById('setFont').value.trim();
+  localStorage.setItem('assistantFont', fontName);
+  loadCustomFont(fontName);
+
+  // Try to fetch models in background
+  const key = document.getElementById('setKey').value.trim();
+  if (proxy && key) {
+    fetchAvailableModels(proxy, key).then(models => {
+      localStorage.setItem('llmModelList', JSON.stringify(models));
+    }).catch(() => {});
+  }
+
+  closeModal('settingsModal');
+}
+
+function closeSettings() {
+  closeModal('settingsModal');
+  // Revert theme if user didn't save
+  loadTheme();
+}
+
+// ============================================
+// System Prompt Presets
+// ============================================
+function loadPresets() {
+  let presets = [];
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) { console.warn('Presets parse error:', e); }
+  const select = document.getElementById('setPresetSelect');
+  select.innerHTML = '<option value="">-- Custom --</option>';
+  presets.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    select.appendChild(opt);
+  });
+  return presets;
+}
+
+function applyPreset(id) {
+  if (!id) return;
+  let presets = [];
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) { console.warn('Presets parse error:', e); }
+  const preset = presets.find(p => p.id === id);
+  if (!preset) return;
+  // Prompt entries (new format) or legacy fallback
+  if (preset.promptEntries) {
+    savePromptEntries(preset.promptEntries);
+    if ('persona' in preset) document.getElementById('setPersona').value = preset.persona || '';
+  } else {
+    const entries = [];
+    if (preset.systemPrompt) entries.push({ id: 'pe_' + Date.now() + '_sys', name: 'System Prompt', content: preset.systemPrompt, enabled: true });
+    if (preset.persona) entries.push({ id: 'pe_' + Date.now() + '_per', name: 'Persona', content: preset.persona, enabled: true });
+    if (entries.length > 0) savePromptEntries(entries);
+  }
+  renderPromptEntries();
+  if ('temperature' in preset) document.getElementById('setTemperature').value = preset.temperature ?? '';
+  if ('extraParams' in preset) document.getElementById('setExtraParams').value = preset.extraParams || '';
+}
+
+function saveCurrentAsPreset() {
+  const name = prompt('Preset name:');
+  if (!name) return;
+  let presets = [];
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) { console.warn('Presets parse error:', e); }
+  const preset = {
+    id: 'preset_' + Date.now(),
+    name: name,
+    promptEntries: loadPromptEntries(),
+    persona: document.getElementById('setPersona').value,
+    temperature: document.getElementById('setTemperature').value.trim(),
+    extraParams: document.getElementById('setExtraParams').value.trim()
+  };
+  presets.push(preset);
+  localStorage.setItem('assistantPresets', JSON.stringify(presets));
+  loadPresets();
+  document.getElementById('setPresetSelect').value = preset.id;
+  showToast('Preset saved: ' + name, 'success');
+}
+
+function deleteSelectedPreset() {
+  const select = document.getElementById('setPresetSelect');
+  const id = select.value;
+  if (!id) { showToast('Select a preset to delete.', 'info'); return; }
+  let presets = [];
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) { console.warn('Presets parse error:', e); }
+  const preset = presets.find(p => p.id === id);
+  if (!preset) return;
+  if (!confirm('Delete preset "' + preset.name + '"?')) return;
+  presets = presets.filter(p => p.id !== id);
+  localStorage.setItem('assistantPresets', JSON.stringify(presets));
+  loadPresets();
+
+  // Clear imported prompt entries and extra params
+  savePromptEntries([{ id: 'pe_' + Date.now() + '_sys', name: 'System Prompt', content: '', enabled: true }]);
+  renderPromptEntries();
+  document.getElementById('setTemperature').value = '';
+  document.getElementById('setExtraParams').value = '';
+  document.getElementById('setPersona').value = '';
+
+  showToast('Preset deleted.', 'info');
+}
+
+function importSTPreset(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let data;
+    try { data = JSON.parse(e.target.result); } catch(err) {
+      showToast('Invalid JSON file.', 'error');
+      return;
+    }
+
+    // Map ST parameter names to API-compatible names
+    const nameMap = {
+      temp: 'temperature',
+      top_p: 'top_p',
+      top_k: 'top_k',
+      min_p: 'min_p',
+      rep_pen: 'repetition_penalty',
+      rep_pen_range: 'repetition_penalty_range',
+      rep_pen_slope: 'repetition_penalty_slope',
+      freq_pen: 'frequency_penalty',
+      presence_pen: 'presence_penalty',
+      typical_p: 'typical_p',
+      tfs: 'tfs_z',
+      top_a: 'top_a',
+      mirostat_mode: 'mirostat_mode',
+      mirostat_tau: 'mirostat_tau',
+      mirostat_eta: 'mirostat_eta',
+      max_tokens: 'max_tokens',
+      genamt: 'max_tokens',
+      max_length: 'max_tokens',
+      seed: 'seed',
+      smoothing_factor: 'smoothing_factor',
+      smoothing_curve: 'smoothing_curve',
+      dynatemp: 'dynatemp',
+      min_temp: 'min_temp',
+      max_temp: 'max_temp',
+      temperature_last: 'temperature_last',
+      sampler_order: 'sampler_order',
+      no_repeat_ngram_size: 'no_repeat_ngram_size',
+      penalty_alpha: 'penalty_alpha',
+      epsilon_cutoff: 'epsilon_cutoff',
+      eta_cutoff: 'eta_cutoff',
+      encoder_rep_pen: 'encoder_repetition_penalty',
+      frequency_penalty: 'frequency_penalty',
+      presence_penalty: 'presence_penalty',
+      temperature: 'temperature',
+      repetition_penalty: 'repetition_penalty'
+    };
+
+    // Fields to skip (metadata, not sampler params)
+    const skip = new Set([
+      'name', 'preset', 'do_sample', 'early_stopping',
+      'grammar_string', 'banned_tokens', 'custom_token_bans',
+      'ignore_eos_token_ban', 'num_beams', 'length_penalty',
+      'min_length', 'add_bos_token', 'truncation_length',
+      'ban_eos_token', 'skip_special_tokens',
+      'sampler_priority', 'n'
+    ]);
+
+    const extra = {};
+    let temperature = null;
+
+    for (const [key, val] of Object.entries(data)) {
+      if (skip.has(key)) continue;
+      if (typeof val === 'string' && key !== 'sampler_order') continue;
+      if (typeof val === 'boolean') continue;
+      const mapped = nameMap[key] || key;
+      if (mapped === 'temperature') {
+        temperature = val;
+      } else {
+        extra[mapped] = val;
+      }
+    }
+
+    // Set temperature field
+    if (temperature !== null) {
+      document.getElementById('setTemperature').value = temperature;
+    }
+
+    // Set Extra Parameters field
+    document.getElementById('setExtraParams').value = Object.keys(extra).length ? JSON.stringify(extra, null, 2) : '';
+
+    // Extract prompt entries from ST prompts array
+    if (Array.isArray(data.prompts)) {
+      // Build enabled map from prompt_order (use last order set)
+      const enabledMap = {};
+      if (Array.isArray(data.prompt_order) && data.prompt_order.length > 0) {
+        const orderSet = data.prompt_order[data.prompt_order.length - 1];
+        if (orderSet && Array.isArray(orderSet.order)) {
+          orderSet.order.forEach(o => { enabledMap[o.identifier] = o.enabled; });
+        }
+      }
+
+      const entries = [];
+      data.prompts.forEach(p => {
+        if (p.marker) return; // skip marker-only entries
+        if (!p.content || !p.content.trim()) return; // skip empty
+        const enabled = enabledMap[p.identifier] != null ? enabledMap[p.identifier] : (p.enabled !== false);
+        entries.push({
+          id: 'pe_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          name: p.name || p.identifier || 'Untitled',
+          content: p.content.trim(),
+          enabled: enabled
+        });
+      });
+      if (entries.length > 0) {
+        savePromptEntries(entries);
+        renderPromptEntries();
+      }
+    }
+
+    // Save as a named preset
+    const presetName = data.name || file.name.replace(/\.json$/i, '');
+    let presets = [];
+    try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) { console.warn('Presets parse error:', e); }
+    const preset = {
+      id: 'preset_' + Date.now(),
+      name: presetName,
+      promptEntries: loadPromptEntries(),
+      temperature: temperature !== null ? String(temperature) : '',
+      extraParams: document.getElementById('setExtraParams').value.trim()
+    };
+    presets.push(preset);
+    localStorage.setItem('assistantPresets', JSON.stringify(presets));
+    loadPresets();
+    document.getElementById('setPresetSelect').value = preset.id;
+    showToast('Imported ST preset: ' + presetName, 'success');
+  };
+  reader.readAsText(file);
+}
+
+// ============================================
+// Prompt Manager
+// ============================================
+function loadPromptEntries() {
+  try { return JSON.parse(localStorage.getItem('llmPromptEntries') || '[]'); } catch(e) { return []; }
+}
+
+function savePromptEntries(entries) {
+  localStorage.setItem('llmPromptEntries', JSON.stringify(entries));
+}
+
+function migrateToPromptEntries() {
+  if (localStorage.getItem('llmPromptEntries')) return;
+  const entries = [];
+  const sys = localStorage.getItem('llmSystemPrompt');
+  entries.push({ id: 'pe_' + Date.now() + '_sys', name: 'System Prompt', content: sys || 'You are a helpful assistant.', enabled: true });
+  const persona = localStorage.getItem('llmPersona');
+  if (persona) {
+    entries.push({ id: 'pe_' + Date.now() + '_per', name: 'Persona', content: persona, enabled: true });
+  }
+  savePromptEntries(entries);
+}
+
+function renderPromptEntries() {
+  const list = document.getElementById('promptEntryList');
+  if (!list) return;
+  list.innerHTML = '';
+  const entries = loadPromptEntries();
+
+  entries.forEach((entry) => {
+    const div = document.createElement('div');
+    div.className = 'prompt-entry' + (entry.enabled ? '' : ' disabled');
+    div.dataset.peId = entry.id;
+    div.draggable = true;
+
+    // Drag-and-drop
+    div.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', entry.id);
+      div.classList.add('dragging');
+    });
+    div.addEventListener('dragend', () => div.classList.remove('dragging'));
+    div.addEventListener('dragover', (e) => { e.preventDefault(); div.classList.add('drag-over'); });
+    div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+    div.addEventListener('drop', (e) => {
+      e.preventDefault();
+      div.classList.remove('drag-over');
+      const draggedId = e.dataTransfer.getData('text/plain');
+      if (draggedId === entry.id) return;
+      const current = loadPromptEntries();
+      const fromIdx = current.findIndex(x => x.id === draggedId);
+      const toIdx = current.findIndex(x => x.id === entry.id);
+      if (fromIdx === -1 || toIdx === -1) return;
+      const [moved] = current.splice(fromIdx, 1);
+      current.splice(toIdx, 0, moved);
+      savePromptEntries(current);
+      renderPromptEntries();
+    });
+
+    // Header row
+    const header = document.createElement('div');
+    header.className = 'prompt-entry-header';
+
+    const drag = document.createElement('span');
+    drag.className = 'drag-handle';
+    drag.textContent = '☰';
+
+    const toggle = document.createElement('input');
+    toggle.type = 'checkbox';
+    toggle.checked = entry.enabled;
+    toggle.title = entry.enabled ? 'Enabled' : 'Disabled';
+    toggle.onchange = () => togglePromptEntry(entry.id);
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'pe-name';
+    nameInput.value = entry.name;
+    nameInput.oninput = () => updatePromptEntry(entry.id, 'name', nameInput.value);
+
+    const expandBtn = document.createElement('button');
+    expandBtn.textContent = '▼';
+    expandBtn.title = 'Expand/collapse';
+    expandBtn.onclick = () => {
+      const body = div.querySelector('.prompt-entry-body');
+      body.classList.toggle('open');
+      expandBtn.textContent = body.classList.contains('open') ? '▲' : '▼';
+    };
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '✕';
+    delBtn.title = 'Delete entry';
+    delBtn.onclick = () => deletePromptEntry(entry.id);
+
+    header.appendChild(drag);
+    header.appendChild(toggle);
+    header.appendChild(nameInput);
+    header.appendChild(expandBtn);
+    header.appendChild(delBtn);
+
+    // Body (collapsible textarea)
+    const body = document.createElement('div');
+    body.className = 'prompt-entry-body';
+    const ta = document.createElement('textarea');
+    ta.value = entry.content;
+    ta.placeholder = 'Enter prompt content...';
+    ta.oninput = () => updatePromptEntry(entry.id, 'content', ta.value);
+    body.appendChild(ta);
+
+    div.appendChild(header);
+    div.appendChild(body);
+    list.appendChild(div);
+  });
+}
+
+function addPromptEntry() {
+  const entries = loadPromptEntries();
+  entries.push({ id: 'pe_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), name: 'New Prompt', content: '', enabled: true });
+  savePromptEntries(entries);
+  renderPromptEntries();
+}
+
+function deletePromptEntry(id) {
+  let entries = loadPromptEntries();
+  entries = entries.filter(e => e.id !== id);
+  savePromptEntries(entries);
+  renderPromptEntries();
+}
+
+function togglePromptEntry(id) {
+  const entries = loadPromptEntries();
+  const entry = entries.find(e => e.id === id);
+  if (entry) entry.enabled = !entry.enabled;
+  savePromptEntries(entries);
+  renderPromptEntries();
+}
+
+function updatePromptEntry(id, field, value) {
+  const entries = loadPromptEntries();
+  const entry = entries.find(e => e.id === id);
+  if (entry) entry[field] = value;
+  savePromptEntries(entries);
+}
+
+async function buildSystemMessages(conv) {
+  const msgs = [];
+  // Prompt entries (never overridden by character cards)
+  const entries = loadPromptEntries();
+  entries.forEach(entry => {
+    if (entry.enabled && entry.content.trim()) msgs.push({ role: 'system', content: entry.content });
+  });
+  // Fallback if completely empty
+  if (msgs.length === 0) {
+    msgs.push({ role: 'system', content: 'You are a helpful assistant.' });
+  }
+  // Character card system_prompt (actual instructions from the card)
+  if (conv && conv.characterSystemPrompt && conv.characterSystemPrompt.trim()) {
+    msgs.push({ role: 'system', content: conv.characterSystemPrompt });
+  }
+  // Character description — who the assistant is (from character cards)
+  if (conv && conv.characterDescription && conv.characterDescription.trim()) {
+    msgs.push({ role: 'system', content: 'The following describes your character \u2014 this is who YOU are, not the user:\n\n' + conv.characterDescription });
+  }
+  // Persona — who the user is
+  const persona = (conv && conv.persona) || localStorage.getItem('llmPersona') || '';
+  if (persona.trim()) {
+    msgs.push({ role: 'system', content: 'The following describes the user you are speaking with:\n\n' + persona });
+  }
+  // Conversation summary
+  if (conv && conv.summary) {
+    msgs.push({ role: 'system', content: 'Conversation summary:\n' + conv.summary });
+  }
+  // Memory prompt
+  const mem = await getMemoryPrompt();
+  if (mem) msgs.push({ role: 'system', content: mem });
+  return msgs;
+}
+
+// ============================================
+// Render Messages
+// ============================================
+function maybeAddAvatar(wrapper) {
+  const conv = getActiveConv();
+  if (conv && conv.characterAvatar) {
+    wrapper.classList.add('has-avatar');
+    const avatar = document.createElement('img');
+    avatar.className = 'msg-avatar';
+    avatar.src = conv.characterAvatar;
+    avatar.alt = '';
+    wrapper.appendChild(avatar);
+  }
+}
+
+function renderMessages() {
+  closeChatSearch();
+  const area = document.getElementById('messagesArea');
+  area.innerHTML = '';
+
+  if (messages.length === 0) {
+    area.innerHTML = '<div class="chat-placeholder">Start a conversation...</div>';
+    return;
+  }
+
+  messages.forEach((msg, idx) => {
+    if (msg._editing) {
+      renderEditMode(area, msg, idx);
+      return;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'msg-wrapper ' + msg.role;
+    wrapper.dataset.msgIdx = idx;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble ' + msg.role;
+
+    if (msg.role === 'user') {
+      if (Array.isArray(msg.content)) {
+        msg.content.forEach(part => {
+          if (part.type === 'text') {
+            const sp = document.createElement('span');
+            sp.textContent = part.text;
+            bubble.appendChild(sp);
+          } else if (part.type === 'image_url') {
+            const img = document.createElement('img');
+            img.src = part.image_url.url;
+            img.className = 'chat-inline-img';
+            img.alt = 'User uploaded image';
+            bubble.appendChild(img);
+          } else if (part.type === 'file') {
+            const badge = document.createElement('a');
+            badge.className = 'chat-file-badge';
+            badge.textContent = '\u{1F4C4} ' + (part.file.name || 'file');
+            badge.href = part.file.url;
+            badge.download = part.file.name || 'file';
+            badge.title = 'Download ' + (part.file.name || 'file');
+            bubble.appendChild(badge);
+          }
+        });
+      } else {
+        bubble.textContent = msg.content;
+      }
+    } else if (msg.role === 'assistant') {
+      const thinkData = msg.swipeThinking && msg.swipeThinking[msg.swipeIndex];
+      const toolData = msg.swipeToolUse && msg.swipeToolUse[msg.swipeIndex];
+      const imgData = msg.swipeImages && msg.swipeImages[msg.swipeIndex];
+      const _h = stripThinkTags(msg.content);
+      const _hThink = _h.thinking ? (thinkData || '') + _h.thinking : (thinkData || '');
+      bubble.innerHTML = renderThinkingHTML(_hThink) + renderToolBlocksHTML(toolData || []) + renderMarkdown(_h.content) + renderGenImages(imgData);
+      postRenderProcessing(bubble);
+    } else {
+      bubble.textContent = msg.content;
+    }
+
+    if (msg.role === 'assistant') maybeAddAvatar(wrapper);
+    wrapper.appendChild(bubble);
+
+    // Message actions
+    const actions = document.createElement('div');
+    actions.className = 'msg-actions';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'msg-action-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.setAttribute('aria-label', 'Copy message');
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(getMsgText(msg));
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy', 1500);
+    };
+    actions.appendChild(copyBtn);
+
+    if (msg.role === 'assistant') {
+      const toolData = msg.swipeToolUse && msg.swipeToolUse[msg.swipeIndex];
+      const hasSources = toolData && toolData.some(tb =>
+        (tb.type === 'url_fetch' && (tb.content || tb.url)) ||
+        (tb.results || []).some(r => r.url)
+      );
+      if (hasSources) {
+        const srcBtn = document.createElement('button');
+        srcBtn.className = 'msg-action-btn';
+        srcBtn.textContent = 'Sources';
+        srcBtn.setAttribute('aria-label', 'View sources');
+        srcBtn.onclick = () => openSourcesDrawer(msg);
+        actions.appendChild(srcBtn);
+      }
+    }
+
+    if (msg.role === 'user') {
+      const editBtn = document.createElement('button');
+      editBtn.className = 'msg-action-btn';
+      editBtn.textContent = 'Edit';
+      editBtn.setAttribute('aria-label', 'Edit message');
+      editBtn.onclick = () => { msg._editing = true; renderMessages(); };
+      actions.appendChild(editBtn);
+
+      const forkBtn = document.createElement('button');
+      forkBtn.className = 'msg-action-btn';
+      forkBtn.textContent = 'Fork';
+      forkBtn.setAttribute('aria-label', 'Fork conversation');
+      forkBtn.onclick = () => forkBranch(idx);
+      actions.appendChild(forkBtn);
+    }
+
+    if (msg.role === 'assistant' && msg.swipes && msg.swipes.length > 1) {
+      const delSwipeBtn = document.createElement('button');
+      delSwipeBtn.className = 'msg-action-btn';
+      delSwipeBtn.textContent = 'Delete Swipe';
+      delSwipeBtn.setAttribute('aria-label', 'Delete current swipe');
+      delSwipeBtn.onclick = () => {
+        if (!confirm('Delete this swipe?')) return;
+        const si = msg.swipeIndex;
+        msg.swipes.splice(si, 1);
+        if (msg.swipeThinking) msg.swipeThinking.splice(si, 1);
+        if (msg.swipeToolUse) msg.swipeToolUse.splice(si, 1);
+        if (msg.swipeImages) msg.swipeImages.splice(si, 1);
+        msg.swipeIndex = Math.min(si, msg.swipes.length - 1);
+        msg.content = msg.swipes[msg.swipeIndex];
+        if (msg.swipeImages) msg.images = msg.swipeImages[msg.swipeIndex] || [];
+        saveConversations();
+        renderMessages();
+        updateTokenInfo();
+      };
+      actions.appendChild(delSwipeBtn);
+    }
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'msg-action-btn';
+    delBtn.textContent = 'Delete';
+    delBtn.setAttribute('aria-label', 'Delete message');
+    delBtn.onclick = () => {
+      if (msg.role === 'assistant' && !confirm('Delete this response?')) return;
+      messages.splice(idx, 1);
+      saveConversations();
+      renderMessages();
+      updateTokenInfo();
+    };
+    actions.appendChild(delBtn);
+
+    wrapper.appendChild(actions);
+
+    // Message timestamp
+    if (msg.timestamp) {
+      const tsEl = document.createElement('div');
+      tsEl.className = 'msg-timestamp';
+      tsEl.textContent = formatRelativeTime(msg.timestamp);
+      tsEl.title = new Date(msg.timestamp).toLocaleString();
+      wrapper.appendChild(tsEl);
+    }
+
+    // Branch controls for user messages
+    if (msg.role === 'user' && msg.branches && msg.branches.length > 1) {
+      const branchDiv = document.createElement('div');
+      branchDiv.className = 'branch-controls has-branches';
+      const bPrev = document.createElement('button');
+      bPrev.textContent = '\u25C0';
+      bPrev.disabled = msg.branchIndex <= 0;
+      bPrev.onclick = () => switchBranch(idx, -1);
+      bPrev.setAttribute('aria-label', 'Previous branch');
+      const bCounter = document.createElement('span');
+      bCounter.textContent = (msg.branchIndex + 1) + '/' + msg.branches.length;
+      const bNext = document.createElement('button');
+      bNext.textContent = '\u25B6';
+      bNext.disabled = msg.branchIndex >= msg.branches.length - 1;
+      bNext.onclick = () => switchBranch(idx, 1);
+      bNext.setAttribute('aria-label', 'Next branch');
+      branchDiv.appendChild(bPrev);
+      branchDiv.appendChild(bCounter);
+      branchDiv.appendChild(bNext);
+      wrapper.appendChild(branchDiv);
+    }
+
+    if (msg.role === 'assistant') {
+      // Swipe controls
+      const swipeDiv = document.createElement('div');
+      swipeDiv.className = 'swipe-controls' + (msg.swipes && msg.swipes.length > 1 ? ' has-swipes' : '');
+      const prev = document.createElement('button');
+      prev.textContent = '\u25C0';
+      prev.disabled = !msg.swipes || msg.swipeIndex <= 0;
+      prev.onclick = () => swipeMsg(idx, -1);
+      prev.setAttribute('aria-label', 'Previous swipe');
+      const counter = document.createElement('span');
+      counter.textContent = msg.swipes ? (msg.swipeIndex + 1) + '/' + msg.swipes.length : '1/1';
+      const next = document.createElement('button');
+      next.textContent = '\u25B6';
+      next.disabled = !msg.swipes || msg.swipeIndex >= msg.swipes.length - 1;
+      next.onclick = () => swipeMsg(idx, 1);
+      next.setAttribute('aria-label', 'Next swipe');
+      swipeDiv.appendChild(prev);
+      swipeDiv.appendChild(counter);
+      swipeDiv.appendChild(next);
+      wrapper.appendChild(swipeDiv);
+
+      const regen = document.createElement('button');
+      regen.className = 'regen-btn';
+      regen.textContent = 'Regenerate';
+      regen.setAttribute('aria-label', 'Regenerate response');
+      regen.onclick = () => regenerate();
+
+      if (idx === messages.length - 1) {
+        const continueBtn = document.createElement('button');
+        continueBtn.className = 'regen-btn';
+        continueBtn.textContent = 'Continue';
+        continueBtn.setAttribute('aria-label', 'Continue generation');
+        continueBtn.onclick = () => continueMessage();
+
+        const btnRow = document.createElement('div');
+        btnRow.style.cssText = 'display:flex;gap:6px;justify-content:center';
+        btnRow.appendChild(regen);
+        btnRow.appendChild(continueBtn);
+        wrapper.appendChild(btnRow);
+      } else {
+        wrapper.appendChild(regen);
+      }
+    }
+
+    // Fade-in on last message only
+    if (idx === messages.length - 1) wrapper.classList.add('msg-new');
+
+    area.appendChild(wrapper);
+  });
+
+  area.scrollTop = area.scrollHeight;
+  updateSendBtnState();
+
+  // Restore select mode state if active
+  if (_selectMode) {
+    area.classList.add('select-mode');
+    _selectedMsgs.forEach(idx => {
+      const w = area.querySelector('.msg-wrapper[data-msg-idx="' + idx + '"]');
+      if (w) w.classList.add('selected');
+    });
+  }
+}
+
+function renderEditMode(area, msg, idx) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg-wrapper user';
+
+  const ta = document.createElement('textarea');
+  ta.className = 'msg-edit-textarea';
+  ta.value = getMsgText(msg);
+  wrapper.appendChild(ta);
+
+  if (Array.isArray(msg.content)) {
+    const attachments = msg.content.filter(c => c.type === 'image_url' || c.type === 'file');
+    if (attachments.length > 0) {
+      const attPreview = document.createElement('div');
+      attPreview.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;padding:4px 0';
+      attachments.forEach(part => {
+        if (part.type === 'image_url') {
+          const img = document.createElement('img');
+          img.src = part.image_url.url;
+          img.className = 'chat-inline-img';
+          img.style.cssText = 'max-width:80px;max-height:80px;border-radius:6px;opacity:0.8';
+          img.alt = 'Attached image';
+          attPreview.appendChild(img);
+        } else if (part.type === 'file') {
+          const badge = document.createElement('span');
+          badge.className = 'chat-file-badge';
+          badge.style.opacity = '0.8';
+          badge.textContent = '\u{1F4C4} ' + (part.file.name || 'file');
+          attPreview.appendChild(badge);
+        }
+      });
+      wrapper.appendChild(attPreview);
+    }
+  }
+
+  const editActions = document.createElement('div');
+  editActions.className = 'msg-edit-actions';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'msg-edit-cancel';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = () => { delete msg._editing; renderMessages(); };
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'msg-edit-save';
+  saveBtn.textContent = 'Save & Resend';
+  saveBtn.onclick = async () => {
+    const editedText = ta.value;
+    delete msg._editing;
+
+    // Save old branch before truncating (deep clone to prevent mutation)
+    const oldBranch = JSON.parse(JSON.stringify(messages.slice(idx)));
+    if (!msg.branches) {
+      msg.branches = [oldBranch];
+    } else {
+      msg.branches[msg.branchIndex] = oldBranch;
+    }
+
+    if (Array.isArray(msg.content)) {
+      const attachments = msg.content.filter(c => c.type === 'image_url' || c.type === 'file');
+      if (attachments.length > 0) {
+        msg.content = [{ type: 'text', text: editedText }, ...attachments];
+      } else {
+        msg.content = editedText;
+      }
+    } else {
+      msg.content = editedText;
+    }
+    messages.length = idx + 1;
+    // Create new branch slot and switch to it
+    msg.branchIndex = msg.branches.length;
+    saveConversations();
+    renderMessages();
+    await resendAfterEdit();
+
+    // Save new branch (after response)
+    const newBranch = JSON.parse(JSON.stringify(messages.slice(idx)));
+    msg.branches[msg.branchIndex] = newBranch;
+    saveConversations();
+    renderMessages();
+  };
+
+  editActions.appendChild(cancelBtn);
+  editActions.appendChild(saveBtn);
+  wrapper.appendChild(editActions);
+  area.appendChild(wrapper);
+}
+
+async function resendAfterEdit() {
+  const proxyUrl = localStorage.getItem('llmProxyUrl');
+  const apiKey = localStorage.getItem('llmApiKey');
+  const conv = getActiveConv();
+  if (!proxyUrl || !apiKey) return;
+
+  const assistantMsg = { role: 'assistant', content: '', swipes: [''], swipeIndex: 0, timestamp: Date.now() };
+  messages.push(assistantMsg);
+
+  const area = document.getElementById('messagesArea');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg-wrapper assistant';
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble assistant';
+  bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  maybeAddAvatar(wrapper);
+  wrapper.appendChild(bubble);
+  area.appendChild(wrapper);
+  area.scrollTop = area.scrollHeight;
+
+  const apiMessages = await buildSystemMessages(conv);
+  messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: buildApiContent(m) }); });
+
+  await streamResponse(apiMessages, assistantMsg, 0, bubble, null, null);
+
+  extractMemories(apiMessages);
+  if (conv) conv.updatedAt = Date.now();
+  saveConversations();
+  renderMessages();
+  updateTokenInfo();
+}
+
+// ============================================
+// Swipe
+// ============================================
+function swipeMsg(idx, dir) {
+  const msg = messages[idx];
+  if (!msg || !msg.swipes) return;
+  msg.swipeIndex = Math.max(0, Math.min(msg.swipes.length - 1, msg.swipeIndex + dir));
+  msg.content = msg.swipes[msg.swipeIndex];
+  if (msg.swipeImages) msg.images = msg.swipeImages[msg.swipeIndex] || [];
+  debouncedSave();
+  renderMessages();
+}
+
+// ============================================
+// Branch Switching
+// ============================================
+function switchBranch(msgIdx, dir) {
+  const msg = messages[msgIdx];
+  if (!msg || !msg.branches) return;
+  // Save current continuation as the current branch (deep clone)
+  msg.branches[msg.branchIndex] = JSON.parse(JSON.stringify(messages.slice(msgIdx)));
+  // Switch
+  const newIdx = Math.max(0, Math.min(msg.branches.length - 1, msg.branchIndex + dir));
+  if (newIdx === msg.branchIndex) return;
+  msg.branchIndex = newIdx;
+  // Replace messages from msgIdx onward with the selected branch (deep clone)
+  const branch = JSON.parse(JSON.stringify(msg.branches[msg.branchIndex]));
+  messages.length = msgIdx;
+  branch.forEach(m => messages.push(m));
+  debouncedSave();
+  renderMessages();
+  updateTokenInfo();
+}
+
+function forkBranch(msgIdx) {
+  if (streaming) return;
+  const conv = getActiveConv();
+  if (!conv) return;
+
+  const forkedMessages = JSON.parse(JSON.stringify(messages.slice(0, msgIdx + 1)));
+
+  const newConv = {
+    id: genId(),
+    title: conv.title + ' (fork)',
+    messages: forkedMessages,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+  if (conv.characterAvatar) newConv.characterAvatar = conv.characterAvatar;
+  if (conv.characterData) newConv.characterData = JSON.parse(JSON.stringify(conv.characterData));
+
+  conversations.unshift(newConv);
+  activeConvId = newConv.id;
+  messages = newConv.messages;
+  saveConversations();
+  renderSidebar();
+  renderMessages();
+  updateTokenInfo();
+  updateCharacterUI();
+}
+
+// ============================================
+// Thinking/Reasoning Rendering
+// ============================================
+function renderThinkingHTML(text) {
+  if (!text) return '';
+  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return '<div class="thinking-block">' +
+    '<div class="thinking-header" onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.thinking-arrow\').textContent=this.nextElementSibling.classList.contains(\'open\')?\'\u25BE\':\'\u25B8\'">' +
+    '\uD83D\uDCAD Thinking <span class="thinking-arrow">\u25B8</span></div>' +
+    '<div class="thinking-content">' + escaped + '</div></div>';
+}
+
+function stripThinkTags(text) {
+  if (!text) return { thinking: '', content: '' };
+  let thinking = '';
+  let content = text;
+  // Extract closed <think>...</think> and <thinking>...</thinking> blocks
+  content = content.replace(/<think(?:ing)?>([\s\S]*?)<\/think(?:ing)?>/gi, (_, inner) => {
+    thinking += inner;
+    return '';
+  });
+  // Handle unclosed <think> or <thinking> at end of string (mid-stream)
+  content = content.replace(/<think(?:ing)?>([\s\S]*)$/i, (_, inner) => {
+    thinking += inner;
+    return '';
+  });
+  return { thinking, content };
+}
+
+// ============================================
+// Tool Use Rendering
+// ============================================
+function renderToolBlocksHTML(toolBlocks) {
+  if (!toolBlocks || toolBlocks.length === 0) return '';
+  return toolBlocks.map((tb, i) => {
+    // --- url_fetch blocks ---
+    if (tb.type === 'url_fetch') {
+      const escapedUrl = escapeHTML(tb.url || '');
+      const displayUrl = escapeHTML((tb.url || '').replace(/^https?:\/\//, '').replace(/\/+$/, ''));
+      if (tb.searching) {
+        return '<div class="tool-use-block"><div class="tool-use-header">\u{1F310} Reading ' + displayUrl + '\u2026</div></div>';
+      }
+      if (tb.error) {
+        return '<div class="tool-use-block"><div class="tool-use-header">\u{1F310} ' + displayUrl + ' \u00B7 <span style="color:var(--error-color,#f66)">' + escapeHTML(tb.error) + '</span></div></div>';
+      }
+      const charCount = (tb.content || '').length;
+      const preview = escapeHTML((tb.content || '').slice(0, 300));
+      return '<div class="tool-use-block">' +
+        '<div class="tool-use-header" onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.tool-use-arrow\').textContent=this.nextElementSibling.classList.contains(\'open\')?\'\u25BE\':\'\u25B8\'">' +
+        '\u{1F310} Fetched ' + displayUrl + ' \u00B7 ' + charCount.toLocaleString() + ' chars' +
+        ' <span class="tool-use-arrow">\u25B8</span></div>' +
+        '<div class="tool-use-results"><div class="tool-result-snippet" style="max-height:200px;overflow-y:auto;white-space:pre-wrap;font-size:0.8em;padding:8px">' + preview + (charCount > 300 ? '\u2026' : '') + '</div></div></div>';
+    }
+    // --- web_search blocks (default) ---
+    const query = tb.query || '';
+    const results = tb.results || [];
+    const searching = tb.searching;
+    if (searching) {
+      return '<div class="tool-use-block"><div class="tool-use-header">\u{1F50D} Searching\u2026</div></div>';
+    }
+    const escapedQuery = escapeHTML(query);
+    if (tb.error) {
+      return '<div class="tool-use-block"><div class="tool-use-header">\u{1F50D} Searched "' + escapedQuery + '" \u00B7 <span style="color:var(--error-color,#f66)">' + escapeHTML(tb.error) + '</span></div></div>';
+    }
+    const count = results.length;
+    const resultsHTML = results.map(r => {
+      const title = r.title || r.url || 'Result';
+      const url = r.url || '';
+      const hasUrl = url && url !== '#';
+      const displayUrl = hasUrl ? url.replace(/^https?:\/\//, '').replace(/\/+$/, '') : '';
+      const snippetText = r.snippet ? escapeHTML(r.snippet) : '';
+      const snippetHtml = snippetText ? '<div class="tool-result-snippet" title="Click to expand" onclick="this.classList.toggle(\'open\')">' + snippetText + '</div>' : '';
+      const titleHtml = hasUrl
+        ? '<a href="' + escapeHTML(url) + '" target="_blank" rel="noopener">' + escapeHTML(title) + '</a>'
+        : '<span class="tool-result-title">' + escapeHTML(title) + '</span>';
+      return '<div class="tool-use-result">' +
+        titleHtml +
+        (displayUrl ? '<span class="tool-result-url">' + escapeHTML(displayUrl) + '</span>' : '') +
+        snippetHtml + '</div>';
+    }).join('');
+    const headerText = '\u{1F50D} Searched "' + escapedQuery + '" \u00B7 ' + count + ' result' + (count !== 1 ? 's' : '');
+    return '<div class="tool-use-block">' +
+      '<div class="tool-use-header" onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.tool-use-arrow\').textContent=this.nextElementSibling.classList.contains(\'open\')?\'\u25BE\':\'\u25B8\'">' +
+      headerText +
+      ' <span class="tool-use-arrow">\u25B8</span></div>' +
+      '<div class="tool-use-results">' + resultsHTML + '</div></div>';
+  }).join('');
+}
+
+// ============================================
+// OpenAI Web Search Function Calling
+// ============================================
+const OPENAI_WEB_SEARCH_TOOL = {
+  type: 'function',
+  function: {
+    name: 'web_search',
+    description: 'Search the web for current information. Use this when the user asks about recent events, real-time data, or anything that may require up-to-date information.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'The search query' }
+      },
+      required: ['query']
+    }
+  }
+};
+
+function proxiedFetch(url, options) {
+  const proxy = localStorage.getItem('llmCorsProxy') || '';
+  if (proxy) return fetch(proxy + encodeURIComponent(url), options);
+  // Try direct fetch first, then auto-fallback to CORS proxy
+  return fetch(url, options).catch(err => {
+    if (err.name === 'AbortError') throw err;
+    const msg = err.message || '';
+    if (msg === 'Failed to fetch' || msg === 'Load failed' || msg.includes('NetworkError') || msg.includes('CORS')) {
+      const fallbackProxy = 'https://api.allorigins.win/raw?url=';
+      return fetch(fallbackProxy + encodeURIComponent(url), options);
+    }
+    throw err;
+  });
+}
+
+async function executeWebSearch(query, signal) {
+  const searchUrl = (localStorage.getItem('llmSearchApiUrl') || 'https://purasearx.duckdns.org/search?format=json').trim();
+  const searchKey = (localStorage.getItem('llmSearchApiKey') || '').trim();
+  if (!searchUrl) {
+    lastSearchStatus = { ok: false, error: 'No search API URL configured.', at: Date.now(), query };
+    return { results: [], error: 'No search API URL configured. Set one in Settings > Tools.' };
+  }
+  const isBrave = searchUrl.includes('api.search.brave.com');
+  const isSearx = /searx|searxng/i.test(searchUrl);
+  const hasQueryTpl = /{query}|\{\{query\}\}|%s/i.test(searchUrl);
+  const hasKeyTpl = /{key}|\{\{key\}\}/i.test(searchUrl);
+  if (hasKeyTpl && !searchKey) {
+    lastSearchStatus = { ok: false, error: 'Search API key required for this URL template.', at: Date.now(), query };
+    return { results: [], error: 'Search API key required for this URL template.' };
+  }
+  try {
+    const qEnc = encodeURIComponent(query);
+    const kEnc = encodeURIComponent(searchKey);
+    let fetchUrl = searchUrl;
+
+    if (hasQueryTpl || hasKeyTpl) {
+      fetchUrl = fetchUrl
+        .replace(/{query}|\{\{query\}\}|%s/gi, qEnc)
+        .replace(/{key}|\{\{key\}\}/gi, kEnc);
+    }
+
+    if (!hasQueryTpl) {
+      const sep = fetchUrl.includes('?') ? '&' : '?';
+      fetchUrl = fetchUrl + sep + 'q=' + qEnc;
+      if (isSearx && !/[?&]format=/i.test(fetchUrl)) fetchUrl += '&format=json';
+    }
+
+    const fetchHeaders = {};
+    if (!hasKeyTpl && searchKey) {
+      const headerMatch = searchKey.match(/^([A-Za-z0-9-]+)\s*:\s*(.+)$/);
+      if (headerMatch) {
+        fetchHeaders[headerMatch[1]] = headerMatch[2];
+      } else if (isBrave) {
+        fetchHeaders['X-Subscription-Token'] = searchKey;
+      } else if (/^bearer\s+/i.test(searchKey)) {
+        fetchHeaders['Authorization'] = searchKey;
+      } else {
+        fetchHeaders['Authorization'] = 'Bearer ' + searchKey;
+      }
+    }
+    if (!fetchHeaders['Accept']) fetchHeaders['Accept'] = 'application/json';
+
+    const resp = await proxiedFetch(fetchUrl, { headers: fetchHeaders, signal });
+    if (!resp.ok) throw new Error(resp.status + ' ' + (resp.statusText || 'Error'));
+    const ct = resp.headers.get('content-type') || '';
+    if (!ct.includes('json')) throw new Error('Expected JSON but got ' + (ct.split(';')[0] || 'unknown content type'));
+    const data = await resp.json();
+
+    const pickArray = (obj) => {
+      if (Array.isArray(obj)) return obj;
+      if (obj && Array.isArray(obj.results)) return obj.results;
+      if (obj && Array.isArray(obj.items)) return obj.items;
+      if (obj && Array.isArray(obj.value)) return obj.value;
+      return null;
+    };
+
+    const candidates = [
+      data?.web?.results,
+      data?.webPages?.value,
+      data?.results,
+      data?.items,
+      data?.data,
+      data?.organic_results,
+      data?.organic,
+      data?.value
+    ];
+
+    let raw = [];
+    for (const c of candidates) {
+      const arr = pickArray(c);
+      if (arr) {
+        raw = arr;
+        if (arr.length) break;
+      }
+    }
+
+    const results = raw.slice(0, 30).map(r => ({
+      title: r.title || r.name || r.heading || '',
+      url: r.url || r.link || r.href || r.target_url || '',
+      snippet: r.content || r.snippet || r.description || r.summary || ''
+    })).filter(r => r.title || r.url);
+
+    lastSearchStatus = { ok: true, error: null, at: Date.now(), query };
+    return { results, error: null };
+  } catch (e) {
+    if (e.name === 'AbortError') throw e;
+    let msg = e.message || 'Unknown error';
+    if (msg === 'Failed to fetch' || msg.includes('NetworkError')) msg = 'Network error — CORS may be blocked by this search instance';
+    lastSearchStatus = { ok: false, error: msg, at: Date.now(), query };
+    return { results: [], error: msg };
+  }
+}
+
+function formatSearchResultsForModel(results, error) {
+  if (error) return 'Web search error: ' + error;
+  if (!results.length) return 'No search results found.';
+  return results.map((r, i) =>
+    (i + 1) + '. ' + r.title + '\n   URL: ' + r.url + (r.snippet ? '\n   ' + r.snippet : '')
+  ).join('\n\n');
+}
+
+// ============================================
+// URL Fetch Tool
+// ============================================
+const URL_FETCH_MAX_CHARS = 18000;
+
+const OPENAI_URL_FETCH_TOOL = {
+  type: 'function',
+  function: {
+    name: 'url_fetch',
+    description: 'Fetch the full content of a web page given its URL. Use this to read articles, documentation, or any web page the user shares or that appeared in search results.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'The URL to fetch' }
+      },
+      required: ['url']
+    }
+  }
+};
+
+const ANTHROPIC_URL_FETCH_TOOL = {
+  name: 'url_fetch',
+  description: 'Fetch the full content of a web page given its URL. Use this to read articles, documentation, or any web page the user shares or that appeared in search results.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      url: { type: 'string', description: 'The URL to fetch' }
+    },
+    required: ['url']
+  }
+};
+
+const HANDLED_TOOLS = new Set(['web_search', 'url_fetch']);
+
+// Parse tool calls that models output as text instead of using the proper API mechanism
+// Matches: <tool_call>{"name":"web_search",...}</tool_call>, ```json\n{"name":...}\n```, etc.
+function parseTextToolCalls(text) {
+  const calls = [];
+  // Pattern 1: <tool_call>...</tool_call>
+  const tagPattern = /<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/gi;
+  let m;
+  while ((m = tagPattern.exec(text)) !== null) {
+    try {
+      const parsed = JSON.parse(m[1]);
+      if (parsed.name && HANDLED_TOOLS.has(parsed.name)) {
+        calls.push({ id: 'text_tc_' + calls.length, name: parsed.name, arguments: JSON.stringify(parsed.arguments || {}) });
+      }
+    } catch(e) {}
+  }
+  // Pattern 2: ```json\n{"name":"web_search",...}\n``` or ```\n{"name":...}\n```
+  if (calls.length === 0) {
+    const codePattern = /```(?:json)?\s*\n?\s*(\{[\s\S]*?\})\s*\n?\s*```/gi;
+    while ((m = codePattern.exec(text)) !== null) {
+      try {
+        const parsed = JSON.parse(m[1]);
+        if (parsed.name && HANDLED_TOOLS.has(parsed.name)) {
+          calls.push({ id: 'text_tc_' + calls.length, name: parsed.name, arguments: JSON.stringify(parsed.arguments || {}) });
+        }
+      } catch(e) {}
+    }
+  }
+  // Pattern 3: {"name": "web_search", "arguments": {...}} as bare JSON in text
+  if (calls.length === 0) {
+    const jsonPattern = /\{\s*"name"\s*:\s*"(web_search|url_fetch)"[\s\S]*?"arguments"\s*:\s*(\{[^}]*\})\s*\}/gi;
+    while ((m = jsonPattern.exec(text)) !== null) {
+      try {
+        const args = JSON.parse(m[2]);
+        if (HANDLED_TOOLS.has(m[1])) {
+          calls.push({ id: 'text_tc_' + calls.length, name: m[1], arguments: JSON.stringify(args) });
+        }
+      } catch(e) {}
+    }
+  }
+  return calls;
+}
+
+function stripTextToolCalls(text) {
+  return text
+    .replace(/<tool_call>\s*[\s\S]*?\s*<\/tool_call>/gi, '')
+    .replace(/```(?:json)?\s*\n?\s*\{\s*"name"\s*:\s*"(?:web_search|url_fetch)"[\s\S]*?\}\s*\n?\s*```/gi, '')
+    .replace(/\{\s*"name"\s*:\s*"(?:web_search|url_fetch)"[\s\S]*?"arguments"\s*:\s*\{[^}]*\}\s*\}/gi, '')
+    .trim();
+}
+
+async function executeUrlFetch(url, signal) {
+  try {
+    const resp = await proxiedFetch(url, { signal });
+    if (!resp.ok) return { content: '', error: resp.status + ' ' + (resp.statusText || 'Error') };
+    const ct = resp.headers.get('content-type') || '';
+    const raw = await resp.text();
+    if (!ct.includes('html')) {
+      // Plain text / JSON / etc — return directly
+      return { content: raw.slice(0, URL_FETCH_MAX_CHARS), error: null };
+    }
+    // Parse HTML and extract readable text
+    const doc = new DOMParser().parseFromString(raw, 'text/html');
+    // Remove noise elements
+    for (const sel of ['script','style','nav','footer','header','aside','iframe','noscript','svg','[role="navigation"]','[role="banner"]','[role="contentinfo"]']) {
+      doc.querySelectorAll(sel).forEach(el => el.remove());
+    }
+    // Prefer article/main content, fall back to body
+    const root = doc.querySelector('article') || doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.body;
+    let text = (root ? root.textContent : doc.body?.textContent) || '';
+    // Collapse whitespace
+    text = text.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    if (!text) return { content: '', error: 'Page returned no readable text.' };
+    return { content: text.slice(0, URL_FETCH_MAX_CHARS), error: null };
+  } catch (e) {
+    if (e.name === 'AbortError') throw e;
+    let msg = e.message || 'Unknown error';
+    if (msg === 'Failed to fetch' || msg === 'Load failed' || msg.includes('NetworkError')) msg = 'Network error — CORS proxy may be required';
+    return { content: '', error: msg };
+  }
+}
+
+function formatUrlFetchResultForModel(content, error, url) {
+  if (error) return 'Error fetching ' + url + ': ' + error;
+  if (!content) return 'No content found at ' + url;
+  return 'Content from ' + url + ':\n\n' + content;
+}
+
+// ============================================
+// Streaming
+// ============================================
+async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, overrideModel, prefixText) {
+  const baseUrl = (localStorage.getItem('llmProxyUrl') || '').replace(/\/+$/, '');
+  const apiKey = localStorage.getItem('llmApiKey');
+  const model = overrideModel || localStorage.getItem('llmModel') || 'gpt-4o';
+  const format = detectApiFormat(model);
+
+  // Extra params & excludes
+  let extra = {};
+  try { extra = JSON.parse(localStorage.getItem('llmExtraParams') || '{}'); } catch(e) { console.warn('Extra params parse error:', e); }
+  const exclude = (localStorage.getItem('llmExcludeParams') || '').split(',').map(s => s.trim()).filter(Boolean);
+
+  abortController = new AbortController();
+  streaming = true;
+  userScrolledAway = false;
+  const btn = document.getElementById('sendBtn');
+  btn.textContent = 'Stop';
+  btn.classList.add('streaming');
+  btn.disabled = false;
+
+  let fullText = prefixText || '';
+  let thinkingText = '';
+  let lastRender = 0;
+  let toolBlocks = [];
+  let currentBlockType = null;
+  let inputJsonBuf = '';
+  let toolCallBuffers = {};
+  let currentToolUseId = null;
+  let currentToolUseName = null;
+  let pendingAnthropicToolCalls = [];
+
+  try {
+    let url, headers, body;
+    const useStream = localStorage.getItem('llmStreaming') !== 'false';
+
+    // Assistant prefill
+    const prefill = localStorage.getItem('llmPrefill') || '';
+    if (prefill && !prefixText) {
+      apiMessages.push({ role: 'assistant', content: prefill });
+      fullText = prefill;
+    }
+
+    if (format === 'anthropic') {
+      url = baseUrl + '/messages';
+      headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      };
+      const prepared = prepareAnthropicMessages(apiMessages);
+      body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 4096, stream: useStream, ...extra };
+      if (resolveWebSearchEnabled()) {
+        body.tools = (body.tools || []).concat([
+          { type: 'web_search_20250305', name: 'web_search', max_uses: 20 },
+          ANTHROPIC_URL_FETCH_TOOL
+        ]);
+        if (localStorage.getItem('llmForceSearch') === 'true') {
+          body.tool_choice = { type: 'any' };
+          body.system = (body.system || '') + '\n\nIMPORTANT: You MUST call the web_search tool to look up information before answering. Do NOT answer from memory or training data. Always search first, then synthesize your answer from the results.';
+        }
+      }
+    } else {
+      url = baseUrl + '/chat/completions';
+      headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      };
+      const processedMessages = apiMessages.map(m => {
+        if (!Array.isArray(m.content)) return m;
+        // Strip image parts from assistant messages — most APIs don't accept them
+        if (m.role === 'assistant') {
+          const textParts = m.content.filter(p => p.type === 'text');
+          const hadImages = m.content.some(p => p.type === 'image_url');
+          if (hadImages) textParts.push({ type: 'text', text: '[Generated image]' });
+          const joined = textParts.map(p => p.text).join('');
+          return { ...m, content: joined || '[Generated image]' };
+        }
+        return {
+          ...m,
+          content: m.content.map(part => {
+            if (part.type === 'image_url' && part.image_url) {
+              return { type: 'image_url', image_url: { url: part.image_url.url } };
+            }
+            if (part.type === 'file') {
+              const name = part.file?.name || 'file';
+              const text = part.file?.textContent;
+              if (text) {
+                return { type: 'text', text: `--- ${name} ---\n${text}\n--- end ${name} ---` };
+              }
+              return { type: 'text', text: `[Attached file: ${name}]` };
+            }
+            return part;
+          })
+        };
+      });
+      body = { model, messages: processedMessages, stream: useStream, ...extra };
+      // Inject web search tool for OpenAI-compatible models
+      if (resolveWebSearchEnabled()) {
+        body.tools = (body.tools || []).concat([OPENAI_WEB_SEARCH_TOOL]);
+        body.tools = (body.tools || []).concat([OPENAI_URL_FETCH_TOOL]);
+        if (localStorage.getItem('llmForceSearch') === 'true') {
+          body.tool_choice = 'required';
+          // Reinforce via system prompt — some providers (e.g. Gemini) ignore tool_choice
+          body.messages = body.messages.concat([{
+            role: 'system',
+            content: 'IMPORTANT: You MUST call the web_search tool to look up information before answering. Do NOT answer from memory or training data. Always search first, then synthesize your answer from the results.'
+          }]);
+        }
+      }
+    }
+    if (!('temperature' in body)) {
+      const temp = parseFloat(localStorage.getItem('llmTemperature'));
+      if (!isNaN(temp)) body.temperature = temp;
+    }
+    exclude.forEach(k => delete body[k]);
+
+    // DEBUG: log message structures before sending
+    if (body.messages) {
+      console.log('=== API PAYLOAD DEBUG ===');
+      body.messages.forEach((m, i) => {
+        if (Array.isArray(m.content)) {
+          m.content.forEach((p, j) => {
+            const clone = { ...p };
+            if (clone.image_url?.url) clone.image_url = { url: clone.image_url.url.slice(0, 80) + '...' };
+            if (clone.text && clone.text.length > 100) clone.text = clone.text.slice(0, 100) + '...';
+            console.log(`msg[${i}].content[${j}]`, JSON.stringify(clone));
+          });
+        } else {
+          console.log(`msg[${i}] role=${m.role} content=${typeof m.content}`);
+        }
+        if (m.tool_calls) console.log(`  tool_calls:`, JSON.stringify(m.tool_calls));
+      });
+      console.log('=== END DEBUG ===');
+    }
+
+    let resp = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: abortController.signal
+    });
+
+    // If tool_choice caused a 400 (e.g. Gemini doesn't support "required"), retry without it
+    if (!resp.ok && resp.status === 400 && body.tool_choice) {
+      const saved = body.tool_choice;
+      delete body.tool_choice;
+      console.warn('Retrying without tool_choice (was:', saved, ')');
+      resp = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: abortController.signal
+      });
+    }
+
+    if (!resp.ok) {
+      let errText = '';
+      try { errText = await resp.text(); } catch(e) { console.warn('Error reading response text:', e); }
+      throw new Error('API returned ' + resp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+    }
+
+    const ct = resp.headers.get('content-type') || '';
+
+    if (ct.includes('application/json')) {
+      const data = await resp.json();
+      if (format === 'anthropic') {
+        fullText = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || 'No response.';
+        // Extract thinking blocks from non-streaming response
+        thinkingText = (data.content || []).filter(c => c.type === 'thinking').map(c => c.thinking).join('');
+        // Extract tool blocks from non-streaming response
+        for (const block of (data.content || [])) {
+          if (block.type === 'server_tool_use' && block.name === 'web_search') {
+            toolBlocks.push({ query: block.input?.query || '', results: [], searching: false });
+          } else if (block.type === 'web_search_tool_result') {
+            const tb = toolBlocks[toolBlocks.length - 1] || { query: '', results: [], searching: false };
+            if (!toolBlocks.length) toolBlocks.push(tb);
+            tb.results = (block.content || []).filter(r => r.type === 'web_search_result').map(r => ({
+              title: r.title,
+              url: r.url,
+              snippet: r.snippet || r.content || r.description || r.summary || ''
+            }));
+            tb.searching = false;
+          } else if (block.type === 'tool_use' && HANDLED_TOOLS.has(block.name)) {
+            if (block.name === 'url_fetch') {
+              toolBlocks.push({ type: 'url_fetch', url: block.input?.url || '', content: '', searching: true });
+            } else {
+              toolBlocks.push({ query: block.input?.query || '', results: [], searching: true });
+            }
+            pendingAnthropicToolCalls.push({ id: block.id, name: block.name, input: block.input || {}, toolBlockIndex: toolBlocks.length - 1 });
+          }
+        }
+        // Execute pending Anthropic custom tool calls (non-streaming)
+        if (pendingAnthropicToolCalls.length > 0) {
+          const toolUseContentBlocks = [];
+          const toolResultBlocks = [];
+          for (const call of pendingAnthropicToolCalls) {
+            toolUseContentBlocks.push({ type: 'tool_use', id: call.id, name: call.name, input: call.input });
+            if (call.name === 'url_fetch') {
+              const tb = toolBlocks[call.toolBlockIndex];
+              const fetchUrl = call.input?.url || '';
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+              if (tb) { tb.content = content; tb.searching = false; if (error) tb.error = error; }
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              toolResultBlocks.push({ type: 'tool_result', tool_use_id: call.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
+            } else if (call.name === 'web_search') {
+              const tb = toolBlocks[call.toolBlockIndex];
+              const query = call.input?.query || '';
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { results, error } = await executeWebSearch(query, abortController.signal);
+              if (tb) { tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet })); tb.searching = false; if (error) tb.error = error; }
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              toolResultBlocks.push({ type: 'tool_result', tool_use_id: call.id, content: formatSearchResultsForModel(results, error) });
+            }
+          }
+          // Follow-up non-streaming request
+          const prepared = prepareAnthropicMessages(apiMessages);
+          const followUpMessages = [
+            ...prepared.messages,
+            { role: 'assistant', content: [
+              ...(fullText && fullText !== 'No response.' ? [{ type: 'text', text: fullText }] : []),
+              ...toolUseContentBlocks
+            ]},
+            { role: 'user', content: toolResultBlocks }
+          ];
+          const followUpBody = { ...body, messages: followUpMessages, stream: false };
+          delete followUpBody.tools;
+          exclude.forEach(k => delete followUpBody[k]);
+          const followUpResp = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(followUpBody),
+            signal: abortController.signal
+          });
+          if (!followUpResp.ok) {
+            let errText = '';
+            try { errText = await followUpResp.text(); } catch(e) {}
+            throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+          }
+          const followUpData = await followUpResp.json();
+          if (followUpData.type === 'error' || followUpData.error) {
+            console.warn('Follow-up API error:', followUpData.error?.message || JSON.stringify(followUpData.error));
+          }
+          const followUpText = (followUpData.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
+          if (followUpText) fullText = followUpText;
+          const followThink = (followUpData.content || []).filter(c => c.type === 'thinking').map(c => c.thinking).join('');
+          if (followThink) thinkingText += followThink;
+          pendingAnthropicToolCalls = [];
+        }
+      } else {
+        const extracted = extractImages(data.choices?.[0]?.message || data);
+        fullText = extracted.text || '';
+        if (extracted.images.length) {
+          assistantMsg.swipeImages = assistantMsg.swipeImages || [];
+          assistantMsg.swipeImages[swipeIdx] = extracted.images;
+          assistantMsg.images = extracted.images;
+        }
+        thinkingText = data.choices?.[0]?.message?.reasoning_content
+          || data.choices?.[0]?.message?.reasoning || '';
+        // Handle OpenAI tool calls (non-streaming)
+        const msgToolCalls = (data.choices?.[0]?.message?.tool_calls || []).filter(tc => HANDLED_TOOLS.has(tc.function?.name));
+        // Fallback: parse text-based tool calls (separate path — uses user message follow-up)
+        let textBasedToolCalls = [];
+        if (msgToolCalls.length === 0 && fullText) {
+          const textCalls = parseTextToolCalls(fullText);
+          if (textCalls.length > 0) textBasedToolCalls = textCalls;
+        }
+        if (msgToolCalls.length > 0) {
+          const assistantToolMsg = {
+            role: 'assistant',
+            content: fullText || null,
+            tool_calls: msgToolCalls.map(tc => ({
+              id: tc.id,
+              type: 'function',
+              function: { name: tc.function.name, arguments: tc.function.arguments }
+            }))
+          };
+          const toolResultMsgs = [];
+          for (const tc of msgToolCalls) {
+            const toolName = tc.function?.name;
+            let args = {};
+            try { args = JSON.parse(tc.function.arguments); } catch(e) {}
+            if (toolName === 'url_fetch') {
+              const fetchUrl = args.url || '';
+              toolBlocks.push({ type: 'url_fetch', url: fetchUrl, content: '', searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.content = content;
+              tb.searching = false;
+              if (error) tb.error = error;
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              toolResultMsgs.push({ role: 'tool', tool_call_id: tc.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
+            } else {
+              const query = args.query || '';
+              toolBlocks.push({ query, results: [], searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { results, error } = await executeWebSearch(query, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
+              tb.searching = false;
+              if (error) tb.error = error;
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              toolResultMsgs.push({ role: 'tool', tool_call_id: tc.id, content: formatSearchResultsForModel(results, error) });
+            }
+          }
+          // Follow-up non-streaming request
+          const followUpMessages = [...body.messages, assistantToolMsg, ...toolResultMsgs];
+          const followUpBody = { ...body, messages: followUpMessages, stream: false };
+          delete followUpBody.tools;
+          exclude.forEach(k => delete followUpBody[k]);
+          // DEBUG: log follow-up message structures
+          console.log('=== FOLLOW-UP PAYLOAD DEBUG ===');
+          followUpBody.messages.forEach((m, i) => {
+            const contentSummary = Array.isArray(m.content)
+              ? m.content.map(p => ({ type: p.type, keys: Object.keys(p) }))
+              : (m.content === null ? 'null' : typeof m.content);
+            console.log(`msg[${i}] role=${m.role}`, JSON.stringify(contentSummary));
+            if (m.tool_calls) console.log(`  tool_calls:`, JSON.stringify(m.tool_calls));
+            if (m.tool_call_id) console.log(`  tool_call_id:`, m.tool_call_id);
+          });
+          console.log('=== END FOLLOW-UP DEBUG ===');
+          const followUpResp = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(followUpBody),
+            signal: abortController.signal
+          });
+          if (!followUpResp.ok) {
+            let errText = '';
+            try { errText = await followUpResp.text(); } catch(e) {}
+            throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+          }
+          const followUpData = await followUpResp.json();
+          if (followUpData.error) {
+            console.warn('Follow-up API error:', followUpData.error?.message || JSON.stringify(followUpData.error));
+          }
+          const followExtracted = extractImages(followUpData.choices?.[0]?.message || followUpData);
+          if (followExtracted.text) fullText = followExtracted.text;
+          if (followExtracted.images.length) {
+            assistantMsg.swipeImages = assistantMsg.swipeImages || [];
+            assistantMsg.swipeImages[swipeIdx] = followExtracted.images;
+            assistantMsg.images = followExtracted.images;
+          }
+          const followThinking = followUpData.choices?.[0]?.message?.reasoning_content
+            || followUpData.choices?.[0]?.message?.reasoning || '';
+          if (followThinking) thinkingText += followThinking;
+        }
+        // Handle text-based tool calls (separate from API tool calls — uses user message follow-up)
+        if (textBasedToolCalls.length > 0 && msgToolCalls.length === 0) {
+          const savedText = fullText;
+          fullText = stripTextToolCalls(fullText);
+          const textToolResults = [];
+          for (const tc of textBasedToolCalls) {
+            let args = {};
+            try { args = JSON.parse(tc.arguments); } catch(e) {}
+            if (tc.name === 'url_fetch') {
+              const fetchUrl = args.url || '';
+              toolBlocks.push({ type: 'url_fetch', url: fetchUrl, content: '', searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.content = content; tb.searching = false;
+              if (error) tb.error = error;
+              textToolResults.push('URL Fetch (' + fetchUrl + '):\n' + formatUrlFetchResultForModel(content, error, fetchUrl));
+            } else {
+              const query = args.query || '';
+              toolBlocks.push({ query, results: [], searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+              const { results, error } = await executeWebSearch(query, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
+              tb.searching = false;
+              if (error) tb.error = error;
+              textToolResults.push('Web Search (' + query + '):\n' + formatSearchResultsForModel(results, error));
+            }
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+          }
+          const followUpMessages = [...body.messages,
+            { role: 'assistant', content: savedText },
+            { role: 'user', content: 'Here are the tool results:\n\n' + textToolResults.join('\n\n') + '\n\nPlease synthesize a response using these results.' }
+          ];
+          const followUpBody = { ...body, messages: followUpMessages, stream: false };
+          delete followUpBody.tools;
+          delete followUpBody.tool_choice;
+          exclude.forEach(k => delete followUpBody[k]);
+          try {
+            const followUpResp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(followUpBody), signal: abortController.signal });
+            if (followUpResp.ok) {
+              const followUpData = await followUpResp.json();
+              const followText = followUpData.choices?.[0]?.message?.content || '';
+              if (followText) fullText = followText;
+            }
+          } catch(e) { console.warn('Text tool call follow-up failed:', e); }
+          if (!fullText) fullText = savedText;
+        }
+        if (!fullText) fullText = 'No response.';
+      }
+      const stripped = stripThinkTags(fullText);
+      if (stripped.thinking) thinkingText += stripped.thinking;
+      fullText = stripped.content;
+      assistantMsg.swipes[swipeIdx] = fullText;
+      assistantMsg.content = fullText;
+      if (thinkingText) {
+        assistantMsg.swipeThinking = assistantMsg.swipeThinking || [];
+        assistantMsg.swipeThinking[swipeIdx] = thinkingText;
+      }
+      if (toolBlocks.length > 0) {
+        assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
+        assistantMsg.swipeToolUse[swipeIdx] = toolBlocks;
+      }
+      bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+      postRenderProcessing(bubbleEl);
+    } else {
+      // SSE streaming
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      const streamImages = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+
+          if (format === 'anthropic') {
+            if (!trimmed.startsWith('data:')) continue;
+            const payload = trimmed.slice(5).trim();
+            if (!payload) continue;
+            try {
+              const json = JSON.parse(payload);
+              if (json.type === 'content_block_start') {
+                const cb = json.content_block;
+                if (cb && cb.type === 'server_tool_use') {
+                  currentBlockType = 'server_tool_use';
+                  inputJsonBuf = '';
+                  toolBlocks.push({ query: '', results: [], searching: true });
+                } else if (cb && cb.type === 'tool_use' && HANDLED_TOOLS.has(cb.name)) {
+                  currentBlockType = 'tool_use';
+                  currentToolUseId = cb.id || '';
+                  currentToolUseName = cb.name;
+                  inputJsonBuf = '';
+                  if (cb.name === 'url_fetch') {
+                    toolBlocks.push({ type: 'url_fetch', url: '', content: '', searching: true });
+                  } else {
+                    toolBlocks.push({ query: '', results: [], searching: true });
+                  }
+                } else if (cb && cb.type === 'web_search_tool_result') {
+                  currentBlockType = 'web_search_tool_result';
+                  const tb = toolBlocks[toolBlocks.length - 1];
+                  if (tb) {
+                    tb.results = (cb.content || []).filter(r => r.type === 'web_search_result').map(r => ({
+                      title: r.title,
+                      url: r.url,
+                      snippet: r.snippet || r.content || r.description || r.summary || ''
+                    }));
+                    tb.searching = false;
+                  }
+                } else if (cb && cb.type === 'text') {
+                  currentBlockType = 'text';
+                } else if (cb && cb.type === 'thinking') {
+                  currentBlockType = 'thinking';
+                }
+              } else if (json.type === 'content_block_delta') {
+                if (json.delta?.type === 'text_delta' && json.delta?.text) {
+                  fullText += json.delta.text;
+                } else if (json.delta?.type === 'thinking_delta' && json.delta?.thinking) {
+                  thinkingText += json.delta.thinking;
+                } else if (json.delta?.type === 'input_json_delta' && json.delta?.partial_json) {
+                  inputJsonBuf += json.delta.partial_json;
+                }
+              } else if (json.type === 'content_block_stop') {
+                if (currentBlockType === 'server_tool_use' && inputJsonBuf) {
+                  try {
+                    const parsed = JSON.parse(inputJsonBuf);
+                    const tb = toolBlocks[toolBlocks.length - 1];
+                    if (tb && parsed.query) tb.query = parsed.query;
+                  } catch(e) {}
+                  inputJsonBuf = '';
+                } else if (currentBlockType === 'tool_use' && currentToolUseName && inputJsonBuf) {
+                  try {
+                    const parsed = JSON.parse(inputJsonBuf);
+                    const tb = toolBlocks[toolBlocks.length - 1];
+                    if (currentToolUseName === 'url_fetch') {
+                      if (tb) tb.url = parsed.url || '';
+                    } else if (tb && parsed.query) {
+                      tb.query = parsed.query;
+                    }
+                    pendingAnthropicToolCalls.push({ id: currentToolUseId, name: currentToolUseName, input: parsed, toolBlockIndex: toolBlocks.length - 1 });
+                  } catch(e) {}
+                  inputJsonBuf = '';
+                  currentToolUseId = null;
+                  currentToolUseName = null;
+                }
+                currentBlockType = null;
+              } else if (json.type === 'message_stop') {
+                // done
+              } else if (json.type === 'error') {
+                throw new Error(json.error?.message || 'Anthropic API error');
+              }
+            } catch(e) { if (e.message && !e.message.startsWith('Unexpected')) throw e; }
+          } else {
+            // OpenAI format
+            if (!trimmed.startsWith('data:')) continue;
+            const payload = trimmed.slice(5).trim();
+            if (payload === '[DONE]') continue;
+            try {
+              const json = JSON.parse(payload);
+              const delta = json.choices?.[0]?.delta?.content;
+              if (typeof delta === 'string') {
+                fullText += delta;
+              } else if (Array.isArray(delta)) {
+                for (const part of delta) {
+                  if (part.type === 'text') fullText += part.text;
+                  else {
+                    const ex = extractImages({ content: [part] });
+                    if (ex.images.length) streamImages.push(...ex.images);
+                  }
+                }
+              }
+              // Some proxies deliver images in the final chunk's message field
+              const finishMsg = json.choices?.[0]?.message;
+              if (finishMsg) {
+                const ex = extractImages(finishMsg);
+                if (ex.images.length) streamImages.push(...ex.images);
+                if (ex.text && !fullText) fullText = ex.text;
+              }
+              const reasoning = json.choices?.[0]?.delta?.reasoning_content
+                || json.choices?.[0]?.delta?.reasoning;
+              if (reasoning) thinkingText += reasoning;
+              const reasoningDetails = json.choices?.[0]?.delta?.reasoning_details;
+              if (Array.isArray(reasoningDetails)) {
+                for (const rd of reasoningDetails) {
+                  if (rd.type === 'reasoning.text' && rd.text) thinkingText += rd.text;
+                }
+              }
+              // Accumulate tool call fragments
+              const deltaToolCalls = json.choices?.[0]?.delta?.tool_calls;
+              if (deltaToolCalls) {
+                for (const tc of deltaToolCalls) {
+                  const idx = tc.index ?? 0;
+                  if (!toolCallBuffers[idx]) toolCallBuffers[idx] = { id: '', name: '', arguments: '' };
+                  if (tc.id) toolCallBuffers[idx].id = tc.id;
+                  if (tc.function?.name) toolCallBuffers[idx].name = tc.function.name;
+                  if (tc.function?.arguments) toolCallBuffers[idx].arguments += tc.function.arguments;
+                }
+              }
+            } catch(e) {}
+          }
+        }
+
+        assistantMsg.swipes[swipeIdx] = fullText;
+        assistantMsg.content = fullText;
+        const now = Date.now();
+        if (now - lastRender > 80) {
+          // Preserve scroll position when user has scrolled away
+          const msgsArea = document.getElementById('messagesArea');
+          const savedScrollTop = userScrolledAway ? msgsArea.scrollTop : null;
+          // Preserve open/closed state of thinking & tool blocks
+          const thinkingOpen = bubbleEl.querySelector('.thinking-content.open') !== null;
+          const toolOpen = Array.from(bubbleEl.querySelectorAll('.tool-use-results')).map(el => el.classList.contains('open'));
+          _suppressScrollFlag = true;
+          const _st = stripThinkTags(fullText);
+          const _displayText = _st.content;
+          const _displayThinking = _st.thinking ? thinkingText + _st.thinking : thinkingText;
+          bubbleEl.innerHTML = renderThinkingHTML(_displayThinking) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(_displayText) + renderGenImages(streamImages);
+          if (thinkingOpen) {
+            const tc = bubbleEl.querySelector('.thinking-content');
+            const ta = bubbleEl.querySelector('.thinking-arrow');
+            if (tc) tc.classList.add('open');
+            if (ta) ta.textContent = '\u25BE';
+          }
+          toolOpen.forEach((open, i) => {
+            if (open) {
+              const results = bubbleEl.querySelectorAll('.tool-use-results')[i];
+              const arrow = bubbleEl.querySelectorAll('.tool-use-arrow')[i];
+              if (results) results.classList.add('open');
+              if (arrow) arrow.textContent = '\u25BE';
+            }
+          });
+          if (savedScrollTop !== null) {
+            msgsArea.scrollTop = savedScrollTop;
+          } else {
+            msgsArea.scrollTop = msgsArea.scrollHeight;
+          }
+          _suppressScrollFlag = false;
+          lastRender = now;
+        }
+      }
+      // === Anthropic custom tool call execution (url_fetch etc.) ===
+      let anthropicToolRound = 0;
+      while (pendingAnthropicToolCalls.length > 0 && format === 'anthropic' && anthropicToolRound < 20) {
+        anthropicToolRound++;
+        const toolUseContentBlocks = [];
+        const toolResultBlocks = [];
+        for (const call of pendingAnthropicToolCalls) {
+          toolUseContentBlocks.push({ type: 'tool_use', id: call.id, name: call.name, input: call.input });
+          if (call.name === 'url_fetch') {
+            const tb = toolBlocks[call.toolBlockIndex];
+            const fetchUrl = call.input?.url || '';
+            if (tb) tb.url = fetchUrl;
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            const msgsAreaTmp = document.getElementById('messagesArea');
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+            if (tb) {
+              tb.content = content;
+              tb.searching = false;
+              if (error) tb.error = error;
+            }
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            toolResultBlocks.push({ type: 'tool_result', tool_use_id: call.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
+          } else if (call.name === 'web_search') {
+            const tb = toolBlocks[call.toolBlockIndex];
+            const query = call.input?.query || '';
+            if (tb) tb.query = query;
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            const msgsAreaTmp = document.getElementById('messagesArea');
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            const { results, error } = await executeWebSearch(query, abortController.signal);
+            if (tb) {
+              tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
+              tb.searching = false;
+              if (error) tb.error = error;
+            }
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            toolResultBlocks.push({ type: 'tool_result', tool_use_id: call.id, content: formatSearchResultsForModel(results, error) });
+          }
+        }
+        // Build follow-up request
+        const prepared = prepareAnthropicMessages(apiMessages);
+        const followUpMessages = [
+          ...prepared.messages,
+          { role: 'assistant', content: [
+            ...(fullText ? [{ type: 'text', text: fullText }] : []),
+            ...toolUseContentBlocks
+          ]},
+          { role: 'user', content: toolResultBlocks }
+        ];
+        const followUpBody = { ...body, messages: followUpMessages, stream: true };
+        if (anthropicToolRound >= 20) delete followUpBody.tools;
+        exclude.forEach(k => delete followUpBody[k]);
+        const followUpResp = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(followUpBody),
+          signal: abortController.signal
+        });
+        if (!followUpResp.ok) {
+          let errText = '';
+          try { errText = await followUpResp.text(); } catch(e) {}
+          throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+        }
+        const preToolText = fullText;
+        fullText = '';
+        pendingAnthropicToolCalls = [];
+        let followInputJsonBuf = '';
+        let followBlockType = null;
+        let followToolUseId = null;
+        let followToolUseName = null;
+        const followCt = followUpResp.headers.get('content-type') || '';
+        if (followCt.includes('application/json')) {
+          const followData = await followUpResp.json();
+          if (followData.type === 'error' || followData.error) {
+            console.warn('Follow-up API error:', followData.error?.message || JSON.stringify(followData.error));
+          }
+          fullText = (followData.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || '';
+          const followThink = (followData.content || []).filter(c => c.type === 'thinking').map(c => c.thinking).join('');
+          if (followThink) thinkingText += followThink;
+          for (const block of (followData.content || [])) {
+            if (block.type === 'tool_use' && HANDLED_TOOLS.has(block.name)) {
+              if (block.name === 'url_fetch') {
+                toolBlocks.push({ type: 'url_fetch', url: block.input?.url || '', content: '', searching: true });
+              } else {
+                toolBlocks.push({ query: block.input?.query || '', results: [], searching: true });
+              }
+              pendingAnthropicToolCalls.push({ id: block.id, name: block.name, input: block.input || {}, toolBlockIndex: toolBlocks.length - 1 });
+            }
+          }
+        } else {
+          const followReader = followUpResp.body.getReader();
+          const followDecoder = new TextDecoder();
+          let followBuffer = '';
+          while (true) {
+            const { done, value } = await followReader.read();
+            if (done) break;
+            followBuffer += followDecoder.decode(value, { stream: true });
+            const fLines = followBuffer.split('\n');
+            followBuffer = fLines.pop() || '';
+            for (const fLine of fLines) {
+              const ft = fLine.trim();
+              if (!ft.startsWith('data:')) continue;
+              const fp = ft.slice(5).trim();
+              if (!fp) continue;
+              try {
+                const fj = JSON.parse(fp);
+                if (fj.type === 'error') {
+                  console.warn('Follow-up stream error:', fj.error?.message || JSON.stringify(fj.error));
+                } else if (fj.type === 'content_block_start') {
+                  const cb = fj.content_block;
+                  if (cb && cb.type === 'tool_use' && HANDLED_TOOLS.has(cb.name)) {
+                    followBlockType = 'tool_use';
+                    followToolUseId = cb.id || '';
+                    followToolUseName = cb.name;
+                    followInputJsonBuf = '';
+                    if (cb.name === 'url_fetch') {
+                      toolBlocks.push({ type: 'url_fetch', url: '', content: '', searching: true });
+                    } else {
+                      toolBlocks.push({ query: '', results: [], searching: true });
+                    }
+                  } else if (cb && cb.type === 'server_tool_use') {
+                    followBlockType = 'server_tool_use';
+                    followInputJsonBuf = '';
+                    toolBlocks.push({ query: '', results: [], searching: true });
+                  } else if (cb && cb.type === 'web_search_tool_result') {
+                    followBlockType = 'web_search_tool_result';
+                    const tb = toolBlocks[toolBlocks.length - 1];
+                    if (tb) {
+                      tb.results = (cb.content || []).filter(r => r.type === 'web_search_result').map(r => ({
+                        title: r.title, url: r.url, snippet: r.snippet || r.content || r.description || r.summary || ''
+                      }));
+                      tb.searching = false;
+                    }
+                  } else if (cb && (cb.type === 'text' || cb.type === 'thinking')) {
+                    followBlockType = cb.type;
+                  }
+                } else if (fj.type === 'content_block_delta') {
+                  if (fj.delta?.type === 'text_delta' && fj.delta?.text) fullText += fj.delta.text;
+                  else if (fj.delta?.type === 'thinking_delta' && fj.delta?.thinking) thinkingText += fj.delta.thinking;
+                  else if (fj.delta?.type === 'input_json_delta' && fj.delta?.partial_json) followInputJsonBuf += fj.delta.partial_json;
+                } else if (fj.type === 'content_block_stop') {
+                  if (followBlockType === 'server_tool_use' && followInputJsonBuf) {
+                    try {
+                      const parsed = JSON.parse(followInputJsonBuf);
+                      const tb = toolBlocks[toolBlocks.length - 1];
+                      if (tb && parsed.query) tb.query = parsed.query;
+                    } catch(e) {}
+                    followInputJsonBuf = '';
+                  } else if (followBlockType === 'tool_use' && followToolUseName && followInputJsonBuf) {
+                    try {
+                      const parsed = JSON.parse(followInputJsonBuf);
+                      const tb = toolBlocks[toolBlocks.length - 1];
+                      if (followToolUseName === 'url_fetch') {
+                        if (tb) tb.url = parsed.url || '';
+                      } else if (tb && parsed.query) {
+                        tb.query = parsed.query;
+                      }
+                      pendingAnthropicToolCalls.push({ id: followToolUseId, name: followToolUseName, input: parsed, toolBlockIndex: toolBlocks.length - 1 });
+                    } catch(e) {}
+                    followInputJsonBuf = '';
+                    followToolUseId = null;
+                    followToolUseName = null;
+                  }
+                  followBlockType = null;
+                }
+              } catch(e) {}
+            }
+            assistantMsg.swipes[swipeIdx] = fullText;
+            assistantMsg.content = fullText;
+            const now2 = Date.now();
+            if (now2 - lastRender > 80) {
+              const msgsArea2 = document.getElementById('messagesArea');
+              const savedST = userScrolledAway ? msgsArea2.scrollTop : null;
+              _suppressScrollFlag = true;
+              const _st2 = stripThinkTags(fullText);
+              bubbleEl.innerHTML = renderThinkingHTML(_st2.thinking ? thinkingText + _st2.thinking : thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(_st2.content) + renderGenImages(streamImages);
+              if (savedST !== null) msgsArea2.scrollTop = savedST;
+              else msgsArea2.scrollTop = msgsArea2.scrollHeight;
+              _suppressScrollFlag = false;
+              lastRender = now2;
+            }
+          }
+        }
+        if (!fullText && preToolText) fullText = preToolText;
+        pendingAnthropicToolCalls = [];
+      }
+      // === Parse text-based tool calls (models like Gemini output tool calls as text) ===
+      // These can't use the standard OpenAI tool loop because the API never produced real
+      // tool_calls — fake IDs get rejected. Instead, execute directly and follow up as a user message.
+      if (format !== 'anthropic' && Object.keys(toolCallBuffers).length === 0) {
+        const textToolCalls = parseTextToolCalls(fullText);
+        if (textToolCalls.length > 0) {
+          const savedText = fullText;
+          fullText = stripTextToolCalls(fullText);
+          const textToolResults = [];
+          for (const tc of textToolCalls) {
+            let args = {};
+            try { args = JSON.parse(tc.arguments); } catch(e) {}
+            if (tc.name === 'url_fetch') {
+              const fetchUrl = args.url || '';
+              toolBlocks.push({ type: 'url_fetch', url: fetchUrl, content: '', searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+              const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.content = content; tb.searching = false;
+              if (error) tb.error = error;
+              textToolResults.push('URL Fetch (' + fetchUrl + '):\n' + formatUrlFetchResultForModel(content, error, fetchUrl));
+            } else {
+              const query = args.query || '';
+              toolBlocks.push({ query, results: [], searching: true });
+              bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+              const { results, error } = await executeWebSearch(query, abortController.signal);
+              const tb = toolBlocks[toolBlocks.length - 1];
+              tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
+              tb.searching = false;
+              if (error) tb.error = error;
+              textToolResults.push('Web Search (' + query + '):\n' + formatSearchResultsForModel(results, error));
+            }
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+          }
+          // Follow up with results as a user message (compatible with all APIs)
+          const followUpMessages = [...(body.messages || []),
+            { role: 'assistant', content: savedText },
+            { role: 'user', content: 'Here are the tool results:\n\n' + textToolResults.join('\n\n') + '\n\nPlease synthesize a response using these results.' }
+          ];
+          const followUpBody = { ...body, messages: followUpMessages, stream: true };
+          delete followUpBody.tools;
+          delete followUpBody.tool_choice;
+          exclude.forEach(k => delete followUpBody[k]);
+          try {
+            const followUpResp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(followUpBody), signal: abortController.signal });
+            if (followUpResp.ok && followUpResp.body) {
+              fullText = '';
+              const fReader = followUpResp.body.getReader();
+              const fDecoder = new TextDecoder();
+              let fBuf = '';
+              while (true) {
+                const { done, value } = await fReader.read();
+                if (done) break;
+                fBuf += fDecoder.decode(value, { stream: true });
+                const fLines = fBuf.split('\n');
+                fBuf = fLines.pop() || '';
+                for (const fl of fLines) {
+                  const ft = fl.trim();
+                  if (!ft.startsWith('data:')) continue;
+                  const fp = ft.slice(5).trim();
+                  if (fp === '[DONE]') continue;
+                  try {
+                    const fj = JSON.parse(fp);
+                    const fd = fj.choices?.[0]?.delta?.content;
+                    if (typeof fd === 'string') fullText += fd;
+                  } catch(e) {}
+                }
+                assistantMsg.swipes[swipeIdx] = fullText;
+                assistantMsg.content = fullText;
+                const now = Date.now();
+                if (now - lastRender > 80) {
+                  bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+                  lastRender = now;
+                }
+              }
+            }
+          } catch(e) {
+            console.warn('Text tool call follow-up failed:', e);
+          }
+          if (!fullText) fullText = savedText;
+        }
+      }
+      // === OpenAI tool call execution loop ===
+      let openaiToolRound = 0;
+      let openaiPendingToolCalls = Object.values(toolCallBuffers).filter(tc => HANDLED_TOOLS.has(tc.name));
+      let openaiRunningMessages = body.messages ? [...body.messages] : [];
+      while (openaiPendingToolCalls.length > 0 && format !== 'anthropic' && openaiToolRound < 20) {
+        openaiToolRound++;
+        // Build the assistant message with tool_calls
+        const assistantToolMsg = {
+          role: 'assistant',
+          content: fullText || null,
+          tool_calls: openaiPendingToolCalls.map(tc => ({
+            id: tc.id,
+            type: 'function',
+            function: { name: tc.name, arguments: tc.arguments }
+          }))
+        };
+        const toolResultMsgs = [];
+        for (const tc of openaiPendingToolCalls) {
+          const toolName = tc.name;
+          let args = {};
+          try { args = JSON.parse(tc.arguments); } catch(e) {}
+          const msgsAreaTmp = document.getElementById('messagesArea');
+          if (toolName === 'url_fetch') {
+            const fetchUrl = args.url || '';
+            toolBlocks.push({ type: 'url_fetch', url: fetchUrl, content: '', searching: true });
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            const { content, error } = await executeUrlFetch(fetchUrl, abortController.signal);
+            const tb = toolBlocks[toolBlocks.length - 1];
+            tb.content = content;
+            tb.searching = false;
+            if (error) tb.error = error;
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            toolResultMsgs.push({ role: 'tool', tool_call_id: tc.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
+          } else {
+            const query = args.query || '';
+            // Show searching state
+            toolBlocks.push({ query, results: [], searching: true });
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            // Execute search
+            const { results, error } = await executeWebSearch(query, abortController.signal);
+            const tb = toolBlocks[toolBlocks.length - 1];
+            tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet }));
+            tb.searching = false;
+            if (error) tb.error = error;
+            bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+            if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
+            toolResultMsgs.push({ role: 'tool', tool_call_id: tc.id, content: formatSearchResultsForModel(results, error) });
+          }
+        }
+        // Follow-up streaming request with tool results
+        openaiRunningMessages = [...openaiRunningMessages, assistantToolMsg, ...toolResultMsgs];
+        const followUpBody = { ...body, messages: openaiRunningMessages, stream: true };
+        if (openaiToolRound >= 20) delete followUpBody.tools;
+        exclude.forEach(k => delete followUpBody[k]);
+        const followUpResp = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(followUpBody),
+          signal: abortController.signal
+        });
+        if (!followUpResp.ok) {
+          let errText = '';
+          try { errText = await followUpResp.text(); } catch(e) {}
+          throw new Error('Follow-up API returned ' + followUpResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+        }
+        const preToolText = fullText;
+        fullText = '';
+        toolCallBuffers = {};
+        const followReader = followUpResp.body.getReader();
+        const followDecoder = new TextDecoder();
+        let followBuffer = '';
+        while (true) {
+          const { done, value } = await followReader.read();
+          if (done) break;
+          followBuffer += followDecoder.decode(value, { stream: true });
+          const fLines = followBuffer.split('\n');
+          followBuffer = fLines.pop() || '';
+          for (const fLine of fLines) {
+            const ft = fLine.trim();
+            if (!ft.startsWith('data:')) continue;
+            const fp = ft.slice(5).trim();
+            if (fp === '[DONE]') continue;
+            try {
+              const fj = JSON.parse(fp);
+              if (fj.error) {
+                console.warn('Follow-up stream error:', fj.error?.message || JSON.stringify(fj.error));
+              }
+              const fd = fj.choices?.[0]?.delta?.content;
+              if (typeof fd === 'string') fullText += fd;
+              const fr = fj.choices?.[0]?.delta?.reasoning_content
+                || fj.choices?.[0]?.delta?.reasoning;
+              if (fr) thinkingText += fr;
+              const frd = fj.choices?.[0]?.delta?.reasoning_details;
+              if (Array.isArray(frd)) {
+                for (const rd of frd) {
+                  if (rd.type === 'reasoning.text' && rd.text) thinkingText += rd.text;
+                }
+              }
+              const deltaToolCalls = fj.choices?.[0]?.delta?.tool_calls;
+              if (deltaToolCalls) {
+                for (const tc of deltaToolCalls) {
+                  const idx = tc.index ?? 0;
+                  if (!toolCallBuffers[idx]) toolCallBuffers[idx] = { id: '', name: '', arguments: '' };
+                  if (tc.id) toolCallBuffers[idx].id = tc.id;
+                  if (tc.function?.name) toolCallBuffers[idx].name = tc.function.name;
+                  if (tc.function?.arguments) toolCallBuffers[idx].arguments += tc.function.arguments;
+                }
+              }
+            } catch(e) {}
+          }
+          assistantMsg.swipes[swipeIdx] = fullText;
+          assistantMsg.content = fullText;
+          const now2 = Date.now();
+          if (now2 - lastRender > 80) {
+            const msgsArea2 = document.getElementById('messagesArea');
+            const savedST = userScrolledAway ? msgsArea2.scrollTop : null;
+            _suppressScrollFlag = true;
+            const _st2 = stripThinkTags(fullText);
+            const _displayText2 = _st2.content;
+            const _displayThinking2 = _st2.thinking ? thinkingText + _st2.thinking : thinkingText;
+            bubbleEl.innerHTML = renderThinkingHTML(_displayThinking2) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(_displayText2) + renderGenImages(streamImages);
+            if (savedST !== null) msgsArea2.scrollTop = savedST;
+            else msgsArea2.scrollTop = msgsArea2.scrollHeight;
+            _suppressScrollFlag = false;
+            lastRender = now2;
+          }
+        }
+        if (!fullText && preToolText) fullText = preToolText;
+        openaiPendingToolCalls = Object.values(toolCallBuffers).filter(tc => HANDLED_TOOLS.has(tc.name));
+      }
+      if (!fullText && !thinkingText) fullText = 'No response.';
+      const stripped = stripThinkTags(fullText);
+      if (stripped.thinking) thinkingText += stripped.thinking;
+      fullText = stripped.content;
+      assistantMsg.swipes[swipeIdx] = fullText;
+      assistantMsg.content = fullText;
+      if (streamImages.length) {
+        assistantMsg.swipeImages = assistantMsg.swipeImages || [];
+        assistantMsg.swipeImages[swipeIdx] = streamImages;
+        assistantMsg.images = streamImages;
+      }
+      if (thinkingText) {
+        assistantMsg.swipeThinking = assistantMsg.swipeThinking || [];
+        assistantMsg.swipeThinking[swipeIdx] = thinkingText;
+      }
+      if (toolBlocks.length > 0) {
+        assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
+        assistantMsg.swipeToolUse[swipeIdx] = toolBlocks;
+      }
+      const msgsArea = document.getElementById('messagesArea');
+      const savedScrollTop = userScrolledAway ? msgsArea.scrollTop : null;
+      _suppressScrollFlag = true;
+      bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
+      postRenderProcessing(bubbleEl);
+      if (savedScrollTop !== null) {
+        msgsArea.scrollTop = savedScrollTop;
+      } else {
+        msgsArea.scrollTop = msgsArea.scrollHeight;
+      }
+      _suppressScrollFlag = false;
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      if (!fullText) fullText = '(stopped)';
+    } else {
+      fullText = 'Error: ' + e.message;
+    }
+    const strippedErr = stripThinkTags(fullText);
+    if (strippedErr.thinking) thinkingText += strippedErr.thinking;
+    fullText = strippedErr.content;
+    assistantMsg.swipes[swipeIdx] = fullText;
+    assistantMsg.content = fullText;
+    if (thinkingText) {
+      assistantMsg.swipeThinking = assistantMsg.swipeThinking || [];
+      assistantMsg.swipeThinking[swipeIdx] = thinkingText;
+    }
+    if (toolBlocks.length > 0) {
+      assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
+      assistantMsg.swipeToolUse[swipeIdx] = toolBlocks;
+    }
+    const msgsArea = document.getElementById('messagesArea');
+    const savedScrollTop = userScrolledAway ? msgsArea.scrollTop : null;
+    _suppressScrollFlag = true;
+    bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
+    if (savedScrollTop !== null) {
+      msgsArea.scrollTop = savedScrollTop;
+    } else {
+      msgsArea.scrollTop = msgsArea.scrollHeight;
+    }
+    _suppressScrollFlag = false;
+  } finally {
+    streaming = false;
+    abortController = null;
+    btn.classList.remove('streaming');
+    btn.disabled = false;
+    updateSendBtnState();
+  }
+}
+
+// ============================================
+// Send Button State
+// ============================================
+function updateSendBtnState() {
+  const btn = document.getElementById('sendBtn');
+  if (streaming) return;
+  const input = document.getElementById('chatInput');
+  const hasInput = input.value.trim() || pendingAttachments.length > 0;
+  const lastMsg = messages[messages.length - 1];
+  if (!hasInput && lastMsg && lastMsg.role === 'user') {
+    btn.textContent = 'Regenerate';
+  } else {
+    btn.textContent = 'Send';
+  }
+}
+
+function resolveWebSearchEnabled() {
+  return localStorage.getItem('llmWebSearch') === 'true';
+}
+
+// ============================================
+// Send Message
+// ============================================
+async function sendMessage() {
+  if (streaming && abortController) { streaming = false; abortController.abort(); return; }
+
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  const lastMsg = messages[messages.length - 1];
+  const isRegenFromFork = !text && pendingAttachments.length === 0 && lastMsg && lastMsg.role === 'user';
+  if (!text && pendingAttachments.length === 0 && !isRegenFromFork) return;
+
+  const proxyUrl = localStorage.getItem('llmProxyUrl');
+  const apiKey = localStorage.getItem('llmApiKey');
+  const conv = getActiveConv();
+
+  if (!isRegenFromFork) {
+    const cmd = parseCommand(text);
+    if (cmd) {
+      if (pendingAttachments.length > 0) { showToast('Commands cannot include attachments.', 'error'); return; }
+      input.value = '';
+      input.style.height = 'auto';
+      await handleCommand(cmd, conv);
+      return;
+    }
+  }
+
+  if (!proxyUrl || !apiKey) {
+    openModal('setupModal', '#setupProxy');
+    return;
+  }
+
+  if (!isRegenFromFork) {
+    let userContent;
+    if (pendingAttachments.length > 0) {
+      if (conv) {
+        const docs = conv.docs || (conv.docs = []);
+        pendingAttachments.forEach(att => {
+          if (att && att.textContent) {
+            const text = att.textContent.length > 20000 ? att.textContent.slice(0, 20000) : att.textContent;
+            docs.push({
+              id: 'doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+              name: att.name || 'file',
+              text: text,
+              createdAt: Date.now()
+            });
+          }
+        });
+      }
+      userContent = [];
+      if (text) userContent.push({ type: 'text', text });
+      pendingAttachments.forEach(att => {
+        if (att.type === 'image') {
+          userContent.push({ type: 'image_url', image_url: { url: att.dataUrl } });
+        } else if (att.textContent) {
+          userContent.push({ type: 'file', file: { name: att.name, mime: att.mime, textContent: att.textContent } });
+        } else {
+          userContent.push({ type: 'file', file: { url: att.dataUrl, name: att.name, mime: att.mime } });
+        }
+      });
+      pendingAttachments = [];
+      document.getElementById('imagePreview').innerHTML = '';
+    } else {
+      userContent = text;
+    }
+
+    messages.push({ role: 'user', content: userContent, timestamp: Date.now() });
+    input.value = '';
+    input.style.height = 'auto';
+
+    // Auto-title
+    if (conv && conv.title === 'New Chat') {
+      conv.title = (text || 'Attachment chat').slice(0, 40);
+      conv.updatedAt = Date.now();
+      renderSidebar();
+    }
+  }
+
+  renderMessages();
+
+  const assistantMsg = { role: 'assistant', content: '', swipes: [''], swipeIndex: 0, timestamp: Date.now() };
+  messages.push(assistantMsg);
+
+  const area = document.getElementById('messagesArea');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg-wrapper assistant';
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble assistant';
+  bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  maybeAddAvatar(wrapper);
+  wrapper.appendChild(bubble);
+  area.appendChild(wrapper);
+  area.scrollTop = area.scrollHeight;
+
+  const apiMessages = await buildSystemMessages(conv);
+  messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: buildApiContent(m) }); });
+
+  // Capture and clear model override
+  const overrideModel = modelOverride;
+  clearModelOverride();
+
+  await streamResponse(apiMessages, assistantMsg, 0, bubble, overrideModel, null);
+
+  extractMemories(apiMessages);
+  if (conv) conv.updatedAt = Date.now();
+  debouncedSave();
+  renderMessages();
+  updateTokenInfo();
+}
+
+// ============================================
+// Regenerate
+// ============================================
+async function regenerate() {
+  if (streaming) return;
+  let lastIdx = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'assistant') { lastIdx = i; break; }
+  }
+  if (lastIdx === -1) return;
+
+  const msg = messages[lastIdx];
+  if (!msg.swipes) msg.swipes = [msg.content];
+  msg.swipes.push('');
+  msg.swipeIndex = msg.swipes.length - 1;
+  msg.content = '';
+  renderMessages();
+
+  const area = document.getElementById('messagesArea');
+  const wrappers = area.querySelectorAll('.msg-wrapper.assistant');
+  const lastWrapper = wrappers[wrappers.length - 1];
+  const bubble = lastWrapper.querySelector('.msg-bubble');
+  bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+
+  const conv = getActiveConv();
+  const apiMessages = await buildSystemMessages(conv);
+  for (let i = 0; i < lastIdx; i++) {
+    if (messages[i].role !== 'system') apiMessages.push({ role: messages[i].role, content: buildApiContent(messages[i]) });
+  }
+
+  await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, null);
+
+  if (conv) conv.updatedAt = Date.now();
+  debouncedSave();
+  renderMessages();
+  updateTokenInfo();
+}
+
+// ============================================
+// Continue Message
+// ============================================
+async function continueMessage() {
+  if (streaming) return;
+  let lastIdx = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'assistant') { lastIdx = i; break; }
+  }
+  if (lastIdx === -1) return;
+
+  const msg = messages[lastIdx];
+  const existingText = typeof msg.content === 'string' ? msg.content : '';
+  if (!existingText.trim()) return;
+
+  const conv = getActiveConv();
+  const apiMessages = await buildSystemMessages(conv);
+  for (let i = 0; i <= lastIdx; i++) {
+    if (messages[i].role !== 'system') {
+      apiMessages.push({ role: messages[i].role, content: buildApiContent(messages[i]) });
+    }
+  }
+
+  const area = document.getElementById('messagesArea');
+  const wrappers = area.querySelectorAll('.msg-wrapper.assistant');
+  const lastWrapper = wrappers[wrappers.length - 1];
+  const bubble = lastWrapper.querySelector('.msg-bubble');
+
+  await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, existingText);
+
+  if (conv) conv.updatedAt = Date.now();
+  debouncedSave();
+  renderMessages();
+  updateTokenInfo();
+}
+
+// ============================================
+// Clear Chat
+// ============================================
+function clearChat() {
+  if (!confirm('Clear this conversation?')) return;
+  const conv = getActiveConv();
+  if (conv) {
+    conv.messages = [];
+    conv.title = 'New Chat';
+    conv.summary = '';
+    conv.summaryUpdatedAt = null;
+    conv.docs = [];
+    messages = conv.messages;
+    saveConversations();
+    renderSidebar();
+  }
+  renderMessages();
+  updateTokenInfo();
+}
+
+// ============================================
+// Export / Import
+// ============================================
+function exportConversation() {
+  const conv = getActiveConv();
+  if (!conv) return;
+  const data = { title: conv.title, messages: conv.messages, model: localStorage.getItem('llmModel') || '', promptEntries: loadPromptEntries(), exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (conv.title || 'chat') + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportAllConversations() {
+  const data = {
+    conversations: conversations,
+    exportedAt: new Date().toISOString(),
+    settings: {
+      model: localStorage.getItem('llmModel') || '',
+      promptEntries: loadPromptEntries(),
+      persona: localStorage.getItem('llmPersona') || '',
+      apiFormat: localStorage.getItem('llmApiFormat') || 'auto',
+      theme: localStorage.getItem('assistantTheme') || 'dark',
+      font: localStorage.getItem('assistantFont') || ''
+    }
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'assistant-export-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importConversation(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      // Handle bulk export format { conversations: [...] }
+      if (data.conversations && Array.isArray(data.conversations)) {
+        let count = 0;
+        data.conversations.forEach(conv => {
+          conv.id = conv.id || genId();
+          conv.createdAt = conv.createdAt || Date.now();
+          conv.updatedAt = conv.updatedAt || Date.now();
+          conv.messages = conv.messages || [];
+          conv.messages.forEach(m => {
+            if (m.role === 'assistant' && !m.swipes) { m.swipes = [m.content]; m.swipeIndex = 0; }
+          });
+          conversations.unshift(conv);
+          count++;
+        });
+        if (count > 0) {
+          activeConvId = conversations[0].id;
+          messages = getActiveConv().messages;
+          saveConversations();
+          renderSidebar();
+          renderMessages();
+          updateTokenInfo();
+          showToast('Imported ' + count + ' conversations.', 'success');
+        } else {
+          showToast('No conversations found in file.', 'error');
+        }
+        return;
+      }
+      // Handle single conversation format { messages: [...] }
+      if (!data.messages || !Array.isArray(data.messages)) throw new Error('Invalid format');
+      const conv = { id: genId(), title: data.title || 'Imported Chat', messages: data.messages, createdAt: Date.now(), updatedAt: Date.now() };
+      conv.messages.forEach(m => {
+        if (m.role === 'assistant' && !m.swipes) { m.swipes = [m.content]; m.swipeIndex = 0; }
+      });
+      conversations.unshift(conv);
+      activeConvId = conv.id;
+      messages = conv.messages;
+      saveConversations();
+      renderSidebar();
+      renderMessages();
+      updateTokenInfo();
+    } catch (err) { showToast('Error importing: ' + err.message, 'error'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ============================================
+// Export as Markdown
+// ============================================
+function exportMarkdown() {
+  const conv = getActiveConv();
+  if (!conv || conv.messages.length === 0) { showToast('No messages to export.', 'info'); return; }
+  let md = '# ' + conv.title + '\n\n';
+  conv.messages.forEach(m => {
+    if (m.role === 'user') {
+      md += '## User\n\n';
+      const text = getMsgText(m);
+      if (Array.isArray(m.content)) {
+        m.content.forEach(p => {
+          if (p.type === 'text') md += p.text + '\n\n';
+          else if (p.type === 'image_url') md += '_[Image attachment]_\n\n';
+          else if (p.type === 'file') md += '_[File: ' + (p.file.name || 'attachment') + ']_\n\n';
+        });
+      } else {
+        md += text + '\n\n';
+      }
+    } else if (m.role === 'assistant') {
+      const thinking = m.swipeThinking && m.swipeThinking[m.swipeIndex || 0];
+      if (thinking) md += '<details>\n<summary>Thinking</summary>\n\n' + thinking + '\n\n</details>\n\n';
+      md += '## Assistant\n\n' + (m.content || '') + '\n\n';
+    }
+  });
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (conv.title || 'chat') + '.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ============================================
+// Screenshot Select Mode
+// ============================================
+let _selectMode = false;
+const _selectedMsgs = new Set();
+let _justEnteredSelectMode = false;
+
+function enterSelectMode() {
+  if (messages.length === 0) { showToast('No messages to screenshot.', 'info'); return; }
+  _selectMode = true;
+  _justEnteredSelectMode = true;
+  _selectedMsgs.clear();
+  document.getElementById('messagesArea').classList.add('select-mode');
+  document.getElementById('selectToolbar').classList.add('visible');
+  updateSelectCount();
+}
+
+function exitSelectMode() {
+  _selectMode = false;
+  _selectedMsgs.clear();
+  const area = document.getElementById('messagesArea');
+  area.classList.remove('select-mode');
+  area.querySelectorAll('.msg-wrapper.selected').forEach(el => el.classList.remove('selected'));
+  document.getElementById('selectToolbar').classList.remove('visible');
+}
+
+function toggleMsgSelect(idx) {
+  if (idx < 0 || idx >= messages.length) return;
+  if (_selectedMsgs.has(idx)) _selectedMsgs.delete(idx);
+  else _selectedMsgs.add(idx);
+  const wrapper = document.querySelector('.msg-wrapper[data-msg-idx="' + idx + '"]');
+  if (wrapper) wrapper.classList.toggle('selected', _selectedMsgs.has(idx));
+  updateSelectCount();
+}
+
+function updateSelectCount() {
+  document.getElementById('selectCount').textContent = _selectedMsgs.size + ' selected';
+  document.getElementById('ssBtn').disabled = _selectedMsgs.size === 0;
+}
+
+async function screenshotSelected() {
+  if (_selectedMsgs.size === 0) return;
+  const btn = document.getElementById('ssBtn');
+  btn.disabled = true;
+  btn.textContent = 'Rendering...';
+  try {
+    if (!window.html2canvas) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Failed to load html2canvas'));
+        document.head.appendChild(s);
+      });
+    }
+    const indices = [..._selectedMsgs].sort((a, b) => a - b);
+    const area = document.getElementById('messagesArea');
+    const cs = getComputedStyle(document.documentElement);
+    const bgColor = cs.getPropertyValue('--bg').trim();
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + Math.min(area.offsetWidth, 800) + 'px;background:' + bgColor + ';padding:20px;display:flex;flex-direction:column;gap:12px;';
+    indices.forEach(idx => {
+      const wrapper = area.querySelector('.msg-wrapper[data-msg-idx="' + idx + '"]');
+      if (!wrapper) return;
+      const clone = wrapper.cloneNode(true);
+      clone.querySelectorAll('.msg-actions, .regen-btn, .swipe-nav, .branch-controls, .msg-timestamp').forEach(el => el.remove());
+      clone.classList.remove('selected');
+      container.appendChild(clone);
+    });
+    document.body.appendChild(container);
+    const canvas = await html2canvas(container, { backgroundColor: bgColor, scale: 2, useCORS: true, logging: false });
+    document.body.removeChild(container);
+    const link = document.createElement('a');
+    link.download = 'chat-screenshot.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    exitSelectMode();
+  } catch (err) {
+    console.error('Screenshot failed:', err);
+    showToast('Screenshot failed: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Screenshot';
+  }
+}
+
+// ============================================
+// Chat Search (Ctrl+F)
+// ============================================
+let chatSearchMatches = [];
+let chatSearchIdx = -1;
+let chatSearchDebounce = null;
+
+// ============================================
+// Global Message Search
+// ============================================
+function openGlobalSearch() {
+  if (globalSearchDismiss) globalSearchDismiss(false);
+
+  const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+  popup.style.width = '500px';
+  popup.setAttribute('role', 'dialog');
+  popup.setAttribute('aria-modal', 'true');
+  popup.setAttribute('aria-labelledby', 'globalSearchTitle');
+  popup.setAttribute('tabindex', '-1');
+  popup.innerHTML = '<h3 id="globalSearchTitle">Search All Messages</h3>' +
+    '<input type="text" id="globalSearchInput" placeholder="Type to search across all conversations..." style="width:100%;padding:10px;font-family:inherit;font-size:0.9em;background:var(--hover);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);margin-bottom:12px;outline:none">' +
+    '<div class="sr-only" id="globalSearchStatus" aria-live="polite" aria-atomic="true"></div>' +
+    '<div class="global-search-results" id="globalSearchResults" role="region" aria-live="polite" aria-label="Search results"><div style="color:var(--text-secondary);font-size:0.85em;text-align:center;padding:20px">Start typing to search</div></div>';
+
+  const closeGlobalSearch = (restoreFocus = true) => {
+    document.removeEventListener('keydown', onKey);
+    overlay.remove();
+    popup.remove();
+    if (globalSearchDismiss === closeGlobalSearch) globalSearchDismiss = null;
+    if (restoreFocus && previousFocus && document.contains(previousFocus)) previousFocus.focus();
+  };
+
+  const onKey = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeGlobalSearch();
+      return;
+    }
+    trapFocus(popup, e);
+  };
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeGlobalSearch();
+  });
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+  globalSearchDismiss = closeGlobalSearch;
+  document.addEventListener('keydown', onKey);
+
+  const input = document.getElementById('globalSearchInput');
+  const status = document.getElementById('globalSearchStatus');
+  if (status) status.textContent = 'Start typing to search across all conversations.';
+  input.focus();
+  let debounce;
+  input.addEventListener('input', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => performGlobalSearch(input.value.trim()), 200);
+  });
+}
+
+function performGlobalSearch(query) {
+  const container = document.getElementById('globalSearchResults');
+  const status = document.getElementById('globalSearchStatus');
+  if (!container) return;
+  if (!query || query.length < 2) {
+    container.innerHTML = '<div style="color:var(--text-secondary);font-size:0.85em;text-align:center;padding:20px">Type at least 2 characters</div>';
+    if (status) status.textContent = 'Type at least 2 characters.';
+    return;
+  }
+  const results = [];
+  const lq = query.toLowerCase();
+  conversations.forEach(conv => {
+    conv.messages.forEach((msg) => {
+      const text = typeof msg.content === 'string' ? msg.content : (Array.isArray(msg.content) ? msg.content.filter(p => p.type === 'text').map(p => p.text).join(' ') : '');
+      const idx = text.toLowerCase().indexOf(lq);
+      if (idx !== -1) {
+        const start = Math.max(0, idx - 40);
+        const end = Math.min(text.length, idx + query.length + 40);
+        const snippet = (start > 0 ? '...' : '') +
+          escapeHTML(text.slice(start, idx)) +
+          '<mark>' + escapeHTML(text.slice(idx, idx + query.length)) + '</mark>' +
+          escapeHTML(text.slice(idx + query.length, end)) +
+          (end < text.length ? '...' : '');
+        results.push({ convId: conv.id, convTitle: conv.title, role: msg.role, snippet });
+      }
+    });
+  });
+  if (results.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-secondary);font-size:0.85em;text-align:center;padding:20px">No results found</div>';
+    if (status) status.textContent = 'No results found.';
+    return;
+  }
+  const displayed = results.slice(0, 50);
+  container.innerHTML = displayed.map(r =>
+    '<div class="global-search-result" data-conv-id="' + r.convId + '" tabindex="0" role="button" aria-label="Open conversation ' + escapeHTML(r.convTitle) + '">' +
+    '<div class="global-search-result-title">' + escapeHTML(r.convTitle) + ' <span style="font-weight:400;color:var(--text-secondary)">(' + escapeHTML(r.role) + ')</span></div>' +
+    '<div class="global-search-result-snippet">' + r.snippet + '</div></div>'
+  ).join('') + (results.length > 50 ? '<div style="color:var(--text-secondary);font-size:0.8em;text-align:center;padding:8px">Showing 50 of ' + results.length + ' results</div>' : '');
+  if (status) status.textContent = (results.length > 50 ? 'Showing 50 of ' + results.length : results.length) + ' results found.';
+  container.querySelectorAll('.global-search-result').forEach(el => {
+    const activateResult = () => {
+      switchConversation(el.dataset.convId);
+      if (globalSearchDismiss) globalSearchDismiss();
+    };
+    el.addEventListener('click', () => {
+      activateResult();
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activateResult();
+      }
+    });
+  });
+}
+
+function openChatSearch() {
+  const bar = document.getElementById('chatSearchBar');
+  bar.classList.add('open');
+  document.getElementById('chatSearchInput').focus();
+}
+
+function closeChatSearch() {
+  const bar = document.getElementById('chatSearchBar');
+  bar.classList.remove('open');
+  document.getElementById('chatSearchInput').value = '';
+  document.getElementById('chatSearchCount').textContent = '';
+  clearChatHighlights();
+  chatSearchMatches = [];
+  chatSearchIdx = -1;
+}
+
+function clearChatHighlights() {
+  document.querySelectorAll('.search-highlight').forEach(el => {
+    const parent = el.parentNode;
+    parent.replaceChild(document.createTextNode(el.textContent), el);
+    parent.normalize();
+  });
+}
+
+function debouncedChatSearch() {
+  clearTimeout(chatSearchDebounce);
+  chatSearchDebounce = setTimeout(performChatSearch, 200);
+}
+
+function performChatSearch() {
+  clearChatHighlights();
+  chatSearchMatches = [];
+  chatSearchIdx = -1;
+  const query = document.getElementById('chatSearchInput').value.trim();
+  if (!query) { document.getElementById('chatSearchCount').textContent = ''; return; }
+
+  const area = document.getElementById('messagesArea');
+  const walker = document.createTreeWalker(area, NodeFilter.SHOW_TEXT, null, false);
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+  const lowerQuery = query.toLowerCase();
+  textNodes.forEach(node => {
+    const text = node.textContent;
+    const lower = text.toLowerCase();
+    let idx = lower.indexOf(lowerQuery);
+    if (idx === -1) return;
+    const frag = document.createDocumentFragment();
+    let lastIdx = 0;
+    while (idx !== -1) {
+      if (idx > lastIdx) frag.appendChild(document.createTextNode(text.slice(lastIdx, idx)));
+      const span = document.createElement('span');
+      span.className = 'search-highlight';
+      span.textContent = text.slice(idx, idx + query.length);
+      frag.appendChild(span);
+      chatSearchMatches.push(span);
+      lastIdx = idx + query.length;
+      idx = lower.indexOf(lowerQuery, lastIdx);
+    }
+    if (lastIdx < text.length) frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+    node.parentNode.replaceChild(frag, node);
+  });
+
+  document.getElementById('chatSearchCount').textContent = chatSearchMatches.length + ' matches';
+  if (chatSearchMatches.length > 0) {
+    chatSearchIdx = 0;
+    chatSearchMatches[0].classList.add('active');
+    chatSearchMatches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function navigateChatSearch(dir) {
+  if (chatSearchMatches.length === 0) return;
+  chatSearchMatches[chatSearchIdx]?.classList.remove('active');
+  chatSearchIdx = (chatSearchIdx + dir + chatSearchMatches.length) % chatSearchMatches.length;
+  chatSearchMatches[chatSearchIdx].classList.add('active');
+  chatSearchMatches[chatSearchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('chatSearchCount').textContent = (chatSearchIdx + 1) + '/' + chatSearchMatches.length;
+}
+
+// ============================================
+// File Attachments
+// ============================================
+function resizeImageIfNeeded(file, maxDim, quality) {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) { resolve(null); return; }
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(img.src);
+      let { width, height } = img;
+      if (width <= maxDim && height <= maxDim) { resolve(null); return; }
+      const scale = maxDim / Math.max(width, height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(img.src); resolve(null); };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function extractPdfText(arrayBuffer) {
+  const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    pages.push(tc.items.map(item => item.str).join(' '));
+  }
+  return pages.join('\n\n');
+}
+
+const TEXT_MIMES = ['text/plain', 'text/csv', 'text/html', 'text/markdown'];
+
+function readAttachmentFile(file) {
+  const isImage = file.type.startsWith('image/');
+  if (isImage) {
+    resizeImageIfNeeded(file, 1536, 0.85).then(resizedUrl => {
+      if (resizedUrl) {
+        pendingAttachments.push({ type: 'image', dataUrl: resizedUrl, name: file.name, mime: 'image/jpeg' });
+        renderPreviews();
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          pendingAttachments.push({ type: 'image', dataUrl: e.target.result, name: file.name, mime: file.type });
+          renderPreviews();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  } else if (file.type === 'application/pdf') {
+    file.arrayBuffer().then(buf => extractPdfText(buf)).then(text => {
+      pendingAttachments.push({ type: 'file', name: file.name, mime: file.type, textContent: text });
+      renderPreviews();
+    }).catch(e => {
+      console.error('PDF extraction failed:', e);
+      pendingAttachments.push({ type: 'file', name: file.name, mime: file.type, textContent: '[PDF could not be read]' });
+      renderPreviews();
+    });
+  } else if (TEXT_MIMES.includes(file.type) || file.name.match(/\.(txt|csv|html|md)$/i)) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      pendingAttachments.push({ type: 'file', name: file.name, mime: file.type, textContent: e.target.result });
+      renderPreviews();
+    };
+    reader.readAsText(file);
+  } else {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      pendingAttachments.push({ type: 'file', dataUrl: e.target.result, name: file.name, mime: file.type });
+      renderPreviews();
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function handleFileSelect(event) {
+  Array.from(event.target.files).forEach(readAttachmentFile);
+  event.target.value = '';
+}
+
+function renderPreviews() {
+  const container = document.getElementById('imagePreview');
+  container.innerHTML = '';
+  pendingAttachments.forEach((att, idx) => {
+    const thumb = document.createElement('div');
+    thumb.className = att.type === 'image' ? 'img-thumb' : 'file-thumb';
+    if (att.type === 'image') {
+      const imgEl = document.createElement('img');
+      imgEl.src = att.dataUrl;
+      thumb.appendChild(imgEl);
+    } else {
+      thumb.textContent = '\u{1F4C4} ' + (att.name || 'file');
+    }
+    const rm = document.createElement('button');
+    rm.className = 'remove-thumb';
+    rm.innerHTML = '&times;';
+    rm.onclick = () => { pendingAttachments.splice(idx, 1); renderPreviews(); };
+    thumb.appendChild(rm);
+    container.appendChild(thumb);
+  });
+}
+
+// ============================================
+// @Model Mentions
+// ============================================
+function clearModelOverride() {
+  modelOverride = null;
+  document.getElementById('modelOverrideBadge').classList.remove('visible');
+}
+
+function setModelOverride(model) {
+  modelOverride = model;
+  document.getElementById('modelOverrideText').textContent = model;
+  document.getElementById('modelOverrideBadge').classList.add('visible');
+  closeMentionDropdown();
+}
+
+function closeMentionDropdown() {
+  document.getElementById('mentionDropdown').classList.remove('open');
+  mentionActive = false;
+  mentionIdx = 0;
+}
+
+function handleMentionInput(ta) {
+  const val = ta.value;
+  const cursorPos = ta.selectionStart;
+  // Find @query before cursor
+  const before = val.slice(0, cursorPos);
+  const atMatch = before.match(/@([\w\-./]*)$/);
+  if (!atMatch) { closeMentionDropdown(); return; }
+
+  const query = atMatch[1].toLowerCase();
+  let models = [];
+  try { models = JSON.parse(localStorage.getItem('llmModelList') || '[]'); } catch(e) { console.warn('Model list parse error:', e); }
+  if (models.length === 0) { closeMentionDropdown(); return; }
+
+  const filtered = models.filter(m => m.toLowerCase().includes(query)).slice(0, 8);
+  if (filtered.length === 0) { closeMentionDropdown(); return; }
+
+  const dropdown = document.getElementById('mentionDropdown');
+  dropdown.innerHTML = '';
+  mentionIdx = 0;
+  filtered.forEach((m, i) => {
+    const div = document.createElement('div');
+    div.className = 'mention-item' + (i === 0 ? ' active' : '');
+    div.textContent = m;
+    div.onclick = () => selectMention(ta, m, atMatch.index);
+    dropdown.appendChild(div);
+  });
+  dropdown.classList.add('open');
+  mentionActive = true;
+}
+
+function selectMention(ta, model, atStart) {
+  // Remove @query from input
+  const after = ta.value.slice(ta.selectionStart);
+  ta.value = ta.value.slice(0, atStart) + after;
+  ta.focus();
+  setModelOverride(model);
+}
+
+function handleMentionKeydown(e, ta) {
+  if (!mentionActive) return;
+  const dropdown = document.getElementById('mentionDropdown');
+  const items = dropdown.querySelectorAll('.mention-item');
+  if (items.length === 0) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    items[mentionIdx]?.classList.remove('active');
+    mentionIdx = (mentionIdx + 1) % items.length;
+    items[mentionIdx]?.classList.add('active');
+    items[mentionIdx]?.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    items[mentionIdx]?.classList.remove('active');
+    mentionIdx = (mentionIdx - 1 + items.length) % items.length;
+    items[mentionIdx]?.classList.add('active');
+    items[mentionIdx]?.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter' || e.key === 'Tab') {
+    e.preventDefault();
+    e.stopPropagation();
+    const model = items[mentionIdx]?.textContent;
+    if (model) {
+      const before = ta.value.slice(0, ta.selectionStart);
+      const atMatch = before.match(/@([\w\-./]*)$/);
+      if (atMatch) selectMention(ta, model, atMatch.index);
+    }
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopPropagation();
+    closeMentionDropdown();
+  }
+}
+
+// ============================================
+// Character Card Import (PNG + JSON)
+// ============================================
+function extractCharaFromPNG(arrayBuffer) {
+  const view = new DataView(arrayBuffer);
+  let offset = 8; // skip PNG signature
+  while (offset < view.byteLength) {
+    const len = view.getUint32(offset);
+    const typeBytes = new Uint8Array(arrayBuffer, offset + 4, 4);
+    const type = String.fromCharCode(...typeBytes);
+    if (type === 'tEXt') {
+      const data = new Uint8Array(arrayBuffer, offset + 8, len);
+      const nullIdx = data.indexOf(0);
+      const keyword = new TextDecoder().decode(data.slice(0, nullIdx));
+      if (keyword === 'chara') {
+        const text = new TextDecoder().decode(data.slice(nullIdx + 1));
+        return JSON.parse(atob(text));
+      }
+    }
+    offset += 12 + len; // 4 length + 4 type + data + 4 CRC
+  }
+  return null;
+}
+
+function normalizeCharaCard(raw) {
+  // V2 format wraps in { spec, data }
+  if (raw.spec === 'chara_card_v2' && raw.data) return raw.data;
+  // V1 is flat
+  if (raw.name || raw.description || raw.first_mes) return raw;
+  return raw;
+}
+
+function buildCharaDescription(card) {
+  let parts = [];
+  if (card.name) parts.push('Character: ' + card.name);
+  if (card.description) parts.push(card.description);
+  if (card.personality) parts.push('Personality: ' + card.personality);
+  if (card.scenario) parts.push('Scenario: ' + card.scenario);
+  if (card.mes_example) parts.push('Example dialogue:\n' + card.mes_example);
+  return parts.join('\n\n');
+}
+
+async function importCharacterCard(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  try {
+    let rawCard = null;
+    let avatarDataUrl = null;
+
+    if (file.name.toLowerCase().endsWith('.png')) {
+      const arrayBuffer = await file.arrayBuffer();
+      rawCard = extractCharaFromPNG(arrayBuffer);
+      if (!rawCard) { showToast('No character data found in PNG.', 'error'); return; }
+      // Also store the PNG as avatar
+      const blob = new Blob([arrayBuffer], { type: 'image/png' });
+      avatarDataUrl = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsDataURL(blob);
+      });
+    } else if (file.name.toLowerCase().endsWith('.json')) {
+      const text = await file.text();
+      rawCard = JSON.parse(text);
+    } else {
+      showToast('Unsupported file type. Use .png or .json.', 'error');
+      return;
+    }
+
+    const card = normalizeCharaCard(rawCard);
+    const charName = card.name || 'Character';
+    const charDescription = buildCharaDescription(card);
+
+    // Create a new conversation
+    const conv = {
+      id: genId(),
+      title: charName,
+      messages: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      characterCard: card,
+      characterDescription: charDescription
+    };
+
+    // Store card's system_prompt as actual system instructions (separate from persona)
+    if (card.system_prompt) conv.characterSystemPrompt = card.system_prompt;
+
+    if (avatarDataUrl) conv.characterAvatar = avatarDataUrl;
+
+    // Add first message if present
+    if (card.first_mes) {
+      conv.messages.push({
+        role: 'assistant',
+        content: card.first_mes,
+        swipes: [card.first_mes],
+        swipeIndex: 0
+      });
+    }
+
+    conversations.unshift(conv);
+    activeConvId = conv.id;
+    messages = conv.messages;
+    saveConversations();
+    renderSidebar();
+    renderMessages();
+    updateTokenInfo();
+    updateCharacterUI();
+
+    showToast('Character imported: ' + charName, 'success');
+    if (window.innerWidth <= 768) toggleSidebar();
+  } catch (err) {
+    showToast('Error importing character: ' + err.message, 'error');
+  }
+}
+
+function updateCharacterUI() {
+  const conv = getActiveConv();
+  const infoBtn = document.getElementById('charInfoBtn');
+  const titleEl = document.querySelector('.toolbar-title');
+  if (conv && conv.characterCard) {
+    infoBtn.style.display = '';
+    titleEl.textContent = conv.characterCard.name || conv.title;
+  } else {
+    infoBtn.style.display = 'none';
+    titleEl.textContent = 'Synapse';
+  }
+}
+
+function showCharacterInfo() {
+  const conv = getActiveConv();
+  if (!conv || !conv.characterCard) return;
+  const card = conv.characterCard;
+
+  // Remove existing popup
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  overlay.onclick = () => { overlay.remove(); popup.remove(); };
+
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  let html = '';
+  if (conv.characterAvatar) {
+    html += '<img class="char-info-avatar" src="' + conv.characterAvatar.replace(/"/g, '&quot;') + '">';
+  }
+  html += '<h3>' + (card.name || 'Character').replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</h3>';
+
+  const fields = [
+    ['Description', card.description],
+    ['Personality', card.personality],
+    ['Scenario', card.scenario],
+    ['First Message', card.first_mes],
+    ['System Prompt', card.system_prompt],
+    ['Example Dialogue', card.mes_example],
+    ['Creator Notes', card.creator_notes]
+  ];
+  fields.forEach(([label, value]) => {
+    if (!value) return;
+    html += '<div class="char-info-field"><div class="char-info-label">' + label + '</div>' +
+      '<div class="char-info-value">' + value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div></div>';
+  });
+
+  html += '<button class="btn btn-primary" style="margin-top:12px;width:100%" onclick="this.parentElement.previousElementSibling.click()">Close</button>';
+  popup.innerHTML = html;
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+}
+
+// ============================================
+// Voice Input
+// ============================================
+function toggleVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  const btn = document.getElementById('voiceBtn');
+
+  if (voiceRec) {
+    voiceRec.stop();
+    voiceRec = null;
+    btn.classList.remove('recording');
+    return;
+  }
+
+  voiceRec = new SR();
+  voiceRec.lang = 'en-US';
+  voiceRec.interimResults = true;
+  voiceRec.continuous = true;
+
+  const input = document.getElementById('chatInput');
+  const startText = input.value;
+  btn.classList.add('recording');
+
+  voiceRec.onresult = (e) => {
+    let transcript = '';
+    for (let i = 0; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+    input.value = startText + transcript;
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 150) + 'px';
+  };
+
+  voiceRec.onend = () => { btn.classList.remove('recording'); voiceRec = null; };
+  voiceRec.onerror = () => { btn.classList.remove('recording'); voiceRec = null; };
+  voiceRec.start();
+}
+
+// Window bridge for inline handlers and external hooks
+const __windowBridge = {
+  openModal,
+  closeModal,
+  closeTopModal,
+  initModalAccessibility,
+  formatRelativeTime,
+  showToast,
+  applyTheme,
+  applyMsgOverrides,
+  toggleTheme,
+  loadTheme,
+  onThemeSelectChange,
+  loadCustomColorPickers,
+  resetCustomTheme,
+  getCustomThemeFromPickers,
+  liveCustomTheme,
+  loadCustomFont,
+  fetchAvailableModels,
+  populateModelSelect,
+  refreshModels,
+  loadCachedModels,
+  loadMemories,
+  saveMemories,
+  getMemoryPrompt,
+  callApiNonStreaming,
+  extractMemories,
+  cleanupMemories,
+  openManageMemories,
+  openSearchTest,
+  openSourcesDrawer,
+  buildSnippet,
+  searchLocalDocs,
+  openFileSearch,
+  openSummaryModal,
+  openStatusPanel,
+  parseCommand,
+  handleCommand,
+  handleManualSearch,
+  handleFileSearch,
+  buildConversationTranscript,
+  deleteMemory,
+  detectApiFormat,
+  prepareAnthropicMessages,
+  renderGenImages,
+  buildApiContent,
+  extractImages,
+  renderMarkdown,
+  addCodeCopyButtons,
+  highlightCodeBlocks,
+  addLineNumbers,
+  renderMermaidBlocks,
+  postRenderProcessing,
+  estimateTokens,
+  getMsgText,
+  updateTokenInfo,
+  openDB,
+  idbPut,
+  idbGetAll,
+  idbDelete,
+  idbClear,
+  idbPutAll,
+  genId,
+  saveConversations,
+  debouncedSave,
+  migratePersonaField,
+  loadConversations,
+  getActiveConv,
+  createConversation,
+  switchConversation,
+  deleteConversation,
+  clearAllConversations,
+  renderSidebar,
+  showTagPicker,
+  renderTagFilterBar,
+  setTagFilter,
+  filterConversations,
+  toggleSidebar,
+  toggleToolbarMenu,
+  closeToolbarMenu,
+  getSelectedModel,
+  saveSetup,
+  switchSettingsTab,
+  openSettings,
+  loadProfiles,
+  saveProfiles,
+  renderProfileSelect,
+  collectProfileSettingsFromInputs,
+  applyProfileToInputs,
+  applyProfile,
+  applyProfileFromSelect,
+  saveCurrentAsProfile,
+  deleteSelectedProfile,
+  saveSettings,
+  closeSettings,
+  loadPresets,
+  applyPreset,
+  saveCurrentAsPreset,
+  deleteSelectedPreset,
+  importSTPreset,
+  loadPromptEntries,
+  savePromptEntries,
+  migrateToPromptEntries,
+  renderPromptEntries,
+  addPromptEntry,
+  deletePromptEntry,
+  togglePromptEntry,
+  updatePromptEntry,
+  buildSystemMessages,
+  maybeAddAvatar,
+  renderMessages,
+  renderEditMode,
+  resendAfterEdit,
+  swipeMsg,
+  switchBranch,
+  forkBranch,
+  renderThinkingHTML,
+  stripThinkTags,
+  renderToolBlocksHTML,
+  proxiedFetch,
+  executeWebSearch,
+  formatSearchResultsForModel,
+  parseTextToolCalls,
+  stripTextToolCalls,
+  executeUrlFetch,
+  formatUrlFetchResultForModel,
+  streamResponse,
+  updateSendBtnState,
+  resolveWebSearchEnabled,
+  sendMessage,
+  regenerate,
+  continueMessage,
+  clearChat,
+  exportConversation,
+  exportAllConversations,
+  importConversation,
+  exportMarkdown,
+  enterSelectMode,
+  exitSelectMode,
+  toggleMsgSelect,
+  updateSelectCount,
+  screenshotSelected,
+  openGlobalSearch,
+  performGlobalSearch,
+  openChatSearch,
+  closeChatSearch,
+  clearChatHighlights,
+  debouncedChatSearch,
+  performChatSearch,
+  navigateChatSearch,
+  resizeImageIfNeeded,
+  extractPdfText,
+  readAttachmentFile,
+  handleFileSelect,
+  renderPreviews,
+  clearModelOverride,
+  setModelOverride,
+  closeMentionDropdown,
+  handleMentionInput,
+  selectMention,
+  handleMentionKeydown,
+  extractCharaFromPNG,
+  normalizeCharaCard,
+  buildCharaDescription,
+  importCharacterCard,
+  updateCharacterUI,
+  showCharacterInfo,
+  toggleVoice
+};
+Object.assign(window, __windowBridge);
+
+export function getWindowBridge() {
+  return __windowBridge;
+}
