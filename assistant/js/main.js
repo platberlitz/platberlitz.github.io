@@ -1551,14 +1551,15 @@ function renderMarkdown(text) {
     if (rows.length < 2) return match;
     const parseRow = r => r.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
     const isSep = r => /^\|[\s\-:|]+\|$/.test(r.trim());
+    const renderTableCell = c => restoreAllowedInlineHtml(escapeHTML(c));
     let headerRow = parseRow(rows[0]);
     let bodyStart = 1;
     if (isSep(rows[1])) bodyStart = 2;
-    let html = '<table><thead><tr>' + headerRow.map(c => `<th>${escapeHTML(c)}</th>`).join('') + '</tr></thead><tbody>';
+    let html = '<table><thead><tr>' + headerRow.map(c => `<th>${renderTableCell(c)}</th>`).join('') + '</tr></thead><tbody>';
     for (let i = bodyStart; i < rows.length; i++) {
       if (isSep(rows[i])) continue;
       const cells = parseRow(rows[i]);
-      html += '<tr>' + cells.map(c => `<td>${escapeHTML(c)}</td>`).join('') + '</tr>';
+      html += '<tr>' + cells.map(c => `<td>${renderTableCell(c)}</td>`).join('') + '</tr>';
     }
     html += '</tbody></table>';
     return html;
