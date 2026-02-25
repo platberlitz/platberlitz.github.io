@@ -35,6 +35,8 @@
   --msg-padding: 12px 16px;
   --msg-font-size: 0.95em;
   --code-bg: rgba(0,0,0,0.3);
+  --card-bg: rgba(255, 255, 255, 0.08);
+  --error-color: #f66;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1718,6 +1720,8 @@ function applyTheme(name) {
   s.setProperty('--msg-padding', t.msgPadding || '12px 16px');
   s.setProperty('--msg-font-size', t.msgFontSize || '0.95em');
   s.setProperty('--code-bg', t.codeBg || (bgLight ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.3)'));
+  s.setProperty('--card-bg', bgLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)');
+  s.setProperty('--error-color', bgLight ? '#dc2626' : '#f66');
   localStorage.setItem('assistantTheme', name);
 
   const btn = document.getElementById('themeToggle');
@@ -3035,11 +3039,11 @@ function renderMarkdown(text) {
     let headerRow = parseRow(rows[0]);
     let bodyStart = 1;
     if (isSep(rows[1])) bodyStart = 2;
-    let html = '<table><thead><tr>' + headerRow.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+    let html = '<table><thead><tr>' + headerRow.map(c => `<th>${escapeHTML(c)}</th>`).join('') + '</tr></thead><tbody>';
     for (let i = bodyStart; i < rows.length; i++) {
       if (isSep(rows[i])) continue;
       const cells = parseRow(rows[i]);
-      html += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+      html += '<tr>' + cells.map(c => `<td>${escapeHTML(c)}</td>`).join('') + '</tr>';
     }
     html += '</tbody></table>';
     return html;
@@ -5333,10 +5337,16 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
     if (body.messages) {
       console.log('=== API PAYLOAD DEBUG ===');
       body.messages.forEach((m, i) => {
-        const contentSummary = Array.isArray(m.content)
-          ? m.content.map(p => ({ type: p.type, keys: Object.keys(p) }))
-          : typeof m.content;
-        console.log(`msg[${i}] role=${m.role}`, JSON.stringify(contentSummary));
+        if (Array.isArray(m.content)) {
+          m.content.forEach((p, j) => {
+            const clone = { ...p };
+            if (clone.image_url?.url) clone.image_url = { url: clone.image_url.url.slice(0, 80) + '...' };
+            if (clone.text && clone.text.length > 100) clone.text = clone.text.slice(0, 100) + '...';
+            console.log(`msg[${i}].content[${j}]`, JSON.stringify(clone));
+          });
+        } else {
+          console.log(`msg[${i}] role=${m.role} content=${typeof m.content}`);
+        }
         if (m.tool_calls) console.log(`  tool_calls:`, JSON.stringify(m.tool_calls));
       });
       console.log('=== END DEBUG ===');
