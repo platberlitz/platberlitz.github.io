@@ -1474,6 +1474,22 @@ function extractImages(msg) {
 function renderMarkdown(text) {
   if (!text) return '';
 
+  function decodeBasicEntities(input) {
+    // Decode up to a few passes to handle doubly-encoded model output like &amp;lt;strong&amp;gt;
+    let out = String(input || '');
+    for (let i = 0; i < 3; i++) {
+      const next = out
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      if (next === out) break;
+      out = next;
+    }
+    return out;
+  }
+
   function restoreAllowedInlineHtml(input) {
     // Allow a small, attribute-free inline HTML subset for formatting.
     // Keep all attributes escaped to avoid script/style injection vectors.
@@ -1500,6 +1516,18 @@ function renderMarkdown(text) {
 
   // Extract KaTeX math before HTML escaping
   const mathPlaceholders = [];
+  const looksLikeInlineMath = (math) => {
+    const t = String(math || '').trim();
+    if (!t) return false;
+    // Explicit LaTeX markers are always treated as math.
+    if (/[\\^_{}]/.test(t)) return true;
+    // Avoid accidentally treating pricing/rates as math (e.g. $25/M, $4/M (leaked)).
+    if (/^\d[\d.,\s/%kKmM-]*$/.test(t)) return false;
+    if (/^\d[\d.,\s]*\/\s*[A-Za-z][A-Za-z0-9-]*(?:\s*\([^)]*\))?$/.test(t)) return false;
+    if (/^\d/.test(t)) return false;
+    // Allow variable-like expressions such as x+y, a/b, a=b.
+    return /[A-Za-z]/.test(t) && /[=+\-*/<>]/.test(t);
+  };
   let s = text;
   // Block math $$...$$
   s = s.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
@@ -1509,13 +1537,14 @@ function renderMarkdown(text) {
   });
   // Inline math $...$
   s = s.replace(/\$([^\$\n]+?)\$/g, (_, math) => {
+    if (!looksLikeInlineMath(math)) return '$' + math + '$';
     const idx = mathPlaceholders.length;
     mathPlaceholders.push({ math, display: false });
     return '\x00MATH' + idx + '\x00';
   });
 
   // Decode HTML entities that models sometimes output before escaping
-  s = s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  s = decodeBasicEntities(s);
   s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   s = restoreAllowedInlineHtml(s);
   // Spoiler tags >!hidden text!<
@@ -1551,7 +1580,7 @@ function renderMarkdown(text) {
     if (rows.length < 2) return match;
     const parseRow = r => r.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
     const isSep = r => /^\|[\s\-:|]+\|$/.test(r.trim());
-    const renderTableCell = c => restoreAllowedInlineHtml(escapeHTML(c));
+    const renderTableCell = c => restoreAllowedInlineHtml(escapeHTML(decodeBasicEntities(c)));
     let headerRow = parseRow(rows[0]);
     let bodyStart = 1;
     if (isSep(rows[1])) bodyStart = 2;
