@@ -3731,35 +3731,143 @@ function stripTextToolCalls(text) {
     .trim();
 }
 
+function normalizeExtractedText(text) {
+  return String(text || '')
+    .replace(/\r/g, '\n')
+    .replace(/\u00A0/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function extractReadableTextFromHtml(rawHtml) {
+  const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
+  for (const sel of ['script','style','nav','footer','header','aside','iframe','noscript','svg','form','button','input','textarea','[role="navigation"]','[role="banner"]','[role="contentinfo"]']) {
+    doc.querySelectorAll(sel).forEach(el => el.remove());
+  }
+
+  const candidates = [
+    'article',
+    'main',
+    '[role="main"]',
+    '.post-content',
+    '.article-content',
+    '.entry-content',
+    '.content',
+    '#content',
+    '.prose',
+    'body'
+  ];
+
+  let best = '';
+  for (const sel of candidates) {
+    const node = sel === 'body' ? doc.body : doc.querySelector(sel);
+    if (!node) continue;
+    const t = normalizeExtractedText(node.textContent || '');
+    if (t.length > best.length) best = t;
+  }
+
+  if (!best) {
+    const meta = doc.querySelector('meta[name="description"],meta[property="og:description"],meta[name="twitter:description"]');
+    best = normalizeExtractedText(meta?.getAttribute('content') || '');
+  }
+
+  if (!best) return '';
+  const title = normalizeExtractedText(doc.title || '');
+  if (title && !best.startsWith(title) && best.length < 400) best = title + '\n\n' + best;
+  return best;
+}
+
+function looksLikeBotOrBlockPage(text) {
+  const t = String(text || '').toLowerCase();
+  if (!t) return false;
+  return /just a moment|checking your browser|enable javascript|access denied|are you human|captcha|cloudflare|ddos protection|request blocked/.test(t);
+}
+
+function buildReaderMirrorUrls(url) {
+  const stripped = String(url || '').replace(/^https?:\/\//i, '');
+  return [
+    'https://r.jina.ai/http://' + url,
+    'https://r.jina.ai/http://' + stripped
+  ];
+}
+
+function stripReaderMirrorPreamble(text) {
+  let out = normalizeExtractedText(text);
+  const markerMatch = out.match(/\nMarkdown Content:\n/i);
+  if (markerMatch) {
+    const idx = out.indexOf(markerMatch[0]);
+    out = out.slice(idx + markerMatch[0].length);
+  }
+  out = out.replace(/^Title:[^\n]*\n/i, '');
+  out = out.replace(/^URL Source:[^\n]*\n/i, '');
+  return normalizeExtractedText(out);
+}
+
 async function executeUrlFetch(url, signal) {
+  const targetUrl = String(url || '').trim();
+  if (!/^https?:\/\//i.test(targetUrl)) {
+    return { content: '', error: 'Invalid URL. Use a full URL starting with http:// or https://.' };
+  }
+
+  let primaryReadable = '';
+  let lastError = '';
+
   try {
-    const resp = await proxiedFetch(url, { signal });
-    if (!resp.ok) return { content: '', error: resp.status + ' ' + (resp.statusText || 'Error') };
-    const ct = resp.headers.get('content-type') || '';
-    const raw = await resp.text();
-    if (!ct.includes('html')) {
-      // Plain text / JSON / etc — return directly
-      return { content: raw.slice(0, URL_FETCH_MAX_CHARS), error: null };
+    const resp = await proxiedFetch(targetUrl, { signal });
+    if (!resp.ok) {
+      lastError = resp.status + ' ' + (resp.statusText || 'Error');
+    } else {
+      const ct = (resp.headers.get('content-type') || '').toLowerCase();
+      const raw = await resp.text();
+      const looksHtml = ct.includes('html') || /<!doctype html|<html|<body/i.test(raw.slice(0, 2500));
+      if (!looksHtml) {
+        const plain = normalizeExtractedText(raw);
+        if (plain) return { content: plain.slice(0, URL_FETCH_MAX_CHARS), error: null };
+        lastError = 'Page returned no readable text.';
+      } else {
+        primaryReadable = extractReadableTextFromHtml(raw);
+        if (primaryReadable && !looksLikeBotOrBlockPage(primaryReadable) && primaryReadable.length >= 120) {
+          return { content: primaryReadable.slice(0, URL_FETCH_MAX_CHARS), error: null };
+        }
+        lastError = primaryReadable ? 'Page returned no readable text.' : 'Page returned no readable text.';
+      }
     }
-    // Parse HTML and extract readable text
-    const doc = new DOMParser().parseFromString(raw, 'text/html');
-    // Remove noise elements
-    for (const sel of ['script','style','nav','footer','header','aside','iframe','noscript','svg','[role="navigation"]','[role="banner"]','[role="contentinfo"]']) {
-      doc.querySelectorAll(sel).forEach(el => el.remove());
-    }
-    // Prefer article/main content, fall back to body
-    const root = doc.querySelector('article') || doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.body;
-    let text = (root ? root.textContent : doc.body?.textContent) || '';
-    // Collapse whitespace
-    text = text.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
-    if (!text) return { content: '', error: 'Page returned no readable text.' };
-    return { content: text.slice(0, URL_FETCH_MAX_CHARS), error: null };
   } catch (e) {
     if (e.name === 'AbortError') throw e;
     let msg = e.message || 'Unknown error';
-    if (msg === 'Failed to fetch' || msg === 'Load failed' || msg.includes('NetworkError')) msg = 'Network error — CORS proxy may be required';
-    return { content: '', error: msg };
+    if (msg === 'Failed to fetch' || msg === 'Load failed' || msg.includes('NetworkError')) msg = 'Network error while fetching page';
+    lastError = msg;
   }
+
+  // Fallback for JS-heavy/CORS-blocked pages: server-side reader mirror.
+  try {
+    const readerUrls = buildReaderMirrorUrls(targetUrl);
+    for (const readerUrl of readerUrls) {
+      const r = await fetch(readerUrl, { signal });
+      if (!r.ok) continue;
+      const txt = stripReaderMirrorPreamble(await r.text());
+      if (txt && txt.length >= 40) {
+        return { content: txt.slice(0, URL_FETCH_MAX_CHARS), error: null };
+      }
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') throw e;
+  }
+
+  // If we got something but it was short/blocked and mirror failed, return what we have.
+  if (primaryReadable) {
+    const fallbackText = normalizeExtractedText(primaryReadable);
+    if (fallbackText) return { content: fallbackText.slice(0, URL_FETCH_MAX_CHARS), error: null };
+  }
+
+  // Final fallback error message.
+  if (!lastError) lastError = 'Unable to fetch readable content from this page.';
+  if (/network error|failed to fetch|cors/i.test(lastError)) {
+    lastError = 'Network error — CORS proxy may be required';
+  }
+  return { content: '', error: lastError };
 }
 
 function formatUrlFetchResultForModel(content, error, url) {
