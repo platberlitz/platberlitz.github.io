@@ -136,7 +136,8 @@
     #tab-preset:checked ~ .tab-labels label[for="tab-preset"],
     #tab-trackers:checked ~ .tab-labels label[for="tab-trackers"],
     #tab-changelog:checked ~ .tab-labels label[for="tab-changelog"],
-    #tab-extensions:checked ~ .tab-labels label[for="tab-extensions"] {
+    #tab-extensions:checked ~ .tab-labels label[for="tab-extensions"],
+    #tab-themes:checked ~ .tab-labels label[for="tab-themes"] {
       color: #a8ccb8;
       border-color: #3a3a5a;
     }
@@ -146,6 +147,7 @@
     #tab-trackers:checked ~ .tab-content-trackers { display: block; }
     #tab-changelog:checked ~ .tab-content-changelog { display: block; }
     #tab-extensions:checked ~ .tab-content-extensions { display: block; }
+    #tab-themes:checked ~ .tab-content-themes { display: block; }
 
     /* Preset info */
 
@@ -275,6 +277,18 @@
 
     .ext-name a:hover { color: #c0e8d0; }
 
+    .inline-link {
+      color: #7a9e8a;
+      text-decoration: none;
+      border-bottom: 1px solid #3a3a5a;
+      transition: color 0.25s, border-color 0.25s;
+    }
+
+    .inline-link:hover {
+      color: #a8ccb8;
+      border-color: #5a7a66;
+    }
+
     .ext-desc {
       font-size: 0.82rem;
       color: #6a8e78;
@@ -363,11 +377,13 @@
       <input type="radio" name="tab" id="tab-trackers">
       <input type="radio" name="tab" id="tab-changelog">
       <input type="radio" name="tab" id="tab-extensions">
+      <input type="radio" name="tab" id="tab-themes">
       <div class="tab-labels">
         <label for="tab-preset">Preset</label>
         <label for="tab-trackers">Trackers</label>
         <label for="tab-changelog">Changelog</label>
         <label for="tab-extensions">Extensions</label>
+        <label for="tab-themes">Themes</label>
       </div>
 
       <div class="tab-content tab-content-preset">
@@ -456,6 +472,15 @@
           <div class="ext-item">
             <div class="ext-name"><a href="https://github.com/platberlitz/sillytavern-character-colors">Dialogue Colours</a></div>
             <div class="ext-desc">Token-efficient character color changer that supports multiple NPCs, and you can change dialogue colours in real time + other features</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content tab-content-themes">
+        <div class="extensions-list">
+          <div class="ext-item">
+            <div class="ext-name"><a href="preset/Everforest%20Dark.json" download="Everforest Dark.json">Everforest Dark</a></div>
+            <div class="ext-desc">Based on the <a href="https://github.com/sainnhe/everforest" class="inline-link">Everforest</a> color palette</div>
           </div>
         </div>
       </div>
