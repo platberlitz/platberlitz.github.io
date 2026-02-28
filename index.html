@@ -80,6 +80,30 @@
       margin-top: 0.15rem;
     }
 
+    .link-item {
+      border: 1px solid #2a2a3a;
+      border-radius: 999px;
+      padding: 0.55rem 1.6rem;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .link-item > a {
+      color: #7a9e8a;
+      text-decoration: none;
+      transition: color 0.25s;
+    }
+
+    .link-item > a:hover { color: #a8ccb8; }
+
+    .link-info-link {
+      color: #5a7a66;
+      text-decoration: none;
+      transition: color 0.25s;
+    }
+
+    .link-info-link:hover { color: #7a9e8a; }
+
     /* ── Preset Section ── */
 
     .preset-section {
@@ -388,7 +412,10 @@
     <div class="links">
       <a href="https://platberlitz.github.io/platinum-startpage/">startpage<span class="link-info">localStorage customisable startpage</span></a>
       <a href="assistant/">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
-      <a href="https://purasdproxy.duckdns.org">SD Proxy<span class="link-info">purachina / purapura &middot; localStorage (private)</span></a>
+      <div class="link-item">
+        <a href="https://purasdproxy.duckdns.org">SD Proxy</a>
+        <span class="link-info">Stable Diffusion image generation frontend &middot; <a href="https://github.com/platberlitz/sd-proxy" class="link-info-link">GitHub</a></span>
+      </div>
     </div>
   </div>
 
