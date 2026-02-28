@@ -3541,11 +3541,41 @@ function proxiedFetch(url, options) {
   });
 }
 
+function extractWebSearchQueryFromArgs(args) {
+  if (!args || typeof args !== 'object') return '';
+  const candidates = [];
+
+  if (typeof args.query === 'string') candidates.push(args.query);
+  if (typeof args.search_query === 'string') candidates.push(args.search_query);
+  if (typeof args.q === 'string') candidates.push(args.q);
+  if (typeof args.search === 'string') candidates.push(args.search);
+  if (typeof args.keywords === 'string') candidates.push(args.keywords);
+  if (typeof args.text === 'string') candidates.push(args.text);
+
+  if (Array.isArray(args.search_query) && args.search_query.length > 0) {
+    const first = args.search_query[0];
+    if (typeof first === 'string') candidates.push(first);
+    else if (first && typeof first === 'object' && typeof first.q === 'string') candidates.push(first.q);
+  }
+
+  for (const candidate of candidates) {
+    const q = candidate.trim();
+    if (q) return q;
+  }
+  return '';
+}
+
 async function executeWebSearch(query, signal) {
+  const normalizedQuery = String(query || '').trim();
+  if (!normalizedQuery) {
+    lastSearchStatus = { ok: false, error: 'Search query is empty.', at: Date.now(), query: '' };
+    return { results: [], error: 'Search query is empty.' };
+  }
+
   const searchUrl = (localStorage.getItem('llmSearchApiUrl') || 'https://purasearx.duckdns.org/search?format=json').trim();
   const searchKey = (localStorage.getItem('llmSearchApiKey') || '').trim();
   if (!searchUrl) {
-    lastSearchStatus = { ok: false, error: 'No search API URL configured.', at: Date.now(), query };
+    lastSearchStatus = { ok: false, error: 'No search API URL configured.', at: Date.now(), query: normalizedQuery };
     return { results: [], error: 'No search API URL configured. Set one in Settings > Tools.' };
   }
   const isBrave = searchUrl.includes('api.search.brave.com');
@@ -3553,11 +3583,11 @@ async function executeWebSearch(query, signal) {
   const hasQueryTpl = /{query}|\{\{query\}\}|%s/i.test(searchUrl);
   const hasKeyTpl = /{key}|\{\{key\}\}/i.test(searchUrl);
   if (hasKeyTpl && !searchKey) {
-    lastSearchStatus = { ok: false, error: 'Search API key required for this URL template.', at: Date.now(), query };
+    lastSearchStatus = { ok: false, error: 'Search API key required for this URL template.', at: Date.now(), query: normalizedQuery };
     return { results: [], error: 'Search API key required for this URL template.' };
   }
   try {
-    const qEnc = encodeURIComponent(query);
+    const qEnc = encodeURIComponent(normalizedQuery);
     const kEnc = encodeURIComponent(searchKey);
     let fetchUrl = searchUrl;
 
@@ -3628,13 +3658,13 @@ async function executeWebSearch(query, signal) {
       snippet: r.content || r.snippet || r.description || r.summary || ''
     })).filter(r => r.title || r.url);
 
-    lastSearchStatus = { ok: true, error: null, at: Date.now(), query };
+    lastSearchStatus = { ok: true, error: null, at: Date.now(), query: normalizedQuery };
     return { results, error: null };
   } catch (e) {
     if (e.name === 'AbortError') throw e;
     let msg = e.message || 'Unknown error';
     if (msg === 'Failed to fetch' || msg.includes('NetworkError')) msg = 'Network error — CORS may be blocked by this search instance';
-    lastSearchStatus = { ok: false, error: msg, at: Date.now(), query };
+    lastSearchStatus = { ok: false, error: msg, at: Date.now(), query: normalizedQuery };
     return { results: [], error: msg };
   }
 }
@@ -4050,7 +4080,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         // Extract tool blocks from non-streaming response
         for (const block of (data.content || [])) {
           if (block.type === 'server_tool_use' && block.name === 'web_search') {
-            toolBlocks.push({ query: block.input?.query || '', results: [], searching: false });
+            toolBlocks.push({ query: extractWebSearchQueryFromArgs(block.input), results: [], searching: false });
           } else if (block.type === 'web_search_tool_result') {
             const tb = toolBlocks[toolBlocks.length - 1] || { query: '', results: [], searching: false };
             if (!toolBlocks.length) toolBlocks.push(tb);
@@ -4064,7 +4094,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             if (block.name === 'url_fetch') {
               toolBlocks.push({ type: 'url_fetch', url: block.input?.url || '', content: '', searching: true });
             } else {
-              toolBlocks.push({ query: block.input?.query || '', results: [], searching: true });
+              toolBlocks.push({ query: extractWebSearchQueryFromArgs(block.input), results: [], searching: true });
             }
             pendingAnthropicToolCalls.push({ id: block.id, name: block.name, input: block.input || {}, toolBlockIndex: toolBlocks.length - 1 });
           }
@@ -4085,7 +4115,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               toolResultBlocks.push({ type: 'tool_result', tool_use_id: call.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
             } else if (call.name === 'web_search') {
               const tb = toolBlocks[call.toolBlockIndex];
-              const query = call.input?.query || '';
+              const query = extractWebSearchQueryFromArgs(call.input);
               bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
               const { results, error } = await executeWebSearch(query, abortController.signal);
               if (tb) { tb.results = results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet })); tb.searching = false; if (error) tb.error = error; }
@@ -4172,7 +4202,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
               toolResultMsgs.push({ role: 'tool', tool_call_id: tc.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
             } else {
-              const query = args.query || '';
+              const query = extractWebSearchQueryFromArgs(args);
               toolBlocks.push({ query, results: [], searching: true });
               bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
               const { results, error } = await executeWebSearch(query, abortController.signal);
@@ -4244,7 +4274,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               if (error) tb.error = error;
               textToolResults.push('URL Fetch (' + fetchUrl + '):\n' + formatUrlFetchResultForModel(content, error, fetchUrl));
             } else {
-              const query = args.query || '';
+              const query = extractWebSearchQueryFromArgs(args);
               toolBlocks.push({ query, results: [], searching: true });
               bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(assistantMsg.images);
               const { results, error } = await executeWebSearch(query, abortController.signal);
@@ -4498,7 +4528,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             toolResultBlocks.push({ type: 'tool_result', tool_use_id: call.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
           } else if (call.name === 'web_search') {
             const tb = toolBlocks[call.toolBlockIndex];
-            const query = call.input?.query || '';
+            const query = extractWebSearchQueryFromArgs(call.input);
             if (tb) tb.query = query;
             bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
             const msgsAreaTmp = document.getElementById('messagesArea');
@@ -4559,7 +4589,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               if (block.name === 'url_fetch') {
                 toolBlocks.push({ type: 'url_fetch', url: block.input?.url || '', content: '', searching: true });
               } else {
-                toolBlocks.push({ query: block.input?.query || '', results: [], searching: true });
+                toolBlocks.push({ query: extractWebSearchQueryFromArgs(block.input), results: [], searching: true });
               }
               pendingAnthropicToolCalls.push({ id: block.id, name: block.name, input: block.input || {}, toolBlockIndex: toolBlocks.length - 1 });
             }
@@ -4683,7 +4713,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               if (error) tb.error = error;
               textToolResults.push('URL Fetch (' + fetchUrl + '):\n' + formatUrlFetchResultForModel(content, error, fetchUrl));
             } else {
-              const query = args.query || '';
+              const query = extractWebSearchQueryFromArgs(args);
               toolBlocks.push({ query, results: [], searching: true });
               bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
               const { results, error } = await executeWebSearch(query, abortController.signal);
@@ -4779,7 +4809,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             if (!userScrolledAway) msgsAreaTmp.scrollTop = msgsAreaTmp.scrollHeight;
             toolResultMsgs.push({ role: 'tool', tool_call_id: tc.id, content: formatUrlFetchResultForModel(content, error, fetchUrl) });
           } else {
-            const query = args.query || '';
+            const query = extractWebSearchQueryFromArgs(args);
             // Show searching state
             toolBlocks.push({ query, results: [], searching: true });
             bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText) + renderGenImages(streamImages);
