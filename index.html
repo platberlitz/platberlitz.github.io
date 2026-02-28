@@ -334,6 +334,29 @@
       .tracker-grid { grid-template-columns: 1fr; }
     }
 
+    @media (max-width: 600px) {
+      .container { padding: 1.5rem; padding-top: 2.5rem; }
+
+      .links { flex-direction: column; align-items: center; gap: 0.75rem; }
+      .links a { width: 100%; max-width: 280px; text-align: center; }
+
+      .preset-section { padding: 0 1rem; }
+
+      .tab-labels { flex-wrap: wrap; gap: 0.4rem; }
+      .tab-labels label { padding: 0.35rem 1rem; font-size: 0.8rem; }
+
+      .preset-title { font-size: 1.1rem; }
+      .preset-desc { font-size: 0.82rem; }
+      .preset-desc li { padding-left: 1rem; }
+
+      .changelog li { font-size: 0.8rem; padding-left: 1rem; }
+
+      .ext-item { padding: 0.8rem 1rem; }
+      .ext-desc { font-size: 0.78rem; }
+
+      .lightbox { padding: 0.75rem; }
+    }
+
     /* Lightbox */
 
     .lightbox {
