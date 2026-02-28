@@ -4689,7 +4689,6 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           }
         }
         if (!fullText && preToolText) fullText = preToolText;
-        pendingAnthropicToolCalls = [];
       }
       // === Parse text-based tool calls (models like Gemini output tool calls as text) ===
       // These can't use the standard OpenAI tool loop because the API never produced real
