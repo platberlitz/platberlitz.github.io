@@ -361,8 +361,23 @@ function loadCustomFont(fontName) {
   document.body.style.fontFamily = "'" + fontName + "', 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 }
 
+const DEFAULT_CORS_PROXY_URL = 'https://corsproxy.io/?url=';
+
+function normalizeCorsProxyUrl(url) {
+  const trimmed = String(url || '').trim();
+  return trimmed || DEFAULT_CORS_PROXY_URL;
+}
+
+function getCorsProxyUrl() {
+  return normalizeCorsProxyUrl(localStorage.getItem('llmCorsProxy'));
+}
+
 function isMixedContentSensitiveApiBase(baseUrl) {
   return window.location.protocol === 'https:' && /^http:\/\//i.test(String(baseUrl || '').trim());
+}
+
+function isHttpApiBase(baseUrl) {
+  return /^http:\/\//i.test(String(baseUrl || '').trim());
 }
 
 function isNetworkLikeFetchError(err) {
@@ -377,16 +392,45 @@ function isNetworkLikeFetchError(err) {
 }
 
 async function fetchApiWithHttpSupport(url, options, baseUrl) {
+  const apiBase = String(baseUrl || '').trim();
+  const corsProxy = getCorsProxyUrl();
+  const tryProxyFetch = async () => fetch(corsProxy + encodeURIComponent(url), options);
+
+  // For explicit http:// API bases, proxy first to avoid mixed-content/CORS failures.
+  if (isHttpApiBase(apiBase)) {
+    try {
+      return await tryProxyFetch();
+    } catch (proxyErr) {
+      // If app is not HTTPS, direct may still work as a fallback.
+      if (window.location.protocol !== 'https:') {
+        try {
+          return await fetch(url, options);
+        } catch (directErr) {
+          if (isNetworkLikeFetchError(directErr)) {
+            throw new Error('CORS proxy and direct request both failed. Try a different CORS proxy URL in Settings > Tools, or switch the API endpoint to HTTPS.');
+          }
+          throw directErr;
+        }
+      }
+      if (isNetworkLikeFetchError(proxyErr)) {
+        throw new Error('CORS proxy request failed. This proxy may block your target host or Authorization headers. Try a different CORS proxy URL in Settings > Tools.');
+      }
+      throw proxyErr;
+    }
+  }
+
   try {
     return await fetch(url, options);
   } catch (err) {
-    const apiBase = String(baseUrl || '').trim();
     if (!isMixedContentSensitiveApiBase(apiBase) || !isNetworkLikeFetchError(err)) throw err;
-    const corsProxy = (localStorage.getItem('llmCorsProxy') || '').trim();
-    if (!corsProxy) {
-      throw new Error('HTTP API URL blocked by browser mixed-content policy. Set Settings > Tools > CORS Proxy URL (e.g. https://corsproxy.io/?url=), or use HTTPS.');
+    try {
+      return await tryProxyFetch();
+    } catch (proxyErr) {
+      if (isNetworkLikeFetchError(proxyErr)) {
+        throw new Error('CORS proxy request failed. This proxy may block your target host or Authorization headers. Try a different CORS proxy URL in Settings > Tools.');
+      }
+      throw proxyErr;
     }
-    return fetch(corsProxy + encodeURIComponent(url), options);
   }
 }
 
@@ -1139,6 +1183,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cleaned = storedUrl.replace(/\/(chat\/completions|messages)\/?$/, '');
     if (cleaned !== storedUrl) localStorage.setItem('llmProxyUrl', cleaned);
   }
+  // Migration/default: keep CORS proxy enabled unless explicitly replaced.
+  localStorage.setItem('llmCorsProxy', getCorsProxyUrl());
 
   await openDB();
   migrateToPromptEntries();
@@ -2358,7 +2404,7 @@ function openSettings() {
   document.getElementById('setForceSearch').checked = localStorage.getItem('llmForceSearch') === 'true';
   document.getElementById('setSearchApiUrl').value = localStorage.getItem('llmSearchApiUrl') || '';
   document.getElementById('setSearchApiKey').value = localStorage.getItem('llmSearchApiKey') || '';
-  document.getElementById('setCorsProxy').value = localStorage.getItem('llmCorsProxy') || '';
+  document.getElementById('setCorsProxy').value = getCorsProxyUrl();
   document.getElementById('setMemory').checked = localStorage.getItem('llmMemoryEnabled') === 'true';
   document.getElementById('setHoldScreenshot').checked = localStorage.getItem('llmHoldScreenshot') === 'true';
 
@@ -2426,7 +2472,7 @@ function collectProfileSettingsFromInputs() {
     llmWebSearch: document.getElementById('setWebSearch').checked ? 'true' : 'false',
     llmSearchApiUrl: document.getElementById('setSearchApiUrl').value.trim(),
     llmSearchApiKey: document.getElementById('setSearchApiKey').value.trim(),
-    llmCorsProxy: document.getElementById('setCorsProxy').value.trim(),
+    llmCorsProxy: normalizeCorsProxyUrl(document.getElementById('setCorsProxy').value),
     llmMemoryEnabled: document.getElementById('setMemory').checked ? 'true' : 'false',
     llmHoldScreenshot: document.getElementById('setHoldScreenshot').checked ? 'true' : 'false',
     llmInputCost: document.getElementById('setInputCost').value.trim(),
@@ -2447,7 +2493,7 @@ function applyProfileToInputs(settings) {
   document.getElementById('setWebSearch').checked = settings.llmWebSearch === 'true';
   document.getElementById('setSearchApiUrl').value = settings.llmSearchApiUrl || '';
   document.getElementById('setSearchApiKey').value = settings.llmSearchApiKey || '';
-  document.getElementById('setCorsProxy').value = settings.llmCorsProxy || '';
+  document.getElementById('setCorsProxy').value = normalizeCorsProxyUrl(settings.llmCorsProxy);
   document.getElementById('setMemory').checked = settings.llmMemoryEnabled === 'true';
   document.getElementById('setHoldScreenshot').checked = settings.llmHoldScreenshot === 'true';
   document.getElementById('setInputCost').value = settings.llmInputCost || '';
@@ -2572,7 +2618,7 @@ function saveSettings() {
   localStorage.setItem('llmForceSearch', document.getElementById('setForceSearch').checked ? 'true' : 'false');
   localStorage.setItem('llmSearchApiUrl', document.getElementById('setSearchApiUrl').value.trim());
   localStorage.setItem('llmSearchApiKey', document.getElementById('setSearchApiKey').value.trim());
-  localStorage.setItem('llmCorsProxy', document.getElementById('setCorsProxy').value.trim());
+  localStorage.setItem('llmCorsProxy', normalizeCorsProxyUrl(document.getElementById('setCorsProxy').value));
   localStorage.setItem('llmMemoryEnabled', document.getElementById('setMemory').checked ? 'true' : 'false');
   localStorage.setItem('llmHoldScreenshot', document.getElementById('setHoldScreenshot').checked ? 'true' : 'false');
 
@@ -3556,10 +3602,8 @@ const OPENAI_WEB_SEARCH_TOOL = {
 };
 
 function proxiedFetch(url, options) {
-  const proxy = localStorage.getItem('llmCorsProxy') || '';
-  if (proxy) return fetch(proxy + encodeURIComponent(url), options);
-  // Try direct fetch first, then auto-fallback to CORS proxy
-  return fetch(url, options).catch(err => {
+  const proxy = getCorsProxyUrl();
+  return fetch(proxy + encodeURIComponent(url), options).catch(err => {
     if (err.name === 'AbortError') throw err;
     const msg = err.message || '';
     if (msg === 'Failed to fetch' || msg === 'Load failed' || msg.includes('NetworkError') || msg.includes('CORS')) {
