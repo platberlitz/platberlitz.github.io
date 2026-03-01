@@ -361,14 +361,43 @@ function loadCustomFont(fontName) {
   document.body.style.fontFamily = "'" + fontName + "', 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 }
 
+function isMixedContentSensitiveApiBase(baseUrl) {
+  return window.location.protocol === 'https:' && /^http:\/\//i.test(String(baseUrl || '').trim());
+}
+
+function isNetworkLikeFetchError(err) {
+  const msg = String(err?.message || '');
+  const lower = msg.toLowerCase();
+  return msg === 'Failed to fetch'
+    || msg === 'Load failed'
+    || msg.includes('NetworkError')
+    || lower.includes('network')
+    || lower.includes('cors')
+    || lower.includes('mixed content');
+}
+
+async function fetchApiWithHttpSupport(url, options, baseUrl) {
+  try {
+    return await fetch(url, options);
+  } catch (err) {
+    const apiBase = String(baseUrl || '').trim();
+    if (!isMixedContentSensitiveApiBase(apiBase) || !isNetworkLikeFetchError(err)) throw err;
+    const corsProxy = (localStorage.getItem('llmCorsProxy') || '').trim();
+    if (!corsProxy) {
+      throw new Error('HTTP API URL blocked by browser mixed-content policy. Set Settings > Tools > CORS Proxy URL (e.g. https://corsproxy.io/?url=), or use HTTPS.');
+    }
+    return fetch(corsProxy + encodeURIComponent(url), options);
+  }
+}
+
 // ============================================
 // Model Fetching
 // ============================================
 async function fetchAvailableModels(baseUrl, apiKey) {
   const url = baseUrl.replace(/\/+$/, '') + '/models';
-  const resp = await fetch(url, {
+  const resp = await fetchApiWithHttpSupport(url, {
     headers: { 'Authorization': 'Bearer ' + apiKey }
-  });
+  }, baseUrl);
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
   const data = await resp.json();
   return data.data?.map(m => m.id) || [];
@@ -463,7 +492,7 @@ async function callApiNonStreaming(messages) {
     body = { model, messages, stream: false, max_tokens: 512 };
   }
 
-  const resp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+  const resp = await fetchApiWithHttpSupport(url, { method: 'POST', headers, body: JSON.stringify(body) }, baseUrl);
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
   const data = await resp.json();
 
@@ -4043,24 +4072,24 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       console.log('=== END DEBUG ===');
     }
 
-    let resp = await fetch(url, {
+    let resp = await fetchApiWithHttpSupport(url, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
       signal: abortController.signal
-    });
+    }, baseUrl);
 
     // If tool_choice caused a 400 (e.g. Gemini doesn't support "required"), retry without it
     if (!resp.ok && resp.status === 400 && body.tool_choice) {
       const saved = body.tool_choice;
       delete body.tool_choice;
       console.warn('Retrying without tool_choice (was:', saved, ')');
-      resp = await fetch(url, {
+      resp = await fetchApiWithHttpSupport(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
         signal: abortController.signal
-      });
+      }, baseUrl);
     }
 
     if (!resp.ok) {
@@ -4136,12 +4165,12 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           const followUpBody = { ...body, messages: followUpMessages, stream: false };
           delete followUpBody.tools;
           exclude.forEach(k => delete followUpBody[k]);
-          const followUpResp = await fetch(url, {
+          const followUpResp = await fetchApiWithHttpSupport(url, {
             method: 'POST',
             headers,
             body: JSON.stringify(followUpBody),
             signal: abortController.signal
-          });
+          }, baseUrl);
           if (!followUpResp.ok) {
             let errText = '';
             try { errText = await followUpResp.text(); } catch(e) {}
@@ -4230,12 +4259,12 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             if (m.tool_call_id) console.log(`  tool_call_id:`, m.tool_call_id);
           });
           console.log('=== END FOLLOW-UP DEBUG ===');
-          const followUpResp = await fetch(url, {
+          const followUpResp = await fetchApiWithHttpSupport(url, {
             method: 'POST',
             headers,
             body: JSON.stringify(followUpBody),
             signal: abortController.signal
-          });
+          }, baseUrl);
           if (!followUpResp.ok) {
             let errText = '';
             try { errText = await followUpResp.text(); } catch(e) {}
@@ -4295,7 +4324,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           delete followUpBody.tool_choice;
           exclude.forEach(k => delete followUpBody[k]);
           try {
-            const followUpResp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(followUpBody), signal: abortController.signal });
+            const followUpResp = await fetchApiWithHttpSupport(url, { method: 'POST', headers, body: JSON.stringify(followUpBody), signal: abortController.signal }, baseUrl);
             if (followUpResp.ok) {
               const followUpData = await followUpResp.json();
               const followText = followUpData.choices?.[0]?.message?.content || '';
@@ -4557,12 +4586,12 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         const followUpBody = { ...body, messages: followUpMessages, stream: true };
         if (anthropicToolRound >= 20) delete followUpBody.tools;
         exclude.forEach(k => delete followUpBody[k]);
-        const followUpResp = await fetch(url, {
+        const followUpResp = await fetchApiWithHttpSupport(url, {
           method: 'POST',
           headers,
           body: JSON.stringify(followUpBody),
           signal: abortController.signal
-        });
+        }, baseUrl);
         if (!followUpResp.ok) {
           let errText = '';
           try { errText = await followUpResp.text(); } catch(e) {}
@@ -4734,7 +4763,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           delete followUpBody.tool_choice;
           exclude.forEach(k => delete followUpBody[k]);
           try {
-            const followUpResp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(followUpBody), signal: abortController.signal });
+            const followUpResp = await fetchApiWithHttpSupport(url, { method: 'POST', headers, body: JSON.stringify(followUpBody), signal: abortController.signal }, baseUrl);
             if (followUpResp.ok && followUpResp.body) {
               fullText = '';
               const fReader = followUpResp.body.getReader();
@@ -4829,12 +4858,12 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         const followUpBody = { ...body, messages: openaiRunningMessages, stream: true };
         if (openaiToolRound >= 20) delete followUpBody.tools;
         exclude.forEach(k => delete followUpBody[k]);
-        const followUpResp = await fetch(url, {
+        const followUpResp = await fetchApiWithHttpSupport(url, {
           method: 'POST',
           headers,
           body: JSON.stringify(followUpBody),
           signal: abortController.signal
-        });
+        }, baseUrl);
         if (!followUpResp.ok) {
           let errText = '';
           try { errText = await followUpResp.text(); } catch(e) {}
