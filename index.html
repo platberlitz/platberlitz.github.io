@@ -148,6 +148,7 @@
     }
 
     #tab-preset:checked ~ .tab-labels label[for="tab-preset"],
+    #tab-previous:checked ~ .tab-labels label[for="tab-previous"],
     #tab-trackers:checked ~ .tab-labels label[for="tab-trackers"],
     #tab-changelog:checked ~ .tab-labels label[for="tab-changelog"],
     #tab-extensions:checked ~ .tab-labels label[for="tab-extensions"],
@@ -158,6 +159,7 @@
 
     .tab-content { display: none; }
     #tab-preset:checked ~ .tab-content-preset { display: block; }
+    #tab-previous:checked ~ .tab-content-previous { display: block; }
     #tab-trackers:checked ~ .tab-content-trackers { display: block; }
     #tab-changelog:checked ~ .tab-content-changelog { display: block; }
     #tab-extensions:checked ~ .tab-content-extensions { display: block; }
@@ -412,12 +414,14 @@
     <h2 class="section-heading">SillyTavern</h2>
     <div class="preset-tabs">
       <input type="radio" name="tab" id="tab-preset" checked>
+      <input type="radio" name="tab" id="tab-previous">
       <input type="radio" name="tab" id="tab-trackers">
       <input type="radio" name="tab" id="tab-changelog">
       <input type="radio" name="tab" id="tab-extensions">
       <input type="radio" name="tab" id="tab-themes">
       <div class="tab-labels">
         <label for="tab-preset">Preset</label>
+        <label for="tab-previous">Previous Versions</label>
         <label for="tab-trackers">Trackers</label>
         <label for="tab-changelog">Changelog</label>
         <label for="tab-extensions">Extensions</label>
@@ -427,7 +431,7 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 5.7</p>
+          <p class="preset-version">Latest Version: 6.0</p>
           <div class="preset-desc">
             <ul>
               <li>Designed for shorter responses with flexible length</li>
@@ -438,8 +442,18 @@
             </ul>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%205.7.json" download="Pura's Director Preset 5.7.json">Download Preset</a>
-            <a href="preset/Pura's%20Director%20Preset%20Regex%20Set.json" download="Pura's Director Preset Regex Set.json">Regex Set</a>
+            <a href="preset/Pura's%20Director%20Preset%206.0.json" download="Pura's Director Preset 6.0.json">Download Preset</a>
+            <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content tab-content-previous">
+        <div class="preset-info">
+          <h2 class="preset-title">Previous Preset Versions</h2>
+          <p class="preset-version">Older stable releases</p>
+          <div class="preset-downloads" id="previous-versions-list">
+            <a href="preset/Pura's%20Director%20Preset%205.7.json" download="Pura's Director Preset 5.7.json">Preset 5.7</a>
           </div>
         </div>
       </div>
@@ -491,6 +505,14 @@
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">6.0</h3>
+          <ul>
+            <li>Trimmed main prompt to save tokens (again)</li>
+            <li>Rewrote Difficulty Increase prompt so you can theoretically turn it on forever, but still have the characters get hard-earned character development and softening</li>
+            <li>Fixed all regexes</li>
+            <li>Ensured Opus 4.6 doesn't yap forever</li>
+          </ul>
+
           <h3 class="changelog-version">5.7</h3>
           <ul>
             <li>Rewrote the whole main prompt</li>
@@ -559,5 +581,68 @@
   <a class="lightbox" id="lb-8" href="#close"><img src="preset/screenshots/inventory.png" alt="Inventory"></a>
   <a class="lightbox" id="lb-9" href="#close"><img src="preset/screenshots/reputation-achievements.png" alt="Reputation &amp; Achievements"></a>
   <a class="lightbox" id="lb-10" href="#close"><img src="preset/screenshots/cyoa-choices.png" alt="CYOA Choices"></a>
+
+  <script>
+    (function () {
+      const list = document.getElementById("previous-versions-list");
+      if (!list) return;
+
+      const owner = "platberlitz";
+      const repo = "platberlitz.github.io";
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/preset`;
+      const presetPattern = /^Pura's Director Preset ([0-9]+(?:\.[0-9]+)*)\.json$/;
+
+      function compareVersionsDesc(a, b) {
+        const aParts = a.split(".").map(Number);
+        const bParts = b.split(".").map(Number);
+        const len = Math.max(aParts.length, bParts.length);
+
+        for (let i = 0; i < len; i += 1) {
+          const aVal = aParts[i] || 0;
+          const bVal = bParts[i] || 0;
+          if (aVal !== bVal) return bVal - aVal;
+        }
+
+        return 0;
+      }
+
+      fetch(apiUrl, { headers: { Accept: "application/vnd.github+json" } })
+        .then((response) => {
+          if (!response.ok) throw new Error("Failed to load preset versions");
+          return response.json();
+        })
+        .then((files) => {
+          const versions = files
+            .filter((file) => file && file.type === "file" && presetPattern.test(file.name))
+            .map((file) => {
+              const match = file.name.match(presetPattern);
+              return { name: file.name, version: match ? match[1] : "" };
+            })
+            .sort((a, b) => compareVersionsDesc(a.version, b.version));
+
+          const previous = versions.slice(1);
+          if (!previous.length) {
+            list.innerHTML = "";
+            const message = document.createElement("span");
+            message.className = "preset-version";
+            message.textContent = "No previous versions yet.";
+            list.appendChild(message);
+            return;
+          }
+
+          list.innerHTML = "";
+          previous.forEach((item) => {
+            const link = document.createElement("a");
+            link.href = `preset/${encodeURIComponent(item.name)}`;
+            link.download = item.name;
+            link.textContent = `Preset ${item.version}`;
+            list.appendChild(link);
+          });
+        })
+        .catch(() => {
+          // Keep fallback link(s) already rendered in HTML.
+        });
+    }());
+  </script>
 </body>
 </html>
