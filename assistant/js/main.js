@@ -1549,6 +1549,9 @@ function extractImages(msg) {
 function renderMarkdown(text) {
   if (!text) return '';
 
+  // Normalize line endings early so markdown regexes behave consistently.
+  text = String(text).replace(/\r\n?/g, '\n');
+
   function decodeBasicEntities(input) {
     // Decode up to a few passes to handle doubly-encoded model output like &amp;lt;strong&amp;gt;
     let out = String(input || '');
@@ -1647,10 +1650,20 @@ function renderMarkdown(text) {
   s = s.replace(/~~(.+?)~~/g, '<del>$1</del>');
   s = s.replace(/==(.+?)==/g, '<mark>$1</mark>');
   s = s.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-  s = s.replace(/^[\-\*] (.+)$/gm, '<li class="ul-li">$1</li>');
-  s = s.replace(/((?:<li class="ul-li">.*<\/li>\n*)+)/g, function(m) { return '<ul>' + m.replace(/ class="ul-li"/g, '') + '</ul>'; });
-  s = s.replace(/^\d+\. (.+)$/gm, '<li class="ol-li">$1</li>');
-  s = s.replace(/((?:<li class="ol-li">.*<\/li>\n*)+)/g, function(m) { return '<ol>' + m.replace(/ class="ol-li"/g, '') + '</ol>'; });
+  s = s.replace(/^[ \t]*[\-\*] (.+)$/gm, '<li class="ul-li">$1</li>');
+  s = s.replace(/((?:<li class="ul-li">.*<\/li>(?:\n[ \t]*)*)+)/g, function(m) {
+    const items = m
+      .replace(/ class="ul-li"/g, '')
+      .replace(/\n[ \t]*/g, '');
+    return '<ul>' + items + '</ul>';
+  });
+  s = s.replace(/^[ \t]*\d+[.)] (.+)$/gm, '<li class="ol-li">$1</li>');
+  s = s.replace(/((?:<li class="ol-li">.*<\/li>(?:\n[ \t]*)*)+)/g, function(m) {
+    const items = m
+      .replace(/ class="ol-li"/g, '')
+      .replace(/\n[ \t]*/g, '');
+    return '<ol>' + items + '</ol>';
+  });
   s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="chat-inline-img chat-gen-img" loading="lazy">');
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
   s = s.replace(/^---$/gm, '<hr>');
