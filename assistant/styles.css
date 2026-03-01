@@ -781,6 +781,21 @@ body {
   .input-row textarea, .modal input, .modal textarea, .modal select, .sidebar-search input, .chat-search-bar input, .msg-edit-textarea { font-size: 16px; }
 }
 
+/* iOS Safari: favor readable multiline code over horizontal single-line feel */
+@supports (-webkit-touch-callout: none) {
+  .msg-bubble pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    -webkit-overflow-scrolling: touch;
+  }
+  .msg-bubble pre code {
+    white-space: inherit;
+    overflow-wrap: inherit;
+    word-break: inherit;
+  }
+}
+
 /* Mobile sidebar overlay */
 .sidebar-overlay {
   display: none;

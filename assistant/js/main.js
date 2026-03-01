@@ -1806,7 +1806,10 @@ async function renderMermaidBlocks(container) {
 function postRenderProcessing(bubble) {
   addCodeCopyButtons(bubble);
   highlightCodeBlocks(bubble);
-  addLineNumbers(bubble);
+  // Line-number DOM rewriting can be fragile on some mobile WebKit builds.
+  // Keep desktop behavior, skip on small screens for more robust code rendering.
+  const smallScreen = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+  if (!smallScreen) addLineNumbers(bubble);
   renderMermaidBlocks(bubble);
 }
 
