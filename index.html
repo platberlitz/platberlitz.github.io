@@ -126,6 +126,7 @@
 
     .tab-labels {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
       justify-content: center;
       margin-bottom: 1.5rem;
@@ -137,6 +138,8 @@
       border-radius: 999px;
       padding: 0.4rem 1.3rem;
       font-size: 0.85rem;
+      flex: 0 0 auto;
+      white-space: nowrap;
       cursor: pointer;
       transition: color 0.25s, border-color 0.25s;
       user-select: none;
