@@ -1632,12 +1632,14 @@ function renderMarkdown(text) {
   s = restoreAllowedInlineHtml(s);
   // Spoiler tags >!hidden text!<
   s = s.replace(/&gt;!([\s\S]*?)!&lt;/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
-  // Mermaid code blocks
-  s = s.replace(/```mermaid\n([\s\S]*?)```/g, (_, code) =>
+  // Mermaid code blocks (supports ```mermaid\n...\n``` and ```mermaid ...```)
+  s = s.replace(/```mermaid(?:[ \t]*\n|[ \t]+)?([\s\S]*?)```/gi, (_, code) =>
     '<div class="mermaid-container"><pre class="mermaid">' + code.trimEnd() + '</pre></div>');
-  s = s.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+  // Generic fenced code blocks. Supports multiline and single-line fences,
+  // including cases like ```json {"a":1}``` that previously rendered as one line.
+  s = s.replace(/```([A-Za-z0-9_#+.-]*)(?:[ \t]*\n|[ \t]+)?([\s\S]*?)```/g, (_, lang, code) =>
     '<pre><code' + (lang ? ' class="language-' + lang + '"' : '') + '>' + code.trimEnd() + '</code></pre>');
-  s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  s = s.replace(/(?<!`)`([^`\n]+)`(?!`)/g, '<code>$1</code>');
   s = s.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
   s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
   s = s.replace(/^## (.+)$/gm, '<h2>$1</h2>');
