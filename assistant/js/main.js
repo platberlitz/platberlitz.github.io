@@ -491,27 +491,106 @@ function loadCachedModels(target) {
 // ============================================
 // Memory System
 // ============================================
-async function loadMemories() {
-  try {
-    const mems = await idbGetAll('memories');
-    if (mems.length > 0) return mems;
-  } catch(e) {}
-  try {
-    const mems = JSON.parse(localStorage.getItem('assistantMemories') || '[]');
-    if (mems.length > 0) {
-      await idbPutAll('memories', mems);
-      localStorage.removeItem('assistantMemories');
+function parseEnabledSetting(value) {
+  if (typeof value === 'boolean') return value;
+  if (value === null || value === undefined) return false;
+  return String(value).trim().toLowerCase() === 'true';
+}
+
+function isMemoryEnabled() {
+  return parseEnabledSetting(localStorage.getItem('llmMemoryEnabled'));
+}
+
+function normalizeMemoryEntry(raw, index, seedTimestamp) {
+  let text = '';
+  let id = '';
+  let createdAt = seedTimestamp + index;
+
+  if (typeof raw === 'string') {
+    text = raw.trim();
+  } else if (raw && typeof raw === 'object') {
+    if (typeof raw.text === 'string') text = raw.text.trim();
+    else if (typeof raw.content === 'string') text = raw.content.trim();
+    if (typeof raw.id === 'string') id = raw.id.trim();
+    const rawCreatedAt = Number(raw.createdAt);
+    if (Number.isFinite(rawCreatedAt) && rawCreatedAt > 0) createdAt = rawCreatedAt;
+  }
+
+  if (!text) return null;
+  if (!id) id = 'mem_' + createdAt + '_' + index;
+  return { id, text, createdAt };
+}
+
+function normalizeMemoryList(rawList) {
+  if (!Array.isArray(rawList)) return { memories: [], changed: rawList !== null && rawList !== undefined };
+
+  const seedTimestamp = Date.now();
+  const usedIds = new Set();
+  const normalized = [];
+  let changed = false;
+
+  rawList.forEach((raw, index) => {
+    const entry = normalizeMemoryEntry(raw, index, seedTimestamp);
+    if (!entry) {
+      changed = true;
+      return;
     }
-    return mems;
+    if (usedIds.has(entry.id)) {
+      entry.id = entry.id + '_' + index;
+      changed = true;
+    }
+    usedIds.add(entry.id);
+    normalized.push(entry);
+
+    const isObject = raw && typeof raw === 'object' && !Array.isArray(raw);
+    if (!isObject) {
+      changed = true;
+      return;
+    }
+    const rawText = typeof raw.text === 'string' ? raw.text : '';
+    const rawId = typeof raw.id === 'string' ? raw.id : '';
+    const rawCreatedAt = Number(raw.createdAt);
+    if (rawText !== entry.text || rawId !== entry.id || !Number.isFinite(rawCreatedAt) || rawCreatedAt !== entry.createdAt) {
+      changed = true;
+    }
+  });
+
+  if (normalized.length !== rawList.length) changed = true;
+  return { memories: normalized, changed };
+}
+
+async function loadMemories() {
+  if (db) {
+    try {
+      const idbRaw = await idbGetAll('memories');
+      const normalizedIdb = normalizeMemoryList(idbRaw);
+      if (normalizedIdb.changed) await saveMemories(normalizedIdb.memories);
+      if (normalizedIdb.memories.length > 0) return normalizedIdb.memories;
+    } catch(e) {}
+  }
+
+  try {
+    const legacyRaw = JSON.parse(localStorage.getItem('assistantMemories') || '[]');
+    const normalizedLegacy = normalizeMemoryList(legacyRaw);
+    if (normalizedLegacy.memories.length > 0 || normalizedLegacy.changed) {
+      await saveMemories(normalizedLegacy.memories);
+      if (db) localStorage.removeItem('assistantMemories');
+    }
+    return normalizedLegacy.memories;
   } catch(e) { return []; }
 }
+
 async function saveMemories(memories) {
-  if (!db) return;
-  await idbClear('memories');
-  await idbPutAll('memories', memories);
+  const normalized = normalizeMemoryList(memories).memories;
+  if (!db) {
+    localStorage.setItem('assistantMemories', JSON.stringify(normalized));
+    return;
+  }
+  await idbPutAll('memories', normalized);
 }
+
 async function getMemoryPrompt() {
-  if (localStorage.getItem('llmMemoryEnabled') !== 'true') return '';
+  if (!isMemoryEnabled()) return '';
   const memories = await loadMemories();
   if (memories.length === 0) return '';
   return 'User memories (facts learned from previous conversations):\n' +
@@ -547,7 +626,7 @@ async function callApiNonStreaming(messages) {
 }
 
 async function extractMemories(conversationMessages) {
-  if (localStorage.getItem('llmMemoryEnabled') !== 'true') return;
+  if (!isMemoryEnabled()) return;
 
   const existing = await loadMemories();
   const existingText = existing.map(m => '- ' + m.text).join('\n') || '(none yet)';
@@ -2425,7 +2504,7 @@ function openSettings() {
   document.getElementById('setSearchApiUrl').value = localStorage.getItem('llmSearchApiUrl') || '';
   document.getElementById('setSearchApiKey').value = localStorage.getItem('llmSearchApiKey') || '';
   document.getElementById('setCorsProxy').value = getCorsProxyUrl();
-  document.getElementById('setMemory').checked = localStorage.getItem('llmMemoryEnabled') === 'true';
+  document.getElementById('setMemory').checked = isMemoryEnabled();
   document.getElementById('setHoldScreenshot').checked = localStorage.getItem('llmHoldScreenshot') === 'true';
 
   renderProfileSelect();
@@ -2516,7 +2595,7 @@ function applyProfileToInputs(settings) {
   document.getElementById('setSearchApiUrl').value = settings.llmSearchApiUrl || '';
   document.getElementById('setSearchApiKey').value = settings.llmSearchApiKey || '';
   document.getElementById('setCorsProxy').value = normalizeCorsProxyUrl(settings.llmCorsProxy);
-  document.getElementById('setMemory').checked = settings.llmMemoryEnabled === 'true';
+  document.getElementById('setMemory').checked = parseEnabledSetting(settings.llmMemoryEnabled);
   document.getElementById('setHoldScreenshot').checked = settings.llmHoldScreenshot === 'true';
   document.getElementById('setInputCost').value = settings.llmInputCost || '';
   document.getElementById('setOutputCost').value = settings.llmOutputCost || '';
