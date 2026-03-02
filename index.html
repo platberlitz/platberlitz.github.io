@@ -315,6 +315,65 @@
       font-weight: 300;
     }
 
+    .theme-colors {
+      display: inline-flex;
+      gap: 0.3rem;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .color-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid #2a2a3a;
+      display: inline-block;
+    }
+
+    /* Theme sub-tabs */
+    .theme-tabs {
+      position: relative;
+    }
+
+    .theme-tabs input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .theme-tab-labels {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .theme-tab-labels label {
+      color: #5a7a66;
+      border: 1px solid #1a1a2a;
+      border-radius: 999px;
+      padding: 0.4rem 1.3rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: color 0.25s, border-color 0.25s;
+      user-select: none;
+    }
+
+    .theme-tab-labels label:hover {
+      color: #7a9e8a;
+      border-color: #2a2a3a;
+    }
+
+    #theme-dark:checked ~ .theme-tab-labels label[for="theme-dark"],
+    #theme-light:checked ~ .theme-tab-labels label[for="theme-light"] {
+      color: #a8ccb8;
+      border-color: #3a3a5a;
+    }
+
+    .theme-tab-content { display: none; }
+    #theme-dark:checked ~ .theme-tab-content-dark { display: block; }
+    #theme-light:checked ~ .theme-tab-content-light { display: block; }
+
     /* Tracker gallery */
 
     .tracker-grid {
@@ -540,33 +599,645 @@
       </div>
 
       <div class="tab-content tab-content-themes">
-        <div class="extensions-list">
+        <div class="theme-tabs">
+          <input type="radio" name="theme-tab" id="theme-dark" checked>
+          <input type="radio" name="theme-tab" id="theme-light">
+          <div class="theme-tab-labels">
+            <label for="theme-dark">Dark Themes</label>
+            <label for="theme-light">Light Themes</label>
+          </div>
+
+          <div class="theme-tab-content theme-tab-content-dark">
+            <div class="extensions-list">
           <div class="ext-item">
-            <div class="ext-name">Everforest Dark</div>
-            <div class="ext-desc">Based on the <a href="https://github.com/sainnhe/everforest" class="inline-link">Everforest</a> color palette</div>
+            <div class="ext-name">
+              Amber Dusk
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(250, 189, 47, 1)"></span>
+                <span class="color-swatch" style="background: rgba(255, 219, 77, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Warm golden amber tones on dark brown background</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Amber%20Dusk.json" download="Amber Dusk.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Burnt Orange
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(199, 191, 186, 1)"></span>
+                <span class="color-swatch" style="background: rgba(254, 142, 60, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Earthy orange accents with neutral grey tones</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Burnt%20Orange.json" download="Burnt Orange.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Catppuccin Mocha
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(192, 177, 209, 1)"></span>
+                <span class="color-swatch" style="background: rgba(250, 179, 135, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Warm, pastel dark theme with purple and peach accents</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Catppuccin%20Mocha.json" download="Catppuccin Mocha.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Cerulean
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(103, 176, 232, 1)"></span>
+                <span class="color-swatch" style="background: rgba(133, 206, 255, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Sky blue and cyan hues for a calm atmosphere</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Cerulean.json" download="Cerulean.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Cinder
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(217, 217, 217, 1)"></span>
+                <span class="color-swatch" style="background: rgba(247, 247, 247, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Warm monochrome greys with subtle earthy undertones</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Cinder.json" download="Cinder.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Dracula
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(225, 215, 239, 0.74)"></span>
+                <span class="color-swatch" style="background: rgba(255, 121, 198, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Popular dark theme with purple and pink highlights</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Dracula.json" download="Dracula.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Everforest Dark
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(184, 192, 173, 1)"></span>
+                <span class="color-swatch" style="background: rgba(230, 152, 117, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Comfortable dark green theme inspired by forests</div>
             <div class="preset-downloads" style="margin-top: 0.75rem;">
               <a href="preset/Everforest%20Dark.json" download="Everforest Dark.json">Download Theme</a>
             </div>
           </div>
           <div class="ext-item">
-            <div class="ext-name">Verdant</div>
-            <div class="ext-desc">Deep dark theme with vivid green accents &mdash; easy on the eyes, easy on the mind</div>
+            <div class="ext-name">
+              Glacier
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(136, 192, 208, 1)"></span>
+                <span class="color-swatch" style="background: rgba(166, 222, 238, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Icy blue-cyan palette inspired by Nordic landscapes</div>
             <div class="preset-downloads" style="margin-top: 0.75rem;">
-              <a href="preset/Verdant.json" download="Verdant.json">Download Theme</a>
+              <a href="preset/Glacier.json" download="Glacier.json">Download Theme</a>
             </div>
           </div>
           <div class="ext-item">
-            <div class="ext-name">Hacker Terminal</div>
+            <div class="ext-name">
+              Gruvbox Dark
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(202, 192, 183, 1)"></span>
+                <span class="color-swatch" style="background: rgba(250, 189, 47, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Retro groove dark theme with warm, muted colors</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Gruvbox%20Dark.json" download="Gruvbox Dark.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Hacker-Terminal
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(0, 255, 65, 1)"></span>
+                <span class="color-swatch" style="background: rgba(50, 255, 100, 1)"></span>
+              </span>
+            </div>
             <div class="ext-desc">Classic green-on-black terminal aesthetic</div>
             <div class="preset-downloads" style="margin-top: 0.75rem;">
               <a href="preset/Hacker-Terminal.json" download="Hacker-Terminal.json">Download Theme</a>
             </div>
           </div>
           <div class="ext-item">
-            <div class="ext-name">Cinder</div>
-            <div class="ext-desc">Warm monochrome greys with subtle earthy undertones</div>
+            <div class="ext-name">
+              Lavender
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(196, 183, 216, 1)"></span>
+                <span class="color-swatch" style="background: rgba(219, 198, 250, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Soft purple and lavender for gentle readability</div>
             <div class="preset-downloads" style="margin-top: 0.75rem;">
-              <a href="preset/Cinder.json" download="Cinder.json">Download Theme</a>
+              <a href="preset/Lavender.json" download="Lavender.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Lime
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(137, 229, 116, 1)"></span>
+                <span class="color-swatch" style="background: rgba(167, 255, 146, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Bright lime green on dark green base</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Lime.json" download="Lime.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Magenta
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(249, 38, 114, 1)"></span>
+                <span class="color-swatch" style="background: rgba(255, 68, 144, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Hot pink and magenta for bold contrast</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Magenta.json" download="Magenta.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Mint
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(131, 179, 142, 1)"></span>
+                <span class="color-swatch" style="background: rgba(161, 209, 172, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Fresh mint green with soothing undertones</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Mint.json" download="Mint.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Monochrome
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(252, 252, 252, 1)"></span>
+                <span class="color-swatch" style="background: rgba(255, 255, 255, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Classic white on black terminal aesthetic</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Monochrome.json" download="Monochrome.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Neon Abyss
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(171, 177, 166, 1)"></span>
+                <span class="color-swatch" style="background: rgba(110, 200, 39, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Bright lime greens on deep blue background</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Neon%20Abyss.json" download="Neon Abyss.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Neon Yellow
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(250, 218, 22, 1)"></span>
+                <span class="color-swatch" style="background: rgba(255, 248, 52, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Electric yellow neon on pure black</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Neon%20Yellow.json" download="Neon Yellow.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Nord
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(136, 192, 208, 1)"></span>
+                <span class="color-swatch" style="background: rgba(235, 203, 139, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Arctic, north-bluish color palette</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Nord.json" download="Nord.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Plum
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(196, 180, 199, 1)"></span>
+                <span class="color-swatch" style="background: rgba(160, 63, 179, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Deep purple and plum for rich contrast</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Plum.json" download="Plum.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Rose
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(238, 83, 150, 1)"></span>
+                <span class="color-swatch" style="background: rgba(255, 113, 180, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Pink and rose tones with warm character</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Rose.json" download="Rose.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Rosé Pine
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(235, 188, 186, 1)"></span>
+                <span class="color-swatch" style="background: rgba(246, 193, 119, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">All natural pine, faux fur and a bit of soho vibes</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Ros%C3%A9%20Pine.json" download="Rosé Pine.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sage
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(183, 199, 190, 1)"></span>
+                <span class="color-swatch" style="background: rgba(179, 241, 205, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Muted mint and sage green palette</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sage.json" download="Sage.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Slate
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(91, 107, 118, 1)"></span>
+                <span class="color-swatch" style="background: rgba(121, 137, 148, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Cool grey-blue tones for subtle elegance</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Slate.json" download="Slate.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Solarized Dark
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(181, 137, 0, 1)"></span>
+                <span class="color-swatch" style="background: rgba(203, 75, 22, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Precision colors for machines and people</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Solarized%20Dark.json" download="Solarized Dark.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Andromeda
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(211, 203, 223, 1)"></span>
+                <span class="color-swatch" style="background: rgba(248, 152, 96, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Purple-tinted dark theme with warm accents</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Andromeda.json" download="Sonokai Andromeda.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Atlantis
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(158, 178, 184, 1)"></span>
+                <span class="color-swatch" style="background: rgba(246, 156, 94, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Blue-grey theme inspired by ocean depths</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Atlantis.json" download="Sonokai Atlantis.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Default
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(179, 195, 164, 1)"></span>
+                <span class="color-swatch" style="background: rgba(243, 150, 96, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Balanced green theme with orange accents</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Default.json" download="Sonokai Default.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Espresso
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(237, 252, 250, 1)"></span>
+                <span class="color-swatch" style="background: rgba(240, 198, 111, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Warm espresso-inspired dark theme</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Espresso.json" download="Sonokai Espresso.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Maia
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(219, 210, 239, 1)"></span>
+                <span class="color-swatch" style="background: rgba(156, 213, 123, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Purple theme with fresh green highlights</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Maia.json" download="Sonokai Maia.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Shusia
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(246, 228, 233, 1)"></span>
+                <span class="color-swatch" style="background: rgba(239, 144, 98, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Pink-tinted theme with warm orange</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Shusia.json" download="Sonokai Shusia.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Tokyo Night
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(122, 162, 247, 1)"></span>
+                <span class="color-swatch" style="background: rgba(224, 175, 104, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Dark theme inspired by Tokyo's night lights</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Tokyo%20Night.json" download="Tokyo Night.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Verdant
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(235, 245, 235, 1)"></span>
+                <span class="color-swatch" style="background: rgba(80, 220, 100, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Deep dark theme with vivid green accents</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Verdant.json" download="Verdant.json">Download Theme</a>
+            </div>
+          </div>
+            </div>
+          </div>
+
+          <div class="theme-tab-content theme-tab-content-light">
+            <div class="extensions-list">
+          <div class="ext-item">
+            <div class="ext-name">
+              Verdant Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(70, 85, 70, 1)"></span>
+                <span class="color-swatch" style="background: rgba(50, 110, 60, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Calming light green theme for focus</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Verdant%20Light.json" download="Verdant Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Catppuccin Latte
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(136, 57, 239, 1)"></span>
+                <span class="color-swatch" style="background: rgba(254, 100, 11, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Soft, warm light theme with vibrant purple and orange</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Catppuccin%20Latte.json" download="Catppuccin Latte.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Dracula Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(124, 58, 237, 1)"></span>
+                <span class="color-swatch" style="background: rgba(217, 70, 168, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light variant with bold purple and pink accents</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Dracula%20Light.json" download="Dracula Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Everforest Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(141, 161, 1, 1)"></span>
+                <span class="color-swatch" style="background: rgba(245, 125, 38, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Natural light theme with earthy green tones</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Everforest%20Light.json" download="Everforest Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Gruvbox Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(214, 93, 14, 1)"></span>
+                <span class="color-swatch" style="background: rgba(215, 153, 33, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Warm light theme with earthy orange and yellow</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Gruvbox%20Light.json" download="Gruvbox Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Hacker-Terminal-Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(60, 80, 60, 1)"></span>
+                <span class="color-swatch" style="background: rgba(50, 100, 60, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light variant of classic terminal green</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Hacker-Terminal-Light.json" download="Hacker-Terminal-Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Nord Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(94, 129, 172, 1)"></span>
+                <span class="color-swatch" style="background: rgba(208, 135, 112, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light variant with cool blue and warm accents</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Nord%20Light.json" download="Nord Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Rosé Pine Dawn
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(215, 130, 126, 1)"></span>
+                <span class="color-swatch" style="background: rgba(234, 157, 52, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light variant with warm rose and amber tones</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Ros%C3%A9%20Pine%20Dawn.json" download="Rosé Pine Dawn.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Solarized Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(181, 137, 0, 1)"></span>
+                <span class="color-swatch" style="background: rgba(203, 75, 22, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light variant with carefully chosen contrast</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Solarized%20Light.json" download="Solarized Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Andromeda Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(123, 82, 196, 1)"></span>
+                <span class="color-swatch" style="background: rgba(192, 112, 48, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light purple theme with orange highlights</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Andromeda%20Light.json" download="Sonokai Andromeda Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Atlantis Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(42, 138, 175, 1)"></span>
+                <span class="color-swatch" style="background: rgba(192, 112, 40, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light cyan theme with warm orange</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Atlantis%20Light.json" download="Sonokai Atlantis Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Default Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(90, 140, 42, 1)"></span>
+                <span class="color-swatch" style="background: rgba(192, 106, 42, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light green theme with earthy tones</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Default%20Light.json" download="Sonokai Default Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Espresso Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(42, 154, 144, 1)"></span>
+                <span class="color-swatch" style="background: rgba(160, 133, 32, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light teal theme with golden accents</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Espresso%20Light.json" download="Sonokai Espresso Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Maia Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(122, 85, 200, 1)"></span>
+                <span class="color-swatch" style="background: rgba(90, 138, 40, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light purple with vibrant green accents</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Maia%20Light.json" download="Sonokai Maia Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Sonokai Shusia Light
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(196, 48, 90, 1)"></span>
+                <span class="color-swatch" style="background: rgba(192, 104, 48, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light rose theme with orange highlights</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Sonokai%20Shusia%20Light.json" download="Sonokai Shusia Light.json">Download Theme</a>
+            </div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name">
+              Tokyo Night Day
+              <span class="theme-colors">
+                <span class="color-swatch" style="background: rgba(46, 125, 233, 1)"></span>
+                <span class="color-swatch" style="background: rgba(177, 92, 0, 1)"></span>
+              </span>
+            </div>
+            <div class="ext-desc">Light theme with vibrant blue and orange</div>
+            <div class="preset-downloads" style="margin-top: 0.75rem;">
+              <a href="preset/Tokyo%20Night%20Day.json" download="Tokyo Night Day.json">Download Theme</a>
+            </div>
+          </div>
             </div>
           </div>
         </div>
