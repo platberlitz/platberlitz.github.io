@@ -2407,6 +2407,8 @@ function openSettings() {
   renderPromptEntries();
   const conv = getActiveConv();
   document.getElementById('setPersona').value = (conv && conv.persona) || localStorage.getItem('llmPersona') || '';
+  document.getElementById('setEnableStMacros').checked = localStorage.getItem('llmEnableStMacros') === 'true';
+  document.getElementById('setRpUserName').value = localStorage.getItem('llmRpUserName') || '';
   document.getElementById('setExtraParams').value = localStorage.getItem('llmExtraParams') || '';
   document.getElementById('setExcludeParams').value = localStorage.getItem('llmExcludeParams') || '';
   document.getElementById('setPrefill').value = localStorage.getItem('llmPrefill') || '';
@@ -2494,7 +2496,9 @@ function collectProfileSettingsFromInputs() {
     llmMemoryEnabled: document.getElementById('setMemory').checked ? 'true' : 'false',
     llmHoldScreenshot: document.getElementById('setHoldScreenshot').checked ? 'true' : 'false',
     llmInputCost: document.getElementById('setInputCost').value.trim(),
-    llmOutputCost: document.getElementById('setOutputCost').value.trim()
+    llmOutputCost: document.getElementById('setOutputCost').value.trim(),
+    llmEnableStMacros: document.getElementById('setEnableStMacros').checked ? 'true' : 'false',
+    llmRpUserName: document.getElementById('setRpUserName').value.trim()
   };
 }
 
@@ -2516,6 +2520,8 @@ function applyProfileToInputs(settings) {
   document.getElementById('setHoldScreenshot').checked = settings.llmHoldScreenshot === 'true';
   document.getElementById('setInputCost').value = settings.llmInputCost || '';
   document.getElementById('setOutputCost').value = settings.llmOutputCost || '';
+  document.getElementById('setEnableStMacros').checked = settings.llmEnableStMacros === 'true';
+  document.getElementById('setRpUserName').value = settings.llmRpUserName || '';
 
   const model = settings.llmModel || '';
   document.getElementById('setModelManual').value = model;
@@ -2625,6 +2631,8 @@ function saveSettings() {
     // Only update global default if this is not a character-card conversation
     if (!c || !c.characterCard) localStorage.setItem('llmPersona', personaVal);
   }
+  localStorage.setItem('llmEnableStMacros', document.getElementById('setEnableStMacros').checked ? 'true' : 'false');
+  localStorage.setItem('llmRpUserName', document.getElementById('setRpUserName').value.trim());
   localStorage.setItem('llmPrefill', document.getElementById('setPrefill').value);
   localStorage.setItem('llmStreaming', document.getElementById('setStreaming').checked ? 'true' : 'false');
   localStorage.setItem('llmEnterSend', document.getElementById('setEnterSend').checked ? 'true' : 'false');
@@ -3041,12 +3049,54 @@ function updatePromptEntry(id, field, value) {
   savePromptEntries(entries);
 }
 
+function isStMacroEnabled() {
+  return localStorage.getItem('llmEnableStMacros') === 'true';
+}
+
+function getRpMacroContext(conv) {
+  const card = (conv && conv.characterCard) || {};
+  const userName = (localStorage.getItem('llmRpUserName') || '').trim() || 'User';
+  const charName = (typeof card.name === 'string' && card.name.trim()) ||
+    (conv && typeof conv.title === 'string' && conv.title.trim()) ||
+    'Assistant';
+  return {
+    user: userName,
+    username: userName,
+    user_name: userName,
+    char: charName,
+    char_name: charName,
+    charname: charName,
+    character: charName,
+    character_name: charName,
+    bot: charName,
+    bot_name: charName,
+    assistant: charName,
+    description: card.description || '',
+    personality: card.personality || '',
+    scenario: card.scenario || ''
+  };
+}
+
+function applyStMacros(text, context) {
+  if (typeof text !== 'string' || !text) return text;
+  const ctx = context || {};
+  return text.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (match, rawKey) => {
+    const key = String(rawKey || '').toLowerCase();
+    if (!Object.prototype.hasOwnProperty.call(ctx, key)) return match;
+    const value = ctx[key];
+    return value == null ? '' : String(value);
+  });
+}
+
 async function buildSystemMessages(conv) {
   const msgs = [];
+  const macroCtx = isStMacroEnabled() ? getRpMacroContext(conv) : null;
+  const resolveText = (text) => macroCtx ? applyStMacros(text, macroCtx) : text;
   // Prompt entries (never overridden by character cards)
   const entries = loadPromptEntries();
   entries.forEach(entry => {
-    if (entry.enabled && entry.content.trim()) msgs.push({ role: 'system', content: entry.content });
+    const content = resolveText(entry.content);
+    if (entry.enabled && typeof content === 'string' && content.trim()) msgs.push({ role: 'system', content });
   });
   // Fallback if completely empty
   if (msgs.length === 0) {
@@ -3054,16 +3104,16 @@ async function buildSystemMessages(conv) {
   }
   // Character card system_prompt (actual instructions from the card)
   if (conv && conv.characterSystemPrompt && conv.characterSystemPrompt.trim()) {
-    msgs.push({ role: 'system', content: conv.characterSystemPrompt });
+    msgs.push({ role: 'system', content: resolveText(conv.characterSystemPrompt) });
   }
   // Character description — who the assistant is (from character cards)
   if (conv && conv.characterDescription && conv.characterDescription.trim()) {
-    msgs.push({ role: 'system', content: 'The following describes your character \u2014 this is who YOU are, not the user:\n\n' + conv.characterDescription });
+    msgs.push({ role: 'system', content: 'The following describes your character \u2014 this is who YOU are, not the user:\n\n' + resolveText(conv.characterDescription) });
   }
   // Persona — who the user is
   const persona = (conv && conv.persona) || localStorage.getItem('llmPersona') || '';
   if (persona.trim()) {
-    msgs.push({ role: 'system', content: 'The following describes the user you are speaking with:\n\n' + persona });
+    msgs.push({ role: 'system', content: 'The following describes the user you are speaking with:\n\n' + resolveText(persona) });
   }
   // Conversation summary
   if (conv && conv.summary) {
@@ -5993,10 +6043,12 @@ async function importCharacterCard(event) {
 
     // Add first message if present
     if (card.first_mes) {
+      const firstMesTemplate = typeof card.first_mes === 'string' ? card.first_mes : String(card.first_mes);
+      const firstMes = isStMacroEnabled() ? applyStMacros(firstMesTemplate, getRpMacroContext(conv)) : firstMesTemplate;
       conv.messages.push({
         role: 'assistant',
-        content: card.first_mes,
-        swipes: [card.first_mes],
+        content: firstMes,
+        swipes: [firstMes],
         swipeIndex: 0
       });
     }

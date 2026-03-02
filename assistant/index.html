@@ -203,6 +203,11 @@
       <label for="setPersona">Persona</label>
       <small style="opacity:.7;margin-bottom:4px;display:block">Describes who you (the user) are. Sent as context to the assistant.</small>
       <textarea id="setPersona" rows="3" placeholder="e.g. I am a traveling merchant named Kael…"></textarea>
+      <label class="toggle-row">
+        <input type="checkbox" id="setEnableStMacros"> Enable SillyTavern macro conversion
+      </label>
+      <label for="setRpUserName">Roleplay User Name</label>
+      <input type="text" id="setRpUserName" placeholder="Used for {{user}}; default is User">
       <label style="display:flex;align-items:center;justify-content:space-between">
         Prompt Entries
         <button class="model-refresh-btn" onclick="addPromptEntry()" title="Add prompt entry">+</button>
