@@ -19,8 +19,8 @@
     {
         "id": "92bffb9c-852d-4d93-b448-e68eff11189c",
         "scriptName": "Replace Support NPC",
-        "findRegex": "/\\[NPC:SUPPORT\\|(.*?)\\]\\n*b:\\s*(.*?)\\n+a:\\s*(.*?)\\n+p:\\s*(.*?)\\n+h:\\s*(.*?)(?:\\n*\\[\\/NPC\\])?(?=\\n|$)/g",
-        "replaceString": "<details style=\"margin:8px 0\"><summary style=\"padding:6px 10px;background:rgba(40,44,52,0.8);border-radius:6px;border:1px solid #6272a4;color:#8be9fd;font-family:monospace;font-size:10px;cursor:pointer\">📋 $1 ▼</summary><div style=\"padding:10px;background:rgba(40,44,52,0.85);border-radius:0 0 6px 6px;border:1px solid #6272a4;border-top:none;font-size:10px;line-height:1.5\"><span style=\"color:#ff79c6\">⬡</span> <span style=\"color:#f8f8f2\">$2</span><br/><span style=\"color:#ffb86c\">⬡</span> <span style=\"color:#f8f8f2\">$3</span><br/><span style=\"color:#50fa7b\">⬡</span> <span style=\"color:#f8f8f2\">$4</span><br/><span style=\"color:#f1fa8c\">⬡</span> <span style=\"color:#f8f8f2\">$5</span></div></details>",
+        "findRegex": "/\\[NPC:SUPPORT\\|(.*?)\\]\\n*b:\\s*(.*?)(?:\\n+a:\\s*(.*?))?(?:\\n+p:\\s*(.*?))?(?:\\n+h:\\s*(.*?))?(?:\\n+r:\\s*(.*?))?(?:\\n*\\[\\/NPC\\])?(?=\\n|$)/g",
+        "replaceString": "<details style=\"margin:8px 0\"><summary style=\"padding:6px 10px;background:rgba(40,44,52,0.8);border-radius:6px;border:1px solid #6272a4;color:#8be9fd;font-family:monospace;font-size:10px;cursor:pointer\">📋 $1 ▼</summary><div style=\"padding:10px;background:rgba(40,44,52,0.85);border-radius:0 0 6px 6px;border:1px solid #6272a4;border-top:none;font-size:10px;line-height:1.5\"><span style=\"color:#ff79c6\">⬡</span> <span style=\"color:#f8f8f2\">$2</span><br/><span style=\"color:#ffb86c\">⬡</span> <span style=\"color:#f8f8f2\">$3</span><br/><span style=\"color:#50fa7b\">⬡</span> <span style=\"color:#f8f8f2\">$4</span><br/><span style=\"color:#f1fa8c\">⬡</span> <span style=\"color:#f8f8f2\">$5</span><br/><span style=\"color:#ff874c\">⬡</span> <span style=\"color:#f8f8f2\">$6</span> </div></details>",
         "trimStrings": [],
         "placement": [
             2
@@ -71,7 +71,7 @@
         "id": "b454df61-2130-40a7-952a-eed18413613e",
         "scriptName": "Replace NPC Upgrade",
         "findRegex": "/\\[NPC:UP\\|(.*?)\\|(.*?)\\]\\n*b:\\s*(.*?)\\n+a:\\s*(.*?)\\n+p:\\s*(.*?)\\n+h:\\s*(.*?)(?:\\n*\\[\\/NPC\\])?(?=\\n|$)/g",
-        "replaceString": "<details style=\"margin:8px 0\"><summary style=\"padding:6px 10px;background:linear-gradient(90deg,rgba(40,44,52,0.85),rgba(80,250,123,0.2));border-radius:6px;border:1px solid #50fa7b;color:#50fa7b;font-family:monospace;font-size:10px;cursor:pointer\">⬆️ $1 → $2 ▼</summary>\n<div style=\"padding:10px;background:rgba(40,44,52,0.85);border-radius:0 0 6px 6px;border:1px solid #50fa7b;border-top:none;font-size:10px;line-height:1.6;color:#f8f8f2;white-space:pre-line\">$3</div></details>",
+        "replaceString": "<details style=\"margin:8px 0\"><summary style=\"padding:6px 10px;background:linear-gradient(90deg,rgba(40,44,52,0.85),rgba(80,250,123,0.2));border-radius:6px;border:1px solid #50fa7b;color:#50fa7b;font-family:monospace;font-size:10px;cursor:pointer\">⬆️ $1 → $2 ▼</summary><div style=\"padding:10px;background:rgba(40,44,52,0.85);border-radius:0 0 6px 6px;border:1px solid #50fa7b;border-top:none;font-size:10px;line-height:1.6;color:#f8f8f2;white-space:pre-line\">$3</div></details>",
         "trimStrings": [],
         "placement": [
             2
