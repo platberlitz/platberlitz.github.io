@@ -3321,14 +3321,14 @@ function renderMessages() {
       editBtn.setAttribute('aria-label', 'Edit message');
       editBtn.onclick = () => { msg._editing = true; renderMessages(); };
       actions.appendChild(editBtn);
-
-      const forkBtn = document.createElement('button');
-      forkBtn.className = 'msg-action-btn';
-      forkBtn.textContent = 'Fork';
-      forkBtn.setAttribute('aria-label', 'Fork conversation');
-      forkBtn.onclick = () => forkBranch(idx);
-      actions.appendChild(forkBtn);
     }
+
+    const forkBtn = document.createElement('button');
+    forkBtn.className = 'msg-action-btn';
+    forkBtn.textContent = 'Fork';
+    forkBtn.setAttribute('aria-label', 'Fork conversation');
+    forkBtn.onclick = () => forkBranch(idx);
+    actions.appendChild(forkBtn);
 
     if (msg.role === 'assistant' && msg.swipes && msg.swipes.length > 1) {
       const delSwipeBtn = document.createElement('button');

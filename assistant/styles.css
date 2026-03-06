@@ -463,7 +463,7 @@ body {
 /* Message edit mode */
 .msg-edit-textarea {
   width: 100%;
-  min-height: 60px;
+  min-height: 200px;
   padding: 10px;
   font-family: inherit;
   font-size: 0.95em;
@@ -779,6 +779,7 @@ body {
   .code-copy-btn { padding: 8px 12px; font-size: 0.8em; min-height: 36px; }
   .conv-item .conv-delete { padding: 8px; min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center; }
   .input-row textarea, .modal input, .modal textarea, .modal select, .sidebar-search input, .chat-search-bar input, .msg-edit-textarea { font-size: 16px; }
+  .msg-edit-textarea { min-height: 40vh; }
 }
 
 /* iOS Safari: favor readable multiline code over horizontal single-line feel */
