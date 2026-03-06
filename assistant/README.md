@@ -59,20 +59,29 @@ A privacy-first, fully client-side AI chat interface. No backend, no account —
 
 Synapse is entirely static — no build step, no dependencies, no Node.js required.
 
-### Option 1: Open directly
+### Option 1: Single-file download (easiest)
 
-Simply open `index.html` in your browser:
+Download **`synapse.html`** — a single self-contained file with all CSS and JS inlined. Just open it in your browser:
 
 ```bash
-# From the repo root
+open synapse.html          # macOS
+xdg-open synapse.html     # Linux
+start synapse.html         # Windows
+```
+
+> **Note:** Some browsers restrict `fetch()` from `file://` URLs. If you see CORS errors, use a local server instead (see Option 3).
+
+### Option 2: Open from source
+
+If you've cloned the repo, open `index.html` directly:
+
+```bash
 open assistant/index.html          # macOS
 xdg-open assistant/index.html     # Linux
 start assistant/index.html         # Windows
 ```
 
-> **Note:** Some browsers restrict `fetch()` from `file://` URLs. If you see CORS errors, use a local server instead.
-
-### Option 2: Local HTTP server
+### Option 3: Local HTTP server
 
 Any static file server works. Pick whichever you have installed:
 
@@ -93,7 +102,7 @@ php -S localhost:8000
 
 Then open the URL shown in the terminal.
 
-### Option 3: VS Code Live Server
+### Option 4: VS Code Live Server
 
 If you use VS Code, install the **Live Server** extension and right-click `assistant/index.html` → "Open with Live Server".
 
@@ -111,6 +120,7 @@ All settings are stored in `localStorage` — nothing leaves your browser except
 
 ```
 assistant/
+  synapse.html        # Standalone single-file build (download this!)
   index.html          # Single-page app shell and all modals
   styles.css          # All styles, themes, responsive design
   favicon.ico
