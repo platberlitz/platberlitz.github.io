@@ -2015,6 +2015,14 @@ function isHttpApiBase(baseUrl) {
   return /^http:\/\//i.test(String(baseUrl || '').trim());
 }
 
+function isLocalUrl(url) {
+  try {
+    const host = new URL(url).hostname;
+    return host === 'localhost' || host === '127.0.0.1' || host === '::1'
+      || host.endsWith('.local') || /^(10|172\.(1[6-9]|2\d|3[01])|192\.168)\./.test(host);
+  } catch { return false; }
+}
+
 function isNetworkLikeFetchError(err) {
   const msg = String(err?.message || '');
   const lower = msg.toLowerCase();
@@ -2030,16 +2038,40 @@ async function fetchApiWithHttpSupport(url, options, baseUrl) {
   const apiBase = String(baseUrl || '').trim();
   const corsProxy = getCorsProxyUrl();
   const tryProxyFetch = async () => fetch(corsProxy + encodeURIComponent(url), options);
+  const tryDirectFetch = async () => fetch(url, options);
 
-  // For explicit http:// API bases, proxy first to avoid mixed-content/CORS failures.
+  // For explicit http:// API bases, handle proxy vs direct intelligently.
   if (isHttpApiBase(apiBase)) {
+    // Local/private URLs: skip proxy entirely (browsers allow http://localhost from HTTPS pages).
+    if (isLocalUrl(apiBase)) {
+      try {
+        return await tryDirectFetch();
+      } catch (directErr) {
+        if (isNetworkLikeFetchError(directErr)) {
+          throw new Error('Could not connect to local API server. Make sure it is running and accessible at ' + apiBase);
+        }
+        throw directErr;
+      }
+    }
+
+    // Non-local http:// URL: try proxy first, fall back to direct on proxy errors.
     try {
-      return await tryProxyFetch();
+      const proxyResp = await tryProxyFetch();
+      // If proxy returned a proxy-level error (not an upstream API error), try direct.
+      if (!proxyResp.ok && [403, 407, 502, 503].includes(proxyResp.status)) {
+        const isApiError = await (async () => {
+          try { const j = await proxyResp.clone().json(); return j.error || j.message; } catch { return false; }
+        })();
+        if (!isApiError && window.location.protocol !== 'https:') {
+          return await tryDirectFetch();
+        }
+      }
+      return proxyResp;
     } catch (proxyErr) {
-      // If app is not HTTPS, direct may still work as a fallback.
+      // Network-level proxy failure: try direct if not HTTPS.
       if (window.location.protocol !== 'https:') {
         try {
-          return await fetch(url, options);
+          return await tryDirectFetch();
         } catch (directErr) {
           if (isNetworkLikeFetchError(directErr)) {
             throw new Error('CORS proxy and direct request both failed. Try a different CORS proxy URL in Settings > Tools, or switch the API endpoint to HTTPS.');
