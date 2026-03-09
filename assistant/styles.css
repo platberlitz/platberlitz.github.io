@@ -399,9 +399,9 @@ body {
 }
 
 /* Markdown in messages */
-.msg-bubble pre { background: var(--code-bg); padding: 10px; border-radius: 8px; overflow-x: auto; margin: 6px 0; white-space: pre; }
+.msg-bubble pre { background: var(--code-bg); padding: 10px; border-radius: 8px; overflow-x: auto; margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
 .msg-bubble code { background: var(--overlay-10); padding: 2px 5px; border-radius: 4px; font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: 0.9em; }
-.msg-bubble pre code { background: none; padding: 0; }
+.msg-bubble pre code { background: none; padding: 0; white-space: inherit; overflow-wrap: inherit; word-break: inherit; }
 .msg-bubble blockquote { border-left: 3px solid var(--accent); padding-left: 10px; color: var(--text-secondary); margin: 6px 0; }
 .msg-bubble a { color: var(--accent-hover); text-decoration: underline; }
 .msg-bubble ul, .msg-bubble ol { padding-left: 20px; margin: 4px 0; }
@@ -785,15 +785,7 @@ body {
 /* iOS Safari: favor readable multiline code over horizontal single-line feel */
 @supports (-webkit-touch-callout: none) {
   .msg-bubble pre {
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    word-break: break-word;
     -webkit-overflow-scrolling: touch;
-  }
-  .msg-bubble pre code {
-    white-space: inherit;
-    overflow-wrap: inherit;
-    word-break: inherit;
   }
 }
 

@@ -1694,6 +1694,10 @@ function renderMarkdown(text) {
     return out;
   }
 
+  function renderLiteralCode(input) {
+    return escapeHTML(decodeBasicEntities(input));
+  }
+
   // Fix UTF-8 text that was decoded as Latin-1 (smart quotes, em dashes, etc. showing as â + boxes)
   text = text.replace(/[\xC0-\xF4][\x80-\xBF]{1,3}/g, function(m) {
     try {
@@ -1702,6 +1706,26 @@ function renderMarkdown(text) {
       return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
     } catch(e) { return m; }
   });
+
+  const protectedBlocks = [];
+  const protectBlock = (block) => {
+    const idx = protectedBlocks.length;
+    protectedBlocks.push(block);
+    return '\x00BLOCK' + idx + '\x00';
+  };
+  const restoreProtectedBlock = (_, idx) => {
+    const block = protectedBlocks[parseInt(idx, 10)];
+    if (!block) return '';
+    if (block.type === 'html') return block.html;
+    if (block.type === 'mermaid') {
+      return '<div class="mermaid-container"><pre class="mermaid">' + renderLiteralCode(block.code) + '</pre></div>';
+    }
+    if (block.type === 'inline-code') {
+      return '<code>' + renderLiteralCode(block.code) + '</code>';
+    }
+    const langAttr = block.lang ? ' class="language-' + block.lang + '"' : '';
+    return '<pre><code' + langAttr + '>' + renderLiteralCode(block.code) + '</code></pre>';
+  };
 
   // Extract KaTeX math before HTML escaping
   const mathPlaceholders = [];
@@ -1723,6 +1747,16 @@ function renderMarkdown(text) {
     return false;
   };
   let s = text;
+  // Protect literal code/mermaid content before markdown regexes run.
+  s = s.replace(/```mermaid(?:[ \t]*\n|[ \t]+)?([\s\S]*?)```/gi, (_, code) =>
+    protectBlock({ type: 'mermaid', code: code.trimEnd() })
+  );
+  s = s.replace(/```([A-Za-z0-9_#+.-]*)(?:[ \t]*\n|[ \t]+)?([\s\S]*?)```/g, (_, lang, code) =>
+    protectBlock({ type: 'fence', lang, code: code.trimEnd() })
+  );
+  s = s.replace(/(?<!`)`([^`\n]+)`(?!`)/g, (_, code) =>
+    protectBlock({ type: 'inline-code', code })
+  );
   // Block math $$...$$
   s = s.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
     const idx = mathPlaceholders.length;
@@ -1743,14 +1777,6 @@ function renderMarkdown(text) {
   s = restoreAllowedInlineHtml(s);
   // Spoiler tags >!hidden text!<
   s = s.replace(/&gt;!([\s\S]*?)!&lt;/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
-  // Mermaid code blocks (supports ```mermaid\n...\n``` and ```mermaid ...```)
-  s = s.replace(/```mermaid(?:[ \t]*\n|[ \t]+)?([\s\S]*?)```/gi, (_, code) =>
-    '<div class="mermaid-container"><pre class="mermaid">' + code.trimEnd() + '</pre></div>');
-  // Generic fenced code blocks. Supports multiline and single-line fences,
-  // including cases like ```json {"a":1}``` that previously rendered as one line.
-  s = s.replace(/```([A-Za-z0-9_#+.-]*)(?:[ \t]*\n|[ \t]+)?([\s\S]*?)```/g, (_, lang, code) =>
-    '<pre><code' + (lang ? ' class="language-' + lang + '"' : '') + '>' + code.trimEnd() + '</code></pre>');
-  s = s.replace(/(?<!`)`([^`\n]+)`(?!`)/g, '<code>$1</code>');
   s = s.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
   s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
   s = s.replace(/^## (.+)$/gm, '<h2>$1</h2>');
@@ -1797,10 +1823,9 @@ function renderMarkdown(text) {
       html += '<tr>' + cells.map(c => `<td>${renderTableCell(c)}</td>`).join('') + '</tr>';
     }
     html += '</tbody></table>';
-    return html;
+    return protectBlock({ type: 'html', html });
   });
-  const parts = s.split(/(<pre>[\s\S]*?<\/pre>|<div class="mermaid-container">[\s\S]*?<\/div>|<table>[\s\S]*?<\/table>)/g);
-  s = parts.map(part => (part.startsWith('<pre>') || part.startsWith('<div class="mermaid') || part.startsWith('<table>')) ? part : part.replace(/\n/g, '<br>')).join('');
+  s = s.replace(/\n/g, '<br>');
 
   // Restore KaTeX math placeholders
   s = s.replace(/\x00MATH(\d+)\x00/g, (_, idx) => {
@@ -1810,6 +1835,7 @@ function renderMarkdown(text) {
     }
     return (ph.display ? '$$' : '$') + ph.math.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + (ph.display ? '$$' : '$');
   });
+  s = s.replace(/\x00BLOCK(\d+)\x00/g, restoreProtectedBlock);
 
   return s;
 }
