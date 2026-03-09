@@ -493,7 +493,7 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 7.0</p>
+          <p class="preset-version">Latest Version: 7.5</p>
           <div class="preset-desc">
             <ul>
               <li>Designed for shorter responses with flexible length</li>
@@ -505,7 +505,7 @@
             <p><strong>Current favourite:</strong> Gemini 3.1 Pro Preview. WizardLM 8x22B is also still pretty good! GLM 5 sounds exactly like Claude if you like that writing style for a much cheaper price.</p>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%207.0.json" download="Pura's Director Preset 7.0.json">Download Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%207.5.json" download="Pura's Director Preset 7.5.json">Download Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -516,6 +516,7 @@
           <h2 class="preset-title">Previous Preset Versions</h2>
           <p class="preset-version">Older stable releases</p>
           <div class="preset-downloads" id="previous-versions-list">
+            <a href="preset/Pura's%20Director%20Preset%207.0.json" download="Pura's Director Preset 7.0.json">Preset 7.0</a>
             <a href="preset/Pura's%20Director%20Preset%205.7.json" download="Pura's Director Preset 5.7.json">Preset 5.7</a>
           </div>
         </div>
@@ -568,6 +569,14 @@
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">7.5</h3>
+          <ul>
+            <li>Since the anti-slop is getting bigger, I significantly trimmed the main prompt.</li>
+            <li>If you aren't using a SOTA/recent model, the anti-slop is probably unnecessary, so you can turn it off.</li>
+            <li>Makes sure GLM doesn't always end on a question.</li>
+            <li>Just uh, better writing in general in my opinion.</li>
+          </ul>
+
           <h3 class="changelog-version">7.0</h3>
           <ul>
             <li>Total rewrite of main prompt and anti-slop</li>
