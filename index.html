@@ -493,7 +493,7 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 7.5</p>
+          <p class="preset-version">Latest Version: 8.0</p>
           <div class="preset-desc">
             <ul>
               <li>Designed for shorter responses with flexible length</li>
@@ -502,10 +502,11 @@
               <li>All trackers are optional; the regex set renders them, but the preset works fine without</li>
               <li>Place your reminders and response length in the formatting section or the optional user instructions toggle</li>
             </ul>
+            <p>8.0 defaults to the XML version of Banned Patterns for frontier models. If your model prefers markdown instructions, disable the XML one and enable the markdown version instead.</p>
             <p><strong>Current favourite:</strong> Gemini 3.1 Pro Preview. WizardLM 8x22B is also still pretty good! GLM 5 sounds exactly like Claude if you like that writing style for a much cheaper price.</p>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%207.5.json" download="Pura's Director Preset 7.5.json">Download Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%208.0.json" download="Pura's Director Preset 8.0.json">Download Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -516,7 +517,9 @@
           <h2 class="preset-title">Previous Preset Versions</h2>
           <p class="preset-version">Older stable releases</p>
           <div class="preset-downloads" id="previous-versions-list">
+            <a href="preset/Pura's%20Director%20Preset%207.5.json" download="Pura's Director Preset 7.5.json">Preset 7.5</a>
             <a href="preset/Pura's%20Director%20Preset%207.0.json" download="Pura's Director Preset 7.0.json">Preset 7.0</a>
+            <a href="preset/Pura's%20Director%20Preset%206.0.json" download="Pura's Director Preset 6.0.json">Preset 6.0</a>
             <a href="preset/Pura's%20Director%20Preset%205.7.json" download="Pura's Director Preset 5.7.json">Preset 5.7</a>
           </div>
         </div>
@@ -569,6 +572,18 @@
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">8.0</h3>
+          <ul>
+            <li>Fixed regexes.</li>
+            <li>Big style rewrite of the main prompt, so yes, unfortunately, it is now 900-1000 tokens. Sorry.</li>
+            <li>Added an XML version of Banned Patterns, which is now default, since most people who use this are probably using frontier models. If you are using models that prefer markdown instructions, you may disable the XML one and enable the markdown version.</li>
+            <li>GPT 5.4 fix, maybe. Better dialogue on that part, not sounding so stilted and "perfect". Use "GPT Assistant Prefill" for NSFW scenes. If you get refused, it's either my skill issue, yours, or OpenAI decided to be funny to taunt me specifically.</li>
+            <li>More decent prose on Deepseek V3.2, not having the "super short responses" problem, probably. GLM 5 also should have better prose and pacing adherence.</li>
+            <li>More neutral Opus - if a character really hates you, being nice to them most likely won't make them like you immediately. Again, this depends on how you write the card.</li>
+            <li>To clarify, Difficulty Increase is supposed to make the difficulty ridiculously difficult. It is not an anti-positivity bias. Turn it on if you want silly-fficulty.</li>
+            <li>Theoretically, should still be customisable and easy to put your extra stuff into. Make sure to read the main prompt to see which parts you'd like to modify/remove for your own preference. The writing style indicated here is one I vastly prefer on my own, maybe you don't like it, maybe you do.</li>
+          </ul>
+
           <h3 class="changelog-version">7.5</h3>
           <ul>
             <li>Since the anti-slop is getting bigger, I significantly trimmed the main prompt.</li>
