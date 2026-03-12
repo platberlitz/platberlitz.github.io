@@ -5446,6 +5446,16 @@ function proxiedFetch(url, options) {
   });
 }
 
+async function fetchWebSearchWithFallback(url, options) {
+  try {
+    return await fetchApiWithHttpSupport(url, options, url);
+  } catch (err) {
+    if (err.name === 'AbortError') throw err;
+    if (!isNetworkLikeFetchError(err)) throw err;
+    return await proxiedFetch(url, options);
+  }
+}
+
 function extractWebSearchQueryFromArgs(args) {
   if (!args || typeof args !== 'object') return '';
   const candidates = [];
@@ -5523,7 +5533,7 @@ async function executeWebSearch(query, signal) {
     }
     if (!fetchHeaders['Accept']) fetchHeaders['Accept'] = 'application/json';
 
-    const resp = await proxiedFetch(fetchUrl, { headers: fetchHeaders, signal });
+    const resp = await fetchWebSearchWithFallback(fetchUrl, { headers: fetchHeaders, signal });
     if (!resp.ok) throw new Error(resp.status + ' ' + (resp.statusText || 'Error'));
     const ct = resp.headers.get('content-type') || '';
     if (!ct.includes('json')) throw new Error('Expected JSON but got ' + (ct.split(';')[0] || 'unknown content type'));
