@@ -87,7 +87,7 @@
     {
         "id": "5c330e00-7b27-4314-9c6b-fa3d336f8e1f",
         "scriptName": "Replace Time Tracker",
-        "findRegex": "/\\[TIME\\|(.*?)\\|(.*?)\\|(.*?)\\]\\n*((?:note:\\s*)?.*?)(?:\\n*\\[\\/TIME\\])?(?=\\n|$)/g",
+        "findRegex": "/\\[TIME\\|([^|\\]]+)\\|([^|\\]]+)\\|([^|\\]]+)\\]\\n*(?:note:\\s*)?((?:(?!\\[(?:REP|SECRET|STATUS|EVENT|SCENE|ACH|ITEM|TIME|METER|NPC|CHOICES)\\b)[^\\[])*?)(?:\\n*\\[\\/TIME\\])?(?=\\n|$)/g",
         "replaceString": "<details style=\"margin:8px 0\"><summary style=\"padding:8px 12px;background:rgba(40,44,52,0.85);border-radius:8px;border:2px solid #8be9fd;color:#8be9fd;font-family:monospace;font-size:11px;cursor:pointer\">🕐 $1 · $2 · $3</summary><div style=\"padding:12px;background:rgba(40,44,52,0.9);border-radius:0 0 8px 8px;border:2px solid #8be9fd;border-top:none;font-size:11px;line-height:1.6;color:#f8f8f2;white-space:pre-line\"><span style=\"color:#8be9fd\">⬢ Context:</span> $4</div></details>",
         "trimStrings": [],
         "placement": [
@@ -138,7 +138,7 @@
     {
         "id": "1bc8515b-10b4-49f3-b142-b69bd769829a",
         "scriptName": "Replace Status/Conditions Tracker",
-        "findRegex": "/\\[STATUS\\|(.*?)\\|(.*?)\\|(.*?)\\]\\n*((?:note:\\s*)?.*?)(?:\\n*\\[\\/STATUS\\])?(?=\\n|$)/g",
+        "findRegex": "/\\[STATUS\\|([^|\\]]+)\\|([^|\\]]+)\\|([^|\\]]+)\\]\\n*(?:note:\\s*)?((?:(?!\\[(?:REP|SECRET|STATUS|EVENT|SCENE|ACH|ITEM|TIME|METER|NPC|CHOICES)\\b)[^\\[])*?)(?:\\n*\\[\\/STATUS\\])?(?=\\n|$)/g",
         "replaceString": "<details style=\"margin:8px 0\"><summary style=\"padding:8px 12px;background:rgba(40,44,52,0.85);border-radius:8px;border:2px solid #ff6e6e;color:#ff6e6e;font-family:monospace;font-size:11px;cursor:pointer\">🩹 $1 · $2</summary><div style=\"padding:12px;background:rgba(40,44,52,0.9);border-radius:0 0 8px 8px;border:2px solid #ff6e6e;border-top:none;font-size:11px;line-height:1.6;color:#f8f8f2;white-space:pre-line\"><span style=\"color:#ff6e6e\">⬢ Severity:</span> $3\n<span style=\"color:#ff6e6e\">⬢ Note:</span> $4</div></details>",
         "trimStrings": [],
         "placement": [
@@ -155,7 +155,7 @@
     {
         "id": "61ea463c-adc7-4d09-b14f-23522992495f",
         "scriptName": "Replace Pending Events Tracker",
-        "findRegex": "/\\[EVENT\\|(.*?)\\|(.*?)\\|(.*?)\\]\\n*((?:context:\\s*)?.*?)(?:\\n*\\[\\/EVENT\\])?(?=\\n|$)/g",
+        "findRegex": "/\\[EVENT\\|([^|\\]]+)\\|([^|\\]]+)\\|([^|\\]]+)\\]\\n*(?:context:\\s*)?((?:(?!\\[(?:REP|SECRET|STATUS|EVENT|SCENE|ACH|ITEM|TIME|METER|NPC|CHOICES)\\b)[^\\[])*?)(?:\\n*\\[\\/EVENT\\])?(?=\\n|$)/g",
         "replaceString": "<details style=\"margin:8px 0\"><summary style=\"padding:8px 12px;background:rgba(40,44,52,0.85);border-radius:8px;border:2px solid #f1fa8c;color:#f1fa8c;font-family:monospace;font-size:11px;cursor:pointer\">$1 $2 · ⏳ $3</summary><div style=\"padding:12px;background:rgba(40,44,52,0.9);border-radius:0 0 8px 8px;border:2px solid #f1fa8c;border-top:none;font-size:11px;line-height:1.6;color:#f8f8f2;white-space:pre-line\">$4</div></details>",
         "trimStrings": [],
         "placement": [
@@ -172,7 +172,7 @@
     {
         "id": "afd91723-8572-4f4e-b878-7bdd9f7e88a4",
         "scriptName": "Replace Relationship Tracker",
-        "findRegex": "/\\[METER\\|(.*?)\\|(.*?)\\|(.*?)\\|(.*?)\\|(.*?)\\]\\n*((?:shift:\\s*)?.*?)(?:\\n*\\[\\/METER\\])?(?=\\n|$)/g",
+        "findRegex": "/\\[METER\\|([^|\\]]+)\\|([^|\\]]+)\\|([^|\\]]+)\\|([^|\\]]+)\\|([^|\\]]+)\\]\\n*(?:shift:\\s*)?((?:(?!\\[(?:REP|SECRET|STATUS|EVENT|SCENE|ACH|ITEM|TIME|METER|NPC|CHOICES)\\b)[^\\[])*?)(?:\\n*\\[\\/METER\\])?(?=\\n|$)/g",
         "replaceString": "<details style=\"margin:8px 0\"><summary style=\"padding:8px 12px;background:rgba(40,44,52,0.85);border-radius:8px;border:2px solid #ff79c6;color:#ff79c6;font-family:monospace;font-size:11px;cursor:pointer\">💗 $1 · $4 · $5</summary><div style=\"padding:12px;background:rgba(40,44,52,0.9);border-radius:0 0 8px 8px;border:2px solid #ff79c6;border-top:none;font-size:11px;line-height:1.6;color:#f8f8f2;white-space:pre-line\"><span style=\"color:#ff79c6\">⬢ Affection:</span> $2\n<span style=\"color:#ff79c6\">⬢ Trust:</span> $3\n<span style=\"color:#ff79c6\">⬢ Shift:</span> $6</div></details>",
         "trimStrings": [],
         "placement": [
@@ -189,7 +189,7 @@
     {
         "id": "56ec474e-ce3c-45ea-b81a-c557097095f2",
         "scriptName": "Replace Scene Tracker",
-        "findRegex": "/\\[SCENE\\|(.*?)\\|(.*?)\\|(.*?)\\]\\n*((?:detail:\\s*)?.*?)(?:\\n*\\[\\/SCENE\\])?(?=\\n|$)/g",
+        "findRegex": "/\\[SCENE\\|([^|\\]]+)\\|([^|\\]]+)\\|([^|\\]]+)\\]\\n*(?:detail:\\s*)?((?:(?!\\[(?:REP|SECRET|STATUS|EVENT|SCENE|ACH|ITEM|TIME|METER|NPC|CHOICES)\\b)[^\\[])*?)(?:\\n*\\[\\/SCENE\\])?(?=\\n|$)/g",
         "replaceString": "<details style=\"margin:8px 0\" open><summary style=\"padding:8px 12px;background:rgba(40,44,52,0.85);border-radius:8px;border:2px solid #bd93f9;color:#bd93f9;font-family:monospace;font-size:11px;cursor:pointer\">📍 $1 · 🕐 $2 · $3</summary><div style=\"padding:12px;background:rgba(40,44,52,0.9);border-radius:0 0 8px 8px;border:2px solid #bd93f9;border-top:none;font-size:11px;line-height:1.6;color:#f8f8f2;white-space:pre-line\">$4</div></details>",
         "trimStrings": [],
         "placement": [
@@ -206,7 +206,7 @@
     {
         "id": "c2b6acc3-3e02-4abc-ba1a-4782f3725997",
         "scriptName": "Replace Achievement Tracker",
-        "findRegex": "/\\[ACH\\|(.*?)\\|(.*?)\\|(.*?)\\]\\n*((?:unlocked:\\s*)?.*?)(?:\\n*\\[\\/ACH\\])?(?=\\n|$)/g",
+        "findRegex": "/\\[ACH\\|([^|\\]]+)\\|([^|\\]]+)\\|([^|\\]]+)\\]\\n*(?:unlocked:\\s*)?((?:(?!\\[(?:REP|SECRET|STATUS|EVENT|SCENE|ACH|ITEM|TIME|METER|NPC|CHOICES)\\b)[^\\[])*?)(?:\\n*\\[\\/ACH\\])?(?=\\n|$)/g",
         "replaceString": "<details style=\"margin:8px 0\" open><summary style=\"padding:8px 12px;background:rgba(40,44,52,0.85);border-radius:8px;border:2px solid #ffb86c;color:#ffb86c;font-family:monospace;font-size:11px;cursor:pointer\">🏆 $1 · $2</summary><div style=\"padding:12px;background:rgba(40,44,52,0.9);border-radius:0 0 8px 8px;border:2px solid #ffb86c;border-top:none;font-size:11px;line-height:1.6;color:#f8f8f2;white-space:pre-line\"><span style=\"color:#ffb86c\">$3</span>\n$4</div></details>",
         "trimStrings": [],
         "placement": [
@@ -223,7 +223,7 @@
     {
         "id": "1b4e2460-d3db-4d32-9abb-711109404f8b",
         "scriptName": "Replace Reputation Tracker",
-        "findRegex": "/\\[REP\\|(.*?)\\|(.*?)\\|(.*?)\\]\\n*((?:cause:\\s*)?.*?)(?:\\n*\\[\\/REP\\])?(?=\\n|$)/g",
+        "findRegex": "/\\[REP\\|([^|\\]]+)\\|([^|\\]]+)\\|([^|\\]]+)\\]\\n*(?:cause:\\s*)?((?:(?!\\[(?:REP|SECRET|STATUS|EVENT|SCENE|ACH|ITEM|TIME|METER|NPC|CHOICES)\\b)[^\\[])*?)(?:\\n*\\[\\/REP\\])?(?=\\n|$)/g",
         "replaceString": "<details style=\"margin:8px 0\"><summary style=\"padding:8px 12px;background:rgba(40,44,52,0.85);border-radius:8px;border:2px solid #ffc87c;color:#ffc87c;font-family:monospace;font-size:11px;cursor:pointer\">👥 Source: $1 · 👁 Perception: $2</summary><div style=\"padding:12px;background:rgba(40,44,52,0.9);border-radius:0 0 8px 8px;border:2px solid #ffc87c;border-top:none;font-size:11px;line-height:1.6;color:#f8f8f2;white-space:pre-line\"><span style=\"color:#ffc87c\">⬢ Direction:</span> $3\n<span style=\"color:#ffc87c\">⬢ Cause:</span> $4</div></details>",
         "trimStrings": [],
         "placement": [
@@ -240,7 +240,7 @@
     {
         "id": "b376380f-bc5d-453a-bce1-de8e089f0cff",
         "scriptName": "Replace Secret Tracker",
-        "findRegex": "/\\[SECRET\\|(.*?)\\|(.*?)\\|(.*?)\\]\\n*((?:context:\\s*)?.*?)(?:\\n*\\[\\/SECRET\\])?(?=\\n|$)/g",
+        "findRegex": "/\\[SECRET\\|([^|\\]]+)\\|([^|\\]]+)\\|([^|\\]]+)\\]\\n*(?:context:\\s*)?((?:(?!\\[(?:REP|SECRET|STATUS|EVENT|SCENE|ACH|ITEM|TIME|METER|NPC|CHOICES)\\b)[^\\[])*?)(?:\\n*\\[\\/SECRET\\])?(?=\\n|$)/g",
         "replaceString": "<details style=\"margin:8px 0\"><summary style=\"padding:8px 12px;background:rgba(40,44,52,0.85);border-radius:8px;border:2px solid #bd93f9;color:#bd93f9;font-family:monospace;font-size:11px;cursor:pointer\">🔒 $1 · $2</summary><div style=\"padding:12px;background:rgba(40,44,52,0.9);border-radius:0 0 8px 8px;border:2px solid #bd93f9;border-top:none;font-size:11px;line-height:1.6;color:#f8f8f2;white-space:pre-line\"><span style=\"color:#bd93f9\">⬢ Also Know:</span> $3\n<span style=\"color:#bd93f9\">⬢ Context:</span> $4</div></details>",
         "trimStrings": [],
         "placement": [
@@ -257,7 +257,7 @@
     {
         "id": "40eec223-1d7e-4c46-9410-c781d572b00e",
         "scriptName": "Replace Item Tracker",
-        "findRegex": "/\\[ITEM\\|(.*?)\\|(.*?)\\|(.*?)\\]\\n*((?:note:\\s*)?.*?)(?:\\n*\\[\\/ITEM\\])?(?=\\n|$)/g",
+        "findRegex": "/\\[ITEM\\|([^|\\]]+)\\|([^|\\]]+)\\|([^|\\]]+)\\]\\n*(?:note:\\s*)?((?:(?!\\[(?:REP|SECRET|STATUS|EVENT|SCENE|ACH|ITEM|TIME|METER|NPC|CHOICES)\\b)[^\\[])*?)(?:\\n*\\[\\/ITEM\\])?(?=\\n|$)/g",
         "replaceString": "<details style=\"margin:8px 0\"><summary style=\"padding:8px 12px;background:rgba(40,44,52,0.85);border-radius:8px;border:2px solid #8be9fd;color:#8be9fd;font-family:monospace;font-size:11px;cursor:pointer\">$1 $2 · $3</summary><div style=\"padding:12px;background:rgba(40,44,52,0.9);border-radius:0 0 8px 8px;border:2px solid #8be9fd;border-top:none;font-size:11px;line-height:1.6;color:#f8f8f2;white-space:pre-line\">$4</div></details>",
         "trimStrings": [],
         "placement": [
