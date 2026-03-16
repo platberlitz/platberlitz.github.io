@@ -493,7 +493,7 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 8.5</p>
+          <p class="preset-version">Latest Version: 9.0</p>
           <div class="preset-desc">
             <ul>
               <li>Designed for shorter responses with flexible length</li>
@@ -505,7 +505,7 @@
             <p><strong>Current favourite:</strong> Gemini 3.1 Pro Preview. WizardLM 8x22B is also still pretty good! GLM 5 sounds exactly like Claude if you like that writing style for a much cheaper price.</p>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%208.5.json" download="Pura's Director Preset 8.5.json">Download Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%209.0.json" download="Pura's Director Preset 9.0.json">Download Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -572,6 +572,14 @@
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">9.0</h3>
+          <ul>
+            <li>Removed anti-slop injection in favour of tighter, positive prompting to improve style. So now it's transparent - the whole thing really is just 1100-1200 tokens, depending on which tokeniser is used.</li>
+            <li>Should reduce GPT 5.4 infinite yap works.</li>
+            <li>Some Claudisms can never be truly removed. This is the only thing constant in the world.</li>
+            <li>Removed redundancy and extra style paragraphs since they were pretty pointless.</li>
+          </ul>
+
           <h3 class="changelog-version">8.5</h3>
           <ul>
             <li>Tightened style directives.</li>
