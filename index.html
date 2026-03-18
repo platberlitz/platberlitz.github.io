@@ -493,7 +493,7 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 9.0</p>
+          <p class="preset-version">Latest Version: 9.5</p>
           <div class="preset-desc">
             <ul>
               <li>Designed for shorter responses with flexible length</li>
@@ -505,7 +505,7 @@
             <p><strong>Current favourite:</strong> Gemini 3.1 Pro Preview. WizardLM 8x22B is also still pretty good! GLM 5 sounds exactly like Claude if you like that writing style for a much cheaper price.</p>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%209.0.json" download="Pura's Director Preset 9.0.json">Download Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%209.5.json" download="Pura's Director Preset 9.5.json">Download Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -516,6 +516,8 @@
           <h2 class="preset-title">Previous Preset Versions</h2>
           <p class="preset-version">Older stable releases</p>
           <div class="preset-downloads" id="previous-versions-list">
+            <a href="preset/Pura's%20Director%20Preset%209.0.json" download="Pura's Director Preset 9.0.json">Preset 9.0</a>
+            <a href="preset/Pura's%20Director%20Preset%208.5.json" download="Pura's Director Preset 8.5.json">Preset 8.5</a>
             <a href="preset/Pura's%20Director%20Preset%208.0.json" download="Pura's Director Preset 8.0.json">Preset 8.0</a>
             <a href="preset/Pura's%20Director%20Preset%207.5.json" download="Pura's Director Preset 7.5.json">Preset 7.5</a>
             <a href="preset/Pura's%20Director%20Preset%207.0.json" download="Pura's Director Preset 7.0.json">Preset 7.0</a>
@@ -572,6 +574,19 @@
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">9.5</h3>
+          <ul>
+            <li>Fixed Gemini's negativity bias by telling it to not rely on caricature.</li>
+            <li>Added something about secrets remaining hidden so characters put in more effort. Specifically this is a Claudism where a smart character keeps immediately guessing the ulterior motive within a message. Allows for more slow burn.</li>
+            <li>Rewrote default genre a bit.</li>
+            <li>Mitigated the "not a question" Claudism which pisses me off so much it's hitting me like a physical blow as I white-knuckle it.</li>
+            <li>Gemini is now not gonna default to horny mode unless you explicitly want it to be. So even if you have kinks or character states their penis size, Gemini is now not gonna try to have sex with you immediately if you don't want it to.</li>
+            <li>More naturalistic Gemini dialogue.</li>
+            <li>Rewrote anti-echo, anti-rhetorical echo. In my testing, even if you had it write for user for 50 messages, and you switch to don't write for user, it actually doesn't write for you. So that should hopefully mean it's effective.</li>
+            <li>Opus should still remain more neutral. Tested with some cards of sadistic people and cards that hate user and they don't soften immediately or try to do the typical Claude thing of "it's okay, we can therapy session immediately..."</li>
+            <li>Hopefully reduced caricature, exaggerated shorthand like "burnt water" or that stupid shit Claude likes to do.</li>
+          </ul>
+
           <h3 class="changelog-version">9.0</h3>
           <ul>
             <li>Removed anti-slop injection in favour of tighter, positive prompting to improve style. So now it's transparent - the whole thing really is just 1100-1200 tokens, depending on which tokeniser is used.</li>
