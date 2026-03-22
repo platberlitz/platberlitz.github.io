@@ -167,6 +167,7 @@
     #tab-changelog:checked ~ .tab-content-changelog { display: block; }
     #tab-extensions:checked ~ .tab-content-extensions { display: block; }
     #tab-themes:checked ~ .tab-content-themes { display: block; }
+    #tab-cards:checked ~ .tab-content-cards { display: block; }
 
     /* Preset info */
 
@@ -495,6 +496,7 @@
       <input type="radio" name="tab" id="tab-changelog">
       <input type="radio" name="tab" id="tab-extensions">
       <input type="radio" name="tab" id="tab-themes">
+      <input type="radio" name="tab" id="tab-cards">
       <div class="tab-labels">
         <label for="tab-preset">Preset</label>
         <label for="tab-previous">Previous Versions</label>
@@ -502,6 +504,7 @@
         <label for="tab-changelog">Changelog</label>
         <label for="tab-extensions">Extensions</label>
         <label for="tab-themes">Themes</label>
+        <label for="tab-cards">Cards</label>
       </div>
 
       <div class="tab-content tab-content-preset">
@@ -1340,73 +1343,71 @@
           </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <section class="preset-section">
-    <div class="divider"></div>
-    <h2 class="section-heading">Cards</h2>
-    <div class="cards-grid">
-      <a class="tracker-item" href="cards/Alhaitham.png" target="_blank">
-        <img src="cards/Alhaitham.png" alt="Alhaitham" loading="lazy">
-        <span class="tracker-caption">Scholarly scribe with analytical mind</span>
-      </a>
-      <a class="tracker-item" href="cards/Arataki Itto.png" target="_blank">
-        <img src="cards/Arataki Itto.png" alt="Arataki Itto" loading="lazy">
-        <span class="tracker-caption">Boisterous oni gang leader</span>
-      </a>
-      <a class="tracker-item" href="cards/Cyno.png" target="_blank">
-        <img src="cards/Cyno.png" alt="Cyno" loading="lazy">
-        <span class="tracker-caption">Stoic General Mahamatra</span>
-      </a>
-      <a class="tracker-item" href="cards/Diluc.png" target="_blank">
-        <img src="cards/Diluc.png" alt="Diluc" loading="lazy">
-        <span class="tracker-caption">Brooding vigilante of Mondstadt</span>
-      </a>
-      <a class="tracker-item" href="cards/Il Dottore.png" target="_blank">
-        <img src="cards/Il Dottore.png" alt="Il Dottore" loading="lazy">
-        <span class="tracker-caption">Calculating Fatui Harbinger</span>
-      </a>
-      <a class="tracker-item" href="cards/Kaeya.png" target="_blank">
-        <img src="cards/Kaeya.png" alt="Kaeya" loading="lazy">
-        <span class="tracker-caption">Charming Cavalry Captain</span>
-      </a>
-      <a class="tracker-item" href="cards/Kaveh & Alhaitham.png" target="_blank">
-        <img src="cards/Kaveh & Alhaitham.png" alt="Kaveh & Alhaitham" loading="lazy">
-        <span class="tracker-caption">Roommates with contrasting personalities</span>
-      </a>
-      <a class="tracker-item" href="cards/Kaveh.png" target="_blank">
-        <img src="cards/Kaveh.png" alt="Kaveh" loading="lazy">
-        <span class="tracker-caption">Passionate architect with ideals</span>
-      </a>
-      <a class="tracker-item" href="cards/Neuvillette.png" target="_blank">
-        <img src="cards/Neuvillette.png" alt="Neuvillette" loading="lazy">
-        <span class="tracker-caption">Impartial Chief Justice of Fontaine</span>
-      </a>
-      <a class="tracker-item" href="cards/Silas Beaumont-Charbonneau.png" target="_blank">
-        <img src="cards/Silas Beaumont-Charbonneau.png" alt="Silas Beaumont-Charbonneau" loading="lazy">
-        <span class="tracker-caption">Former Canadian PM living anonymously in Montreal</span>
-      </a>
-      <a class="tracker-item" href="cards/Tighnari & Cyno.png" target="_blank">
-        <img src="cards/Tighnari & Cyno.png" alt="Tighnari & Cyno" loading="lazy">
-        <span class="tracker-caption">Desert scholar and lawman duo</span>
-      </a>
-      <a class="tracker-item" href="cards/Tighnari.png" target="_blank">
-        <img src="cards/Tighnari.png" alt="Tighnari" loading="lazy">
-        <span class="tracker-caption">Pragmatic forest ranger</span>
-      </a>
-      <a class="tracker-item" href="cards/Venti.png" target="_blank">
-        <img src="cards/Venti.png" alt="Venti" loading="lazy">
-        <span class="tracker-caption">Carefree bard with secrets</span>
-      </a>
-      <a class="tracker-item" href="cards/Wanderer.png" target="_blank">
-        <img src="cards/Wanderer.png" alt="Wanderer" loading="lazy">
-        <span class="tracker-caption">Reformed puppet seeking purpose</span>
-      </a>
-      <a class="tracker-item" href="cards/Wriothesley.png" target="_blank">
-        <img src="cards/Wriothesley.png" alt="Wriothesley" loading="lazy">
-        <span class="tracker-caption">Duke of the Fortress of Meropide</span>
-      </a>
+      <div class="tab-content tab-content-cards">
+        <div class="cards-grid">
+          <a class="tracker-item" href="cards/Alhaitham.png" target="_blank">
+            <img src="cards/Alhaitham.png" alt="Alhaitham" loading="lazy">
+            <span class="tracker-caption"><strong>Alhaitham</strong><br>Scholarly scribe with analytical mind</span>
+          </a>
+          <a class="tracker-item" href="cards/Arataki Itto.png" target="_blank">
+            <img src="cards/Arataki Itto.png" alt="Arataki Itto" loading="lazy">
+            <span class="tracker-caption"><strong>Arataki Itto</strong><br>Boisterous oni gang leader</span>
+          </a>
+          <a class="tracker-item" href="cards/Cyno.png" target="_blank">
+            <img src="cards/Cyno.png" alt="Cyno" loading="lazy">
+            <span class="tracker-caption"><strong>Cyno</strong><br>Stoic General Mahamatra</span>
+          </a>
+          <a class="tracker-item" href="cards/Diluc.png" target="_blank">
+            <img src="cards/Diluc.png" alt="Diluc" loading="lazy">
+            <span class="tracker-caption"><strong>Diluc</strong><br>Brooding vigilante of Mondstadt</span>
+          </a>
+          <a class="tracker-item" href="cards/Il Dottore.png" target="_blank">
+            <img src="cards/Il Dottore.png" alt="Il Dottore" loading="lazy">
+            <span class="tracker-caption"><strong>Il Dottore</strong><br>Calculating Fatui Harbinger</span>
+          </a>
+          <a class="tracker-item" href="cards/Kaeya.png" target="_blank">
+            <img src="cards/Kaeya.png" alt="Kaeya" loading="lazy">
+            <span class="tracker-caption"><strong>Kaeya</strong><br>Charming Cavalry Captain</span>
+          </a>
+          <a class="tracker-item" href="cards/Kaveh & Alhaitham.png" target="_blank">
+            <img src="cards/Kaveh & Alhaitham.png" alt="Kaveh & Alhaitham" loading="lazy">
+            <span class="tracker-caption"><strong>Kaveh & Alhaitham</strong><br>Roommates with contrasting personalities</span>
+          </a>
+          <a class="tracker-item" href="cards/Kaveh.png" target="_blank">
+            <img src="cards/Kaveh.png" alt="Kaveh" loading="lazy">
+            <span class="tracker-caption"><strong>Kaveh</strong><br>Passionate architect with ideals</span>
+          </a>
+          <a class="tracker-item" href="cards/Neuvillette.png" target="_blank">
+            <img src="cards/Neuvillette.png" alt="Neuvillette" loading="lazy">
+            <span class="tracker-caption"><strong>Neuvillette</strong><br>Impartial Chief Justice of Fontaine</span>
+          </a>
+          <a class="tracker-item" href="cards/Silas Beaumont-Charbonneau.png" target="_blank">
+            <img src="cards/Silas Beaumont-Charbonneau.png" alt="Silas Beaumont-Charbonneau" loading="lazy">
+            <span class="tracker-caption"><strong>Silas Beaumont-Charbonneau</strong><br>Former Canadian PM living anonymously in Montreal</span>
+          </a>
+          <a class="tracker-item" href="cards/Tighnari & Cyno.png" target="_blank">
+            <img src="cards/Tighnari & Cyno.png" alt="Tighnari & Cyno" loading="lazy">
+            <span class="tracker-caption"><strong>Tighnari & Cyno</strong><br>Desert scholar and lawman duo</span>
+          </a>
+          <a class="tracker-item" href="cards/Tighnari.png" target="_blank">
+            <img src="cards/Tighnari.png" alt="Tighnari" loading="lazy">
+            <span class="tracker-caption"><strong>Tighnari</strong><br>Pragmatic forest ranger</span>
+          </a>
+          <a class="tracker-item" href="cards/Venti.png" target="_blank">
+            <img src="cards/Venti.png" alt="Venti" loading="lazy">
+            <span class="tracker-caption"><strong>Venti</strong><br>Carefree bard with secrets</span>
+          </a>
+          <a class="tracker-item" href="cards/Wanderer.png" target="_blank">
+            <img src="cards/Wanderer.png" alt="Wanderer" loading="lazy">
+            <span class="tracker-caption"><strong>Wanderer</strong><br>Reformed puppet seeking purpose</span>
+          </a>
+          <a class="tracker-item" href="cards/Wriothesley.png" target="_blank">
+            <img src="cards/Wriothesley.png" alt="Wriothesley" loading="lazy">
+            <span class="tracker-caption"><strong>Wriothesley</strong><br>Duke of the Fortress of Meropide</span>
+          </a>
+        </div>
+      </div>
     </div>
   </section>
 
