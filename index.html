@@ -412,6 +412,20 @@
       .tracker-grid { grid-template-columns: 1fr; }
     }
 
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .cards-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 540px) {
+      .cards-grid { grid-template-columns: 1fr; }
+    }
+
     @media (max-width: 600px) {
       .container { padding: 1.5rem; padding-top: 2.5rem; }
 
@@ -493,7 +507,7 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 10.0</p>
+          <p class="preset-version">Latest Version: 10.1</p>
           <div class="preset-desc">
             <ul>
               <li>Designed for shorter responses with flexible length</li>
@@ -505,7 +519,7 @@
             <p><strong>Current favourite:</strong> Gemini 3.1 Pro Preview. WizardLM 8x22B is also still pretty good! GLM 5 sounds exactly like Claude if you like that writing style for a much cheaper price.</p>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%2010.0.json" download="Pura's Director Preset 10.0.json">Download Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%2010.1.json" download="Pura's Director Preset 10.1.json">Download Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -516,6 +530,7 @@
           <h2 class="preset-title">Previous Preset Versions</h2>
           <p class="preset-version">Older stable releases</p>
           <div class="preset-downloads" id="previous-versions-list">
+            <a href="preset/Pura's%20Director%20Preset%2010.0.json" download="Pura's Director Preset 10.0.json">Preset 10.0</a>
             <a href="preset/Pura's%20Director%20Preset%209.5.json" download="Pura's Director Preset 9.5.json">Preset 9.5</a>
             <a href="preset/Pura's%20Director%20Preset%209.0.json" download="Pura's Director Preset 9.0.json">Preset 9.0</a>
             <a href="preset/Pura's%20Director%20Preset%208.5.json" download="Pura's Director Preset 8.5.json">Preset 8.5</a>
@@ -575,6 +590,12 @@
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">10.1</h3>
+          <ul>
+            <li>Hotfix. A little bit of restructuring of prompts, so it's less of an eyesore.</li>
+            <li>Added an injection under Primary Toggles to 'Force Gemini to Think Less', for Gemini users.</li>
+          </ul>
+
           <h3 class="changelog-version">10.0</h3>
           <ul>
             <li>Moved anti-slop into Post-History Instructions.</li>
@@ -1319,6 +1340,73 @@
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="preset-section">
+    <div class="divider"></div>
+    <h2 class="section-heading">Cards</h2>
+    <div class="cards-grid">
+      <a class="tracker-item" href="cards/Alhaitham.png" target="_blank">
+        <img src="cards/Alhaitham.png" alt="Alhaitham" loading="lazy">
+        <span class="tracker-caption">Scholarly scribe with analytical mind</span>
+      </a>
+      <a class="tracker-item" href="cards/Arataki Itto.png" target="_blank">
+        <img src="cards/Arataki Itto.png" alt="Arataki Itto" loading="lazy">
+        <span class="tracker-caption">Boisterous oni gang leader</span>
+      </a>
+      <a class="tracker-item" href="cards/Cyno.png" target="_blank">
+        <img src="cards/Cyno.png" alt="Cyno" loading="lazy">
+        <span class="tracker-caption">Stoic General Mahamatra</span>
+      </a>
+      <a class="tracker-item" href="cards/Diluc.png" target="_blank">
+        <img src="cards/Diluc.png" alt="Diluc" loading="lazy">
+        <span class="tracker-caption">Brooding vigilante of Mondstadt</span>
+      </a>
+      <a class="tracker-item" href="cards/Il Dottore.png" target="_blank">
+        <img src="cards/Il Dottore.png" alt="Il Dottore" loading="lazy">
+        <span class="tracker-caption">Calculating Fatui Harbinger</span>
+      </a>
+      <a class="tracker-item" href="cards/Kaeya.png" target="_blank">
+        <img src="cards/Kaeya.png" alt="Kaeya" loading="lazy">
+        <span class="tracker-caption">Charming Cavalry Captain</span>
+      </a>
+      <a class="tracker-item" href="cards/Kaveh & Alhaitham.png" target="_blank">
+        <img src="cards/Kaveh & Alhaitham.png" alt="Kaveh & Alhaitham" loading="lazy">
+        <span class="tracker-caption">Roommates with contrasting personalities</span>
+      </a>
+      <a class="tracker-item" href="cards/Kaveh.png" target="_blank">
+        <img src="cards/Kaveh.png" alt="Kaveh" loading="lazy">
+        <span class="tracker-caption">Passionate architect with ideals</span>
+      </a>
+      <a class="tracker-item" href="cards/Neuvillette.png" target="_blank">
+        <img src="cards/Neuvillette.png" alt="Neuvillette" loading="lazy">
+        <span class="tracker-caption">Impartial Chief Justice of Fontaine</span>
+      </a>
+      <a class="tracker-item" href="cards/Silas Beaumont-Charbonneau.png" target="_blank">
+        <img src="cards/Silas Beaumont-Charbonneau.png" alt="Silas Beaumont-Charbonneau" loading="lazy">
+        <span class="tracker-caption">Former Canadian PM living anonymously in Montreal</span>
+      </a>
+      <a class="tracker-item" href="cards/Tighnari & Cyno.png" target="_blank">
+        <img src="cards/Tighnari & Cyno.png" alt="Tighnari & Cyno" loading="lazy">
+        <span class="tracker-caption">Desert scholar and lawman duo</span>
+      </a>
+      <a class="tracker-item" href="cards/Tighnari.png" target="_blank">
+        <img src="cards/Tighnari.png" alt="Tighnari" loading="lazy">
+        <span class="tracker-caption">Pragmatic forest ranger</span>
+      </a>
+      <a class="tracker-item" href="cards/Venti.png" target="_blank">
+        <img src="cards/Venti.png" alt="Venti" loading="lazy">
+        <span class="tracker-caption">Carefree bard with secrets</span>
+      </a>
+      <a class="tracker-item" href="cards/Wanderer.png" target="_blank">
+        <img src="cards/Wanderer.png" alt="Wanderer" loading="lazy">
+        <span class="tracker-caption">Reformed puppet seeking purpose</span>
+      </a>
+      <a class="tracker-item" href="cards/Wriothesley.png" target="_blank">
+        <img src="cards/Wriothesley.png" alt="Wriothesley" loading="lazy">
+        <span class="tracker-caption">Duke of the Fortress of Meropide</span>
+      </a>
     </div>
   </section>
 
