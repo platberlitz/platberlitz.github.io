@@ -307,10 +307,89 @@
       white-space: normal;
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 760px) {
+      .opinions-table-wrap {
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .opinions-table,
+      .opinions-table tbody,
+      .opinions-table tr,
+      .opinions-table td {
+        display: block;
+        width: 100%;
+      }
+
       .opinions-table {
-        min-width: 640px;
         table-layout: auto;
+      }
+
+      .opinions-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .opinions-table tbody {
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      .opinions-table tr {
+        border: 1px solid #1f1f30;
+        border-radius: 18px;
+        background: rgba(14, 14, 22, 0.92);
+        overflow: hidden;
+      }
+
+      .opinions-table td,
+      .opinions-table td:first-child,
+      .opinions-table td:nth-child(2),
+      .opinions-table td:last-child {
+        width: auto;
+      }
+
+      .opinions-table td {
+        border-bottom: 1px solid #1f1f30;
+        padding: 0.8rem 0.95rem;
+      }
+
+      .opinions-table td:last-child {
+        border-bottom: 0;
+        color: #a8ccb8;
+        font-weight: 400;
+      }
+
+      .opinions-table td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 0.35rem;
+        color: #8aab96;
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .opinions-table td:first-child {
+        padding-top: 0.95rem;
+        color: #d6ead9;
+        font-size: 0.96rem;
+        line-height: 1.45;
+      }
+
+      .opinions-table td:first-child::before {
+        content: none;
       }
     }
 
@@ -631,49 +710,49 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>GLM 5.1</td>
-                  <td>Claude Opus 4.6 that's infinitely cheaper and still follows instructions well? Not creating a hole in your wallet? Look no further. It's emotionally intelligent, actually follows the Grounded Prose Directive, and is enhanced by the style I put in my prompt. The absolute best, especially with the quality to price ratio. Turn on thinking for best results, the thinking doesn't take that long.</td>
-                  <td>None/Merge</td>
+                  <td data-label="Model">GLM 5.1</td>
+                  <td data-label="Opinion">Claude Opus 4.6 that's infinitely cheaper and still follows instructions well? Not creating a hole in your wallet? Look no further. It's emotionally intelligent, actually follows the Grounded Prose Directive, and is enhanced by the style I put in my prompt. The absolute best, especially with the quality to price ratio. Turn on thinking for best results, the thinking doesn't take that long.</td>
+                  <td data-label="Recommended Post Processing">None/Merge</td>
                 </tr>
                 <tr>
-                  <td>Kimi K2.5</td>
-                  <td>A unique writing style that's better off without the Grounded Prose rules, since telling it to ban things just makes it wanna use them more. You may or may not turn thinking on; in my experience, turning thinking on can make analytical characters sound too much like unfeeling robots, always talking in jargon. The problem with thinking as well is that it constantly second, third, fourth-guesses itself; hence the thinking takes more than a minute usually. Five minutes at worst with its constant redrafting. In the end, try it with either thinking on or off to see how it goes.</td>
-                  <td>Merge/Semi-strict</td>
+                  <td data-label="Model">Kimi K2.5</td>
+                  <td data-label="Opinion">A unique writing style that's better off without the Grounded Prose rules, since telling it to ban things just makes it wanna use them more. You may or may not turn thinking on; in my experience, turning thinking on can make analytical characters sound too much like unfeeling robots, always talking in jargon. The problem with thinking as well is that it constantly second, third, fourth-guesses itself; hence the thinking takes more than a minute usually. Five minutes at worst with its constant redrafting. In the end, try it with either thinking on or off to see how it goes.</td>
+                  <td data-label="Recommended Post Processing">Merge/Semi-strict</td>
                 </tr>
                 <tr>
-                  <td>Claude Opus 4.6</td>
-                  <td>Everyone knows how good this is at following instructions, the depth of its knowledge and emotional intelligence. I tried making it as neutral as possible, however I still find myself getting Opus fatigue. It has a 'Claude voice' - a character card that isn't defined enough will be overtaken by Claude's personality, essentially. Try talking to an indignant character with a stupid joke, it will react the same way that Claude does in their official site. The positivity bias is intense because it's always trying to therapise you and everyone around you. For its price point, it's not really that justified to always constantly use it.</td>
-                  <td>None/Semi-strict</td>
+                  <td data-label="Model">Claude Opus 4.6</td>
+                  <td data-label="Opinion">Everyone knows how good this is at following instructions, the depth of its knowledge and emotional intelligence. I tried making it as neutral as possible, however I still find myself getting Opus fatigue. It has a 'Claude voice' - a character card that isn't defined enough will be overtaken by Claude's personality, essentially. Try talking to an indignant character with a stupid joke, it will react the same way that Claude does in their official site. The positivity bias is intense because it's always trying to therapise you and everyone around you. For its price point, it's not really that justified to always constantly use it.</td>
+                  <td data-label="Recommended Post Processing">None/Semi-strict</td>
                 </tr>
                 <tr>
-                  <td>GPT 5.4</td>
-                  <td>After a lot of finagling, I've been able to prompt it to actually write like a human being and make people sound like people. The problem was that everything was too clean. Everyone talks in complete sentences, a period at the end, and it gives everyone the same voice. An instant 'GPT personality' takeover that flattens everyone. Try using GPT 5.4 as an assistant and you'll see what I mean. However with my prompting it's now actually pretty good. Try it. Can even do smut, and if it's 'extreme' you can use the prefill included in the preset.</td>
-                  <td>None/Merge</td>
+                  <td data-label="Model">GPT 5.4</td>
+                  <td data-label="Opinion">After a lot of finagling, I've been able to prompt it to actually write like a human being and make people sound like people. The problem was that everything was too clean. Everyone talks in complete sentences, a period at the end, and it gives everyone the same voice. An instant 'GPT personality' takeover that flattens everyone. Try using GPT 5.4 as an assistant and you'll see what I mean. However with my prompting it's now actually pretty good. Try it. Can even do smut, and if it's 'extreme' you can use the prefill included in the preset.</td>
+                  <td data-label="Recommended Post Processing">None/Merge</td>
                 </tr>
                 <tr>
-                  <td>Gemini 3.1 Pro Preview</td>
-                  <td>During the first couple weeks, it was perfect. It was everything Gemini 3 Pro was, but better. Fast, followed instructions very well, moved the plot along, it was highly engaging. However after some time it became so lobotomised it's no longer worth using. It's depressing. It will list your character sheet traits clinically, and I had to tell it to <em>use contractions</em> for dialogue like that isn't the most obvious fucking thing in the world. Honestly, what a let down. Even now, it keeps drafting multiple times in a row for some reason. It didn't do that before.</td>
-                  <td>Any</td>
+                  <td data-label="Model">Gemini 3.1 Pro Preview</td>
+                  <td data-label="Opinion">During the first couple weeks, it was perfect. It was everything Gemini 3 Pro was, but better. Fast, followed instructions very well, moved the plot along, it was highly engaging. However after some time it became so lobotomised it's no longer worth using. It's depressing. It will list your character sheet traits clinically, and I had to tell it to <em>use contractions</em> for dialogue like that isn't the most obvious fucking thing in the world. Honestly, what a let down. Even now, it keeps drafting multiple times in a row for some reason. It didn't do that before.</td>
+                  <td data-label="Recommended Post Processing">Any</td>
                 </tr>
                 <tr>
-                  <td>Gemini 3 Flash</td>
-                  <td>This was better for the first month. It seems to have gotten worse in instruction following, going for 'knuckles turning pale' a lot despite obviously thinking. The funny part is it's still much, much better than Gemini 3.1 Pro Preview. It's also faster. It's still very knowledgeable, so it's worth trying.</td>
-                  <td>None/Merge</td>
+                  <td data-label="Model">Gemini 3 Flash</td>
+                  <td data-label="Opinion">This was better for the first month. It seems to have gotten worse in instruction following, going for 'knuckles turning pale' a lot despite obviously thinking. The funny part is it's still much, much better than Gemini 3.1 Pro Preview. It's also faster. It's still very knowledgeable, so it's worth trying.</td>
+                  <td data-label="Recommended Post Processing">None/Merge</td>
                 </tr>
                 <tr>
-                  <td>DeepSeek V3.2</td>
-                  <td>I managed to fix the super short responses problem and managed to improve the writing style. Probably worth it just for how utterly cheap it is.</td>
-                  <td>Any</td>
+                  <td data-label="Model">DeepSeek V3.2</td>
+                  <td data-label="Opinion">I managed to fix the super short responses problem and managed to improve the writing style. Probably worth it just for how utterly cheap it is.</td>
+                  <td data-label="Recommended Post Processing">Any</td>
                 </tr>
                 <tr>
-                  <td>TheDrummer's Rocinante 12B</td>
-                  <td>Surprisingly fresh writing. Use without Grounded Prose.</td>
-                  <td>None</td>
+                  <td data-label="Model">TheDrummer's Rocinante 12B</td>
+                  <td data-label="Opinion">Surprisingly fresh writing. Use without Grounded Prose.</td>
+                  <td data-label="Recommended Post Processing">None</td>
                 </tr>
                 <tr>
-                  <td>WizardLM 8x22B</td>
-                  <td>I don't know why but it also still holds up. It's slow as hell on OpenRouter though with one provider. But if you're feeling nostalgic, the prompt works. Use without Grounded Prose.</td>
-                  <td>None</td>
+                  <td data-label="Model">WizardLM 8x22B</td>
+                  <td data-label="Opinion">I don't know why but it also still holds up. It's slow as hell on OpenRouter though with one provider. But if you're feeling nostalgic, the prompt works. Use without Grounded Prose.</td>
+                  <td data-label="Recommended Post Processing">None</td>
                 </tr>
               </tbody>
             </table>
