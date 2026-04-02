@@ -172,6 +172,40 @@
     #tab-themes:checked ~ .tab-content-themes { display: block; }
     #tab-cards:checked ~ .tab-content-cards { display: block; }
 
+    /* Card sub-tabs */
+    .card-subtab-content { display: none; }
+    #card-subtab-genshin:checked ~ .card-subtab-content-genshin { display: block; }
+    #card-subtab-oc:checked ~ .card-subtab-content-oc { display: block; }
+
+    .card-subtab-labels {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      justify-content: center;
+    }
+
+    .card-subtab-labels label {
+      padding: 0.4rem 1rem;
+      font-size: 0.85rem;
+      color: #5a7a66;
+      background: rgba(168, 204, 184, 0.1);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .card-subtab-labels label:hover {
+      background: rgba(168, 204, 184, 0.2);
+      color: #a8ccb8;
+    }
+
+    #card-subtab-genshin:checked ~ .card-subtab-labels label[for="card-subtab-genshin"],
+    #card-subtab-oc:checked ~ .card-subtab-labels label[for="card-subtab-oc"] {
+      background: rgba(168, 204, 184, 0.3);
+      color: #a8ccb8;
+      font-weight: 500;
+    }
+
     /* Preset info */
 
     .preset-info { text-align: left; }
@@ -678,7 +712,7 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 10.7</p>
+          <p class="preset-version">Latest Version: 11.0</p>
           <div class="preset-desc">
             <ul>
               <li>Designed for shorter responses with flexible length</li>
@@ -689,7 +723,7 @@
             </ul>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%2010.7.json" download="Pura's Director Preset 10.7.json">Download Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%2011.0.json" download="Pura's Director Preset 11.0.json">Download Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -784,51 +818,76 @@
 
       <div class="tab-content tab-content-trackers">
         <div class="tracker-grid">
-          <a class="tracker-item" href="#lb-1">
+          <div class="tracker-item">
             <img src="preset/screenshots/scene-time.png" alt="Scene &amp; Time" loading="lazy">
             <span class="tracker-caption">Scene &amp; Time</span>
-          </a>
-          <a class="tracker-item" href="#lb-2">
-            <img src="preset/screenshots/npc-major.png" alt="NPC Introduction (Major)" loading="lazy">
-            <span class="tracker-caption">NPC Introduction (Major)</span>
-          </a>
-          <a class="tracker-item" href="#lb-3">
-            <img src="preset/screenshots/npc-support-minor.png" alt="NPC Support / Minor / Reference" loading="lazy">
-            <span class="tracker-caption">NPC Support / Minor / Reference</span>
-          </a>
-          <a class="tracker-item" href="#lb-4">
-            <img src="preset/screenshots/npc-tier-relationships.png" alt="Tier Upgrade &amp; Relationship Meters" loading="lazy">
-            <span class="tracker-caption">Tier Upgrade &amp; Relationships</span>
-          </a>
-          <a class="tracker-item" href="#lb-5">
-            <img src="preset/screenshots/status-conditions.png" alt="Status &amp; Conditions" loading="lazy">
-            <span class="tracker-caption">Status &amp; Conditions</span>
-          </a>
-          <a class="tracker-item" href="#lb-6">
-            <img src="preset/screenshots/secrets-asymmetry.png" alt="Secrets &amp; Information Asymmetry" loading="lazy">
-            <span class="tracker-caption">Secrets &amp; Information Asymmetry</span>
-          </a>
-          <a class="tracker-item" href="#lb-7">
+          </div>
+          <div class="tracker-item">
+            <img src="preset/screenshots/relationships.png" alt="Relationships" loading="lazy">
+            <span class="tracker-caption">Relationships</span>
+          </div>
+          <div class="tracker-item">
             <img src="preset/screenshots/pending-events.png" alt="Pending Events" loading="lazy">
             <span class="tracker-caption">Pending Events</span>
-          </a>
-          <a class="tracker-item" href="#lb-8">
+          </div>
+          <div class="tracker-item">
+            <img src="preset/screenshots/achievements.png" alt="Achievements" loading="lazy">
+            <span class="tracker-caption">Achievements</span>
+          </div>
+          <div class="tracker-item">
+            <img src="preset/screenshots/reputation.png" alt="Reputation" loading="lazy">
+            <span class="tracker-caption">Reputation</span>
+          </div>
+          <div class="tracker-item">
             <img src="preset/screenshots/inventory.png" alt="Inventory" loading="lazy">
             <span class="tracker-caption">Inventory</span>
-          </a>
-          <a class="tracker-item" href="#lb-9">
-            <img src="preset/screenshots/reputation-achievements.png" alt="Reputation &amp; Achievements" loading="lazy">
-            <span class="tracker-caption">Reputation &amp; Achievements</span>
-          </a>
-          <a class="tracker-item" href="#lb-10">
+          </div>
+          <div class="tracker-item">
+            <img src="preset/screenshots/status-conditions.png" alt="Status &amp; Conditions" loading="lazy">
+            <span class="tracker-caption">Status &amp; Conditions</span>
+          </div>
+          <div class="tracker-item">
+            <img src="preset/screenshots/secrets.png" alt="Secrets &amp; Information Asymmetry" loading="lazy">
+            <span class="tracker-caption">Secrets &amp; Information Asymmetry</span>
+          </div>
+          <div class="tracker-item">
+            <img src="preset/screenshots/parallel-offscreen.png" alt="Parallel Off-Screen Tracker" loading="lazy">
+            <span class="tracker-caption">Parallel Off-Screen Tracker</span>
+          </div>
+          <div class="tracker-item">
+            <img src="preset/screenshots/world-detail.png" alt="World Detail Tracker" loading="lazy">
+            <span class="tracker-caption">World Detail Tracker</span>
+          </div>
+          <div class="tracker-item">
             <img src="preset/screenshots/cyoa-choices.png" alt="CYOA Choices" loading="lazy">
             <span class="tracker-caption">CYOA Choices</span>
-          </a>
+          </div>
+          <div class="tracker-item">
+            <img src="preset/screenshots/npc-introduction.png" alt="NPC Introduction" loading="lazy">
+            <span class="tracker-caption">NPC Introduction</span>
+          </div>
         </div>
       </div>
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">11.0</h3>
+          <ul>
+            <li>Added two new trackers: Parallel Off-Screen Tracker, which shows what other characters are up to in ways that could converge with your plot without making your RP too deterministic; and World Detail Tracker, which includes small world-building details that could be used later in the RP for either conflict, resolution, or just enhancing the details of the world to make it feel more lived-in.</li>
+            <li>Added multiple Optional Randomiser Toggles:
+              <ul>
+                <li>Grounded Complication → Moves the plot without it being too wild or making the plot too nasty.</li>
+                <li>Chaos Mode → Moves the plot in bizarre, erratic ways without changing character behaviour arbitrarily.</li>
+                <li>Genre Randomiser → Changes genres to inform what the scene will be about.</li>
+                <li>Scene Driving Force → Picks a random type of main force that carries the scene forward (dialogue, action, reaction, tension, discovery, task flow)</li>
+                <li>Scene Pressure Cocktail → Mixes several scene pressures together, combining tension, focus, consequence, and social weather into one blended scene texture.</li>
+                <li>Combined Director's Cut → Combines all of the above in a way that still retains coherency.</li>
+                <li>Dead Dove Escalation → Characters act on their worst impulses, but only when context supports it. Anti-softening. Try combining with Difficulty Increase toggle if Opus is still stubborn as hell about it.</li>
+              </ul>
+            <li>As always, these are all optional. The RPs are still good without them, they just add texture. In my testing especially, Opus actually moves the plot well with these toggles.</li>
+            <li>Regexes are now prettier-looking.</li>
+          </ul>
+
           <h3 class="changelog-version">10.7</h3>
           <ul>
             <li>In my attempts to fix Gemini 3.1 Pro Preview, I ended up overhauling the entire prompt. The good news - it makes every other model better, and it makes Gemini 3.1 Pro's dialogue sound less robotic. Bad news: The model itself is inherently nerfed. If I were Logan, I'm sure it would be the best thing ever by now, but I'm not. I'm just a guy.</li>
@@ -1617,7 +1676,16 @@
       </div>
 
       <div class="tab-content tab-content-cards">
-        <div class="cards-grid">
+        <input type="radio" name="card-subtab" id="card-subtab-genshin" checked>
+        <input type="radio" name="card-subtab" id="card-subtab-oc">
+
+        <div class="card-subtab-labels">
+          <label for="card-subtab-genshin">Genshin</label>
+          <label for="card-subtab-oc">OC</label>
+        </div>
+
+        <div class="card-subtab-content card-subtab-content-genshin">
+          <div class="cards-grid">
           <a class="tracker-item" href="cards/Alhaitham.png" target="_blank">
             <img src="cards/Alhaitham.png" alt="Alhaitham" loading="lazy">
             <span class="tracker-caption"><strong>Alhaitham</strong><br>Scholarly scribe with analytical mind</span>
@@ -1690,10 +1758,6 @@
             <img src="cards/Ororon.png" alt="Ororon" loading="lazy">
             <span class="tracker-caption"><strong>Ororon</strong><br>Mysterious nocturnal guide</span>
           </a>
-          <a class="tracker-item" href="cards/Silas Beaumont-Charbonneau.png" target="_blank">
-            <img src="cards/Silas Beaumont-Charbonneau.png" alt="Silas Beaumont-Charbonneau" loading="lazy">
-            <span class="tracker-caption"><strong>Silas Beaumont-Charbonneau</strong><br>Former Canadian PM living anonymously in Montreal</span>
-          </a>
           <a class="tracker-item" href="cards/Tartaglia.png" target="_blank">
             <img src="cards/Tartaglia.png" alt="Tartaglia" loading="lazy">
             <span class="tracker-caption"><strong>Tartaglia</strong><br>Ambitious Fatui Harbinger</span>
@@ -1723,20 +1787,36 @@
             <span class="tracker-caption"><strong>Zhongli</strong><br>Wise consultant with secrets</span>
           </a>
         </div>
+        </div>
+
+        <div class="card-subtab-content card-subtab-content-oc">
+          <div class="cards-grid">
+          <a class="tracker-item" href="cards/Garrett%20Winslow.png" target="_blank">
+            <img src="cards/Garrett Winslow.png" alt="Garrett Winslow" loading="lazy">
+            <span class="tracker-caption"><strong>Garrett Winslow</strong><br>Your boss who's secretly your best Marvel Rivals teammate</span>
+          </a>
+          <a class="tracker-item" href="cards/Silas%20Beaumont-Charbonneau.png" target="_blank">
+            <img src="cards/Silas Beaumont-Charbonneau.png" alt="Silas Beaumont-Charbonneau" loading="lazy">
+            <span class="tracker-caption"><strong>Silas Beaumont-Charbonneau</strong><br>Former Canadian PM living anonymously in Montreal</span>
+          </a>
+        </div>
+        </div>
       </div>
     </div>
   </section>
 
   <a class="lightbox" id="lb-1" href="#close"><img src="preset/screenshots/scene-time.png" alt="Scene &amp; Time"></a>
-  <a class="lightbox" id="lb-2" href="#close"><img src="preset/screenshots/npc-major.png" alt="NPC Introduction (Major)"></a>
-  <a class="lightbox" id="lb-3" href="#close"><img src="preset/screenshots/npc-support-minor.png" alt="NPC Support / Minor / Reference"></a>
-  <a class="lightbox" id="lb-4" href="#close"><img src="preset/screenshots/npc-tier-relationships.png" alt="Tier Upgrade &amp; Relationship Meters"></a>
-  <a class="lightbox" id="lb-5" href="#close"><img src="preset/screenshots/status-conditions.png" alt="Status &amp; Conditions"></a>
-  <a class="lightbox" id="lb-6" href="#close"><img src="preset/screenshots/secrets-asymmetry.png" alt="Secrets &amp; Information Asymmetry"></a>
-  <a class="lightbox" id="lb-7" href="#close"><img src="preset/screenshots/pending-events.png" alt="Pending Events"></a>
-  <a class="lightbox" id="lb-8" href="#close"><img src="preset/screenshots/inventory.png" alt="Inventory"></a>
-  <a class="lightbox" id="lb-9" href="#close"><img src="preset/screenshots/reputation-achievements.png" alt="Reputation &amp; Achievements"></a>
-  <a class="lightbox" id="lb-10" href="#close"><img src="preset/screenshots/cyoa-choices.png" alt="CYOA Choices"></a>
+  <a class="lightbox" id="lb-2" href="#close"><img src="preset/screenshots/relationships.png" alt="Relationships"></a>
+  <a class="lightbox" id="lb-3" href="#close"><img src="preset/screenshots/pending-events.png" alt="Pending Events"></a>
+  <a class="lightbox" id="lb-4" href="#close"><img src="preset/screenshots/achievements.png" alt="Achievements"></a>
+  <a class="lightbox" id="lb-5" href="#close"><img src="preset/screenshots/reputation.png" alt="Reputation"></a>
+  <a class="lightbox" id="lb-6" href="#close"><img src="preset/screenshots/inventory.png" alt="Inventory"></a>
+  <a class="lightbox" id="lb-7" href="#close"><img src="preset/screenshots/status-conditions.png" alt="Status &amp; Conditions"></a>
+  <a class="lightbox" id="lb-8" href="#close"><img src="preset/screenshots/secrets.png" alt="Secrets &amp; Information Asymmetry"></a>
+  <a class="lightbox" id="lb-9" href="#close"><img src="preset/screenshots/parallel-offscreen.png" alt="Parallel Off-Screen Tracker"></a>
+  <a class="lightbox" id="lb-10" href="#close"><img src="preset/screenshots/world-detail.png" alt="World Detail Tracker"></a>
+  <a class="lightbox" id="lb-11" href="#close"><img src="preset/screenshots/cyoa-choices.png" alt="CYOA Choices"></a>
+  <a class="lightbox" id="lb-12" href="#close"><img src="preset/screenshots/npc-introduction.png" alt="NPC Introduction"></a>
 
   <script>
     (function () {
