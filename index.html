@@ -682,6 +682,7 @@
       <a href="https://platberlitz.github.io/platinum-startpage/">startpage<span class="link-info">localStorage customisable startpage</span></a>
       <a href="assistant/">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
       <a href="https://purasdproxy.duckdns.org">SD Proxy<span class="link-info">Stable Diffusion image generation frontend</span></a>
+      <a href="https://github.com/platberlitz/SillyBunny">SillyBunny<span class="link-info">SillyTavern fork with UI/UX improvements</span></a>
     </div>
     <p class="links-footer"><a href="https://github.com/platberlitz/sd-proxy" class="link-info-link">SD Proxy on GitHub</a></p>
   </div>
@@ -712,7 +713,7 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 11.0</p>
+          <p class="preset-version">Latest Version: 11.5</p>
           <div class="preset-desc">
             <ul>
               <li>Designed for shorter responses with flexible length</li>
@@ -723,7 +724,7 @@
             </ul>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%2011.0.json" download="Pura's Director Preset 11.0.json">Download Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%2011.5.json" download="Pura's Director Preset 11.5.json">Download Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -804,6 +805,7 @@
           <h2 class="preset-title">Previous Preset Versions</h2>
           <p class="preset-version">Older stable releases</p>
           <div class="preset-downloads" id="previous-versions-list">
+            <a href="preset/Pura's%20Director%20Preset%2011.0.json" download="Pura's Director Preset 11.0.json">Preset 11.0</a>
             <a href="preset/Pura's%20Director%20Preset%2010.6.json" download="Pura's Director Preset 10.6.json">Preset 10.6</a>
             <a href="preset/Pura's%20Director%20Preset%2010.5.json" download="Pura's Director Preset 10.5.json">Preset 10.5</a>
             <a href="preset/Pura's%20Director%20Preset%2010.2.json" download="Pura's Director Preset 10.2.json">Preset 10.2</a>
@@ -900,6 +902,19 @@
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">11.5</h3>
+          <ul>
+            <li>Rewrote the entire Director Main Prompt to reduce redundancies and use words the LLM can use without bloating up tokens. ~800 tokens</li>
+            <li>Rewrote Grounded Prose Rules to be more consistent with Main Prompt. ~500 tokens</li>
+            <li>Rewrote both Write for User and Don't Write for User to enhance anti-echoing.</li>
+            <li>Removed 'Force Gemini to Think Less' now that it's irrelevant and replaced it with 'Friction Mode' - an extra toggle attempt to realistically combat positivity bias, especially in Opus. For some reason, Sonnet doesn't really have this problem.</li>
+            <li>Rewrote HTML Toggle to be more interactive.</li>
+            <li>Rewrote Difficulty Increase to be less bloated.</li>
+            <li>Rewrote NSFW Toggle with better wording.</li>
+            <li>Trimmed Parallel Off-Screen Tracker and World Detail Trackers and gave them stronger rules to follow.</li>
+            <li>Added "Pace" section in Scene Pressure Cocktail, added more random outcomes, and edited Combined Director's Cut in line with this.</li>
+          </ul>
+
           <h3 class="changelog-version">11.0</h3>
           <ul>
             <li>Added two new trackers: Parallel Off-Screen Tracker, which shows what other characters are up to in ways that could converge with your plot without making your RP too deterministic; and World Detail Tracker, which includes small world-building details that could be used later in the RP for either conflict, resolution, or just enhancing the details of the world to make it feel more lived-in.</li>
@@ -912,7 +927,9 @@
                 <li>Scene Pressure Cocktail → Mixes several scene pressures together, combining tension, focus, consequence, and social weather into one blended scene texture.</li>
                 <li>Combined Director's Cut → Combines all of the above in a way that still retains coherency.</li>
                 <li>Dead Dove Escalation → Characters act on their worst impulses, but only when context supports it. Anti-softening. Try combining with Difficulty Increase toggle if Opus is still stubborn as hell about it.</li>
-              </ul><li>As always, these are all optional. The RPs are still good without them, they just add texture. In my testing especially, Opus actually moves the plot well with these toggles.</li>
+              </ul>
+            </li>
+            <li>As always, these are all optional. The RPs are still good without them, they just add texture. In my testing especially, Opus actually moves the plot well with these toggles.</li>
             <li>Regexes are now prettier-looking.</li>
           </ul>
 
