@@ -735,7 +735,7 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 11.5</p>
+          <p class="preset-version">Latest Version: 12 (Definitive)</p>
           <div class="preset-desc">
             <ul>
               <li>Designed for shorter responses with flexible length</li>
@@ -743,10 +743,13 @@
               <li>Plug and play, import and go; the regex set is already installed in the preset file</li>
               <li>All trackers are optional; the regex set renders them, but the preset works fine without</li>
               <li>Place your reminders and response length in the formatting section or the optional user instructions toggle</li>
+              <li><strong>SillyTavern version</strong> &mdash; the full preset with all toggles: trackers, randomisers, and everything else</li>
+              <li><strong>SillyBunny version</strong> &mdash; a trimmed version with only the Main, Primary Toggles, and Prefills; trackers and randomisers are now built into SillyBunny itself</li>
             </ul>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%2011.5.json" download="Pura's Director Preset 11.5.json">Download Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%20(SillyTavern).json" download="Pura's Director Preset (SillyTavern).json">Download (SillyTavern)</a>
+            <a href="preset/Pura's%20Director%20Preset%20(SillyBunny).json" download="Pura's Director Preset (SillyBunny).json">Download (SillyBunny)</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -827,6 +830,7 @@
           <h2 class="preset-title">Previous Preset Versions</h2>
           <p class="preset-version">Older stable releases</p>
           <div class="preset-downloads" id="previous-versions-list">
+            <a href="preset/Pura's%20Director%20Preset%2011.5.json" download="Pura's Director Preset 11.5.json">Preset 11.5</a>
             <a href="preset/Pura's%20Director%20Preset%2011.0.json" download="Pura's Director Preset 11.0.json">Preset 11.0</a>
             <a href="preset/Pura's%20Director%20Preset%2010.6.json" download="Pura's Director Preset 10.6.json">Preset 10.6</a>
             <a href="preset/Pura's%20Director%20Preset%2010.5.json" download="Pura's Director Preset 10.5.json">Preset 10.5</a>
@@ -924,6 +928,16 @@
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">12</h3>
+          <ul>
+            <li>Added Intimacy &amp; Kink Randomiser Toggle.</li>
+            <li>Added "Direction Menu", which is situation-focused instead of user-focused choices to steer the plot.</li>
+            <li>Trimmed Grounded Prose Rules a bit.</li>
+            <li>Rewrote Write and Don't Write for User toggles to have stronger wording and anti-echoing.</li>
+            <li>Trimmed a lot of the rules of the toggles for the SillyTavern version, and gave them stronger wording.</li>
+            <li>Added two separate versions &mdash; the SillyTavern version which has all of the toggles, and the SillyBunny version which has only the Main, Primary Toggles, and the Prefills; this is because these trackers and randomisers are now part of SillyBunny.</li>
+          </ul>
+
           <h3 class="changelog-version">11.5</h3>
           <ul>
             <li>Rewrote the entire Director Main Prompt to reduce redundancies and use words the LLM can use without bloating up tokens. ~800 tokens</li>
