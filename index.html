@@ -16,7 +16,7 @@
 
     body {
       background: #0a0a0f;
-      color: #8aab96;
+      color: #9bbbaa;
       font-family: 'Figtree', sans-serif;
       min-height: 100vh;
       display: flex;
@@ -58,7 +58,7 @@
 
     .subtitle {
       font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-      color: #5a7a66;
+      color: #739282;
       margin-bottom: 2.5rem;
     }
 
@@ -70,9 +70,9 @@
     }
 
     .links a {
-      color: #7a9e8a;
+      color: #91b3a0;
       text-decoration: none;
-      border: 1px solid #2a2a3a;
+      border: 1px solid #353d4d;
       border-radius: 999px;
       padding: 0.55rem 1.6rem;
       font-size: 0.95rem;
@@ -80,10 +80,83 @@
       position: relative;
     }
 
+    .links a.glow-pill {
+      color: var(--pill-text, #a8ccb8);
+      border-color: var(--pill-border, rgba(84, 160, 255, 0.38));
+      background: linear-gradient(135deg, var(--pill-bg-start, rgba(34, 46, 74, 0.42)), var(--pill-bg-end, rgba(34, 46, 74, 0.24)));
+      box-shadow: 0 0 20px var(--pill-glow, rgba(84, 160, 255, 0.18));
+    }
+
+    .links a.glow-pill .link-info {
+      color: var(--pill-info, #8fb3a0);
+    }
+
     .links a:hover {
       color: #a8ccb8;
       border-color: #4a4a6a;
       box-shadow: 0 0 12px rgba(84, 160, 255, 0.15);
+    }
+
+    .links a.glow-pill:hover {
+      color: var(--pill-text-hover, #dff1e6);
+      border-color: var(--pill-border-hover, rgba(120, 196, 255, 0.68));
+      box-shadow: 0 0 24px var(--pill-glow-hover, rgba(84, 160, 255, 0.28));
+    }
+
+    .links a.glow-pill:hover .link-info {
+      color: var(--pill-info-hover, #cbe3d6);
+    }
+
+    .links a.startpage-link {
+      --pill-text: #ffe0f0;
+      --pill-text-hover: #ffeff8;
+      --pill-info: #e7a8ca;
+      --pill-info-hover: #f7cde2;
+      --pill-border: rgba(255, 132, 205, 0.44);
+      --pill-border-hover: rgba(255, 163, 220, 0.68);
+      --pill-bg-start: rgba(70, 29, 54, 0.46);
+      --pill-bg-end: rgba(46, 20, 36, 0.24);
+      --pill-glow: rgba(255, 132, 205, 0.22);
+      --pill-glow-hover: rgba(255, 132, 205, 0.34);
+    }
+
+    .links a.synapse-link {
+      --pill-text: #c7e7ff;
+      --pill-text-hover: #e4f4ff;
+      --pill-info: #8fb8df;
+      --pill-info-hover: #bbdbf8;
+      --pill-border: rgba(102, 184, 255, 0.44);
+      --pill-border-hover: rgba(136, 204, 255, 0.68);
+      --pill-bg-start: rgba(26, 45, 72, 0.46);
+      --pill-bg-end: rgba(20, 33, 52, 0.24);
+      --pill-glow: rgba(102, 184, 255, 0.22);
+      --pill-glow-hover: rgba(102, 184, 255, 0.34);
+    }
+
+    .links a.sdproxy-link {
+      --pill-text: #ffd9a8;
+      --pill-text-hover: #ffe8c9;
+      --pill-info: #deb184;
+      --pill-info-hover: #f3cb9e;
+      --pill-border: rgba(255, 173, 92, 0.46);
+      --pill-border-hover: rgba(255, 196, 130, 0.68);
+      --pill-bg-start: rgba(72, 44, 22, 0.46);
+      --pill-bg-end: rgba(48, 30, 17, 0.24);
+      --pill-glow: rgba(255, 173, 92, 0.22);
+      --pill-glow-hover: rgba(255, 173, 92, 0.34);
+    }
+
+    .links a.sillybunny-link {
+      --pill-text: #c9f5e2;
+      --pill-text-hover: #e3fff3;
+      --pill-info: #8fd5b9;
+      --pill-info-hover: #b8f0da;
+      --pill-border: rgba(84, 217, 172, 0.44);
+      --pill-border-hover: rgba(118, 242, 193, 0.68);
+      --pill-bg-start: rgba(24, 67, 54, 0.46);
+      --pill-bg-end: rgba(20, 46, 39, 0.24);
+      --pill-glow: rgba(84, 217, 172, 0.22);
+      --pill-glow-hover: rgba(84, 217, 172, 0.34);
     }
 
     .links a.kofi-link {
@@ -110,7 +183,7 @@
     .link-info {
       display: block;
       font-size: 0.7rem;
-      color: #5a7a66;
+      color: #6f9080;
       margin-top: 0.15rem;
     }
 
@@ -121,12 +194,12 @@
 
     .link-info-link {
       font-size: 0.72rem;
-      color: #5a7a66;
+      color: #739282;
       text-decoration: none;
       transition: color 0.25s;
     }
 
-    .link-info-link:hover { color: #7a9e8a; }
+    .link-info-link:hover { color: #b6d8c5; }
 
     /* ── Preset Section ── */
 
@@ -235,14 +308,14 @@
     .divider {
       width: 40px;
       height: 1px;
-      background: #2a2a3a;
+      background: #394455;
       margin: 0 auto 2rem;
     }
 
     .section-heading {
       font-size: 1.1rem;
       font-weight: 600;
-      color: #7a9e8a;
+      color: #9cbdad;
       text-align: center;
       margin-bottom: 1.2rem;
     }
@@ -262,21 +335,24 @@
     }
 
     .tab-labels label {
-      color: #5a7a66;
-      border: 1px solid #1a1a2a;
+      color: #789889;
+      border: 1px solid #2b3445;
       border-radius: 999px;
+      background: rgba(18, 21, 31, 0.82);
       padding: 0.4rem 1.3rem;
       font-size: 0.85rem;
       flex: 0 0 auto;
       white-space: nowrap;
       cursor: pointer;
-      transition: color 0.25s, border-color 0.25s;
+      transition: color 0.25s, border-color 0.25s, background 0.25s, box-shadow 0.25s;
       user-select: none;
     }
 
     .tab-labels label:hover {
-      color: #7a9e8a;
-      border-color: #2a2a3a;
+      color: #b9d9ca;
+      border-color: #415067;
+      background: rgba(24, 30, 42, 0.94);
+      box-shadow: 0 0 16px rgba(84, 160, 255, 0.08);
     }
 
     #tab-preset:checked ~ .tab-labels label[for="tab-preset"],
@@ -288,8 +364,10 @@
     #tab-extensions:checked ~ .tab-labels label[for="tab-extensions"],
     #tab-themes:checked ~ .tab-labels label[for="tab-themes"],
     #tab-cards:checked ~ .tab-labels label[for="tab-cards"] {
-      color: #a8ccb8;
-      border-color: #3a3a5a;
+      color: #e0f2e7;
+      border-color: #566985;
+      background: rgba(28, 35, 48, 0.96);
+      box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 18px rgba(84, 160, 255, 0.1);
     }
 
     .tab-content { display: none; }
@@ -308,8 +386,10 @@
     #sb-tab-agents:checked ~ .tab-labels label[for="sb-tab-agents"],
     #sb-tab-screenshots:checked ~ .tab-labels label[for="sb-tab-screenshots"],
     #sb-tab-changelog:checked ~ .tab-labels label[for="sb-tab-changelog"] {
-      color: #a8ccb8;
-      border-color: #3a3a5a;
+      color: #e0f2e7;
+      border-color: #566985;
+      background: rgba(28, 35, 48, 0.96);
+      box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 18px rgba(84, 160, 255, 0.1);
     }
 
     #sb-tab-overview:checked ~ .sb-tab-content-overview { display: block; }
@@ -333,22 +413,25 @@
     .card-subtab-labels label {
       padding: 0.4rem 1rem;
       font-size: 0.85rem;
-      color: #5a7a66;
-      background: rgba(168, 204, 184, 0.1);
+      color: #789889;
+      background: rgba(20, 24, 33, 0.86);
+      border: 1px solid #2b3445;
       border-radius: 20px;
       cursor: pointer;
       transition: all 0.2s;
     }
 
     .card-subtab-labels label:hover {
-      background: rgba(168, 204, 184, 0.2);
-      color: #a8ccb8;
+      background: rgba(28, 35, 46, 0.94);
+      border-color: #42506a;
+      color: #cfe6d9;
     }
 
     #card-subtab-genshin:checked ~ .card-subtab-labels label[for="card-subtab-genshin"],
     #card-subtab-oc:checked ~ .card-subtab-labels label[for="card-subtab-oc"] {
-      background: rgba(168, 204, 184, 0.3);
-      color: #a8ccb8;
+      background: rgba(31, 42, 54, 0.95);
+      border-color: #5a6b86;
+      color: #e0f2e7;
       font-weight: 500;
     }
 
@@ -359,21 +442,21 @@
     .preset-title {
       font-size: 1.25rem;
       font-weight: 600;
-      color: #a8ccb8;
+      color: #d8eee2;
       margin-bottom: 0.3rem;
     }
 
     .preset-version {
       font-size: 0.8rem;
-      color: #5a7a66;
+      color: #7d9c8c;
       margin-bottom: 1rem;
     }
 
     .preset-desc {
       font-size: 0.88rem;
-      color: #6a8e78;
+      color: #89aa99;
       line-height: 1.7;
-      font-weight: 300;
+      font-weight: 400;
     }
 
     .preset-desc ul { list-style: none; }
@@ -388,7 +471,7 @@
       content: '\b7';
       position: absolute;
       left: 0.2rem;
-      color: #4a6a56;
+      color: #6b8d7c;
       font-weight: 600;
     }
 
@@ -400,34 +483,35 @@
     }
 
     .preset-downloads a {
-      color: #7a9e8a;
+      color: #91b4a0;
       text-decoration: none;
-      border: 1px solid #2a2a3a;
+      border: 1px solid #353f52;
       border-radius: 999px;
+      background: rgba(16, 18, 28, 0.78);
       padding: 0.5rem 1.4rem;
       font-size: 0.85rem;
       transition: color 0.25s, border-color 0.25s, box-shadow 0.25s;
     }
 
     .preset-downloads a:hover {
-      color: #a8ccb8;
-      border-color: #4a4a6a;
-      box-shadow: 0 0 12px rgba(84, 160, 255, 0.15);
+      color: #dff2e7;
+      border-color: #5c7193;
+      box-shadow: 0 0 16px rgba(84, 160, 255, 0.14);
     }
 
     .opinions-intro {
       font-size: 0.88rem;
-      color: #6a8e78;
+      color: #89aa99;
       line-height: 1.7;
-      font-weight: 300;
+      font-weight: 400;
       margin-bottom: 1rem;
     }
 
     .opinions-table-wrap {
       overflow-x: auto;
-      border: 1px solid #1f1f30;
+      border: 1px solid #2a3445;
       border-radius: 18px;
-      background: rgba(14, 14, 22, 0.92);
+      background: rgba(15, 16, 25, 0.95);
     }
 
     .opinions-table {
@@ -441,24 +525,24 @@
       padding: 0.9rem 1rem;
       text-align: left;
       vertical-align: top;
-      border-bottom: 1px solid #1f1f30;
+      border-bottom: 1px solid #2a3445;
       font-size: 0.84rem;
       line-height: 1.65;
       overflow-wrap: anywhere;
     }
 
     .opinions-table th {
-      color: #a8ccb8;
+      color: #d3eadf;
       font-size: 0.78rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      background: rgba(22, 22, 34, 0.96);
+      background: rgba(24, 27, 39, 0.98);
     }
 
     .opinions-table td {
-      color: #6a8e78;
-      font-weight: 300;
+      color: #88a997;
+      font-weight: 400;
     }
 
     .opinions-table tbody tr:last-child td {
@@ -483,7 +567,7 @@
     .opinions-table th:last-child,
     .opinions-table td:last-child {
       width: 24%;
-      color: #8aab96;
+      color: #a2c1b1;
       white-space: normal;
     }
 
@@ -526,9 +610,9 @@
       }
 
       .opinions-table tr {
-        border: 1px solid #1f1f30;
+        border: 1px solid #2a3445;
         border-radius: 18px;
-        background: rgba(14, 14, 22, 0.92);
+        background: rgba(15, 16, 25, 0.95);
         overflow: hidden;
       }
 
@@ -540,13 +624,13 @@
       }
 
       .opinions-table td {
-        border-bottom: 1px solid #1f1f30;
+        border-bottom: 1px solid #2a3445;
         padding: 0.8rem 0.95rem;
       }
 
       .opinions-table td:last-child {
         border-bottom: 0;
-        color: #a8ccb8;
+        color: #d0e8dc;
         font-weight: 400;
       }
 
@@ -554,7 +638,7 @@
         content: attr(data-label);
         display: block;
         margin-bottom: 0.35rem;
-        color: #8aab96;
+        color: #9ab8a9;
         font-size: 0.68rem;
         font-weight: 600;
         letter-spacing: 0.05em;
@@ -563,7 +647,7 @@
 
       .opinions-table td:first-child {
         padding-top: 0.95rem;
-        color: #d6ead9;
+        color: #e1f2e8;
         font-size: 0.96rem;
         line-height: 1.45;
       }
@@ -580,7 +664,7 @@
     .changelog-version {
       font-size: 0.95rem;
       font-weight: 600;
-      color: #a8ccb8;
+      color: #d8eee2;
       margin-bottom: 0.6rem;
     }
 
@@ -591,9 +675,9 @@
 
     .changelog li {
       font-size: 0.85rem;
-      color: #6a8e78;
+      color: #89aa99;
       line-height: 1.65;
-      font-weight: 300;
+      font-weight: 400;
       padding: 0.2rem 0;
       padding-left: 1.2rem;
       position: relative;
@@ -603,7 +687,7 @@
       content: '\b7';
       position: absolute;
       left: 0.2rem;
-      color: #4a6a56;
+      color: #6b8d7c;
       font-weight: 600;
     }
 
@@ -612,21 +696,23 @@
     .extensions-list { text-align: left; }
 
     .ext-item {
-      border: 1px solid #1a1a2a;
+      border: 1px solid #293345;
       border-radius: 10px;
       padding: 1rem 1.2rem;
       margin-bottom: 0.75rem;
-      transition: border-color 0.25s;
+      background: rgba(15, 16, 26, 0.82);
+      transition: border-color 0.25s, box-shadow 0.25s;
     }
 
     .ext-item:hover {
-      border-color: #2a2a3a;
+      border-color: #415069;
+      box-shadow: 0 0 18px rgba(84, 160, 255, 0.08);
     }
 
     .ext-name {
       font-size: 0.95rem;
       font-weight: 600;
-      color: #a8ccb8;
+      color: #d8eee2;
       margin-bottom: 0.3rem;
     }
 
@@ -639,22 +725,22 @@
     .ext-name a:hover { color: #c0e8d0; }
 
     .inline-link {
-      color: #7a9e8a;
+      color: #9abfae;
       text-decoration: none;
-      border-bottom: 1px solid #3a3a5a;
+      border-bottom: 1px solid #536681;
       transition: color 0.25s, border-color 0.25s;
     }
 
     .inline-link:hover {
-      color: #a8ccb8;
-      border-color: #5a7a66;
+      color: #e0f4ea;
+      border-color: #8ea99b;
     }
 
     .ext-desc {
       font-size: 0.82rem;
-      color: #6a8e78;
+      color: #89aa99;
       line-height: 1.6;
-      font-weight: 300;
+      font-weight: 400;
     }
 
     .theme-colors {
@@ -676,9 +762,9 @@
 
     .option-note {
       font-size: 0.84rem;
-      color: #6a8e78;
+      color: #89aa99;
       line-height: 1.7;
-      font-weight: 300;
+      font-weight: 400;
       margin-bottom: 1rem;
     }
 
@@ -698,26 +784,26 @@
       display: inline-flex;
       align-items: center;
       border-radius: 999px;
-      border: 1px solid #2a2a3a;
+      border: 1px solid #323b4d;
       padding: 0.24rem 0.7rem;
       font-size: 0.68rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      color: #8aab96;
-      background: rgba(20, 20, 30, 0.92);
+      color: #a0beaf;
+      background: rgba(20, 22, 34, 0.94);
       white-space: nowrap;
     }
 
     .option-badge-st {
-      border-color: rgba(90, 150, 120, 0.55);
-      background: rgba(38, 69, 53, 0.45);
-      color: #b9e7c8;
-    }
-
-    .option-badge-sb {
       border-color: rgba(121, 185, 255, 0.4);
       background: rgba(42, 63, 88, 0.45);
       color: #cae6ff;
+    }
+
+    .option-badge-sb {
+      border-color: rgba(90, 150, 120, 0.55);
+      background: rgba(38, 69, 53, 0.45);
+      color: #b9e7c8;
     }
 
     .option-badge-agent {
@@ -743,7 +829,7 @@
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #8aab96;
+      color: #a0beaf;
       margin-bottom: 0.85rem;
     }
 
@@ -753,10 +839,10 @@
     }
 
     .option-card {
-      border: 1px solid #1a1a2a;
+      border: 1px solid #2a3445;
       border-radius: 14px;
       padding: 0.95rem 1rem;
-      background: rgba(14, 14, 22, 0.78);
+      background: rgba(15, 17, 27, 0.9);
     }
 
     .option-card-head {
@@ -771,18 +857,18 @@
     .option-card-title {
       font-size: 0.92rem;
       font-weight: 600;
-      color: #a8ccb8;
+      color: #d8eee2;
     }
 
     .option-card-copy {
       font-size: 0.82rem;
       line-height: 1.65;
-      color: #6a8e78;
-      font-weight: 300;
+      color: #89aa99;
+      font-weight: 400;
     }
 
     .option-card-copy strong {
-      color: #9cc3a8;
+      color: #c5e4d2;
       font-weight: 600;
     }
 
@@ -805,25 +891,30 @@
     }
 
     .theme-tab-labels label {
-      color: #5a7a66;
-      border: 1px solid #1a1a2a;
+      color: #789889;
+      border: 1px solid #2b3445;
       border-radius: 999px;
+      background: rgba(18, 21, 31, 0.82);
       padding: 0.4rem 1.3rem;
       font-size: 0.85rem;
       cursor: pointer;
-      transition: color 0.25s, border-color 0.25s;
+      transition: color 0.25s, border-color 0.25s, background 0.25s, box-shadow 0.25s;
       user-select: none;
     }
 
     .theme-tab-labels label:hover {
-      color: #7a9e8a;
-      border-color: #2a2a3a;
+      color: #b9d9ca;
+      border-color: #415067;
+      background: rgba(24, 30, 42, 0.94);
+      box-shadow: 0 0 16px rgba(84, 160, 255, 0.08);
     }
 
     #theme-dark:checked ~ .theme-tab-labels label[for="theme-dark"],
     #theme-light:checked ~ .theme-tab-labels label[for="theme-light"] {
-      color: #a8ccb8;
-      border-color: #3a3a5a;
+      color: #e0f2e7;
+      border-color: #566985;
+      background: rgba(28, 35, 48, 0.96);
+      box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 18px rgba(84, 160, 255, 0.1);
     }
 
     .theme-tab-content { display: none; }
@@ -848,19 +939,19 @@
       height: auto;
       object-fit: contain;
       border-radius: 6px;
-      border: 1px solid #1a1a2a;
+      border: 1px solid #2a3445;
       transition: border-color 0.25s, box-shadow 0.25s;
       display: block;
     }
 
     .tracker-item:hover img {
-      border-color: #3a3a5a;
-      box-shadow: 0 2px 16px rgba(84, 160, 255, 0.08);
+      border-color: #4f6380;
+      box-shadow: 0 2px 18px rgba(84, 160, 255, 0.1);
     }
 
     .tracker-caption {
       font-size: 0.75rem;
-      color: #5a7a66;
+      color: #779687;
       margin-top: 0.35rem;
       text-align: center;
       display: block;
@@ -953,10 +1044,10 @@
     <h1 class="rainbow">welcome :3</h1>
     <p class="subtitle">purachina's stuff</p>
     <div class="links">
-      <a href="https://platberlitz.github.io/platinum-startpage/">startpage<span class="link-info">localStorage customisable startpage</span></a>
-      <a href="assistant/">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
-      <a href="https://purasdproxy.duckdns.org">SD Proxy<span class="link-info">Stable Diffusion image generation frontend</span></a>
-      <a href="https://github.com/platberlitz/SillyBunny">SillyBunny<span class="link-info">SillyTavern fork with UI/UX improvements</span></a>
+      <a href="https://platberlitz.github.io/platinum-startpage/" class="glow-pill startpage-link">startpage<span class="link-info">localStorage customisable startpage</span></a>
+      <a href="assistant/" class="glow-pill synapse-link">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
+      <a href="https://purasdproxy.duckdns.org" class="glow-pill sdproxy-link">SD Proxy<span class="link-info">Stable Diffusion image generation frontend</span></a>
+      <a href="https://github.com/platberlitz/SillyBunny" class="glow-pill sillybunny-link">SillyBunny<span class="link-info">SillyTavern fork with UI/UX improvements</span></a>
       <a href="https://ko-fi.com/purachina" class="kofi-link" target="_blank" rel="noopener noreferrer">Ko-fi<span class="link-info">support my work with a coffee</span></a>
     </div>
     <p class="links-footer"><a href="https://github.com/platberlitz/sd-proxy" class="link-info-link">SD Proxy on GitHub</a></p>
