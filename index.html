@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>platberlitz</title>
+  <title>purachina's stuff</title>
+  <link rel="icon" type="image/png" sizes="256x256" href="favicon-256.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;600&amp;display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -24,6 +28,15 @@
       text-align: center;
       padding: 2rem;
       padding-top: clamp(3rem, 15vh, 8rem);
+    }
+
+    .hero-favicon {
+      display: block;
+      width: clamp(72px, 12vw, 104px);
+      height: auto;
+      margin: 0 auto 1rem;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 10px 24px rgba(32, 64, 48, 0.28));
     }
 
     .rainbow {
@@ -124,6 +137,101 @@
       margin-bottom: 4rem;
     }
 
+    .platform-switcher {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .platform-switcher > input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .platform-labels {
+      width: 100%;
+      max-width: 720px;
+      padding: 0 1.5rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .platform-labels label {
+      min-width: 148px;
+      text-align: center;
+      transition: color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+    }
+
+    .platform-labels label[for="platform-view-st"] {
+      color: #6eaef9;
+      border-color: rgba(84, 160, 255, 0.38);
+      background: rgba(24, 38, 66, 0.34);
+      box-shadow: inset 0 0 0 1px rgba(84, 160, 255, 0.08);
+    }
+
+    .platform-labels label[for="platform-view-sb"] {
+      color: #8fe7a8;
+      border-color: rgba(92, 214, 130, 0.4);
+      background: rgba(24, 50, 32, 0.34);
+      box-shadow: inset 0 0 0 1px rgba(92, 214, 130, 0.08);
+    }
+
+    .platform-labels label:hover {
+      transform: translateY(-1px);
+    }
+
+    .platform-labels label[for="platform-view-st"]:hover {
+      color: #a8d3ff;
+      border-color: rgba(112, 190, 255, 0.56);
+      box-shadow: 0 0 18px rgba(84, 160, 255, 0.2);
+    }
+
+    .platform-labels label[for="platform-view-sb"]:hover {
+      color: #b6f6c8;
+      border-color: rgba(120, 235, 157, 0.56);
+      box-shadow: 0 0 18px rgba(92, 214, 130, 0.2);
+    }
+
+    .platform-panel {
+      display: none;
+      width: 100%;
+    }
+
+    #platform-view-st:checked ~ .platform-labels label[for="platform-view-st"] {
+      color: #e4f3ff;
+      border-color: #6ab8ff;
+      background: rgba(28, 49, 82, 0.62);
+      text-shadow: 0 0 12px rgba(122, 190, 255, 0.5);
+      box-shadow: 0 0 24px rgba(84, 160, 255, 0.34), 0 8px 24px rgba(31, 68, 110, 0.28);
+    }
+
+    #platform-view-sb:checked ~ .platform-labels label[for="platform-view-sb"] {
+      color: #e7fff0;
+      border-color: #74e29a;
+      background: rgba(26, 54, 35, 0.62);
+      text-shadow: 0 0 12px rgba(124, 241, 160, 0.45);
+      box-shadow: 0 0 24px rgba(92, 214, 130, 0.34), 0 8px 24px rgba(29, 82, 48, 0.28);
+    }
+
+    #platform-view-st:checked ~ .platform-panel-st,
+    #platform-view-sb:checked ~ .platform-panel-sb {
+      display: block;
+      animation: platformPanelIn 0.34s ease;
+    }
+
+    @keyframes platformPanelIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     .divider {
       width: 40px;
       height: 1px;
@@ -172,6 +280,7 @@
     }
 
     #tab-preset:checked ~ .tab-labels label[for="tab-preset"],
+    #tab-options:checked ~ .tab-labels label[for="tab-options"],
     #tab-opinions:checked ~ .tab-labels label[for="tab-opinions"],
     #tab-previous:checked ~ .tab-labels label[for="tab-previous"],
     #tab-trackers:checked ~ .tab-labels label[for="tab-trackers"],
@@ -185,6 +294,7 @@
 
     .tab-content { display: none; }
     #tab-preset:checked ~ .tab-content-preset { display: block; }
+    #tab-options:checked ~ .tab-content-options { display: block; }
     #tab-opinions:checked ~ .tab-content-opinions { display: block; }
     #tab-previous:checked ~ .tab-content-previous { display: block; }
     #tab-trackers:checked ~ .tab-content-trackers { display: block; }
@@ -192,6 +302,21 @@
     #tab-extensions:checked ~ .tab-content-extensions { display: block; }
     #tab-themes:checked ~ .tab-content-themes { display: block; }
     #tab-cards:checked ~ .tab-content-cards { display: block; }
+
+    #sb-tab-overview:checked ~ .tab-labels label[for="sb-tab-overview"],
+    #sb-tab-features:checked ~ .tab-labels label[for="sb-tab-features"],
+    #sb-tab-agents:checked ~ .tab-labels label[for="sb-tab-agents"],
+    #sb-tab-screenshots:checked ~ .tab-labels label[for="sb-tab-screenshots"],
+    #sb-tab-changelog:checked ~ .tab-labels label[for="sb-tab-changelog"] {
+      color: #a8ccb8;
+      border-color: #3a3a5a;
+    }
+
+    #sb-tab-overview:checked ~ .sb-tab-content-overview { display: block; }
+    #sb-tab-features:checked ~ .sb-tab-content-features { display: block; }
+    #sb-tab-agents:checked ~ .sb-tab-content-agents { display: block; }
+    #sb-tab-screenshots:checked ~ .sb-tab-content-screenshots { display: block; }
+    #sb-tab-changelog:checked ~ .sb-tab-content-changelog { display: block; }
 
     /* Card sub-tabs */
     .card-subtab-content { display: none; }
@@ -547,6 +672,120 @@
       display: inline-block;
     }
 
+    /* Preset options */
+
+    .option-note {
+      font-size: 0.84rem;
+      color: #6a8e78;
+      line-height: 1.7;
+      font-weight: 300;
+      margin-bottom: 1rem;
+    }
+
+    .option-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0 1.4rem;
+    }
+
+    .option-card-head .option-legend {
+      margin: 0;
+      gap: 0.4rem;
+    }
+
+    .option-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid #2a2a3a;
+      padding: 0.24rem 0.7rem;
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #8aab96;
+      background: rgba(20, 20, 30, 0.92);
+      white-space: nowrap;
+    }
+
+    .option-badge-st {
+      border-color: rgba(90, 150, 120, 0.55);
+      background: rgba(38, 69, 53, 0.45);
+      color: #b9e7c8;
+    }
+
+    .option-badge-sb {
+      border-color: rgba(121, 185, 255, 0.4);
+      background: rgba(42, 63, 88, 0.45);
+      color: #cae6ff;
+    }
+
+    .option-badge-agent {
+      border-color: rgba(210, 170, 105, 0.42);
+      background: rgba(78, 62, 31, 0.5);
+      color: #f2ddb1;
+    }
+
+    .option-group {
+      margin-top: 1.6rem;
+    }
+
+    .option-group:first-of-type {
+      margin-top: 0;
+    }
+
+    .option-legend + .option-group {
+      margin-top: 0;
+    }
+
+    .option-group-title {
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8aab96;
+      margin-bottom: 0.85rem;
+    }
+
+    .option-grid {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .option-card {
+      border: 1px solid #1a1a2a;
+      border-radius: 14px;
+      padding: 0.95rem 1rem;
+      background: rgba(14, 14, 22, 0.78);
+    }
+
+    .option-card-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.6rem;
+      margin-bottom: 0.45rem;
+    }
+
+    .option-card-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #a8ccb8;
+    }
+
+    .option-card-copy {
+      font-size: 0.82rem;
+      line-height: 1.65;
+      color: #6a8e78;
+      font-weight: 300;
+    }
+
+    .option-card-copy strong {
+      color: #9cc3a8;
+      font-weight: 600;
+    }
+
     /* Theme sub-tabs */
     .theme-tabs {
       position: relative;
@@ -651,6 +890,15 @@
       .links { flex-direction: column; align-items: center; gap: 0.75rem; }
       .links a { width: 100%; max-width: 280px; text-align: center; }
 
+      .platform-labels {
+        padding: 0 1rem;
+        margin-bottom: 0.65rem;
+      }
+      .platform-labels label {
+        min-width: 0;
+        width: 100%;
+      }
+
       .preset-section { padding: 0 1rem; }
 
       .tab-labels { flex-wrap: wrap; gap: 0.4rem; }
@@ -667,6 +915,10 @@
 
       .ext-item { padding: 0.8rem 1rem; }
       .ext-desc { font-size: 0.78rem; }
+
+      .option-card { padding: 0.85rem 0.9rem; }
+      .option-card-title { font-size: 0.88rem; }
+      .option-card-copy { font-size: 0.78rem; }
 
       .lightbox { padding: 0.75rem; }
     }
@@ -697,6 +949,7 @@
 </head>
 <body>
   <div class="container">
+    <img class="hero-favicon" src="favicon-256.png" alt="" aria-hidden="true" decoding="async">
     <h1 class="rainbow">welcome :3</h1>
     <p class="subtitle">purachina's stuff</p>
     <div class="links">
@@ -709,11 +962,21 @@
     <p class="links-footer"><a href="https://github.com/platberlitz/sd-proxy" class="link-info-link">SD Proxy on GitHub</a></p>
   </div>
 
-  <section class="preset-section">
+  <div class="platform-switcher">
+    <input type="radio" name="platform-view" id="platform-view-st" checked>
+    <input type="radio" name="platform-view" id="platform-view-sb">
+
+    <div class="tab-labels platform-labels">
+      <label for="platform-view-st">SillyTavern</label>
+      <label for="platform-view-sb">SillyBunny</label>
+    </div>
+
+  <section class="preset-section platform-panel platform-panel-st">
     <div class="divider"></div>
     <h2 class="section-heading">SillyTavern</h2>
     <div class="preset-tabs">
       <input type="radio" name="tab" id="tab-preset" checked>
+      <input type="radio" name="tab" id="tab-options">
       <input type="radio" name="tab" id="tab-opinions">
       <input type="radio" name="tab" id="tab-previous">
       <input type="radio" name="tab" id="tab-trackers">
@@ -723,6 +986,7 @@
       <input type="radio" name="tab" id="tab-cards">
       <div class="tab-labels">
         <label for="tab-preset">Preset</label>
+        <label for="tab-options">Preset Options</label>
         <label for="tab-opinions">Model Opinions</label>
         <label for="tab-previous">Previous Versions</label>
         <label for="tab-trackers">Trackers</label>
@@ -743,14 +1007,427 @@
               <li>Plug and play, import and go; the regex set is already installed in the preset file</li>
               <li>All trackers are optional; the regex set renders them, but the preset works fine without</li>
               <li>Place your reminders and response length in the formatting section or the optional user instructions toggle</li>
-              <li><strong>SillyTavern version</strong> &mdash; the full preset with all toggles: trackers, randomisers, and everything else</li>
-              <li><strong>SillyBunny version</strong> &mdash; a trimmed version with only the Main, Primary Toggles, and Prefills; trackers and randomisers are now built into SillyBunny itself</li>
+              <li><strong>SillyTavern version</strong>: the full preset with all toggles: trackers, randomisers, and everything else</li>
+              <li><strong>SillyBunny version</strong>: a trimmed version with only the Main, Primary Toggles, and Prefills; trackers and randomisers are now built into SillyBunny itself</li>
             </ul>
           </div>
           <div class="preset-downloads">
             <a href="preset/Pura's%20Director%20Preset%20(SillyTavern).json" download="Pura's Director Preset (SillyTavern).json">Download (SillyTavern)</a>
             <a href="preset/Pura's%20Director%20Preset%20(SillyBunny).json" download="Pura's Director Preset (SillyBunny).json">Download (SillyBunny)</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content tab-content-options">
+        <div class="preset-info">
+          <h2 class="preset-title">Preset Options</h2>
+          <p class="preset-version">What each toggle actually does</p>
+          <p class="option-note">The SillyTavern preset exposes the whole ecosystem directly. The SillyBunny preset keeps the same core prompt stack, then moves the bigger tracker, directive, and randomiser layer into bundled In-Chat Agents so the main preset stays leaner.</p>
+          <div class="option-legend">
+            <span class="option-badge option-badge-st">SillyTavern preset</span>
+            <span class="option-badge option-badge-sb">SillyBunny preset</span>
+            <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+          </div>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Core Prompting</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Director Main Prompt</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">The main brain of the preset. It treats you like the director, pushes the world and cast to react proportionally, and keeps scenes grounded, diegetic, and focused on consequence instead of floaty narrator sludge.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Grounded Prose Rules</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">The anti-slop post-history layer. It pushes concrete detail, actual pressure shifts, natural contractions, and observable behavior so the writing feels more like people and less like an LLM reporting statistics about a scene.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Formatting</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">The output ruleset. It locks in present tense, third person, quote-wrapped dialogue, no headings, no asterisk narration, and the overall verbosity lane. If you want to steer response length, this is one of the main places to do it.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Genre</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">A lightweight tone anchor. The default keeps things immersive, grounded, and low on melodrama, but it is also the cleanest place to swap in your own genre bias if you want a different overall flavor.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Optional User Instructions</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">An extra injection slot for your own preferences. Good for things like response length, extra relationship rules, special formatting requests, or any recurring scene-direction note you want the model to honor more strongly.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Primary Toggles</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Write for User</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Makes the model write everyone, including you. It treats the user as a full scene character, continues through fresh action and reaction, and cuts at the first meaningful choice point instead of dragging on forever.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Don&apos;t Write for User</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">The default anti-overlap toggle. The model writes everyone except you, begins with genuinely new information, and stops the second the next move belongs to the user.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">HTML Toggle</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Lets the model render diegetic objects directly as inline HTML. Good for letters, maps, posters, menus, screens, receipts, dossiers, warning signs, and other in-world artifacts where layout itself carries information.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">NPC Profile Sheets</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Appends tiered NPC sheets when new named characters appear, so introductions immediately come with a quick structured read on appearance, demeanor, motives, ties, and hidden friction. Best paired with the included regex formatting.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">CYOA Choices</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Ends every reply with 3 to 7 concrete next-action options from the user&apos;s point of view. It is for literal scene choices rather than abstract plot steering.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Direction Menu</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Adds four narrative pivots at the end of each message. Instead of small action choices, it suggests distinct dramatic directions the next beat could take: escalation, rupture, complication, or tonal shift.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Summary</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">A simple slot for summary or memory extension output. Use it if you rely on a summarizer or memory system and want that context injected into the preset pipeline.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">NSFW Mode</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Adds stronger erotic framing without instantly turning the whole RP into full porn. It pushes charged atmosphere, explicit language when things go there, and characters who commit once the scene crosses the line.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Gooner Mode</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">The full horny toggle. It makes baseline arousal part of every interaction, pushes fast sexual escalation, and keeps each character&apos;s personality intact while making that personality act much thirstier.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Friction Mode</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">A softer anti-positivity-bias toggle. Characters become slower to agree, harder to impress, and less likely to slip into therapy-speak while still staying consistent with their motives and the current social context.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Difficulty Increase</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Turns the world meaner and harder to move. Trust becomes conditional, characters protect their interests first, and good outcomes have to be earned through leverage, persistence, or actual sacrifice.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Prefills</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Gemini Prefill</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">A placeholder assistant prefill slot for Gemini-specific nudging. In the current preset file it is blank, so it is there if you want a custom model-specific push without touching the main prompt.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">GPT Assistant Prefill</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">A GPT-specific contemplation prefill for explicit scenes. It tries to keep GPT grounded and physically specific when the model would otherwise get precious, evasive, or weirdly sterile.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Trackers</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Scene Tracker</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">A structured header for location, time, and atmosphere whenever the scene changes. Useful if you want hard scene anchors instead of relying on the model to remember the environment on vibes alone.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Time Tracker</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Tracks meaningful time movement: scene jumps, sleep, hours passing, or deadlines getting closer. It is there to keep the pacing legible instead of letting time smear together.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Relationship Tracker</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Updates affection and trust meters for recurring NPCs when something meaningful shifts. It is less about gamifying every interaction and more about surfacing the moments that actually changed the relationship.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Pending Events Tracker</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Keeps tabs on quests, promises, threats, deadlines, and loose threads. It only updates when something is added, resolved, or fails, so the list stays useful instead of turning into a second transcript.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Achievements Tracker</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Awards one-off milestone tags for scenes that feel memorable enough to deserve it. It works best when used sparingly so the rare moments actually feel like rare moments.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Reputation Tracker</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Tracks what groups, factions, or local publics think about you after witnessed actions or gossip. Good when you want consequences to spread socially instead of staying locked inside the current scene.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Item Tracker</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Tracks only narratively meaningful inventory changes: things gained, lost, used, broken, or given away. It deliberately ignores junk so the items that stay listed still matter.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Status and Conditions Tracker</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Tracks changing physical, mental, or behavioral states like injuries, drunkenness, paranoia, exhaustion, or recovery. The idea is to surface condition changes, not to print a full medical chart every turn.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Secrets Tracker</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Tracks who knows what, who is hiding what, and when that asymmetry spreads or breaks. It is useful when intrigue, lies, and staggered reveals matter more than raw plot events.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Parallel Off-Screen Tracker</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Shows what absent characters, NPCs, or the wider world are doing while you are busy elsewhere. It is there to keep the setting feeling alive and to seed future complications before they walk on-screen.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">World Detail Tracker</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Adds one small piece of world detail per scene: culture, overheard talk, infrastructure, economy, signage, folklore, and so on. The point is to make the world feel lived in and quietly useful later.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Randomisers</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Grounded Complication</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Injects one plausible problem that raises stakes without blowing up realism. Think broken tools, social friction, timing pressure, access issues, or a practical snag that forces somebody to actually deal with something.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Chaos Mode</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">For hard left turns. It keeps internal scene logic intact, but pushes bizarre interruptions, tonal whiplash, aggressive complications, and unexpected scene movement when you want the RP to stop behaving too politely.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Genre Randomiser</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Applies a random genre lens to the current scene without replacing the actual setting or continuity. It nudges the texture and pacing, not the whole canon.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Scene Driving Force</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Randomly decides what is carrying the beat forward: dialogue, action, reaction, discovery, social pressure, or problem-solving. Good when you want the scene engine to feel less samey from turn to turn.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Scene Pressure Cocktail</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Mixes several kinds of scene pressure at once: tension type, focus, consequence, social weather, and pace. It is the toggle for when you want a denser emotional or situational texture without hand-authoring each ingredient.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Combined Director&apos;s Cut</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">The all-in-one version of the randomiser stack. It combines engine, complication, tonal lens, and pressure shaping into one coherent direction, so use this instead of stacking the smaller randomisers on top of each other.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Dead Dove Escalation</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">For darker content where characters act on their worst impulses when the context supports it. It removes softening, leans into predation or coercion, and expects the world to let ugly consequences stay ugly.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Intimacy &amp; Kink Randomiser</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Randomizes explicit scene dynamics once sex starts: positions, pacing, power play, intensity, and kink emphasis. It exists to keep adult scenes varied instead of every encounter collapsing into the same loop.</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -935,7 +1612,7 @@
             <li>Trimmed Grounded Prose Rules a bit.</li>
             <li>Rewrote Write and Don't Write for User toggles to have stronger wording and anti-echoing.</li>
             <li>Trimmed a lot of the rules of the toggles for the SillyTavern version, and gave them stronger wording.</li>
-            <li>Added two separate versions &mdash; the SillyTavern version which has all of the toggles, and the SillyBunny version which has only the Main, Primary Toggles, and the Prefills; this is because these trackers and randomisers are now part of SillyBunny.</li>
+            <li>Added two separate versions: the SillyTavern version which has all of the toggles, and the SillyBunny version which has only the Main, Primary Toggles, and the Prefills; this is because these trackers and randomisers are now part of SillyBunny.</li>
           </ul>
 
           <h3 class="changelog-version">11.5</h3>
@@ -1787,9 +2464,9 @@
             <img src="cards/Diluc.png" alt="Diluc" loading="lazy">
             <span class="tracker-caption"><strong>Diluc</strong><br>Brooding vigilante of Mondstadt</span>
           </a>
-          <a class="tracker-item" href="cards/Furina & Neuvillette.png" target="_blank">
-            <img src="cards/Furina & Neuvillette.png" alt="Furina & Neuvillette" loading="lazy">
-            <span class="tracker-caption"><strong>Furina & Neuvillette</strong><br>Fontaine's divine and judicial duo</span>
+          <a class="tracker-item" href="cards/Furina%20%26%20Neuvillette.png" target="_blank">
+            <img src="cards/Furina%20%26%20Neuvillette.png" alt="Furina &amp; Neuvillette" loading="lazy">
+            <span class="tracker-caption"><strong>Furina &amp; Neuvillette</strong><br>Fontaine's divine and judicial duo</span>
           </a>
           <a class="tracker-item" href="cards/Ifa.png" target="_blank">
             <img src="cards/Ifa.png" alt="Ifa" loading="lazy">
@@ -1799,25 +2476,25 @@
             <img src="cards/Il Dottore.png" alt="Il Dottore" loading="lazy">
             <span class="tracker-caption"><strong>Il Dottore</strong><br>Calculating Fatui Harbinger</span>
           </a>
-          <a class="tracker-item" href="cards/Jean & Diluc & Lisa.png" target="_blank">
-            <img src="cards/Jean & Diluc & Lisa.png" alt="Jean & Diluc & Lisa" loading="lazy">
-            <span class="tracker-caption"><strong>Jean & Diluc & Lisa</strong><br>Mondstadt's founding protectors</span>
+          <a class="tracker-item" href="cards/Jean%20%26%20Diluc%20%26%20Lisa.png" target="_blank">
+            <img src="cards/Jean%20%26%20Diluc%20%26%20Lisa.png" alt="Jean &amp; Diluc &amp; Lisa" loading="lazy">
+            <span class="tracker-caption"><strong>Jean &amp; Diluc &amp; Lisa</strong><br>Mondstadt's founding protectors</span>
           </a>
           <a class="tracker-item" href="cards/Kaeya.png" target="_blank">
             <img src="cards/Kaeya.png" alt="Kaeya" loading="lazy">
             <span class="tracker-caption"><strong>Kaeya</strong><br>Charming Cavalry Captain</span>
           </a>
-          <a class="tracker-item" href="cards/Kaveh & Alhaitham.png" target="_blank">
-            <img src="cards/Kaveh & Alhaitham.png" alt="Kaveh & Alhaitham" loading="lazy">
-            <span class="tracker-caption"><strong>Kaveh & Alhaitham</strong><br>Roommates with contrasting personalities</span>
+          <a class="tracker-item" href="cards/Kaveh%20%26%20Alhaitham.png" target="_blank">
+            <img src="cards/Kaveh%20%26%20Alhaitham.png" alt="Kaveh &amp; Alhaitham" loading="lazy">
+            <span class="tracker-caption"><strong>Kaveh &amp; Alhaitham</strong><br>Roommates with contrasting personalities</span>
           </a>
           <a class="tracker-item" href="cards/Kaveh.png" target="_blank">
             <img src="cards/Kaveh.png" alt="Kaveh" loading="lazy">
             <span class="tracker-caption"><strong>Kaveh</strong><br>Passionate architect with ideals</span>
           </a>
-          <a class="tracker-item" href="cards/Kuki Shinobu & Arataki Itto.png" target="_blank">
-            <img src="cards/Kuki Shinobu & Arataki Itto.png" alt="Kuki Shinobu & Arataki Itto" loading="lazy">
-            <span class="tracker-caption"><strong>Kuki Shinobu & Arataki Itto</strong><br>Gang deputy and boss</span>
+          <a class="tracker-item" href="cards/Kuki%20Shinobu%20%26%20Arataki%20Itto.png" target="_blank">
+            <img src="cards/Kuki%20Shinobu%20%26%20Arataki%20Itto.png" alt="Kuki Shinobu &amp; Arataki Itto" loading="lazy">
+            <span class="tracker-caption"><strong>Kuki Shinobu &amp; Arataki Itto</strong><br>Gang deputy and boss</span>
           </a>
           <a class="tracker-item" href="cards/Lisa.png" target="_blank">
             <img src="cards/Lisa.png" alt="Lisa" loading="lazy">
@@ -1843,9 +2520,9 @@
             <img src="cards/Tartaglia.png" alt="Tartaglia" loading="lazy">
             <span class="tracker-caption"><strong>Tartaglia</strong><br>Ambitious Fatui Harbinger</span>
           </a>
-          <a class="tracker-item" href="cards/Tighnari & Cyno.png" target="_blank">
-            <img src="cards/Tighnari & Cyno.png" alt="Tighnari & Cyno" loading="lazy">
-            <span class="tracker-caption"><strong>Tighnari & Cyno</strong><br>Desert scholar and lawman duo</span>
+          <a class="tracker-item" href="cards/Tighnari%20%26%20Cyno.png" target="_blank">
+            <img src="cards/Tighnari%20%26%20Cyno.png" alt="Tighnari &amp; Cyno" loading="lazy">
+            <span class="tracker-caption"><strong>Tighnari &amp; Cyno</strong><br>Desert scholar and lawman duo</span>
           </a>
           <a class="tracker-item" href="cards/Tighnari.png" target="_blank">
             <img src="cards/Tighnari.png" alt="Tighnari" loading="lazy">
@@ -1886,6 +2563,151 @@
     </div>
   </section>
 
+  <section class="preset-section platform-panel platform-panel-sb">
+    <div class="divider"></div>
+    <h2 class="section-heading">SillyBunny</h2>
+    <div class="preset-tabs">
+      <input type="radio" name="sb-tab" id="sb-tab-overview" checked>
+      <input type="radio" name="sb-tab" id="sb-tab-features">
+      <input type="radio" name="sb-tab" id="sb-tab-agents">
+      <input type="radio" name="sb-tab" id="sb-tab-screenshots">
+      <input type="radio" name="sb-tab" id="sb-tab-changelog">
+
+      <div class="tab-labels">
+        <label for="sb-tab-overview">Overview</label>
+        <label for="sb-tab-features">Features</label>
+        <label for="sb-tab-agents">Agents</label>
+        <label for="sb-tab-screenshots">Screenshots</label>
+        <label for="sb-tab-changelog">Changelog</label>
+      </div>
+
+      <div class="tab-content sb-tab-content-overview">
+        <div class="preset-info">
+          <h2 class="preset-title">SillyBunny</h2>
+          <p class="preset-version">Based on SillyTavern 1.17.0 stable</p>
+          <div class="preset-desc">
+            <ul>
+              <li>Same data, same extensions, better shell. It keeps the SillyTavern workflow you already know, but wraps it in a cleaner UI and a Bun-first runtime.</li>
+              <li>Drop-in compatible with SillyTavern characters, chats, presets, and extensions, so moving over is painless.</li>
+              <li>The SB version of Pura&apos;s Director Preset stays trimmed on purpose: the shared core prompt stack stays in the preset, while the bigger tracker and randomiser ecosystem lives in built-in agents.</li>
+              <li>Default port is <code>4444</code>, Bun is the preferred runtime, and Node.js fallback is there when Bun is not the right fit for the platform.</li>
+            </ul>
+          </div>
+          <div class="preset-downloads">
+            <a href="https://github.com/platberlitz/SillyBunny">GitHub</a>
+            <a href="preset/Pura's%20Director%20Preset%20(SillyBunny).json" download="Pura's Director Preset (SillyBunny).json">Download SB Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%20(SillyTavern).json" download="Pura's Director Preset (SillyTavern).json">Download ST Preset</a>
+            <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content sb-tab-content-features">
+        <div class="preset-info">
+          <h2 class="preset-title">What&apos;s Different</h2>
+          <p class="preset-version">The fork changes the shell, not the core workflow</p>
+          <div class="extensions-list">
+            <div class="ext-item">
+              <div class="ext-name">Better UI Shell</div>
+              <div class="ext-desc">Custom left/right shell navigation, stronger search, collapsible settings sections, and a homepage/customization flow that feels more intentional than stock SillyTavern.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Mobile-Aware Layout</div>
+              <div class="ext-desc">Phone and tablet navigation are treated like first-class layouts rather than an afterthought, so it stays usable when you are not sitting at a desktop.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">More Personal Customization</div>
+              <div class="ext-desc">Three shell themes, three palette presets, three message styles, plus a cleaner home screen and faster access to the stuff people actually touch all the time.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Bun-First Runtime</div>
+              <div class="ext-desc">Bun is the default launcher path for faster startup, but Node.js fallback launchers are bundled too, including platform-aware runtime switching where Bun is less ideal.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Same Data, Same Extensions</div>
+              <div class="ext-desc">Characters, chats, presets, themes, and extensions carry over cleanly. It is meant to feel like a better shell for the same roleplay stack, not a fork that traps your data.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content sb-tab-content-agents">
+        <div class="preset-info">
+          <h2 class="preset-title">Agent Stack</h2>
+          <p class="preset-version">Two different systems, two different jobs</p>
+          <div class="extensions-list">
+            <div class="ext-item">
+              <div class="ext-name">Agent Mode</div>
+              <div class="ext-desc">The lightweight built-in service layer. It is chat-scoped and meant for durable story support, not autonomous internet-task nonsense.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">In-Chat Agents</div>
+              <div class="ext-desc">Modular prompt blocks you can toggle, group, import, export, refine, and stack around the generation pipeline. They can run before or after the main reply, use regex cleanup, and even use a different connection profile if you want a helper model doing side work.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Why the SB Preset Is Leaner</div>
+              <div class="ext-desc">The SB preset keeps the shared core: main prompt, prose rules, primary toggles, and prefills. Trackers, formatting helpers, directives, and randomisers are a better fit as toggleable agents, which is why the SB download is slimmer while the SB feature set is actually bigger.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Bundled Pura Ecosystem</div>
+              <div class="ext-desc">SillyBunny ships bundled templates and groups based on Pura&apos;s Director Preset ecosystem. That means trackers, randomisers, directives, and regex-backed helpers can be swapped in as modular pieces instead of living as one giant preset blob forever.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">What Ships Right Now</div>
+              <div class="ext-desc">The current bundled setup includes trackers, randomisers, formatting helpers, anti-slop cleanup, content toggles, groups for one-click setups, and prompt-transform passes that can rewrite or append after a generation.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content sb-tab-content-screenshots">
+        <div class="preset-info">
+          <h2 class="preset-title">UI Preview</h2>
+          <p class="preset-version">A few local screenshots from the project README set</p>
+        </div>
+        <div class="tracker-grid">
+          <a class="tracker-item" href="#lb-sb-1">
+            <img src="preset/screenshots/sillybunny/desktop-home.png" alt="SillyBunny desktop home" loading="lazy">
+            <span class="tracker-caption">Desktop home</span>
+          </a>
+          <a class="tracker-item" href="#lb-sb-2">
+            <img src="preset/screenshots/sillybunny/desktop-customize.png" alt="SillyBunny desktop customization" loading="lazy">
+            <span class="tracker-caption">Desktop customization</span>
+          </a>
+          <a class="tracker-item" href="#lb-sb-3">
+            <img src="preset/screenshots/sillybunny/mobile-home.png" alt="SillyBunny mobile home" loading="lazy">
+            <span class="tracker-caption">Mobile home</span>
+          </a>
+          <a class="tracker-item" href="#lb-sb-4">
+            <img src="preset/screenshots/sillybunny/mobile-customize.png" alt="SillyBunny mobile customization" loading="lazy">
+            <span class="tracker-caption">Mobile customization</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="tab-content sb-tab-content-changelog">
+        <div class="changelog">
+          <h3 class="changelog-version">1.3.2</h3>
+          <ul>
+            <li>Big shell refresh: centered panels, top tab bar, cleaner home flow, and quicker access to the stuff people constantly touch.</li>
+            <li>Added customizable shortcut buttons, bottom-bar chat management, and a persona quick-access bubble near the input.</li>
+            <li>Reworked the starter pack and home defaults so onboarding is less cluttered.</li>
+            <li>Kept In-Chat Agents as the main modular system and trimmed away heavier Agent Mode orchestration to stay closer to the lightweight RP-helper philosophy.</li>
+            <li>Added Node.js fallback launchers and smarter runtime switching for platforms where Bun is not the nicest option.</li>
+          </ul>
+
+          <h3 class="changelog-version">1.3.1</h3>
+          <ul>
+            <li>Fixed broken agent-card interactions and restored reliable Agent Group behavior.</li>
+            <li>Added ST-style regex support for agents, including bundled regex packs for tracker and formatting templates.</li>
+            <li>Added prompt-transform passes with rewrite and append modes, optional alternate connection profiles, and greeting protection.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+  </div>
+
   <a class="lightbox" id="lb-1" href="#close"><img src="preset/screenshots/scene-time.png" alt="Scene Tracker"></a>
   <a class="lightbox" id="lb-2" href="#close"><img src="preset/screenshots/relationships.png" alt="Time Tracker"></a>
   <a class="lightbox" id="lb-3" href="#close"><img src="preset/screenshots/pending-events.png" alt="Parallel Off-Screen Tracker"></a>
@@ -1904,6 +2726,10 @@
   <a class="lightbox" id="lb-16" href="#close"><img src="preset/screenshots/npc-relationship-change-example.png" alt="Relationship Change Example"></a>
   <a class="lightbox" id="lb-17" href="#close"><img src="preset/screenshots/npc-quick-reference-busy-scene.png" alt="NPC Quick Reference Example (Busy Scene)"></a>
   <a class="lightbox" id="lb-18" href="#close"><img src="preset/screenshots/npc-tier-upgrade-example.png" alt="NPC Tier Upgrade Example"></a>
+  <a class="lightbox" id="lb-sb-1" href="#close"><img src="preset/screenshots/sillybunny/desktop-home.png" alt="SillyBunny desktop home"></a>
+  <a class="lightbox" id="lb-sb-2" href="#close"><img src="preset/screenshots/sillybunny/desktop-customize.png" alt="SillyBunny desktop customization"></a>
+  <a class="lightbox" id="lb-sb-3" href="#close"><img src="preset/screenshots/sillybunny/mobile-home.png" alt="SillyBunny mobile home"></a>
+  <a class="lightbox" id="lb-sb-4" href="#close"><img src="preset/screenshots/sillybunny/mobile-customize.png" alt="SillyBunny mobile customization"></a>
 
   <script>
     (function () {
