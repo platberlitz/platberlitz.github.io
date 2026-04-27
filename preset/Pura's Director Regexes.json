@@ -306,9 +306,43 @@
         "maxDepth": null
     },
     {
+        "id": "d6535a9b-df85-4b55-a0e2-3314afa0952f",
+        "scriptName": "Replace Directions",
+        "findRegex": "\\[DIRECTIONS\\]\\n*(A\\..*?)(?:\\n+(B\\..*?))?(?:\\n+(C\\..*?))?(?:\\n+(D\\..*?))?\\s*(?:\\[\\/DIRECTIONS\\])?(?=\\n|$)",
+        "replaceString": "<style>.pura-direction:empty{display:none}</style><details style=\"margin:12px 0\" open><summary style=\"padding:10px 13px;background:linear-gradient(135deg,rgba(20,18,36,0.92),rgba(74,54,122,0.62));border-radius:12px;border:1px solid rgba(189,147,249,0.42);box-shadow:0 10px 24px rgba(0,0,0,0.28);color:#d7c4ff;font-family:Menlo,monospace;font-size:11px;cursor:pointer\">🧭 Choose the next direction ▼</summary><div style=\"padding:11px;background:linear-gradient(180deg,rgba(16,14,28,0.9),rgba(26,24,38,0.94));border-radius:0 0 12px 12px;border:1px solid rgba(189,147,249,0.28);border-top:none;font-size:11px;line-height:1.8;color:#e6def7\"><div class=\"pura-direction\" style=\"padding:7px 9px;border-left:3px solid #8be9fd;background:rgba(255,255,255,0.04);border-radius:7px;margin:5px 0\">$1</div><div class=\"pura-direction\" style=\"padding:7px 9px;border-left:3px solid #ff79c6;background:rgba(255,255,255,0.04);border-radius:7px;margin:5px 0\">$2</div><div class=\"pura-direction\" style=\"padding:7px 9px;border-left:3px solid #f1fa8c;background:rgba(255,255,255,0.04);border-radius:7px;margin:5px 0\">$3</div><div class=\"pura-direction\" style=\"padding:7px 9px;border-left:3px solid #bd93f9;background:rgba(255,255,255,0.04);border-radius:7px;margin:5px 0\">$4</div></div></details>",
+        "trimStrings": [],
+        "placement": [
+            2
+        ],
+        "disabled": false,
+        "markdownOnly": true,
+        "promptOnly": false,
+        "runOnEdit": true,
+        "substituteRegex": 0,
+        "minDepth": null,
+        "maxDepth": null
+    },
+    {
         "id": "1c892238-de70-40bf-8394-97dd68d8eaff",
         "scriptName": "Trim Choices",
         "findRegex": "\\[CHOICES\\]\\n*(\\d+\\..*?)(?:\\n+(\\d+\\..*?))?(?:\\n+(\\d+\\..*?))?(?:\\n+(\\d+\\..*?))?(?:\\n+(\\d+\\..*?))?(?:\\n+(\\d+\\..*?))?(?:\\n+(\\d+\\..*?))?\\s*(?:\\[\\/CHOICES\\])?(?=\\n|$)",
+        "replaceString": "",
+        "trimStrings": [],
+        "placement": [
+            2
+        ],
+        "disabled": false,
+        "markdownOnly": false,
+        "promptOnly": true,
+        "runOnEdit": true,
+        "substituteRegex": 0,
+        "minDepth": 2,
+        "maxDepth": null
+    },
+    {
+        "id": "e1877fab-669e-467e-9495-43dd90a77295",
+        "scriptName": "Trim Directions",
+        "findRegex": "\\[DIRECTIONS\\]\\n*(A\\..*?)(?:\\n+(B\\..*?))?(?:\\n+(C\\..*?))?(?:\\n+(D\\..*?))?\\s*(?:\\[\\/DIRECTIONS\\])?(?=\\n|$)",
         "replaceString": "",
         "trimStrings": [],
         "placement": [

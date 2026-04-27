@@ -59,6 +59,12 @@
     .subtitle {
       font-size: clamp(0.9rem, 2.5vw, 1.1rem);
       color: #739282;
+      margin-bottom: 0.35rem;
+    }
+
+    .last-updated {
+      font-size: 0.78rem;
+      color: #607f70;
       margin-bottom: 2.5rem;
     }
 
@@ -384,8 +390,7 @@
     #sb-tab-overview:checked ~ .tab-labels label[for="sb-tab-overview"],
     #sb-tab-features:checked ~ .tab-labels label[for="sb-tab-features"],
     #sb-tab-agents:checked ~ .tab-labels label[for="sb-tab-agents"],
-    #sb-tab-screenshots:checked ~ .tab-labels label[for="sb-tab-screenshots"],
-    #sb-tab-changelog:checked ~ .tab-labels label[for="sb-tab-changelog"] {
+    #sb-tab-screenshots:checked ~ .tab-labels label[for="sb-tab-screenshots"] {
       color: #e0f2e7;
       border-color: #566985;
       background: rgba(28, 35, 48, 0.96);
@@ -396,7 +401,6 @@
     #sb-tab-features:checked ~ .sb-tab-content-features { display: block; }
     #sb-tab-agents:checked ~ .sb-tab-content-agents { display: block; }
     #sb-tab-screenshots:checked ~ .sb-tab-content-screenshots { display: block; }
-    #sb-tab-changelog:checked ~ .sb-tab-content-changelog { display: block; }
 
     /* Card sub-tabs */
     .card-subtab-content { display: none; }
@@ -460,6 +464,8 @@
     }
 
     .preset-desc ul { list-style: none; }
+
+    .preset-desc p { margin-bottom: 0.85rem; }
 
     .preset-desc li {
       padding: 0.3rem 0;
@@ -1043,6 +1049,7 @@
     <img class="hero-favicon" src="favicon-256.png" alt="" aria-hidden="true" decoding="async">
     <h1 class="rainbow">welcome :3</h1>
     <p class="subtitle">purachina's stuff</p>
+    <p class="last-updated">Last Updated April 27, 2026</p>
     <div class="links">
       <a href="https://platberlitz.github.io/platinum-startpage/" class="glow-pill startpage-link">startpage<span class="link-info">localStorage customisable startpage</span></a>
       <a href="assistant/" class="glow-pill synapse-link">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
@@ -1090,21 +1097,21 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 12 (Definitive)</p>
+          <p class="preset-version">Latest Version: 13.0</p>
           <div class="preset-desc">
+            <p>This is a universal preset that should work with most LLMs. The main prompt is about ~800 depending on tokeniser, and the anti-slop is 500 or so tokens. So in total - about 1700 tokens. Tested on just about most LLMs I can get my hands on - Opus, Gemini, GPT, GLM 4.6, 4.7, 5, Kimi K2.5, Qwen 3.5, small models like Rocinante 12B, Cydonia 24B, and even WizardLM 8x22B. Even Bielik 11B, which I randomly found on Nvidia NIM.</p>
+            <p>IMPORTANT! If you're using a smaller model, you can turn off Post-History Instructions. It will probably mess it up anyway, it has a lot of *avoid* and *banned* statements that will just make the LLM do it more.</p>
+            <p>The idea behind the prompt was that I like to make the LLM go the direction I want it to, and I wanted it to write for me, since I'm lazy. In the end, it turned into a preset that adheres to a writing style I personally enjoy. Instead of simply being functional, I wanted the prose, the world, and the characters to sound lively, while removing as much slop as I possibly can.</p>
+            <p>Turn off reasoning if, like me, you're not a fan of waiting, but it's not necessary. This preset works regardless, even in terms of anti-slop.</p>
+            <p>I designed the preset to be as easily customisable as possible, so hopefully that works out for your personal use case! All trackers are optional and token-efficient. My intent for them is actually not for the LLM, but for me, since I like pretty things. It doesn't really hurt the LLM if you don't activate all of them (I mean, you can, I did it, but it's probably not optimal), but you don't need them, either.</p>
             <ul>
-              <li>Designed for shorter responses with flexible length</li>
-              <li>Built-in anti-slop, no Chain of Thought required</li>
-              <li>Plug and play, import and go; the regex set is already installed in the preset file</li>
-              <li>All trackers are optional; the regex set renders them, but the preset works fine without</li>
-              <li>Place your reminders and response length in the formatting section or the optional user instructions toggle</li>
               <li><strong>SillyTavern version</strong>: the full preset with all toggles: trackers, randomisers, and everything else</li>
               <li><strong>SillyBunny version</strong>: a trimmed version with only the Main, Primary Toggles, and Prefills; trackers and randomisers are now built into SillyBunny itself</li>
             </ul>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%20(SillyTavern).json" download="Pura's Director Preset (SillyTavern).json">Download (SillyTavern)</a>
-            <a href="preset/Pura's%20Director%20Preset%20(SillyBunny).json" download="Pura's Director Preset (SillyBunny).json">Download (SillyBunny)</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.0%20(SillyTavern).json" download="Pura's Director Preset 13.0 (SillyTavern).json">Download (SillyTavern)</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.0%20(SillyBunny).json" download="Pura's Director Preset 13.0 (SillyBunny).json">Download (SillyBunny)</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -1539,12 +1546,27 @@
               <tbody>
                 <tr>
                   <td data-label="Model">Gemma 4</td>
-                  <td data-label="Opinion">Gemini really cooked with this. It follows instructions well, the character portrayal is nuanced, it's wildly uncensored. It doesn't have Gemini's problem of just listing your character sheet traits like the laziest writer in the world. Give it a try.</td>
+                  <td data-label="Opinion">Have been using this for a long while now and it remains my absolute favourite. It adheres to the prompts and trackers perfectly even without thinking on. Give it a try.</td>
                   <td data-label="Recommended Post Processing">Any</td>
                 </tr>
                 <tr>
+                  <td data-label="Model">Deepseek V4 Pro and Flash</td>
+                  <td data-label="Opinion">It's like if they made Claude (bad model) even worse. Hey, at least it's cheap? Nah, you got Gemma 4 for cheap and quality. It can't even properly adhere to simple tracker formats. Even Rocinante 12B can do this. Come on.</td>
+                  <td data-label="Recommended Post Processing">Merge/Single User Message</td>
+                </tr>
+                <tr>
+                  <td data-label="Model">Claude Opus 4.7</td>
+                  <td data-label="Opinion">Yet another deterministic Claude model, wow, who would've thought. It sucks. It's like Opus 4.6 but they add a .1 to it.</td>
+                  <td data-label="Recommended Post Processing">None/Semi-strict</td>
+                </tr>
+                <tr>
+                  <td data-label="Model">GPT 5.5</td>
+                  <td data-label="Opinion">Oh hey, I'm getting censored less and it actually writes pretty well. More expensive than Opus though. Good thing we have cheaper models and you shouldn't be using too much money on roleplay in the first place. Still, if you have good, consistent access on GPT 5.5, the writing is actually pretty solid. Take note of NSFW adherence though - sometimes it just glosses over it or ignores it completely.</td>
+                  <td data-label="Recommended Post Processing">None/Merge</td>
+                </tr>
+                <tr>
                   <td data-label="Model">GLM 5.1</td>
-                  <td data-label="Opinion">Claude Opus 4.6 that's infinitely cheaper and still follows instructions well? Not creating a hole in your wallet? Look no further. It's emotionally intelligent, actually follows the Grounded Prose Directive, and is enhanced by the style I put in my prompt. The absolute best, especially with the quality to price ratio. Turn on thinking for best results, the thinking doesn't take that long.</td>
+                  <td data-label="Opinion">Claude Opus 4.6 that's infinitely cheaper and still follows instructions well? Not creating a hole in your wallet? Look no further. It's emotionally intelligent, actually follows the Grounded Prose Directive, and is enhanced by the style I put in my prompt. The absolute <em>second</em> best. Sorry, Gemma 4 is now my wife. Turn on thinking for best results, the thinking doesn't take that long.</td>
                   <td data-label="Recommended Post Processing">None/Merge</td>
                 </tr>
                 <tr>
@@ -1696,6 +1718,17 @@
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">13.0</h3>
+          <ul>
+            <li>Rewrote the entire Main Prompt. ~700-800 tokens</li>
+            <li>Trimmed Grounded Prose Rules slightly. ~400 tokens</li>
+            <li>Anti-Echoing is now part of Main Prompt, which should make models adhere to it better, including GLM 4.6/4.7, which I've tested. Sometimes Deepseek V4 Flash too.</li>
+            <li>Changed Grounded Prose Rules to injection for better adherence.</li>
+            <li>Instead of leaning too much into user being the director, it also equalises character adherence and autonomy, which causes better dialogue and characterisation in general.</li>
+            <li>GPT 5.5 actually writes like a person? Waow. Response length also isn't very high here. Make sure to set Post-Processing to None.</li>
+            <li>Added Experimental Anti-Overthinking Prefill for Kimi K2.6. Whether it works or not depends on factors like moon alignment, which gods are available this minute, etc.</li>
+          </ul>
+
           <h3 class="changelog-version">12</h3>
           <ul>
             <li>Added Intimacy &amp; Kink Randomiser Toggle.</li>
@@ -2662,14 +2695,12 @@
       <input type="radio" name="sb-tab" id="sb-tab-features">
       <input type="radio" name="sb-tab" id="sb-tab-agents">
       <input type="radio" name="sb-tab" id="sb-tab-screenshots">
-      <input type="radio" name="sb-tab" id="sb-tab-changelog">
 
       <div class="tab-labels">
         <label for="sb-tab-overview">Overview</label>
         <label for="sb-tab-features">Features</label>
         <label for="sb-tab-agents">Agents</label>
         <label for="sb-tab-screenshots">Screenshots</label>
-        <label for="sb-tab-changelog">Changelog</label>
       </div>
 
       <div class="tab-content sb-tab-content-overview">
@@ -2686,8 +2717,8 @@
           </div>
           <div class="preset-downloads">
             <a href="https://github.com/platberlitz/SillyBunny">GitHub</a>
-            <a href="preset/Pura's%20Director%20Preset%20(SillyBunny).json" download="Pura's Director Preset (SillyBunny).json">Download SB Preset</a>
-            <a href="preset/Pura's%20Director%20Preset%20(SillyTavern).json" download="Pura's Director Preset (SillyTavern).json">Download ST Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.0%20(SillyBunny).json" download="Pura's Director Preset 13.0 (SillyBunny).json">Download SB Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.0%20(SillyTavern).json" download="Pura's Director Preset 13.0 (SillyTavern).json">Download ST Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -2754,101 +2785,74 @@
       <div class="tab-content sb-tab-content-screenshots">
         <div class="preset-info">
           <h2 class="preset-title">UI Preview</h2>
-          <p class="preset-version">SillyBunny v1.3.6 README screenshot set</p>
+          <p class="preset-version">SillyBunny v1.4.0 README screenshot set</p>
         </div>
         <div class="preset-info">
-          <h2 class="preset-title">Default Shell</h2>
+          <h2 class="preset-title">Overview</h2>
         </div>
         <div class="tracker-grid">
           <a class="tracker-item" href="#lb-sb-1">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-navigate-v1.3.6.png" alt="SillyBunny desktop Navigate" loading="lazy">
-            <span class="tracker-caption">Desktop Navigate</span>
-          </a>
-          <a class="tracker-item" href="#lb-sb-2">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-customize-v1.3.6.png" alt="SillyBunny desktop Customize" loading="lazy">
-            <span class="tracker-caption">Desktop Customize</span>
-          </a>
-          <a class="tracker-item" href="#lb-sb-3">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-agents-v1.3.6.png" alt="SillyBunny desktop Agents" loading="lazy">
-            <span class="tracker-caption">Desktop Agents</span>
-          </a>
-          <a class="tracker-item" href="#lb-sb-4">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-characters-v1.3.6.png" alt="SillyBunny desktop Characters" loading="lazy">
-            <span class="tracker-caption">Desktop Characters</span>
-          </a>
-          <a class="tracker-item" href="#lb-sb-5">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-navigate-v1.3.6.png" alt="SillyBunny mobile Navigate" loading="lazy">
-            <span class="tracker-caption">Mobile Navigate</span>
-          </a>
-          <a class="tracker-item" href="#lb-sb-6">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.3.6.png" alt="SillyBunny mobile Customize" loading="lazy">
-            <span class="tracker-caption">Mobile Customize</span>
-          </a>
-          <a class="tracker-item" href="#lb-sb-7">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.3.6.png" alt="SillyBunny mobile Agents" loading="lazy">
-            <span class="tracker-caption">Mobile Agents</span>
-          </a>
-          <a class="tracker-item" href="#lb-sb-8">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.3.6.png" alt="SillyBunny mobile Characters" loading="lazy">
-            <span class="tracker-caption">Mobile Characters</span>
+            <img src="preset/screenshots/sillybunny/banner.jpg" alt="SillyBunny banner" loading="lazy">
+            <span class="tracker-caption">Banner</span>
           </a>
         </div>
         <div class="preset-info">
-          <h2 class="preset-title">Moonlit Echoes Enabled</h2>
+          <h2 class="preset-title">Desktop</h2>
         </div>
         <div class="tracker-grid">
-          <a class="tracker-item" href="#lb-sb-9">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-desktop-navigate-v1.3.6.png" alt="SillyBunny Moonlit desktop Navigate" loading="lazy">
-            <span class="tracker-caption">Moonlit Desktop Navigate</span>
+          <a class="tracker-item" href="#lb-sb-2">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-navigate-v1.4.0.png" alt="SillyBunny desktop Navigate" loading="lazy">
+            <span class="tracker-caption">Desktop Navigate</span>
           </a>
-          <a class="tracker-item" href="#lb-sb-10">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-desktop-customize-v1.3.6.png" alt="SillyBunny Moonlit desktop Customize" loading="lazy">
-            <span class="tracker-caption">Moonlit Desktop Customize</span>
+          <a class="tracker-item" href="#lb-sb-3">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-search-v1.4.0.png" alt="SillyBunny desktop Search" loading="lazy">
+            <span class="tracker-caption">Desktop Search</span>
           </a>
-          <a class="tracker-item" href="#lb-sb-11">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-desktop-agents-v1.3.6.png" alt="SillyBunny Moonlit desktop Agents" loading="lazy">
-            <span class="tracker-caption">Moonlit Desktop Agents</span>
+          <a class="tracker-item" href="#lb-sb-4">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-in-chat-v1.4.0.png" alt="SillyBunny desktop In-Chat" loading="lazy">
+            <span class="tracker-caption">Desktop In-Chat</span>
           </a>
-          <a class="tracker-item" href="#lb-sb-12">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-desktop-characters-v1.3.6.png" alt="SillyBunny Moonlit desktop Characters" loading="lazy">
-            <span class="tracker-caption">Moonlit Desktop Characters</span>
+          <a class="tracker-item" href="#lb-sb-5">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-customize-v1.4.0.png" alt="SillyBunny desktop Customize" loading="lazy">
+            <span class="tracker-caption">Desktop Customize</span>
           </a>
-          <a class="tracker-item" href="#lb-sb-13">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-mobile-navigate-v1.3.6.png" alt="SillyBunny Moonlit mobile Navigate" loading="lazy">
-            <span class="tracker-caption">Moonlit Mobile Navigate</span>
+          <a class="tracker-item" href="#lb-sb-6">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-agents-v1.4.0.png" alt="SillyBunny desktop Agents" loading="lazy">
+            <span class="tracker-caption">Desktop Agents</span>
           </a>
-          <a class="tracker-item" href="#lb-sb-14">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-mobile-customize-v1.3.6.png" alt="SillyBunny Moonlit mobile Customize" loading="lazy">
-            <span class="tracker-caption">Moonlit Mobile Customize</span>
-          </a>
-          <a class="tracker-item" href="#lb-sb-15">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-mobile-agents-v1.3.6.png" alt="SillyBunny Moonlit mobile Agents" loading="lazy">
-            <span class="tracker-caption">Moonlit Mobile Agents</span>
-          </a>
-          <a class="tracker-item" href="#lb-sb-16">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-mobile-characters-v1.3.6.png" alt="SillyBunny Moonlit mobile Characters" loading="lazy">
-            <span class="tracker-caption">Moonlit Mobile Characters</span>
+          <a class="tracker-item" href="#lb-sb-7">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-characters-v1.4.0.png" alt="SillyBunny desktop Characters" loading="lazy">
+            <span class="tracker-caption">Desktop Characters</span>
           </a>
         </div>
-      </div>
-
-      <div class="tab-content sb-tab-content-changelog">
-        <div class="changelog">
-          <h3 class="changelog-version">1.3.2</h3>
-          <ul>
-            <li>Big shell refresh: centered panels, top tab bar, cleaner home flow, and quicker access to the stuff people constantly touch.</li>
-            <li>Added customizable shortcut buttons, bottom-bar chat management, and a persona quick-access bubble near the input.</li>
-            <li>Reworked the starter pack and home defaults so onboarding is less cluttered.</li>
-            <li>Kept In-Chat Agents as the main modular system and trimmed away heavier Agent Mode orchestration to stay closer to the lightweight RP-helper philosophy.</li>
-            <li>Added Node.js fallback launchers and smarter runtime switching for platforms where Bun is not the nicest option.</li>
-          </ul>
-
-          <h3 class="changelog-version">1.3.1</h3>
-          <ul>
-            <li>Fixed broken agent-card interactions and restored reliable Agent Group behavior.</li>
-            <li>Added ST-style regex support for agents, including bundled regex packs for tracker and formatting templates.</li>
-            <li>Added prompt-transform passes with rewrite and append modes, optional alternate connection profiles, and greeting protection.</li>
-          </ul>
+        <div class="preset-info">
+          <h2 class="preset-title">Mobile</h2>
+        </div>
+        <div class="tracker-grid">
+          <a class="tracker-item" href="#lb-sb-8">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-navigate-v1.4.0.png" alt="SillyBunny mobile Navigate" loading="lazy">
+            <span class="tracker-caption">Mobile Navigate</span>
+          </a>
+          <a class="tracker-item" href="#lb-sb-9">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-search-v1.4.0.png" alt="SillyBunny mobile Search" loading="lazy">
+            <span class="tracker-caption">Mobile Search</span>
+          </a>
+          <a class="tracker-item" href="#lb-sb-10">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-in-chat-v1.4.0.png" alt="SillyBunny mobile In-Chat" loading="lazy">
+            <span class="tracker-caption">Mobile In-Chat</span>
+          </a>
+          <a class="tracker-item" href="#lb-sb-11">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.4.0.png" alt="SillyBunny mobile Customize" loading="lazy">
+            <span class="tracker-caption">Mobile Customize</span>
+          </a>
+          <a class="tracker-item" href="#lb-sb-12">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.4.0.png" alt="SillyBunny mobile Agents" loading="lazy">
+            <span class="tracker-caption">Mobile Agents</span>
+          </a>
+          <a class="tracker-item" href="#lb-sb-13">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.4.0.png" alt="SillyBunny mobile Characters" loading="lazy">
+            <span class="tracker-caption">Mobile Characters</span>
+          </a>
         </div>
       </div>
     </div>
@@ -2873,22 +2877,19 @@
   <a class="lightbox" id="lb-16" href="#close"><img src="preset/screenshots/npc-relationship-change-example.png" alt="Relationship Change Example"></a>
   <a class="lightbox" id="lb-17" href="#close"><img src="preset/screenshots/npc-quick-reference-busy-scene.png" alt="NPC Quick Reference Example (Busy Scene)"></a>
   <a class="lightbox" id="lb-18" href="#close"><img src="preset/screenshots/npc-tier-upgrade-example.png" alt="NPC Tier Upgrade Example"></a>
-  <a class="lightbox" id="lb-sb-1" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-navigate-v1.3.6.png" alt="SillyBunny desktop Navigate"></a>
-  <a class="lightbox" id="lb-sb-2" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-customize-v1.3.6.png" alt="SillyBunny desktop Customize"></a>
-  <a class="lightbox" id="lb-sb-3" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-agents-v1.3.6.png" alt="SillyBunny desktop Agents"></a>
-  <a class="lightbox" id="lb-sb-4" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-characters-v1.3.6.png" alt="SillyBunny desktop Characters"></a>
-  <a class="lightbox" id="lb-sb-5" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-navigate-v1.3.6.png" alt="SillyBunny mobile Navigate"></a>
-  <a class="lightbox" id="lb-sb-6" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.3.6.png" alt="SillyBunny mobile Customize"></a>
-  <a class="lightbox" id="lb-sb-7" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.3.6.png" alt="SillyBunny mobile Agents"></a>
-  <a class="lightbox" id="lb-sb-8" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.3.6.png" alt="SillyBunny mobile Characters"></a>
-  <a class="lightbox" id="lb-sb-9" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-desktop-navigate-v1.3.6.png" alt="SillyBunny Moonlit desktop Navigate"></a>
-  <a class="lightbox" id="lb-sb-10" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-desktop-customize-v1.3.6.png" alt="SillyBunny Moonlit desktop Customize"></a>
-  <a class="lightbox" id="lb-sb-11" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-desktop-agents-v1.3.6.png" alt="SillyBunny Moonlit desktop Agents"></a>
-  <a class="lightbox" id="lb-sb-12" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-desktop-characters-v1.3.6.png" alt="SillyBunny Moonlit desktop Characters"></a>
-  <a class="lightbox" id="lb-sb-13" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-mobile-navigate-v1.3.6.png" alt="SillyBunny Moonlit mobile Navigate"></a>
-  <a class="lightbox" id="lb-sb-14" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-mobile-customize-v1.3.6.png" alt="SillyBunny Moonlit mobile Customize"></a>
-  <a class="lightbox" id="lb-sb-15" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-mobile-agents-v1.3.6.png" alt="SillyBunny Moonlit mobile Agents"></a>
-  <a class="lightbox" id="lb-sb-16" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-moonlit-mobile-characters-v1.3.6.png" alt="SillyBunny Moonlit mobile Characters"></a>
+  <a class="lightbox" id="lb-sb-1" href="#close"><img src="preset/screenshots/sillybunny/banner.jpg" alt="SillyBunny banner"></a>
+  <a class="lightbox" id="lb-sb-2" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-navigate-v1.4.0.png" alt="SillyBunny desktop Navigate"></a>
+  <a class="lightbox" id="lb-sb-3" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-search-v1.4.0.png" alt="SillyBunny desktop Search"></a>
+  <a class="lightbox" id="lb-sb-4" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-in-chat-v1.4.0.png" alt="SillyBunny desktop In-Chat"></a>
+  <a class="lightbox" id="lb-sb-5" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-customize-v1.4.0.png" alt="SillyBunny desktop Customize"></a>
+  <a class="lightbox" id="lb-sb-6" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-agents-v1.4.0.png" alt="SillyBunny desktop Agents"></a>
+  <a class="lightbox" id="lb-sb-7" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-characters-v1.4.0.png" alt="SillyBunny desktop Characters"></a>
+  <a class="lightbox" id="lb-sb-8" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-navigate-v1.4.0.png" alt="SillyBunny mobile Navigate"></a>
+  <a class="lightbox" id="lb-sb-9" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-search-v1.4.0.png" alt="SillyBunny mobile Search"></a>
+  <a class="lightbox" id="lb-sb-10" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-in-chat-v1.4.0.png" alt="SillyBunny mobile In-Chat"></a>
+  <a class="lightbox" id="lb-sb-11" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.4.0.png" alt="SillyBunny mobile Customize"></a>
+  <a class="lightbox" id="lb-sb-12" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.4.0.png" alt="SillyBunny mobile Agents"></a>
+  <a class="lightbox" id="lb-sb-13" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.4.0.png" alt="SillyBunny mobile Characters"></a>
 
   <script>
     (function () {
