@@ -18,10 +18,16 @@
       background: #0a0a0f;
       color: #9bbbaa;
       font-family: 'Figtree', sans-serif;
+      color-scheme: dark;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
+    }
+
+    :focus-visible {
+      outline: 2px solid #8fb8df;
+      outline-offset: 4px;
     }
 
     .container {
@@ -76,6 +82,11 @@
     }
 
     .links a {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 54px;
       color: #91b3a0;
       text-decoration: none;
       border: 1px solid #353d4d;
@@ -101,6 +112,16 @@
       color: #a8ccb8;
       border-color: #4a4a6a;
       box-shadow: 0 0 12px rgba(84, 160, 255, 0.15);
+    }
+
+    .links a:focus-visible,
+    .preset-downloads a:focus-visible,
+    .inline-link:focus-visible,
+    .link-info-link:focus-visible,
+    .tracker-item:focus-visible {
+      color: #e0f4ea;
+      border-color: #8ea99b;
+      box-shadow: 0 0 0 3px rgba(84, 160, 255, 0.24), 0 0 18px rgba(84, 160, 255, 0.16);
     }
 
     .links a.glow-pill:hover {
@@ -199,6 +220,9 @@
     }
 
     .link-info-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
       font-size: 0.72rem;
       color: #739282;
       text-decoration: none;
@@ -238,6 +262,10 @@
     }
 
     .platform-labels label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
       min-width: 148px;
       text-align: center;
       transition: color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s;
@@ -341,6 +369,10 @@
     }
 
     .tab-labels label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
       color: #789889;
       border: 1px solid #2b3445;
       border-radius: 999px;
@@ -374,6 +406,31 @@
       border-color: #566985;
       background: rgba(28, 35, 48, 0.96);
       box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 18px rgba(84, 160, 255, 0.1);
+    }
+
+    #platform-view-st:focus-visible ~ .platform-labels label[for="platform-view-st"],
+    #platform-view-sb:focus-visible ~ .platform-labels label[for="platform-view-sb"],
+    #tab-preset:focus-visible ~ .tab-labels label[for="tab-preset"],
+    #tab-options:focus-visible ~ .tab-labels label[for="tab-options"],
+    #tab-opinions:focus-visible ~ .tab-labels label[for="tab-opinions"],
+    #tab-previous:focus-visible ~ .tab-labels label[for="tab-previous"],
+    #tab-trackers:focus-visible ~ .tab-labels label[for="tab-trackers"],
+    #tab-changelog:focus-visible ~ .tab-labels label[for="tab-changelog"],
+    #tab-extensions:focus-visible ~ .tab-labels label[for="tab-extensions"],
+    #tab-themes:focus-visible ~ .tab-labels label[for="tab-themes"],
+    #tab-cards:focus-visible ~ .tab-labels label[for="tab-cards"],
+    #sb-tab-overview:focus-visible ~ .tab-labels label[for="sb-tab-overview"],
+    #sb-tab-features:focus-visible ~ .tab-labels label[for="sb-tab-features"],
+    #sb-tab-agents:focus-visible ~ .tab-labels label[for="sb-tab-agents"],
+    #sb-tab-screenshots:focus-visible ~ .tab-labels label[for="sb-tab-screenshots"],
+    #theme-dark:focus-visible ~ .theme-tab-labels label[for="theme-dark"],
+    #theme-light:focus-visible ~ .theme-tab-labels label[for="theme-light"],
+    #card-subtab-genshin:focus-visible ~ .card-subtab-labels label[for="card-subtab-genshin"],
+    #card-subtab-oc:focus-visible ~ .card-subtab-labels label[for="card-subtab-oc"] {
+      outline: 2px solid #8fb8df;
+      outline-offset: 4px;
+      border-color: #8ea99b;
+      box-shadow: 0 0 0 3px rgba(84, 160, 255, 0.24), 0 0 18px rgba(84, 160, 255, 0.16);
     }
 
     .tab-content { display: none; }
@@ -415,6 +472,10 @@
     }
 
     .card-subtab-labels label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
       padding: 0.4rem 1rem;
       font-size: 0.85rem;
       color: #789889;
@@ -422,7 +483,7 @@
       border: 1px solid #2b3445;
       border-radius: 20px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
     }
 
     .card-subtab-labels label:hover {
@@ -489,6 +550,10 @@
     }
 
     .preset-downloads a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
       color: #91b4a0;
       text-decoration: none;
       border: 1px solid #353f52;
@@ -897,6 +962,10 @@
     }
 
     .theme-tab-labels label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
       color: #789889;
       border: 1px solid #2b3445;
       border-radius: 999px;
@@ -986,6 +1055,9 @@
 
       .links { flex-direction: column; align-items: center; gap: 0.75rem; }
       .links a { width: 100%; max-width: 280px; text-align: center; }
+      .link-info,
+      .link-info-link,
+      .last-updated { font-size: 0.875rem; }
 
       .platform-labels {
         padding: 0 1rem;
@@ -999,25 +1071,41 @@
       .preset-section { padding: 0 1rem; }
 
       .tab-labels { flex-wrap: wrap; gap: 0.4rem; }
-      .tab-labels label { padding: 0.35rem 1rem; font-size: 0.8rem; }
+      .tab-labels label { padding: 0.35rem 1rem; font-size: 0.875rem; }
 
       .preset-title { font-size: 1.1rem; }
-      .preset-desc { font-size: 0.82rem; }
+      .preset-desc { font-size: 0.875rem; }
       .preset-desc li { padding-left: 1rem; }
-      .opinions-intro { font-size: 0.82rem; }
+      .opinions-intro { font-size: 0.875rem; }
       .opinions-table th,
-      .opinions-table td { padding: 0.8rem 0.85rem; font-size: 0.8rem; }
+      .opinions-table td { padding: 0.8rem 0.85rem; font-size: 0.875rem; }
 
-      .changelog li { font-size: 0.8rem; padding-left: 1rem; }
+      .changelog li { font-size: 0.875rem; padding-left: 1rem; }
 
       .ext-item { padding: 0.8rem 1rem; }
-      .ext-desc { font-size: 0.78rem; }
+      .ext-desc { font-size: 0.875rem; }
 
       .option-card { padding: 0.85rem 0.9rem; }
-      .option-card-title { font-size: 0.88rem; }
-      .option-card-copy { font-size: 0.78rem; }
+      .option-card-title { font-size: 0.95rem; }
+      .option-card-copy { font-size: 0.875rem; }
 
       .lightbox { padding: 0.75rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .rainbow {
+        animation: none;
+        background-position: 0% 50%;
+      }
     }
 
     /* Lightbox */
