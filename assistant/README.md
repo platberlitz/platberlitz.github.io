@@ -1,157 +1,176 @@
 # Synapse
 
-A privacy-first, fully client-side AI chat interface. No backend, no account — just static files that talk directly to any OpenAI-compatible or Anthropic API endpoint.
+Synapse is a browser-only chat app for API-backed assistants. It runs from static files, stores your chats locally, and sends requests only to the endpoint you configure.
 
-## Features
+Use it from GitHub Pages, run it from a local server, or download the standalone `synapse.html` file.
 
-### Core
-- **Multi-provider support** — works with OpenAI, Anthropic, and any OpenAI-compatible proxy (e.g. local LLMs via LM Studio, Ollama, text-generation-webui)
-- **Streaming responses** with abort support
-- **Conversation management** — create, rename, tag, search, fork, import/export (JSON and Markdown)
-- **Multiple API profiles** — save and switch between different provider/model configurations
-- **Model override** — type `@model-name` in the input to override the model for a single message
-- **Cost tracking** — set per-token pricing and track spend across conversations
+## What It Does
 
-### Chat
-- **Message editing** — edit any user message and regenerate from that point
-- **Swipes** — regenerate assistant responses and navigate between alternatives
-- **Fork conversations** — branch off at any message to explore different directions
-- **Conversation summary** — AI-generated summaries of the current chat
-- **Global search** — full-text search across all conversations
-- **Message screenshots** — select and screenshot message ranges
+### Providers and Models
 
-### Roleplay and Characters
-- **SillyTavern character card import** — drag and drop `.png` or `.json` character cards
-- **Persona system** — define who you are for the AI to reference
-- **Prompt entries** — ordered, togglable prompt segments (system, user, assistant) with drag-and-drop reordering
-- **Preset system** — save/load/import prompt configurations, including SillyTavern presets
-- **SillyTavern macro conversion** — `{{user}}`, `{{char}}`, `{{random}}`, etc.
+- Works with OpenAI, Anthropic, and OpenAI-compatible endpoints.
+- Supports local model servers such as LM Studio, Ollama, and text-generation-webui.
+- Lets you save connection profiles for different base URLs, keys, models, and request settings.
+- Supports streaming responses, stop generation, and one-message model overrides with `@model-name`.
+- Shows which model answered and an estimated token count on each message.
 
-### Tools
-- **Web search** — native Anthropic tool use, or SearXNG/Brave/custom search APIs for OpenAI-format models
-- **Memory** — persistent cross-conversation memory the AI can read and write to
-- **File attachments** — images (with vision), PDFs, DOCX/DOC, JSON, RTF, CSV, HTML, Markdown, code, and text files in general
+### Chats
+
+- Create, rename, tag, search, import, and export conversations.
+- Export one chat as JSON or Markdown, or export everything at once.
+- Edit a user message and resend from that point.
+- Regenerate assistant messages and switch between swipes.
+- Fork a chat from any message.
+- Generate and save a conversation summary for context.
+- Select message ranges for screenshots.
+
+### Files
+
+- Attach images, PDFs, DOCX/DOC, JSON, RTF, CSV, HTML, Markdown, code, and plain text files.
+- Images are sent for vision-capable models.
+- Text is extracted from supported document formats before sending.
+- Large text attachments are capped so one file does not flood the request.
+
+### Roleplay and Prompting
+
+- Import SillyTavern character cards from `.png` or `.json`.
+- Set a persona for the user.
+- Manage ordered prompt entries with enable/disable controls and drag reordering.
+- Save, load, and import prompt presets, including SillyTavern presets.
+- Supports common SillyTavern macros such as `{{user}}` and `{{char}}`.
+
+### Tools and Diagnostics
+
+- Web search through Anthropic tools, SearXNG, Brave, or a custom search endpoint.
+- Optional memory across conversations.
+- Status and diagnostics panel for connection/search checks.
+- Debug tab with redacted request logging, optional full text logging, and a snapshot copy button.
+- Local update indicator when a local build can be compared against `version.json` or a `/version` endpoint.
 
 ### Appearance
-- **35+ built-in themes** — Nord, Catppuccin, Dracula, Gruvbox, Tokyo Night, Rose Pine, and many more
-- **Custom themes** — full color picker with live preview
-- **Customizable font**, message width, font size, and border radius
-- **Light/dark/system** mode toggle
-- **Syntax highlighting** (highlight.js), **LaTeX** (KaTeX), and **Mermaid diagrams**
 
-### Keyboard Shortcuts
+- Built-in themes, custom color picker, and light/dark/system toggle.
+- Custom font, message width, font size, and border radius settings.
+- Syntax highlighting, LaTeX, Mermaid diagrams, tables, code blocks, spoilers, and generated image display.
+- Mobile layout with touch-friendly controls.
+
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 |---|---|
-| `Enter` | Send message (configurable) |
+| `Enter` | Send message, if enabled |
 | `Shift+Enter` | New line |
-| `Ctrl+Enter` | Always sends |
+| `Ctrl+Enter` | Send message |
 | `Ctrl+N` | New conversation |
 | `Ctrl+/` | Focus input |
 | `Ctrl+K` | Search conversations |
-| `Ctrl+F` | Search in current chat |
+| `Ctrl+F` | Search current chat |
 | `Ctrl+Shift+E` | Export all conversations |
 | `Ctrl+Shift+R` | Regenerate last response |
-| `Escape` | Close modal / Stop streaming |
-| `@model` | Override model for one message |
+| `Escape` | Close modal or stop generation |
+| `@model` | Override the model for one message |
 
-## Running Locally
+## Run It
 
-Synapse is entirely static — no build step, no dependencies, no Node.js required.
+### Standalone File
 
-### Option 1: Single-file download (easiest)
-
-Download **`synapse.html`** — a single self-contained file with all CSS and JS inlined. Just open it in your browser:
+Download `synapse.html` and open it in your browser:
 
 ```bash
-open synapse.html          # macOS
-xdg-open synapse.html     # Linux
-start synapse.html         # Windows
+open synapse.html       # macOS
+xdg-open synapse.html   # Linux
+start synapse.html      # Windows
 ```
 
-> **Note:** Some browsers restrict `fetch()` from `file://` URLs. If you see CORS errors, use a local server instead (see Option 3).
+Some browsers block requests from `file://` pages. If API calls fail from the standalone file, use a local HTTP server.
 
-### Option 2: Open from source
+### Source Files
 
-If you've cloned the repo, open `index.html` directly:
+If you cloned the repo, you can open `assistant/index.html` directly:
 
 ```bash
-open assistant/index.html          # macOS
-xdg-open assistant/index.html     # Linux
-start assistant/index.html         # Windows
+open assistant/index.html       # macOS
+xdg-open assistant/index.html   # Linux
+start assistant/index.html      # Windows
 ```
 
-### Option 3: Local HTTP server
+### Local Server
 
-Any static file server works. Pick whichever you have installed:
+Any static server works:
 
 ```bash
-# Python (built-in)
 cd assistant
 python3 -m http.server 8000
-# → http://localhost:8000
-
-# Node (npx, no install needed)
-npx serve assistant
-# → http://localhost:3000
-
-# PHP (built-in)
-cd assistant
-php -S localhost:8000
 ```
 
-Then open the URL shown in the terminal.
+Then open `http://localhost:8000`.
 
-### Option 4: VS Code Live Server
+Other options:
 
-If you use VS Code, install the **Live Server** extension and right-click `assistant/index.html` → "Open with Live Server".
+```bash
+npx serve assistant
+php -S localhost:8000 -t assistant
+```
 
 ## Setup
 
-On first launch you'll see the setup modal:
+On first launch, enter:
 
-1. **Base URL** — your API endpoint (e.g. `https://api.openai.com/v1`, `http://localhost:1234/v1` for local models)
-2. **API Key** — your provider's API key
-3. **Model** — fetch the model list or type a model name manually
+1. Base URL, for example `https://api.openai.com/v1` or `http://localhost:1234/v1`.
+2. API key.
+3. Model name, either fetched from the provider or typed manually.
 
-All settings are stored in `localStorage` — nothing leaves your browser except API requests to your configured endpoint.
+Keys and settings stay in your browser. Synapse does not run a server and does not proxy your traffic.
 
-## Project Structure
+## Storage
 
-```
-assistant/
-  synapse.html        # Standalone single-file build (download this!)
-  index.html          # Single-page app shell and all modals
-  styles.css          # All styles, themes, responsive design
-  favicon.ico
-  js/
-    main.js           # Application logic (~6400 lines)
-    lib/
-      dom-utils.js    # Focus trapping, focusable element helpers
-      text-utils.js   # HTML escaping, color utilities
-```
+Synapse uses browser storage:
 
-## Data Storage
+| Storage | Contents |
+|---|---|
+| IndexedDB | Conversations, messages, and memories |
+| `localStorage` | API settings, themes, profiles, prompt entries, presets, cached model list, and UI preferences |
 
-Everything is stored in the browser's `localStorage`:
+Important keys include:
 
 | Key | Contents |
 |---|---|
 | `llmProxyUrl` | API base URL |
-| `llmApiKey` | API key (stored locally only) |
-| `llmModel` | Active model name |
-| `assistantConversations` | All conversations and messages |
-| `assistantTheme` | Current theme name |
-| `assistantCustomTheme` | Custom theme colors (JSON) |
-| `assistantMemories` | Persistent memory entries |
-| `llmModelList` | Cached model list from API |
+| `llmApiKey` | API key |
+| `llmModel` | Active model |
+| `assistantProfiles` | Saved connection profiles |
+| `assistantTheme` | Current theme |
+| `assistantCustomTheme` | Custom theme colors |
+| `llmPromptEntries` | Prompt entries |
+| `assistantDebug` | Debug logging toggle |
 
-**Back up your data** by exporting conversations regularly (toolbar menu → "Export all chats").
+Use "Export all chats" from the toolbar menu if you want a backup.
+
+## Project Files
+
+```text
+assistant/
+  index.html          App shell and modals
+  styles.css          Styles, themes, and responsive layout
+  synapse.html        Standalone build with CSS and JS inlined
+  version.json        Build metadata for local update checks
+  favicon.ico
+  js/
+    main.js           App logic
+    lib/
+      dom-utils.js    Focus helpers
+      text-utils.js   HTML escaping and color helpers
+```
 
 ## Browser Support
 
-Works in any modern browser (Chrome, Firefox, Safari, Edge). Optimized for mobile with touch-friendly controls and responsive layout. Includes iOS Safari-specific fixes for code block rendering and safe area insets.
+Synapse targets current Chrome, Firefox, Safari, and Edge. Some features depend on browser APIs:
 
-## License
+- Voice input needs `SpeechRecognition`.
+- DOCX extraction needs `DecompressionStream`.
+- PDF extraction loads PDF.js from a CDN.
+- API calls may need a CORS-friendly endpoint or proxy.
 
-Made by [purachina](https://platberlitz.github.io/) and 100% Claude.
+## Credit
+
+Made by [purachina](https://platberlitz.github.io/).
