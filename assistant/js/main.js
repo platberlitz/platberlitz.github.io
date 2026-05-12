@@ -104,6 +104,24 @@ function formatRelativeTime(ts) {
   return new Date(ts).toLocaleDateString();
 }
 
+function prefersReducedMotion() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function getScrollBehavior() {
+  return prefersReducedMotion() ? 'auto' : 'smooth';
+}
+
+function scrollMessagesToBottom() {
+  const area = document.getElementById('messagesArea');
+  if (!area) return;
+  area.scrollTo({ top: area.scrollHeight, behavior: getScrollBehavior() });
+}
+
+function isDebugLoggingEnabled() {
+  return localStorage.getItem('assistantDebug') === 'true';
+}
+
 // ============================================
 // Toast Notifications
 // ============================================
@@ -197,8 +215,8 @@ function applyTheme(name) {
   s.setProperty('--msg-user', t.msgUser);
   s.setProperty('--msg-assistant', t.msgAssistant);
   s.setProperty('--hover', isLightColor(t.bg) ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)');
-  s.setProperty('--accent-text', isLightColor(t.accent) ? '#000000' : '#ffffff');
-  s.setProperty('--msg-user-text', isLightColor(t.msgUser) ? '#000000' : '#ffffff');
+  s.setProperty('--accent-text', isLightColor(t.accent) ? '#101014' : '#f7f8ff');
+  s.setProperty('--msg-user-text', isLightColor(t.msgUser) ? '#101014' : '#f7f8ff');
   const bgLight = isLightColor(t.bg);
   s.setProperty('--overlay-10', bgLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)');
   s.setProperty('--overlay-15', bgLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)');
@@ -209,7 +227,10 @@ function applyTheme(name) {
   s.setProperty('--msg-font-size', t.msgFontSize || '0.95em');
   s.setProperty('--code-bg', t.codeBg || (bgLight ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.3)'));
   s.setProperty('--card-bg', bgLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)');
-  s.setProperty('--error-color', bgLight ? '#dc2626' : '#f66');
+  s.setProperty('--error-color', bgLight ? '#dc2626' : '#ff7777');
+  s.setProperty('--danger-color', bgLight ? '#dc2626' : '#ef4444');
+  s.setProperty('--danger-hover', bgLight ? '#b91c1c' : '#dc2626');
+  s.setProperty('--success-color', '#22c55e');
   localStorage.setItem('assistantTheme', name);
 
   const btn = document.getElementById('themeToggle');
@@ -290,7 +311,7 @@ function loadCustomColorPickers() {
       const m = c.match(/[\d.]+/g);
       if (m) return '#' + [m[0],m[1],m[2]].map(v => Math.round(parseFloat(v)).toString(16).padStart(2,'0')).join('');
     }
-    return '#000000';
+    return '#101014';
   };
   document.getElementById('cBg').value = toHex(t.bg);
   document.getElementById('cSidebar').value = toHex(t.sidebar);
@@ -304,7 +325,7 @@ function loadCustomColorPickers() {
   document.getElementById('cBorderRadius').value = t.borderRadius || '';
   document.getElementById('cMsgMaxWidth').value = t.msgMaxWidth || '';
   document.getElementById('cMsgFontSize').value = t.msgFontSize || '';
-  document.getElementById('cCodeBg').value = t.codeBg ? toHex(t.codeBg) : '#000000';
+  document.getElementById('cCodeBg').value = t.codeBg ? toHex(t.codeBg) : '#101014';
 }
 
 function resetCustomTheme() {
@@ -866,7 +887,7 @@ function openSourcesDrawer(msg) {
         const displayUrl = escapeHTML((tb.url || '').replace(/^https?:\/\//, '').replace(/\/+$/, ''));
         html += '<div style="margin:10px 0 6px;font-weight:600;font-size:0.9em">\u{1F310} ' + displayUrl + '</div>';
         if (tb.error) {
-          html += '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover);margin-bottom:8px;color:var(--error-color,#f66);font-size:0.85em">' + escapeHTML(tb.error) + '</div>';
+          html += '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover);margin-bottom:8px;color:var(--error-color,#ff7777);font-size:0.85em">' + escapeHTML(tb.error) + '</div>';
         } else if (tb.content) {
           const preview = escapeHTML(tb.content.slice(0, 500));
           html += '<div style="padding:10px;border:1px solid var(--card-border);border-radius:10px;background:var(--hover);margin-bottom:8px">' +
@@ -1264,14 +1285,15 @@ function prepareAnthropicMessages(apiMessages) {
           return { type: 'image', source: { type: 'url', url: url } };
         }
         if (part.type === 'file') {
-          if (part.file.textContent) {
-            const name = part.file.name || 'file';
-            return { type: 'text', text: `--- ${name} ---\n${part.file.textContent}\n--- end ${name} ---` };
-          }
-          const url = part.file.url;
+          const file = part.file || {};
+          const url = file.url;
           if (url && url.startsWith('data:')) {
             const match = url.match(/^data:([^;]+);base64,(.+)$/);
             if (match) return { type: 'document', source: { type: 'base64', media_type: match[1], data: match[2] } };
+          }
+          if (typeof file.textContent === 'string') {
+            const name = file.name || 'file';
+            return { type: 'text', text: `--- ${name} ---\n${file.textContent}\n--- end ${name} ---` };
           }
           return part;
         }
@@ -1420,12 +1442,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Drag & drop files
-  const DOCUMENT_MIMES = ['application/pdf', 'text/plain', 'text/csv', 'text/html', 'text/markdown'];
   const main = document.querySelector('.main');
   main.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
   main.addEventListener('drop', (e) => {
     e.preventDefault();
-    Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/') || DOCUMENT_MIMES.includes(f.type)).forEach(readAttachmentFile);
+    Array.from(e.dataTransfer.files).forEach(readAttachmentFile);
   });
 
   // Paste images
@@ -2384,7 +2405,7 @@ function renderSidebar() {
       tagEl.className = 'conv-tag';
       const tagColor = TAG_COLORS.find(t => t.name === c.tag);
       tagEl.style.background = tagColor ? tagColor.color : 'var(--accent)';
-      tagEl.style.color = '#fff';
+      tagEl.style.color = 'var(--accent-text)';
       tagEl.textContent = c.tag;
       div.appendChild(tagEl);
     }
@@ -3314,12 +3335,18 @@ function renderMessages() {
             img.alt = 'User uploaded image';
             bubble.appendChild(img);
           } else if (part.type === 'file') {
-            const badge = document.createElement('a');
+            const fileName = part.file?.name || 'file';
+            const fileUrl = part.file?.url;
+            const badge = document.createElement(fileUrl ? 'a' : 'span');
             badge.className = 'chat-file-badge';
-            badge.textContent = '\u{1F4C4} ' + (part.file.name || 'file');
-            badge.href = part.file.url;
-            badge.download = part.file.name || 'file';
-            badge.title = 'Download ' + (part.file.name || 'file');
+            badge.textContent = '\u{1F4C4} ' + fileName;
+            if (fileUrl) {
+              badge.href = fileUrl;
+              badge.download = fileName;
+              badge.title = 'Download ' + fileName;
+            } else {
+              badge.title = 'Attached file: ' + fileName;
+            }
             bubble.appendChild(badge);
           }
         });
@@ -3742,7 +3769,7 @@ function renderToolBlocksHTML(toolBlocks) {
         return '<div class="tool-use-block"><div class="tool-use-header">\u{1F310} Reading ' + displayUrl + '\u2026</div></div>';
       }
       if (tb.error) {
-        return '<div class="tool-use-block"><div class="tool-use-header">\u{1F310} ' + displayUrl + ' \u00B7 <span style="color:var(--error-color,#f66)">' + escapeHTML(tb.error) + '</span></div></div>';
+        return '<div class="tool-use-block"><div class="tool-use-header">\u{1F310} ' + displayUrl + ' \u00B7 <span style="color:var(--error-color,#ff7777)">' + escapeHTML(tb.error) + '</span></div></div>';
       }
       const charCount = (tb.content || '').length;
       const preview = escapeHTML((tb.content || '').slice(0, 300));
@@ -3761,7 +3788,7 @@ function renderToolBlocksHTML(toolBlocks) {
     }
     const escapedQuery = escapeHTML(query);
     if (tb.error) {
-      return '<div class="tool-use-block"><div class="tool-use-header">\u{1F50D} Searched "' + escapedQuery + '" \u00B7 <span style="color:var(--error-color,#f66)">' + escapeHTML(tb.error) + '</span></div></div>';
+      return '<div class="tool-use-block"><div class="tool-use-header">\u{1F50D} Searched "' + escapedQuery + '" \u00B7 <span style="color:var(--error-color,#ff7777)">' + escapeHTML(tb.error) + '</span></div></div>';
     }
     const count = results.length;
     const resultsHTML = results.map(r => {
@@ -4282,7 +4309,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             if (part.type === 'file') {
               const name = part.file?.name || 'file';
               const text = part.file?.textContent;
-              if (text) {
+              if (typeof text === 'string') {
                 return { type: 'text', text: `--- ${name} ---\n${text}\n--- end ${name} ---` };
               }
               return { type: 'text', text: `[Attached file: ${name}]` };
@@ -4312,8 +4339,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
     }
     exclude.forEach(k => delete body[k]);
 
-    // DEBUG: log message structures before sending
-    if (body.messages) {
+    if (isDebugLoggingEnabled() && body.messages) {
       console.log('=== API PAYLOAD DEBUG ===');
       body.messages.forEach((m, i) => {
         if (Array.isArray(m.content)) {
@@ -4507,17 +4533,18 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           const followUpBody = { ...body, messages: followUpMessages, stream: false };
           delete followUpBody.tools;
           exclude.forEach(k => delete followUpBody[k]);
-          // DEBUG: log follow-up message structures
-          console.log('=== FOLLOW-UP PAYLOAD DEBUG ===');
-          followUpBody.messages.forEach((m, i) => {
-            const contentSummary = Array.isArray(m.content)
-              ? m.content.map(p => ({ type: p.type, keys: Object.keys(p) }))
-              : (m.content === null ? 'null' : typeof m.content);
-            console.log(`msg[${i}] role=${m.role}`, JSON.stringify(contentSummary));
-            if (m.tool_calls) console.log(`  tool_calls:`, JSON.stringify(m.tool_calls));
-            if (m.tool_call_id) console.log(`  tool_call_id:`, m.tool_call_id);
-          });
-          console.log('=== END FOLLOW-UP DEBUG ===');
+          if (isDebugLoggingEnabled()) {
+            console.log('=== FOLLOW-UP PAYLOAD DEBUG ===');
+            followUpBody.messages.forEach((m, i) => {
+              const contentSummary = Array.isArray(m.content)
+                ? m.content.map(p => ({ type: p.type, keys: Object.keys(p) }))
+                : (m.content === null ? 'null' : typeof m.content);
+              console.log(`msg[${i}] role=${m.role}`, JSON.stringify(contentSummary));
+              if (m.tool_calls) console.log(`  tool_calls:`, JSON.stringify(m.tool_calls));
+              if (m.tool_call_id) console.log(`  tool_call_id:`, m.tool_call_id);
+            });
+            console.log('=== END FOLLOW-UP DEBUG ===');
+          }
           const followUpResp = await fetchApiWithHttpSupport(url, {
             method: 'POST',
             headers,
@@ -5320,7 +5347,7 @@ async function sendMessage() {
       if (conv) {
         const docs = conv.docs || (conv.docs = []);
         pendingAttachments.forEach(att => {
-          if (att && att.textContent) {
+          if (att && att.textContent && !att.binary) {
             const text = att.textContent.length > 20000 ? att.textContent.slice(0, 20000) : att.textContent;
             docs.push({
               id: 'doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
@@ -5336,8 +5363,11 @@ async function sendMessage() {
       pendingAttachments.forEach(att => {
         if (att.type === 'image') {
           userContent.push({ type: 'image_url', image_url: { url: att.dataUrl } });
-        } else if (att.textContent) {
-          userContent.push({ type: 'file', file: { name: att.name, mime: att.mime, textContent: att.textContent } });
+        } else if (typeof att.textContent === 'string') {
+          const filePart = { name: att.name, mime: att.mime, textContent: att.textContent };
+          if (att.dataUrl) filePart.url = att.dataUrl;
+          if (att.binary) filePart.binary = true;
+          userContent.push({ type: 'file', file: filePart });
         } else {
           userContent.push({ type: 'file', file: { url: att.dataUrl, name: att.name, mime: att.mime } });
         }
@@ -5884,7 +5914,7 @@ function performChatSearch() {
   if (chatSearchMatches.length > 0) {
     chatSearchIdx = 0;
     chatSearchMatches[0].classList.add('active');
-    chatSearchMatches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    chatSearchMatches[0].scrollIntoView({ behavior: getScrollBehavior(), block: 'center' });
   }
 }
 
@@ -5893,7 +5923,7 @@ function navigateChatSearch(dir) {
   chatSearchMatches[chatSearchIdx]?.classList.remove('active');
   chatSearchIdx = (chatSearchIdx + dir + chatSearchMatches.length) % chatSearchMatches.length;
   chatSearchMatches[chatSearchIdx].classList.add('active');
-  chatSearchMatches[chatSearchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  chatSearchMatches[chatSearchIdx].scrollIntoView({ behavior: getScrollBehavior(), block: 'center' });
   document.getElementById('chatSearchCount').textContent = (chatSearchIdx + 1) + '/' + chatSearchMatches.length;
 }
 
@@ -5934,47 +5964,292 @@ async function extractPdfText(arrayBuffer) {
   return pages.join('\n\n');
 }
 
-const TEXT_MIMES = ['text/plain', 'text/csv', 'text/html', 'text/markdown'];
+const MAX_ATTACHMENT_TEXT_CHARS = 200000;
+const TEXT_MIMES = new Set([
+  'application/ecmascript',
+  'application/geo+json',
+  'application/graphql',
+  'application/graphql-response+json',
+  'application/javascript',
+  'application/json',
+  'application/ld+json',
+  'application/manifest+json',
+  'application/rss+xml',
+  'application/sql',
+  'application/toml',
+  'application/xml',
+  'application/yaml',
+  'application/x-ipynb+json',
+  'application/x-httpd-php',
+  'application/x-javascript',
+  'application/x-ndjson',
+  'application/x-php',
+  'application/x-python-code',
+  'application/x-ruby',
+  'application/x-sh',
+  'application/x-sql',
+  'application/x-toml',
+  'application/x-yaml',
+  'image/svg+xml',
+  'text/cache-manifest',
+  'text/calendar',
+  'text/css',
+  'text/csv',
+  'text/html',
+  'text/javascript',
+  'text/jsx',
+  'text/markdown',
+  'text/plain',
+  'text/rtf',
+  'text/tab-separated-values',
+  'text/tsx',
+  'text/typescript',
+  'text/vcard',
+  'text/xml',
+  'text/yaml'
+]);
+const TEXT_EXTENSIONS = /\.(asm|bat|c|cfg|conf|cpp|cs|css|csv|cts|cxx|diff|dockerignore|editorconfig|env|gitattributes|gitignore|gitmodules|go|gql|graphql|h|hpp|htm|html|ini|ipynb|java|js|json|json5|jsonl|jsx|lock|log|lua|m|md|mdx|mts|npmrc|php|plist|properties|py|r|rb|rs|sass|scala|scss|sh|sql|srt|svg|swift|toml|ts|tsv|tsx|txt|vue|xml|yaml|yml|zsh)$/i;
+const TEXT_FILENAMES = new Set([
+  'changelog',
+  'dockerfile',
+  'license',
+  'makefile',
+  'readme'
+]);
+const DOCX_EXTENSIONS = /\.(docm|docx|dotm|dotx)$/i;
+const DOC_EXTENSIONS = /\.(doc|dot)$/i;
+const DOCX_MIMES = new Set([
+  'application/vnd.ms-word.document.macroenabled.12',
+  'application/vnd.ms-word.template.macroenabled.12',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.template'
+]);
+const DOC_MIMES = new Set(['application/msword']);
+const RTF_MIMES = new Set(['application/rtf', 'text/rtf']);
 
-function readAttachmentFile(file) {
-  const isImage = file.type.startsWith('image/');
-  if (isImage) {
-    resizeImageIfNeeded(file, 1536, 0.85).then(resizedUrl => {
-      if (resizedUrl) {
-        pendingAttachments.push({ type: 'image', dataUrl: resizedUrl, name: file.name, mime: 'image/jpeg' });
-        renderPreviews();
-      } else {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          pendingAttachments.push({ type: 'image', dataUrl: e.target.result, name: file.name, mime: file.type });
-          renderPreviews();
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  } else if (file.type === 'application/pdf') {
-    file.arrayBuffer().then(buf => extractPdfText(buf)).then(text => {
-      pendingAttachments.push({ type: 'file', name: file.name, mime: file.type, textContent: text });
-      renderPreviews();
-    }).catch(e => {
-      console.error('PDF extraction failed:', e);
-      pendingAttachments.push({ type: 'file', name: file.name, mime: file.type, textContent: '[PDF could not be read]' });
-      renderPreviews();
-    });
-  } else if (TEXT_MIMES.includes(file.type) || file.name.match(/\.(txt|csv|html|md)$/i)) {
+function limitAttachmentText(text, name) {
+  const value = String(text || '');
+  if (value.length <= MAX_ATTACHMENT_TEXT_CHARS) return value;
+  return value.slice(0, MAX_ATTACHMENT_TEXT_CHARS) +
+    `\n\n[${name || 'file'} truncated after ${MAX_ATTACHMENT_TEXT_CHARS.toLocaleString()} characters.]`;
+}
+
+function isTextLikeFile(file) {
+  const mime = (file.type || '').toLowerCase();
+  const name = String(file.name || '').toLowerCase();
+  return mime.startsWith('text/') || TEXT_MIMES.has(mime) || TEXT_EXTENSIONS.test(name) || TEXT_FILENAMES.has(name);
+}
+
+function isProbablyTextBuffer(buffer) {
+  const bytes = new Uint8Array(buffer.slice(0, Math.min(buffer.byteLength, 4096)));
+  if (bytes.length === 0) return true;
+  let suspicious = 0;
+  for (const byte of bytes) {
+    if (byte === 0) return false;
+    if (byte < 7 || (byte > 13 && byte < 32)) suspicious++;
+  }
+  return suspicious / bytes.length < 0.08;
+}
+
+function decodeXmlEntities(text) {
+  return String(text || '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)));
+}
+
+function cleanExtractedText(text) {
+  return String(text || '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{4,}/g, '\n\n\n')
+    .trim();
+}
+
+function extractTextFromDocxXml(xml) {
+  const withBreaks = String(xml || '')
+    .replace(/<w:tab\/?>/g, '\t')
+    .replace(/<w:br\/?>/g, '\n')
+    .replace(/<\/w:p>/g, '\n')
+    .replace(/<\/w:tr>/g, '\n')
+    .replace(/<\/w:tc>/g, '\t');
+  return cleanExtractedText(decodeXmlEntities(withBreaks.replace(/<[^>]+>/g, '')));
+}
+
+function findZipEndOfCentralDirectory(view) {
+  for (let i = view.byteLength - 22; i >= Math.max(0, view.byteLength - 66000); i--) {
+    if (view.getUint32(i, true) === 0x06054b50) return i;
+  }
+  return -1;
+}
+
+async function inflateZipEntry(data, method) {
+  if (method === 0) return data;
+  if (method !== 8) throw new Error('Unsupported ZIP compression method: ' + method);
+  if (typeof DecompressionStream === 'undefined') throw new Error('This browser cannot decompress DOCX files.');
+  try {
+    const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  } catch (rawErr) {
+    const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+}
+
+async function extractZipEntries(arrayBuffer, wantedNames) {
+  const view = new DataView(arrayBuffer);
+  const bytes = new Uint8Array(arrayBuffer);
+  const eocd = findZipEndOfCentralDirectory(view);
+  if (eocd < 0) throw new Error('ZIP directory not found.');
+  const totalEntries = view.getUint16(eocd + 10, true);
+  let offset = view.getUint32(eocd + 16, true);
+  const decoder = new TextDecoder('utf-8');
+  const results = {};
+
+  for (let i = 0; i < totalEntries; i++) {
+    if (view.getUint32(offset, true) !== 0x02014b50) break;
+    const method = view.getUint16(offset + 10, true);
+    const compressedSize = view.getUint32(offset + 20, true);
+    const nameLen = view.getUint16(offset + 28, true);
+    const extraLen = view.getUint16(offset + 30, true);
+    const commentLen = view.getUint16(offset + 32, true);
+    const localOffset = view.getUint32(offset + 42, true);
+    const name = decoder.decode(bytes.slice(offset + 46, offset + 46 + nameLen));
+
+    if (wantedNames.some(pattern => typeof pattern === 'string' ? pattern === name : pattern.test(name))) {
+      if (view.getUint32(localOffset, true) !== 0x04034b50) throw new Error('ZIP local header not found.');
+      const localNameLen = view.getUint16(localOffset + 26, true);
+      const localExtraLen = view.getUint16(localOffset + 28, true);
+      const dataStart = localOffset + 30 + localNameLen + localExtraLen;
+      const compressed = bytes.slice(dataStart, dataStart + compressedSize);
+      results[name] = decoder.decode(await inflateZipEntry(compressed, method));
+    }
+    offset += 46 + nameLen + extraLen + commentLen;
+  }
+
+  return results;
+}
+
+async function extractDocxText(arrayBuffer) {
+  const entries = await extractZipEntries(arrayBuffer, [
+    'word/document.xml',
+    /^word\/header\d+\.xml$/,
+    /^word\/footer\d+\.xml$/,
+    /^word\/footnotes\.xml$/,
+    /^word\/endnotes\.xml$/
+  ]);
+  const orderedNames = Object.keys(entries).sort((a, b) => {
+    if (a === 'word/document.xml') return -1;
+    if (b === 'word/document.xml') return 1;
+    return a.localeCompare(b);
+  });
+  const parts = orderedNames.map(name => extractTextFromDocxXml(entries[name])).filter(Boolean);
+  return cleanExtractedText(parts.join('\n\n'));
+}
+
+function extractRtfText(text) {
+  return cleanExtractedText(String(text || '')
+    .replace(/\\u(-?\d+)\??/g, (_, code) => String.fromCharCode(Number(code) < 0 ? Number(code) + 65536 : Number(code)))
+    .replace(/\\'[0-9a-f]{2}/gi, match => String.fromCharCode(parseInt(match.slice(2), 16)))
+    .replace(/\\par[d]?/g, '\n')
+    .replace(/\\line/g, '\n')
+    .replace(/\\tab/g, '\t')
+    .replace(/[{}]/g, '')
+    .replace(/\\[a-z]+\d* ?/gi, '')
+    .replace(/\\[^a-z0-9]/gi, ''));
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      pendingAttachments.push({ type: 'file', name: file.name, mime: file.type, textContent: e.target.result });
-      renderPreviews();
-    };
-    reader.readAsText(file);
-  } else {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      pendingAttachments.push({ type: 'file', dataUrl: e.target.result, name: file.name, mime: file.type });
-      renderPreviews();
-    };
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(reader.error || new Error('File could not be read.'));
     reader.readAsDataURL(file);
+  });
+}
+
+function extractLegacyDocText(arrayBuffer) {
+  const bytes = new Uint8Array(arrayBuffer);
+  const singleByte = new TextDecoder('windows-1252').decode(bytes);
+  const utf16 = new TextDecoder('utf-16le').decode(bytes);
+  const chunks = [];
+
+  for (const source of [singleByte, utf16]) {
+    const matches = source.match(/[^\x00-\x08\x0b\x0c\x0e-\x1f]{6,}/g) || [];
+    for (const match of matches) {
+      const cleaned = match.replace(/\s+/g, ' ').trim();
+      if (!cleaned) continue;
+      if (/^[\W_]+$/.test(cleaned)) continue;
+      chunks.push(cleaned);
+    }
+  }
+
+  return cleanExtractedText([...new Set(chunks)].join('\n'));
+}
+
+async function readAttachmentFile(file) {
+  const mime = (file.type || '').toLowerCase();
+  const name = file.name || 'file';
+  const fail = (message) => {
+    pendingAttachments.push({ type: 'file', name, mime: file.type || 'application/octet-stream', textContent: message });
+    renderPreviews();
+  };
+
+  try {
+    const isImage = mime.startsWith('image/');
+    if (isImage) {
+      const resizedUrl = await resizeImageIfNeeded(file, 1536, 0.85);
+      if (resizedUrl) {
+        pendingAttachments.push({ type: 'image', dataUrl: resizedUrl, name, mime: 'image/jpeg' });
+      } else {
+        pendingAttachments.push({ type: 'image', dataUrl: await readFileAsDataURL(file), name, mime: file.type });
+      }
+      renderPreviews();
+    } else if (mime === 'application/pdf' || /\.pdf$/i.test(name)) {
+      const text = await extractPdfText(await file.arrayBuffer());
+      pendingAttachments.push({ type: 'file', name, mime: file.type || 'application/pdf', textContent: limitAttachmentText(text, name) || '[PDF contains no extractable text]' });
+      renderPreviews();
+    } else if (DOCX_EXTENSIONS.test(name) || DOCX_MIMES.has(mime)) {
+      const text = await extractDocxText(await file.arrayBuffer());
+      pendingAttachments.push({ type: 'file', name, mime: file.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', textContent: limitAttachmentText(text, name) || '[DOCX contains no extractable text]' });
+      renderPreviews();
+    } else if (/\.rtf$/i.test(name) || RTF_MIMES.has(mime)) {
+      const text = extractRtfText(await file.text());
+      pendingAttachments.push({ type: 'file', name, mime: file.type || 'text/rtf', textContent: limitAttachmentText(text, name) || '[RTF contains no extractable text]' });
+      renderPreviews();
+    } else if (DOC_EXTENSIONS.test(name) || DOC_MIMES.has(mime)) {
+      const text = extractLegacyDocText(await file.arrayBuffer());
+      pendingAttachments.push({ type: 'file', name, mime: file.type || 'application/msword', textContent: limitAttachmentText(text, name) || '[Legacy DOC could not be read as text]' });
+      renderPreviews();
+    } else if (isTextLikeFile(file)) {
+      const text = await file.text();
+      pendingAttachments.push({ type: 'file', name, mime: file.type || 'text/plain', textContent: limitAttachmentText(text, name) });
+      renderPreviews();
+    } else {
+      const buffer = await file.arrayBuffer();
+      if (isProbablyTextBuffer(buffer)) {
+        const text = new TextDecoder('utf-8').decode(buffer);
+        pendingAttachments.push({ type: 'file', name, mime: file.type || 'text/plain', textContent: limitAttachmentText(text, name) });
+        renderPreviews();
+        return;
+      }
+      pendingAttachments.push({
+        type: 'file',
+        dataUrl: await readFileAsDataURL(file),
+        name,
+        mime: file.type || 'application/octet-stream',
+        binary: true,
+        textContent: `[Binary file attached: ${name} (${file.type || 'unknown type'}, ${file.size.toLocaleString()} bytes). This provider may only receive file contents if it supports document uploads.]`
+      });
+      renderPreviews();
+    }
+  } catch (e) {
+    console.error('File attachment failed:', e);
+    fail(`[${name} could not be read]`);
   }
 }
 
@@ -5989,20 +6264,26 @@ function renderPreviews() {
   pendingAttachments.forEach((att, idx) => {
     const thumb = document.createElement('div');
     thumb.className = att.type === 'image' ? 'img-thumb' : 'file-thumb';
+    thumb.title = att.name || 'file';
     if (att.type === 'image') {
       const imgEl = document.createElement('img');
       imgEl.src = att.dataUrl;
+      imgEl.alt = att.name ? 'Attached image: ' + att.name : 'Attached image';
       thumb.appendChild(imgEl);
     } else {
       thumb.textContent = '\u{1F4C4} ' + (att.name || 'file');
     }
     const rm = document.createElement('button');
     rm.className = 'remove-thumb';
+    rm.type = 'button';
+    rm.title = 'Remove ' + (att.name || 'attachment');
+    rm.setAttribute('aria-label', 'Remove ' + (att.name || 'attachment'));
     rm.innerHTML = '&times;';
     rm.onclick = () => { pendingAttachments.splice(idx, 1); renderPreviews(); };
     thumb.appendChild(rm);
     container.appendChild(thumb);
   });
+  updateSendBtnState();
 }
 
 // ============================================
@@ -6316,6 +6597,10 @@ const __windowBridge = {
   closeTopModal,
   initModalAccessibility,
   formatRelativeTime,
+  prefersReducedMotion,
+  getScrollBehavior,
+  scrollMessagesToBottom,
+  isDebugLoggingEnabled,
   showToast,
   applyTheme,
   applyMsgOverrides,
@@ -6461,6 +6746,10 @@ const __windowBridge = {
   navigateChatSearch,
   resizeImageIfNeeded,
   extractPdfText,
+  extractDocxText,
+  extractRtfText,
+  extractLegacyDocText,
+  isTextLikeFile,
   readAttachmentFile,
   handleFileSelect,
   renderPreviews,

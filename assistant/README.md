@@ -30,7 +30,7 @@ A privacy-first, fully client-side AI chat interface. No backend, no account —
 ### Tools
 - **Web search** — native Anthropic tool use, or SearXNG/Brave/custom search APIs for OpenAI-format models
 - **Memory** — persistent cross-conversation memory the AI can read and write to
-- **File attachments** — images (with vision), PDFs, text, CSV, HTML, Markdown
+- **File attachments** — images (with vision), PDFs, DOCX/DOC, JSON, RTF, CSV, HTML, Markdown, code, and text files in general
 
 ### Appearance
 - **35+ built-in themes** — Nord, Catppuccin, Dracula, Gruvbox, Tokyo Night, Rose Pine, and many more

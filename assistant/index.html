@@ -35,7 +35,7 @@
     <input type="text" id="sidebarSearch" placeholder="Search conversations..." oninput="filterConversations()">
     <button class="search-clear-btn" onclick="document.getElementById('sidebarSearch').value='';filterConversations()" aria-label="Clear search">&times;</button>
   </div>
-  <button class="global-search-btn" onclick="openGlobalSearch()">&#128269; Search all messages</button>
+  <button class="global-search-btn" onclick="openGlobalSearch()" aria-label="Search all messages">&#128269; Search all messages</button>
   <div class="tag-filter-bar" id="tagFilterBar"></div>
   <div class="conv-list" id="convList"></div>
   <div class="sidebar-footer">
@@ -87,7 +87,7 @@
   <div class="messages-area" id="messagesArea">
     <div class="chat-placeholder">Start a conversation...</div>
   </div>
-  <button class="scroll-fab" id="scrollFab" onclick="document.getElementById('messagesArea').scrollTo({top:document.getElementById('messagesArea').scrollHeight,behavior:'smooth'})" title="Scroll to bottom" aria-label="Scroll to bottom">&#8595;</button>
+  <button class="scroll-fab" id="scrollFab" onclick="scrollMessagesToBottom()" title="Scroll to bottom" aria-label="Scroll to bottom">&#8595;</button>
   <div class="select-toolbar" id="selectToolbar">
     <span class="select-count" id="selectCount">0 selected</span>
     <button class="ss-btn" id="ssBtn" onclick="screenshotSelected()" disabled>Screenshot</button>
@@ -104,7 +104,7 @@
     <div class="input-row" style="position:relative">
       <div class="mention-dropdown" id="mentionDropdown"></div>
       <button class="input-btn" onclick="document.getElementById('fileInput').click()" title="Attach file" aria-label="Attach file">&#128206;</button>
-      <input type="file" id="fileInput" accept="image/*,.pdf,.txt,.csv,.html,.md" multiple style="display:none" onchange="handleFileSelect(event)">
+      <input type="file" id="fileInput" multiple style="display:none" onchange="handleFileSelect(event)">
       <textarea id="chatInput" placeholder="Type a message..." rows="1"></textarea>
       <button class="input-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input" aria-label="Voice input">&#127908;</button>
       <button class="send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Send message">Send</button>
@@ -118,11 +118,14 @@
   <div class="modal" aria-labelledby="setupModalTitle">
     <h2 id="setupModalTitle">Welcome to Synapse</h2>
     <p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:20px">Enter your API settings to get started. Your keys are stored locally and never sent to any server except your configured proxy.</p>
-    <label>Base URL</label>
-    <input type="text" id="setupProxy" placeholder="https://api.openai.com/v1">
-    <label>API Key</label>
-    <input type="password" id="setupKey" placeholder="sk-...">
-    <label>Model</label>
+    <label for="setupProxy">Base URL</label>
+    <input type="text" id="setupProxy" placeholder="https://api.openai.com/v1" autocomplete="url">
+    <form class="password-field-form" onsubmit="return false">
+      <input class="sr-only" type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true">
+      <label for="setupKey">API Key</label>
+      <input type="password" id="setupKey" placeholder="sk-..." autocomplete="current-password">
+    </form>
+    <label for="setupModelSelect">Model</label>
     <div class="model-selector-row">
       <select id="setupModelSelect" onchange="document.getElementById('setupModelManual').value=''"><option value="">-- Fetch models first --</option></select>
       <button class="model-refresh-btn" onclick="refreshModels('setup', this)" title="Refresh model list">&#x1F504;</button>
@@ -147,11 +150,14 @@
     </div>
 
     <div class="settings-tab-content active" id="settingsTab-api">
-      <label>Base URL</label>
-      <input type="text" id="setProxy" placeholder="https://api.openai.com/v1">
-      <label>API Key</label>
-      <input type="password" id="setKey">
-      <label>Model</label>
+      <label for="setProxy">Base URL</label>
+      <input type="text" id="setProxy" placeholder="https://api.openai.com/v1" autocomplete="url">
+      <form class="password-field-form" onsubmit="return false">
+        <input class="sr-only" type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true">
+        <label for="setKey">API Key</label>
+        <input type="password" id="setKey" autocomplete="current-password">
+      </form>
+      <label for="setModelSelect">Model</label>
       <div class="model-selector-row">
         <select id="setModelSelect" onchange="document.getElementById('setModelManual').value=''"><option value="">-- Fetch models first --</option></select>
         <button class="model-refresh-btn" onclick="refreshModels('settings', this)" title="Refresh model list">&#x1F504;</button>
@@ -298,8 +304,11 @@
     </label>
     <label>Search API URL <span class="toggle-hint">SearXNG, Brave, or custom with {query}/{key}</span></label>
     <input type="text" id="setSearchApiUrl" placeholder="https://purasearx.duckdns.org/search?format=json">
-    <label>Search API Key <span class="toggle-hint">optional for SearXNG · required for Brave · supports Header: value</span></label>
-    <input type="password" id="setSearchApiKey" placeholder="token or X-API-Key: value">
+    <form class="password-field-form" onsubmit="return false">
+      <input class="sr-only" type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true">
+      <label for="setSearchApiKey">Search API Key <span class="toggle-hint">optional for SearXNG · required for Brave · supports Header: value</span></label>
+      <input type="password" id="setSearchApiKey" placeholder="token or X-API-Key: value" autocomplete="off">
+    </form>
     <label>CORS Proxy URL <span class="toggle-hint">prefix for cross-origin requests</span></label>
     <input type="text" id="setCorsProxy" placeholder="https://corsproxy.io/?url=">
     <button class="btn btn-secondary" style="width:100%;padding:8px;font-size:0.8em;margin-bottom:14px" onclick="openSearchTest()">Test Search</button>

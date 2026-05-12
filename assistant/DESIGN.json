@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-12T11:15:54+08:00",
+  "title": "Design System: Synapse",
+  "extensions": {
+    "colorMeta": {
+      "app-bg": {
+        "role": "neutral",
+        "displayName": "Workbench Black",
+        "canonical": "#0a0a0f",
+        "tonalRamp": ["oklch(15% 0.01 285)", "oklch(25% 0.01 285)", "oklch(35% 0.01 285)", "oklch(45% 0.01 285)", "oklch(55% 0.01 285)", "oklch(68% 0.01 285)", "oklch(82% 0.01 285)", "oklch(95% 0.01 285)"]
+      },
+      "panel-bg": {
+        "role": "neutral",
+        "displayName": "Panel Charcoal",
+        "canonical": "#14141a",
+        "tonalRamp": ["oklch(15% 0.012 285)", "oklch(25% 0.012 285)", "oklch(35% 0.012 285)", "oklch(45% 0.012 285)", "oklch(55% 0.012 285)", "oklch(68% 0.012 285)", "oklch(82% 0.012 285)", "oklch(95% 0.012 285)"]
+      },
+      "border-subtle": {
+        "role": "neutral",
+        "displayName": "Soft Border",
+        "canonical": "#ffffff14",
+        "tonalRamp": ["oklch(15% 0.005 285)", "oklch(25% 0.005 285)", "oklch(35% 0.005 285)", "oklch(45% 0.005 285)", "oklch(55% 0.005 285)", "oklch(68% 0.005 285)", "oklch(82% 0.005 285)", "oklch(95% 0.005 285)"]
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Hover Veil",
+        "canonical": "#ffffff0d",
+        "tonalRamp": ["oklch(15% 0.005 285)", "oklch(25% 0.005 285)", "oklch(35% 0.005 285)", "oklch(45% 0.005 285)", "oklch(55% 0.005 285)", "oklch(68% 0.005 285)", "oklch(82% 0.005 285)", "oklch(95% 0.005 285)"]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised Surface",
+        "canonical": "#ffffff14",
+        "tonalRamp": ["oklch(15% 0.006 285)", "oklch(25% 0.006 285)", "oklch(35% 0.006 285)", "oklch(45% 0.006 285)", "oklch(55% 0.006 285)", "oklch(68% 0.006 285)", "oklch(82% 0.006 285)", "oklch(95% 0.006 285)"]
+      },
+      "overlay-soft": {
+        "role": "neutral",
+        "displayName": "Overlay Soft",
+        "canonical": "#ffffff1a",
+        "tonalRamp": ["oklch(15% 0.004 285)", "oklch(25% 0.004 285)", "oklch(35% 0.004 285)", "oklch(45% 0.004 285)", "oklch(55% 0.004 285)", "oklch(68% 0.004 285)", "oklch(82% 0.004 285)", "oklch(95% 0.004 285)"]
+      },
+      "overlay-medium": {
+        "role": "neutral",
+        "displayName": "Overlay Medium",
+        "canonical": "#ffffff26",
+        "tonalRamp": ["oklch(15% 0.004 285)", "oklch(25% 0.004 285)", "oklch(35% 0.004 285)", "oklch(45% 0.004 285)", "oklch(55% 0.004 285)", "oklch(68% 0.004 285)", "oklch(82% 0.004 285)", "oklch(95% 0.004 285)"]
+      },
+      "overlay-strong": {
+        "role": "neutral",
+        "displayName": "Overlay Strong",
+        "canonical": "#ffffff40",
+        "tonalRamp": ["oklch(15% 0.004 285)", "oklch(25% 0.004 285)", "oklch(35% 0.004 285)", "oklch(45% 0.004 285)", "oklch(55% 0.004 285)", "oklch(68% 0.004 285)", "oklch(82% 0.004 285)", "oklch(95% 0.004 285)"]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Primary Text",
+        "canonical": "#fffffff2",
+        "tonalRamp": ["oklch(18% 0.006 285)", "oklch(28% 0.006 285)", "oklch(38% 0.006 285)", "oklch(48% 0.006 285)", "oklch(60% 0.006 285)", "oklch(72% 0.006 285)", "oklch(84% 0.006 285)", "oklch(96% 0.006 285)"]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Secondary Text",
+        "canonical": "#ffffff99",
+        "tonalRamp": ["oklch(18% 0.005 285)", "oklch(28% 0.005 285)", "oklch(38% 0.005 285)", "oklch(48% 0.005 285)", "oklch(60% 0.005 285)", "oklch(72% 0.005 285)", "oklch(84% 0.005 285)", "oklch(96% 0.005 285)"]
+      },
+      "text-on-accent": {
+        "role": "neutral",
+        "displayName": "Accent Text",
+        "canonical": "#f7f8ff",
+        "tonalRamp": ["oklch(18% 0.012 285)", "oklch(28% 0.012 285)", "oklch(38% 0.012 285)", "oklch(48% 0.012 285)", "oklch(60% 0.012 285)", "oklch(72% 0.012 285)", "oklch(84% 0.012 285)", "oklch(96% 0.012 285)"]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Command Indigo",
+        "canonical": "#6366f1",
+        "tonalRamp": ["oklch(15% 0.08 275)", "oklch(25% 0.10 275)", "oklch(35% 0.13 275)", "oklch(45% 0.16 275)", "oklch(55% 0.18 275)", "oklch(68% 0.16 275)", "oklch(82% 0.10 275)", "oklch(95% 0.04 275)"]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Lifted Indigo",
+        "canonical": "#818cf8",
+        "tonalRamp": ["oklch(15% 0.07 275)", "oklch(25% 0.09 275)", "oklch(35% 0.12 275)", "oklch(45% 0.15 275)", "oklch(58% 0.17 275)", "oklch(70% 0.15 275)", "oklch(84% 0.09 275)", "oklch(95% 0.04 275)"]
+      },
+      "danger": {
+        "role": "error",
+        "displayName": "Danger Red",
+        "canonical": "#ef4444",
+        "tonalRamp": ["oklch(15% 0.08 25)", "oklch(25% 0.11 25)", "oklch(35% 0.15 25)", "oklch(45% 0.18 25)", "oklch(58% 0.19 25)", "oklch(70% 0.15 25)", "oklch(84% 0.09 25)", "oklch(95% 0.04 25)"]
+      },
+      "success": {
+        "role": "success",
+        "displayName": "Success Green",
+        "canonical": "#22c55e",
+        "tonalRamp": ["oklch(15% 0.07 145)", "oklch(25% 0.10 145)", "oklch(35% 0.13 145)", "oklch(45% 0.16 145)", "oklch(58% 0.17 145)", "oklch(70% 0.13 145)", "oklch(84% 0.08 145)", "oklch(95% 0.04 145)"]
+      },
+      "warning": {
+        "role": "warning",
+        "displayName": "Warning Amber",
+        "canonical": "#eab308",
+        "tonalRamp": ["oklch(15% 0.06 95)", "oklch(25% 0.09 95)", "oklch(35% 0.12 95)", "oklch(45% 0.15 95)", "oklch(60% 0.16 95)", "oklch(72% 0.12 95)", "oklch(84% 0.08 95)", "oklch(95% 0.04 95)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Modal headings and the largest in-app headings only."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Toolbar titles, result titles, and compact panel headers."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Message text, form values, and primary readable content."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, settings labels, menu items, tabs, and compact controls."
+      },
+      "mono": {
+        "displayName": "Code",
+        "purpose": "Inline code, fenced code, and generated snippets."
+      }
+    },
+    "shadows": [
+      {
+        "name": "dropdown-shadow",
+        "value": "0 4px 12px rgba(0,0,0,0.3)",
+        "purpose": "Menus, tag pickers, mention dropdowns, and small floating panels."
+      },
+      {
+        "name": "menu-shadow",
+        "value": "0 4px 16px rgba(0,0,0,0.4)",
+        "purpose": "Toolbar overflow menu and similarly important action menus."
+      },
+      {
+        "name": "floating-toolbar-shadow",
+        "value": "0 4px 20px rgba(0,0,0,0.4)",
+        "purpose": "Screenshot selection toolbar and persistent floating action surfaces."
+      },
+      {
+        "name": "dialog-shadow",
+        "value": "0 8px 32px rgba(0,0,0,0.5)",
+        "purpose": "Character info popup and full attention overlays."
+      },
+      {
+        "name": "selection-ring",
+        "value": "0 0 0 2px var(--accent)",
+        "purpose": "Selected messages and explicit focus-like selection states."
+      }
+    ],
+    "motion": [
+      {
+        "name": "fast-state",
+        "value": "150ms ease",
+        "purpose": "Small affordances such as image hover opacity and tag color feedback."
+      },
+      {
+        "name": "standard-state",
+        "value": "200ms ease",
+        "purpose": "Default hover, menu, border-color, and button feedback."
+      },
+      {
+        "name": "panel-state",
+        "value": "300ms ease",
+        "purpose": "Sidebar collapse and toast/message entrance or exit."
+      },
+      {
+        "name": "attention-loop",
+        "value": "1200ms ease-in-out infinite",
+        "purpose": "Typing dots and recording pulse only."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "768px"
+      },
+      {
+        "name": "touch-target",
+        "value": "44px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary actions such as Send, Save, Search, and setup completion.",
+      "html": "<button class=\"ds-btn-primary\">Send</button>",
+      "css": ".ds-btn-primary { background: var(--accent, #6366f1); color: var(--accent-text, #f7f8ff); border: none; border-radius: 8px; padding: 10px 20px; font-family: Figtree, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; font-size: 0.9em; font-weight: 600; cursor: pointer; transition: background 0.2s ease, opacity 0.2s ease; } .ds-btn-primary:hover { background: var(--accent-hover, #818cf8); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Quiet secondary actions in modals, toolbars, and inline panels.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { background: var(--hover, rgba(255,255,255,0.05)); color: var(--text-primary, rgba(255,255,255,0.95)); border: 1px solid var(--card-border, rgba(255,255,255,0.08)); border-radius: 8px; padding: 12px; font-family: Figtree, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; font-size: 0.9em; font-weight: 600; cursor: pointer; transition: background 0.2s ease, color 0.2s ease; } .ds-btn-secondary:hover { background: var(--overlay-10, rgba(255,255,255,0.1)); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 2px; }"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "Toolbar and input icon controls that stay quiet until hovered or focused.",
+      "html": "<button class=\"ds-icon-btn\" aria-label=\"Settings\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Zm8-3.5a7.6 7.6 0 0 0-.1-1.1l2-1.5-2-3.5-2.4 1a8 8 0 0 0-1.9-1.1L15.3 3h-4l-.4 2.8a8 8 0 0 0-1.9 1.1l-2.4-1-2 3.5 2 1.5a7.6 7.6 0 0 0 0 2.2l-2 1.5 2 3.5 2.4-1a8 8 0 0 0 1.9 1.1l.4 2.8h4l.4-2.8a8 8 0 0 0 1.9-1.1l2.4 1 2-3.5-2-1.5c.1-.4.1-.7.1-1.1Z\" fill=\"currentColor\"/></svg></button>",
+      "css": ".ds-icon-btn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--text-secondary, rgba(255,255,255,0.6)); border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s ease, color 0.2s ease; } .ds-icon-btn svg { width: 18px; height: 18px; } .ds-icon-btn:hover { background: var(--hover, rgba(255,255,255,0.05)); color: var(--text-primary, rgba(255,255,255,0.95)); } .ds-icon-btn:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Search, setup, settings, and chat-adjacent text entry.",
+      "html": "<label class=\"ds-field\"><span>Model</span><input value=\"gpt-4o\" /></label>",
+      "css": ".ds-field { display: grid; gap: 4px; font-family: Figtree, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; color: var(--text-secondary, rgba(255,255,255,0.6)); font-size: 0.85em; } .ds-field input { width: 100%; padding: 12px; background: var(--hover, rgba(255,255,255,0.05)); border: 1px solid var(--card-border, rgba(255,255,255,0.08)); border-radius: 8px; color: var(--text-primary, rgba(255,255,255,0.95)); font: inherit; outline: none; transition: border-color 0.2s ease; } .ds-field input:focus { border-color: var(--accent, #6366f1); } .ds-field input:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 2px; }"
+    },
+    {
+      "name": "User Message",
+      "kind": "custom",
+      "refersTo": "message-user",
+      "description": "Right-aligned user chat bubble.",
+      "html": "<div class=\"ds-message-user\">Can you help me compare these model settings?</div>",
+      "css": ".ds-message-user { max-width: 75%; margin-left: auto; padding: 12px 16px; border-radius: 16px 16px 4px 16px; background: var(--msg-user, #6366f1); color: var(--msg-user-text, #f7f8ff); font-family: Figtree, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; font-size: 0.95em; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }"
+    },
+    {
+      "name": "Assistant Message",
+      "kind": "custom",
+      "refersTo": "message-assistant",
+      "description": "Left-aligned assistant chat bubble with soft tonal layering.",
+      "html": "<div class=\"ds-message-assistant\">Yes. Start with temperature, context length, and whether you need streaming.</div>",
+      "css": ".ds-message-assistant { max-width: 75%; padding: 12px 16px; border-radius: 16px 16px 16px 4px; background: var(--msg-assistant, rgba(255,255,255,0.08)); color: var(--text-primary, rgba(255,255,255,0.95)); font-family: Figtree, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; font-size: 0.95em; line-height: 1.6; word-wrap: break-word; }"
+    },
+    {
+      "name": "Conversation Item",
+      "kind": "nav",
+      "refersTo": "sidebar-conversation-item",
+      "description": "Sidebar row for conversations, with active and hover states.",
+      "html": "<button class=\"ds-conv-item ds-active\"><span>API setup notes</span><small>2h ago</small></button>",
+      "css": ".ds-conv-item { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; background: transparent; border: none; border-radius: 8px; color: var(--text-secondary, rgba(255,255,255,0.6)); font-family: Figtree, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; font-size: 0.85em; cursor: pointer; transition: background 0.2s ease, color 0.2s ease; } .ds-conv-item small { opacity: 0.75; } .ds-conv-item:hover { background: var(--hover, rgba(255,255,255,0.05)); color: var(--text-primary, rgba(255,255,255,0.95)); } .ds-conv-item.ds-active { background: rgba(99,102,241,0.15); color: var(--text-primary, rgba(255,255,255,0.95)); } .ds-conv-item:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 2px; }"
+    },
+    {
+      "name": "Active Chip",
+      "kind": "chip",
+      "refersTo": "tag-filter-active",
+      "description": "Selected filters, model overrides, and compact state badges.",
+      "html": "<button class=\"ds-chip-active\">Roleplay</button>",
+      "css": ".ds-chip-active { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 10px; border: 1px solid var(--accent, #6366f1); background: var(--accent, #6366f1); color: var(--accent-text, #f7f8ff); font-family: Figtree, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; font-size: 0.72em; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.2s ease, border-color 0.2s ease; } .ds-chip-active:hover { background: var(--accent-hover, #818cf8); border-color: var(--accent-hover, #818cf8); } .ds-chip-active:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 2px; }"
+    },
+    {
+      "name": "Modal Panel",
+      "kind": "card",
+      "refersTo": "modal-panel",
+      "description": "Setup, settings, shortcuts, and focused utility panels.",
+      "html": "<section class=\"ds-modal-panel\"><h2>Settings</h2><p>Configure provider, prompts, appearance, and tools.</p></section>",
+      "css": ".ds-modal-panel { max-width: 520px; padding: 28px; background: var(--sidebar-bg, #14141a); border: 1px solid var(--card-border, rgba(255,255,255,0.08)); border-radius: var(--border-radius, 16px); color: var(--text-primary, rgba(255,255,255,0.95)); font-family: Figtree, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; } .ds-modal-panel h2 { margin: 0 0 20px; font-size: 1.2em; line-height: 1.2; font-weight: 600; } .ds-modal-panel p { margin: 0; color: var(--text-secondary, rgba(255,255,255,0.6)); font-size: 0.9em; line-height: 1.5; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clean Workbench",
+    "overview": "Synapse is a practical conversation tool first. The interface should feel like a clear desk with the right instruments within reach: quiet surfaces, compact controls, predictable panels, and enough polish that beginners trust it immediately.\n\nThe system is dark by default because the app supports long chat sessions, code blocks, roleplay, and late-night tinkering. Theme presets can change the mood, but the baseline vocabulary stays restrained: one primary accent, soft surface layers, readable type, and no decoration that fights the chat.\n\nThis system explicitly rejects the PRODUCT.md anti-references: it must not feel janky, clunky, visually noisy, or like a demo glued together from disconnected tools. Advanced features can be dense, but the main send-and-reply loop must remain effortless.",
+    "keyCharacteristics": [
+      "Compact app-shell structure with a persistent sidebar, toolbar, message stream, and input dock.",
+      "Restrained color with a single primary accent for action, selection, focus, and active state.",
+      "Soft tonal layering instead of heavy decoration.",
+      "Rounded, touch-friendly controls that remain professional rather than playful.",
+      "Motion that reports state changes and never performs for its own sake."
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Command Indigo carries action, selection, and focus. Do not add decorative accent colors to inactive UI.",
+        "section": "colors"
+      },
+      {
+        "name": "The Theme Variable Rule",
+        "body": "New surfaces must use semantic CSS variables, not hard-coded per-theme colors, so the built-in theme gallery and custom theme editor keep working.",
+        "section": "colors"
+      },
+      {
+        "name": "The Comfortable Dark Rule",
+        "body": "Dark surfaces must stay separated by subtle tonal shifts and borders. Never use harsh pure black panels or neon-on-black contrast for ordinary controls.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Display Drama Rule",
+        "body": "Product surfaces do not use oversized type. Hierarchy comes from weight, placement, and density, not hero-scale headings.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Figtree carries the UI. Do not introduce decorative fonts, display fonts, or per-feature font families.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Until Floating Rule",
+        "body": "Static panels do not get heavy shadows. If an element is not floating above content, separate it with tone and border.",
+        "section": "elevation"
+      },
+      {
+        "name": "The State Shadow Rule",
+        "body": "Shadows should communicate menu, overlay, selection, or temporary elevation. They are forbidden as decoration.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep the main chat effortless: message stream, input, attachment, voice, and send controls must remain immediately findable.",
+      "Do use semantic variables such as `--bg`, `--sidebar-bg`, `--accent`, `--hover`, and `--card-border` for new UI.",
+      "Do preserve keyboard navigation, visible focus states, screen-reader labels, and mobile touch targets.",
+      "Do keep advanced features discoverable through predictable settings tabs, menus, badges, and inline controls.",
+      "Do maintain compact density for settings, prompt entries, memory tools, and search results.",
+      "Do keep motion in the 150ms to 300ms range for state feedback, menu reveal, hover, and toast transitions."
+    ],
+    "donts": [
+      "Don't make Synapse feel \"janky, clunky, visually noisy, or like a demo glued together from disconnected tools.\"",
+      "Don't bury basic chat behind configuration, overdecorate simple tasks, or assume every user is already an expert.",
+      "Don't add decorative color, gradients, glass effects, or animation that does not communicate state.",
+      "Don't introduce inconsistent component vocabulary across features. A save, cancel, field, tab, chip, or popup should look like it belongs to the same product.",
+      "Don't use heavy shadows on static panels. If it is not floating, use tone, spacing, or border.",
+      "Don't use side-stripe card accents, gradient text, nested cards, or hero-metric layouts in product UI."
+    ]
+  }
+}
