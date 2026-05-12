@@ -20,6 +20,14 @@ let lastSearchStatus = { ok: null, error: null, at: null, query: '' };
 let openModalStack = [];
 const modalFocusReturn = new WeakMap();
 let globalSearchDismiss = null;
+let debugLogBuffer = [];
+let localUpdateState = { status: 'idle', message: 'Not checked', details: '' };
+
+const APP_VERSION = {
+  name: 'Synapse',
+  buildDate: '2026-05-12',
+  updateUrl: 'https://platberlitz.github.io/assistant/version.json'
+};
 
 const TAG_COLORS = [
   { name: 'Red', color: '#ef4444' },
@@ -120,6 +128,244 @@ function scrollMessagesToBottom() {
 
 function isDebugLoggingEnabled() {
   return localStorage.getItem('assistantDebug') === 'true';
+}
+
+function isDebugTextIncluded() {
+  return localStorage.getItem('assistantDebugIncludeText') === 'true';
+}
+
+function setDebugPreference() {
+  const logging = document.getElementById('setDebugLogging');
+  const includeText = document.getElementById('setDebugIncludeText');
+  if (logging) localStorage.setItem('assistantDebug', logging.checked ? 'true' : 'false');
+  if (includeText) localStorage.setItem('assistantDebugIncludeText', includeText.checked ? 'true' : 'false');
+  renderDebugLogPreview();
+}
+
+function shortenForDebug(value, limit = 160) {
+  const text = String(value ?? '');
+  if (text.length <= limit) return text;
+  return text.slice(0, limit) + '... [' + (text.length - limit).toLocaleString() + ' more chars]';
+}
+
+function summarizeContentPartForDebug(part, includeText) {
+  if (!part || typeof part !== 'object') return { type: typeof part };
+  const type = part.type || 'part';
+  if (type === 'text') {
+    return {
+      type,
+      chars: String(part.text || '').length,
+      text: includeText ? part.text || '' : shortenForDebug(part.text || '')
+    };
+  }
+  if (type === 'image_url') {
+    const url = part.image_url?.url || '';
+    return { type, imageUrl: url ? shortenForDebug(url, 80) : '' };
+  }
+  if (type === 'file') {
+    const file = part.file || {};
+    const text = file.textContent || '';
+    return {
+      type,
+      name: file.name || 'file',
+      mime: file.mime || '',
+      chars: String(text).length,
+      text: includeText ? text : (text ? '[redacted file text]' : '')
+    };
+  }
+  return { type, keys: Object.keys(part) };
+}
+
+function summarizeMessageForDebug(message, includeText) {
+  const summary = { role: message.role };
+  if (Array.isArray(message.content)) {
+    summary.content = message.content.map(part => summarizeContentPartForDebug(part, includeText));
+  } else if (typeof message.content === 'string') {
+    summary.content = {
+      type: 'text',
+      chars: message.content.length,
+      text: includeText ? message.content : shortenForDebug(message.content)
+    };
+  } else if (message.content === null) {
+    summary.content = null;
+  } else {
+    summary.content = typeof message.content;
+  }
+  if (message.tool_calls) {
+    summary.toolCalls = message.tool_calls.map(tc => ({
+      id: tc.id,
+      type: tc.type,
+      name: tc.function?.name || tc.name || '',
+      arguments: includeText ? tc.function?.arguments : shortenForDebug(tc.function?.arguments || '')
+    }));
+  }
+  if (message.tool_call_id) summary.toolCallId = message.tool_call_id;
+  return summary;
+}
+
+function summarizeLlmPayloadForDebug(payload, includeText = isDebugTextIncluded()) {
+  const summary = {};
+  ['model', 'stream', 'temperature', 'max_tokens', 'tool_choice'].forEach(key => {
+    if (payload && key in payload) summary[key] = payload[key];
+  });
+  if (payload?.system) {
+    summary.system = {
+      chars: String(payload.system).length,
+      text: includeText ? payload.system : shortenForDebug(payload.system)
+    };
+  }
+  if (Array.isArray(payload?.messages)) {
+    summary.messages = payload.messages.map(message => summarizeMessageForDebug(message, includeText));
+  }
+  if (Array.isArray(payload?.tools)) {
+    summary.tools = payload.tools.map(tool => tool.name || tool.function?.name || tool.type || 'tool');
+  }
+  return summary;
+}
+
+function debugLog(event, details = {}) {
+  if (!isDebugLoggingEnabled()) return;
+  const entry = { time: new Date().toISOString(), event, details };
+  debugLogBuffer.push(entry);
+  if (debugLogBuffer.length > 50) debugLogBuffer = debugLogBuffer.slice(-50);
+  console.log('[Synapse debug]', event, details);
+  renderDebugLogPreview();
+}
+
+function debugLogPayload(event, payload, meta = {}) {
+  debugLog(event, { ...meta, payload: summarizeLlmPayloadForDebug(payload) });
+}
+
+function renderDebugLogPreview() {
+  const el = document.getElementById('debugLogPreview');
+  if (!el) return;
+  if (debugLogBuffer.length === 0) {
+    el.textContent = isDebugLoggingEnabled()
+      ? 'Debug logging is on. API request summaries will appear here.'
+      : 'Debug logging is off.';
+    return;
+  }
+  el.textContent = JSON.stringify(debugLogBuffer.slice(-12), null, 2);
+}
+
+function clearDebugLog() {
+  debugLogBuffer = [];
+  renderDebugLogPreview();
+}
+
+async function copyDebugSnapshot() {
+  const snapshot = {
+    version: APP_VERSION,
+    currentModel: localStorage.getItem('llmModel') || '',
+    apiFormat: localStorage.getItem('llmApiFormat') || 'auto',
+    provider: getLlmProviderInfo(localStorage.getItem('llmModel') || '', detectApiFormat(localStorage.getItem('llmModel') || ''), localStorage.getItem('llmProxyUrl') || ''),
+    activeProfile: getActiveProfileSummary(),
+    update: localUpdateState,
+    logs: debugLogBuffer
+  };
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(snapshot, null, 2));
+    showToast('Debug snapshot copied.', 'success');
+  } catch(e) {
+    showToast('Clipboard is unavailable in this browser.', 'error');
+  }
+}
+
+function isLocalRuntime() {
+  const host = location.hostname;
+  return location.protocol === 'file:' ||
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '0.0.0.0' ||
+    host === '::1' ||
+    host.endsWith('.local');
+}
+
+async function fetchJsonNoStore(url) {
+  const separator = url.includes('?') ? '&' : '?';
+  const response = await fetch(url + separator + 't=' + Date.now(), { cache: 'no-store' });
+  if (!response.ok) throw new Error('HTTP ' + response.status);
+  return response.json();
+}
+
+function compareBuildDate(a, b) {
+  const aDate = Date.parse(a || '');
+  const bDate = Date.parse(b || '');
+  if (!Number.isFinite(aDate) || !Number.isFinite(bDate)) return 0;
+  return aDate === bDate ? 0 : (aDate > bDate ? 1 : -1);
+}
+
+function setLocalUpdateState(status, message, details) {
+  localUpdateState = { status, message, details: details || '' };
+  renderLocalUpdateStatus();
+}
+
+function renderLocalUpdateStatus() {
+  const footer = document.getElementById('updateStatus');
+  const status = document.getElementById('localUpdateStatus');
+  const details = document.getElementById('localUpdateDetails');
+  if (footer) {
+    footer.hidden = !(isLocalRuntime() && localUpdateState.status === 'update');
+    footer.textContent = localUpdateState.message || 'Update available';
+    footer.title = localUpdateState.details || '';
+  }
+  if (status) {
+    status.textContent = localUpdateState.message || 'Not checked';
+    status.className = 'debug-status-pill ' + (localUpdateState.status || 'idle');
+  }
+  if (details) {
+    details.textContent = localUpdateState.details || (isLocalRuntime()
+      ? 'Synapse can compare this local copy with the published build.'
+      : 'Update checks only appear while Synapse is running locally.');
+  }
+}
+
+async function checkLocalUpdateStatus(manual = false) {
+  if (!isLocalRuntime()) {
+    setLocalUpdateState('idle', 'Remote build', 'Update checks are shown only when running Synapse from localhost or a local file.');
+    if (manual) showToast('Update checks are only shown for local runs.', 'info');
+    return;
+  }
+
+  setLocalUpdateState('checking', 'Checking...', 'Looking for a newer Synapse build.');
+  let current = APP_VERSION;
+  try {
+    current = { ...APP_VERSION, ...(await fetchJsonNoStore('./version.json')) };
+  } catch(e) {}
+
+  try {
+    if (location.protocol !== 'file:') {
+      const serverVersion = await fetchJsonNoStore('/version');
+      if (serverVersion && serverVersion.isLatest === false) {
+        setLocalUpdateState('update', 'Update available', 'The local server reports that this checkout is behind its tracked branch.');
+        if (manual) showToast('Update available.', 'info');
+        return;
+      }
+      if (serverVersion && serverVersion.isLatest === true) {
+        setLocalUpdateState('current', 'Up to date', 'The local server reports that this checkout is current.');
+      }
+    }
+  } catch(e) {}
+
+  try {
+    const remote = await fetchJsonNoStore(current.updateUrl || APP_VERSION.updateUrl);
+    const cmp = compareBuildDate(remote.buildDate, current.buildDate);
+    if (cmp > 0) {
+      setLocalUpdateState('update', 'Update available', 'Published build: ' + (remote.buildDate || 'unknown') + '. Local build: ' + (current.buildDate || 'unknown') + '.');
+      if (manual) showToast('Update available.', 'info');
+      return;
+    }
+    if (cmp === 0) {
+      setLocalUpdateState('current', 'Up to date', 'Local build matches the published Synapse build.');
+      if (manual) showToast('Synapse is up to date.', 'success');
+      return;
+    }
+  } catch(e) {
+    if (localUpdateState.status === 'current') return;
+  }
+
+  setLocalUpdateState('unknown', 'Unable to compare', 'No local /version endpoint or published version metadata was reachable.');
+  if (manual) showToast('Could not compare updates automatically.', 'info');
 }
 
 // ============================================
@@ -1242,6 +1488,97 @@ function detectApiFormat(model) {
   return 'openai';
 }
 
+function getLlmProviderInfo(model = '', format = detectApiFormat(model), baseUrl = localStorage.getItem('llmProxyUrl') || '') {
+  const modelText = String(model || '').toLowerCase();
+  const baseText = String(baseUrl || '').toLowerCase();
+  const localHost = /(^|\/\/)(localhost|127\.0\.0\.1|0\.0\.0\.0|\[?::1\]?)(:|\/|$)/.test(baseText) ||
+    /ollama|lmstudio|kobold|text-generation-webui/.test(baseText);
+
+  const rules = [
+    { test: /claude|anthropic/, symbol: 'C', name: 'Claude' },
+    { test: /gpt-|chatgpt|^o[0-9]|openai/, symbol: 'O', name: 'OpenAI' },
+    { test: /gemini|palm/, symbol: 'G', name: 'Gemini' },
+    { test: /grok|x-ai/, symbol: 'X', name: 'xAI' },
+    { test: /command-r|cohere/, symbol: 'H', name: 'Cohere' },
+    { test: /mistral|mixtral/, symbol: 'M', name: 'Mistral' },
+    { test: /deepseek/, symbol: 'D', name: 'DeepSeek' },
+    { test: /qwen/, symbol: 'Q', name: 'Qwen' },
+    { test: /llama|yi-|phi-|gemma|nous|hermes/, symbol: 'L', name: 'Local / open model' }
+  ];
+
+  for (const rule of rules) {
+    if (rule.test.test(modelText)) return { symbol: rule.symbol, name: rule.name };
+  }
+  if (localHost) return { symbol: 'L', name: 'Local' };
+  if (baseText.includes('openrouter')) return { symbol: 'R', name: 'OpenRouter' };
+  if (format === 'anthropic') return { symbol: 'C', name: 'Claude' };
+  if (baseText.includes('generativelanguage.googleapis.com')) return { symbol: 'G', name: 'Gemini' };
+  return { symbol: 'O', name: 'OpenAI-compatible' };
+}
+
+function formatModelForDisplay(model, limit = 34) {
+  const value = String(model || '').trim() || 'default model';
+  if (value.length <= limit) return value;
+  return value.slice(0, Math.max(0, limit - 3)) + '...';
+}
+
+function getActiveProfile() {
+  const id = localStorage.getItem('assistantActiveProfileId') || '';
+  if (!id) return null;
+  return loadProfiles().find(profile => profile.id === id) || null;
+}
+
+function getActiveProfileSummary() {
+  const profile = getActiveProfile();
+  if (!profile) return null;
+  const settings = profile.settings || {};
+  return {
+    name: profile.name,
+    model: settings.llmModel || '',
+    apiFormat: settings.llmApiFormat || 'auto',
+    provider: getLlmProviderInfo(settings.llmModel || '', settings.llmApiFormat || 'auto', settings.llmProxyUrl || '')
+  };
+}
+
+function getConnectionSummary(settings = {}) {
+  const model = settings.llmModel || localStorage.getItem('llmModel') || '';
+  const format = settings.llmApiFormat || localStorage.getItem('llmApiFormat') || 'auto';
+  const baseUrl = settings.llmProxyUrl || localStorage.getItem('llmProxyUrl') || '';
+  const provider = getLlmProviderInfo(model, format === 'auto' ? detectApiFormat(model) : format, baseUrl);
+  let host = '';
+  try { host = baseUrl ? new URL(baseUrl).host : ''; } catch(e) { host = baseUrl; }
+  return {
+    provider,
+    model,
+    format,
+    host: host || 'No base URL'
+  };
+}
+
+function suggestProfileName(settings = {}) {
+  const summary = getConnectionSummary(settings);
+  return (summary.provider.name + ' - ' + formatModelForDisplay(summary.model, 28)).trim();
+}
+
+function setAssistantLlmMetadata(assistantMsg, swipeIdx, model, format) {
+  const baseUrl = localStorage.getItem('llmProxyUrl') || '';
+  const provider = getLlmProviderInfo(model, format, baseUrl);
+  const activeProfile = getActiveProfile();
+  const metadata = {
+    model,
+    apiFormat: format,
+    providerName: provider.name,
+    providerSymbol: provider.symbol,
+    profileName: activeProfile?.name || '',
+    timestamp: Date.now()
+  };
+  assistantMsg.model = model;
+  assistantMsg.apiFormat = format;
+  assistantMsg.llm = metadata;
+  assistantMsg.swipeLlms = assistantMsg.swipeLlms || [];
+  assistantMsg.swipeLlms[swipeIdx] = metadata;
+}
+
 // ============================================
 // Anthropic Message Conversion
 // ============================================
@@ -1327,6 +1664,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadCachedModels('setup');
   loadCachedModels('settings');
   initModalAccessibility();
+  renderLocalUpdateStatus();
+  checkLocalUpdateStatus(false);
 
   // Save on page unload — sync fallback since IDB is async
   window.addEventListener('beforeunload', () => {
@@ -1981,8 +2320,108 @@ function estimateTokens(text) {
 
 function getMsgText(msg) {
   if (typeof msg.content === 'string') return msg.content;
-  if (Array.isArray(msg.content)) return msg.content.filter(c => c.type === 'text').map(c => c.text).join(' ');
+  if (Array.isArray(msg.content)) {
+    return msg.content.map(part => {
+      if (part.type === 'text') return part.text || '';
+      if (part.type === 'file') {
+        const name = part.file?.name || 'file';
+        if (typeof part.file?.textContent === 'string') return part.file.textContent;
+        return '[Attached file: ' + name + ']';
+      }
+      if (part.type === 'image_url') return '[Attached image]';
+      return '';
+    }).filter(Boolean).join(' ');
+  }
   return '';
+}
+
+function formatTokenCount(tokens) {
+  const value = Number(tokens) || 0;
+  if (value >= 1000000) return (value / 1000000).toFixed(1) + 'm';
+  if (value >= 1000) return (value / 1000).toFixed(1) + 'k';
+  return String(value);
+}
+
+function getMessageTokenCount(msg) {
+  if (!msg) return 0;
+  if (msg.role === 'assistant' && msg.swipeTokenEstimates && Number.isFinite(msg.swipeTokenEstimates[msg.swipeIndex])) {
+    return msg.swipeTokenEstimates[msg.swipeIndex];
+  }
+  if (Number.isFinite(msg.tokenEstimate)) return msg.tokenEstimate;
+  return estimateTokens(getMsgText(msg));
+}
+
+function updateMessageTokenMetadata(msg, swipeIdx = msg?.swipeIndex || 0) {
+  if (!msg) return;
+  const tokenEstimate = estimateTokens(getMsgText(msg));
+  msg.tokenEstimate = tokenEstimate;
+  if (msg.role === 'assistant') {
+    msg.swipeTokenEstimates = msg.swipeTokenEstimates || [];
+    msg.swipeTokenEstimates[swipeIdx] = tokenEstimate;
+  }
+}
+
+function getMessageLlmInfo(msg) {
+  if (!msg || msg.role !== 'assistant') return null;
+  const swipeInfo = msg.swipeLlms && msg.swipeLlms[msg.swipeIndex];
+  if (swipeInfo) return swipeInfo;
+  if (msg.llm) return msg.llm;
+  if (msg.model) {
+    const format = msg.apiFormat || detectApiFormat(msg.model);
+    const provider = getLlmProviderInfo(msg.model, format, localStorage.getItem('llmProxyUrl') || '');
+    return {
+      model: msg.model,
+      apiFormat: format,
+      providerName: provider.name,
+      providerSymbol: provider.symbol,
+      profileName: ''
+    };
+  }
+  return null;
+}
+
+function renderMessageMeta(msg) {
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  let hasMeta = false;
+
+  const llm = getMessageLlmInfo(msg);
+  if (llm) {
+    const llmBadge = document.createElement('span');
+    llmBadge.className = 'msg-meta-pill llm-badge';
+    const symbol = document.createElement('span');
+    symbol.className = 'llm-symbol';
+    symbol.textContent = llm.providerSymbol || '?';
+    const label = document.createElement('span');
+    label.textContent = (llm.providerName || 'Model') + ' | ' + formatModelForDisplay(llm.model || '');
+    llmBadge.title = 'LLM used: ' + (llm.providerName || 'Model') + (llm.model ? ' (' + llm.model + ')' : '') + (llm.profileName ? ' via ' + llm.profileName : '');
+    llmBadge.setAttribute('aria-label', llmBadge.title);
+    llmBadge.appendChild(symbol);
+    llmBadge.appendChild(label);
+    meta.appendChild(llmBadge);
+    hasMeta = true;
+  }
+
+  const tokenCount = getMessageTokenCount(msg);
+  if (tokenCount > 0 || getMsgText(msg)) {
+    const tokenEl = document.createElement('span');
+    tokenEl.className = 'msg-meta-pill';
+    tokenEl.textContent = '~' + formatTokenCount(tokenCount) + ' tokens';
+    tokenEl.title = 'Estimated message tokens';
+    meta.appendChild(tokenEl);
+    hasMeta = true;
+  }
+
+  if (msg.timestamp) {
+    const tsEl = document.createElement('span');
+    tsEl.className = 'msg-meta-pill msg-timestamp';
+    tsEl.textContent = formatRelativeTime(msg.timestamp);
+    tsEl.title = new Date(msg.timestamp).toLocaleString();
+    meta.appendChild(tsEl);
+    hasMeta = true;
+  }
+
+  return hasMeta ? meta : null;
 }
 
 function updateTokenInfo() {
@@ -2592,6 +3031,13 @@ function openSettings() {
   if (profileSelect) profileSelect.value = activeProfileId;
   const profileName = document.getElementById('profileName');
   if (profileName) profileName.value = '';
+  renderProfileSummary();
+  const debugLogging = document.getElementById('setDebugLogging');
+  const debugIncludeText = document.getElementById('setDebugIncludeText');
+  if (debugLogging) debugLogging.checked = isDebugLoggingEnabled();
+  if (debugIncludeText) debugIncludeText.checked = isDebugTextIncluded();
+  renderDebugLogPreview();
+  renderLocalUpdateStatus();
 
   // Presets
   loadPresets();
@@ -2625,14 +3071,32 @@ function saveProfiles(profiles) {
 function renderProfileSelect() {
   const select = document.getElementById('profileSelect');
   if (!select) return;
-  const profiles = loadProfiles();
+  const profiles = loadProfiles().slice().sort((a, b) =>
+    (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0) ||
+    String(a.name || '').localeCompare(String(b.name || ''))
+  );
   select.innerHTML = '<option value="">-- Select profile --</option>';
   profiles.forEach(p => {
     const opt = document.createElement('option');
+    const summary = getConnectionSummary(p.settings || {});
     opt.value = p.id;
-    opt.textContent = p.name;
+    opt.textContent = (p.name || 'Unnamed profile') + ' | ' + summary.provider.name + ' | ' + formatModelForDisplay(summary.model, 26);
     select.appendChild(opt);
   });
+}
+
+function renderProfileSummary() {
+  const el = document.getElementById('profileSummary');
+  if (!el) return;
+  const select = document.getElementById('profileSelect');
+  const profiles = loadProfiles();
+  const selected = select?.value ? profiles.find(p => p.id === select.value) : null;
+  const settings = selected ? (selected.settings || {}) : collectProfileSettingsFromInputs();
+  const summary = getConnectionSummary(settings);
+  const name = selected ? (selected.name || 'Unnamed profile') : 'Current settings';
+  const updated = selected?.updatedAt ? ' | saved ' + formatRelativeTime(selected.updatedAt) : '';
+  el.textContent = name + ': ' + summary.provider.symbol + ' ' + summary.provider.name + ' | ' + formatModelForDisplay(summary.model, 42) + ' | ' + summary.host + updated;
+  el.title = selected?.updatedAt ? new Date(selected.updatedAt).toLocaleString() : '';
 }
 
 function collectProfileSettingsFromInputs() {
@@ -2648,6 +3112,7 @@ function collectProfileSettingsFromInputs() {
     llmExcludeParams: document.getElementById('setExcludeParams').value.trim(),
     llmPrefill: document.getElementById('setPrefill').value,
     llmWebSearch: document.getElementById('setWebSearch').checked ? 'true' : 'false',
+    llmForceSearch: document.getElementById('setForceSearch').checked ? 'true' : 'false',
     llmSearchApiUrl: document.getElementById('setSearchApiUrl').value.trim(),
     llmSearchApiKey: document.getElementById('setSearchApiKey').value.trim(),
     llmCorsProxy: normalizeCorsProxyUrl(document.getElementById('setCorsProxy').value),
@@ -2671,6 +3136,7 @@ function applyProfileToInputs(settings) {
   document.getElementById('setExcludeParams').value = settings.llmExcludeParams || '';
   document.getElementById('setPrefill').value = settings.llmPrefill || '';
   document.getElementById('setWebSearch').checked = settings.llmWebSearch === 'true';
+  document.getElementById('setForceSearch').checked = settings.llmForceSearch === 'true';
   document.getElementById('setSearchApiUrl').value = settings.llmSearchApiUrl || '';
   document.getElementById('setSearchApiKey').value = settings.llmSearchApiKey || '';
   document.getElementById('setCorsProxy').value = normalizeCorsProxyUrl(settings.llmCorsProxy);
@@ -2699,6 +3165,7 @@ function applyProfile(profile) {
   });
   localStorage.setItem('assistantActiveProfileId', profile.id);
   applyProfileToInputs(settings);
+  renderProfileSummary();
   showToast('Profile applied: ' + profile.name, 'success');
 }
 
@@ -2724,16 +3191,13 @@ function saveCurrentAsProfile() {
     profile = profiles.find(p => p.id === select.value);
   }
 
-  if (!profile && !desiredName) {
-    showToast('Enter a profile name.', 'error');
-    return;
-  }
-
   if (profile) {
     profile.name = desiredName || profile.name;
     profile.settings = settings;
+    profile.updatedAt = Date.now();
   } else {
-    profile = { id: 'profile_' + Date.now(), name: desiredName, settings };
+    const now = Date.now();
+    profile = { id: 'profile_' + now, name: desiredName || suggestProfileName(settings), settings, createdAt: now, updatedAt: now };
     profiles.push(profile);
   }
 
@@ -2742,6 +3206,7 @@ function saveCurrentAsProfile() {
   if (select) select.value = profile.id;
   localStorage.setItem('assistantActiveProfileId', profile.id);
   if (nameInput) nameInput.value = '';
+  renderProfileSummary();
   showToast('Profile saved.', 'success');
 }
 
@@ -2755,6 +3220,7 @@ function deleteSelectedProfile() {
   localStorage.removeItem('assistantActiveProfileId');
   renderProfileSelect();
   select.value = '';
+  renderProfileSummary();
   showToast('Profile deleted.', 'info');
 }
 
@@ -2805,6 +3271,7 @@ function saveSettings() {
   localStorage.setItem('llmCorsProxy', normalizeCorsProxyUrl(document.getElementById('setCorsProxy').value));
   localStorage.setItem('llmMemoryEnabled', document.getElementById('setMemory').checked ? 'true' : 'false');
   localStorage.setItem('llmHoldScreenshot', document.getElementById('setHoldScreenshot').checked ? 'true' : 'false');
+  setDebugPreference();
 
   // Warn if web search enabled for non-Anthropic without search URL
   if (document.getElementById('setWebSearch').checked) {
@@ -3452,14 +3919,8 @@ function renderMessages() {
 
     wrapper.appendChild(actions);
 
-    // Message timestamp
-    if (msg.timestamp) {
-      const tsEl = document.createElement('div');
-      tsEl.className = 'msg-timestamp';
-      tsEl.textContent = formatRelativeTime(msg.timestamp);
-      tsEl.title = new Date(msg.timestamp).toLocaleString();
-      wrapper.appendChild(tsEl);
-    }
+    const metaEl = renderMessageMeta(msg);
+    if (metaEl) wrapper.appendChild(metaEl);
 
     // Branch controls for user messages
     if (msg.role === 'user' && msg.branches && msg.branches.length > 1) {
@@ -3613,6 +4074,7 @@ function renderEditMode(area, msg, idx) {
     } else {
       msg.content = editedText;
     }
+    updateMessageTokenMetadata(msg);
     messages.length = idx + 1;
     // Create new branch slot and switch to it
     msg.branchIndex = msg.branches.length;
@@ -3676,6 +4138,7 @@ function swipeMsg(idx, dir) {
   if (msg.swipeImages) msg.images = msg.swipeImages[msg.swipeIndex] || [];
   debouncedSave();
   renderMessages();
+  updateTokenInfo();
 }
 
 // ============================================
@@ -4229,6 +4692,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
   const apiKey = localStorage.getItem('llmApiKey');
   const model = overrideModel || localStorage.getItem('llmModel') || 'gpt-4o';
   const format = detectApiFormat(model);
+  setAssistantLlmMetadata(assistantMsg, swipeIdx, model, format);
 
   // Extra params & excludes
   let extra = {};
@@ -4338,24 +4802,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       if (!isNaN(temp)) body.temperature = temp;
     }
     exclude.forEach(k => delete body[k]);
-
-    if (isDebugLoggingEnabled() && body.messages) {
-      console.log('=== API PAYLOAD DEBUG ===');
-      body.messages.forEach((m, i) => {
-        if (Array.isArray(m.content)) {
-          m.content.forEach((p, j) => {
-            const clone = { ...p };
-            if (clone.image_url?.url) clone.image_url = { url: clone.image_url.url.slice(0, 80) + '...' };
-            if (clone.text && clone.text.length > 100) clone.text = clone.text.slice(0, 100) + '...';
-            console.log(`msg[${i}].content[${j}]`, JSON.stringify(clone));
-          });
-        } else {
-          console.log(`msg[${i}] role=${m.role} content=${typeof m.content}`);
-        }
-        if (m.tool_calls) console.log(`  tool_calls:`, JSON.stringify(m.tool_calls));
-      });
-      console.log('=== END DEBUG ===');
-    }
+    debugLogPayload('API request', body, { url, format, model });
 
     let resp = await fetchApiWithHttpSupport(url, {
       method: 'POST',
@@ -4450,6 +4897,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           const followUpBody = { ...body, messages: followUpMessages, stream: false };
           delete followUpBody.tools;
           exclude.forEach(k => delete followUpBody[k]);
+          debugLogPayload('API follow-up request', followUpBody, { url, format, model, stage: 'anthropic-tools' });
           const followUpResp = await fetchApiWithHttpSupport(url, {
             method: 'POST',
             headers,
@@ -4533,18 +4981,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           const followUpBody = { ...body, messages: followUpMessages, stream: false };
           delete followUpBody.tools;
           exclude.forEach(k => delete followUpBody[k]);
-          if (isDebugLoggingEnabled()) {
-            console.log('=== FOLLOW-UP PAYLOAD DEBUG ===');
-            followUpBody.messages.forEach((m, i) => {
-              const contentSummary = Array.isArray(m.content)
-                ? m.content.map(p => ({ type: p.type, keys: Object.keys(p) }))
-                : (m.content === null ? 'null' : typeof m.content);
-              console.log(`msg[${i}] role=${m.role}`, JSON.stringify(contentSummary));
-              if (m.tool_calls) console.log(`  tool_calls:`, JSON.stringify(m.tool_calls));
-              if (m.tool_call_id) console.log(`  tool_call_id:`, m.tool_call_id);
-            });
-            console.log('=== END FOLLOW-UP DEBUG ===');
-          }
+          debugLogPayload('API follow-up request', followUpBody, { url, format, model, stage: 'openai-tools' });
           const followUpResp = await fetchApiWithHttpSupport(url, {
             method: 'POST',
             headers,
@@ -4609,6 +5046,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           delete followUpBody.tools;
           delete followUpBody.tool_choice;
           exclude.forEach(k => delete followUpBody[k]);
+          debugLogPayload('API follow-up request', followUpBody, { url, format, model, stage: 'text-tools' });
           try {
             const followUpResp = await fetchApiWithHttpSupport(url, { method: 'POST', headers, body: JSON.stringify(followUpBody), signal: abortController.signal }, baseUrl);
             if (followUpResp.ok) {
@@ -4872,6 +5310,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         const followUpBody = { ...body, messages: followUpMessages, stream: true };
         if (anthropicToolRound >= 20) delete followUpBody.tools;
         exclude.forEach(k => delete followUpBody[k]);
+        debugLogPayload('API follow-up request', followUpBody, { url, format, model, stage: 'anthropic-stream-tools' });
         const followUpResp = await fetchApiWithHttpSupport(url, {
           method: 'POST',
           headers,
@@ -5048,6 +5487,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           delete followUpBody.tools;
           delete followUpBody.tool_choice;
           exclude.forEach(k => delete followUpBody[k]);
+          debugLogPayload('API follow-up request', followUpBody, { url, format, model, stage: 'stream-text-tools' });
           try {
             const followUpResp = await fetchApiWithHttpSupport(url, { method: 'POST', headers, body: JSON.stringify(followUpBody), signal: abortController.signal }, baseUrl);
             if (followUpResp.ok && followUpResp.body) {
@@ -5144,6 +5584,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         const followUpBody = { ...body, messages: openaiRunningMessages, stream: true };
         if (openaiToolRound >= 20) delete followUpBody.tools;
         exclude.forEach(k => delete followUpBody[k]);
+        debugLogPayload('API follow-up request', followUpBody, { url, format, model, stage: 'openai-stream-tools' });
         const followUpResp = await fetchApiWithHttpSupport(url, {
           method: 'POST',
           headers,
@@ -5281,6 +5722,14 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
     }
     _suppressScrollFlag = false;
   } finally {
+    updateMessageTokenMetadata(assistantMsg, swipeIdx);
+    debugLog('API response', {
+      model,
+      format,
+      outputTokens: getMessageTokenCount(assistantMsg),
+      toolBlocks: toolBlocks.length,
+      hasThinking: Boolean(thinkingText)
+    });
     streaming = false;
     abortController = null;
     btn.classList.remove('streaming');
@@ -5378,7 +5827,9 @@ async function sendMessage() {
       userContent = text;
     }
 
-    messages.push({ role: 'user', content: userContent, timestamp: Date.now() });
+    const userMsg = { role: 'user', content: userContent, timestamp: Date.now() };
+    updateMessageTokenMetadata(userMsg);
+    messages.push(userMsg);
     input.value = '';
     input.style.height = 'auto';
 
@@ -5706,7 +6157,7 @@ async function screenshotSelected() {
       const wrapper = area.querySelector('.msg-wrapper[data-msg-idx="' + idx + '"]');
       if (!wrapper) return;
       const clone = wrapper.cloneNode(true);
-      clone.querySelectorAll('.msg-actions, .regen-btn, .swipe-nav, .branch-controls, .msg-timestamp').forEach(el => el.remove());
+      clone.querySelectorAll('.msg-actions, .regen-btn, .swipe-nav, .branch-controls, .msg-meta, .msg-timestamp').forEach(el => el.remove());
       clone.classList.remove('selected');
       container.appendChild(clone);
     });
@@ -6601,6 +7052,17 @@ const __windowBridge = {
   getScrollBehavior,
   scrollMessagesToBottom,
   isDebugLoggingEnabled,
+  isDebugTextIncluded,
+  setDebugPreference,
+  summarizeLlmPayloadForDebug,
+  debugLog,
+  debugLogPayload,
+  renderDebugLogPreview,
+  clearDebugLog,
+  copyDebugSnapshot,
+  isLocalRuntime,
+  checkLocalUpdateStatus,
+  renderLocalUpdateStatus,
   showToast,
   applyTheme,
   applyMsgOverrides,
@@ -6637,6 +7099,13 @@ const __windowBridge = {
   buildConversationTranscript,
   deleteMemory,
   detectApiFormat,
+  getLlmProviderInfo,
+  formatModelForDisplay,
+  getActiveProfile,
+  getActiveProfileSummary,
+  getConnectionSummary,
+  suggestProfileName,
+  setAssistantLlmMetadata,
   prepareAnthropicMessages,
   renderGenImages,
   buildApiContent,
@@ -6649,6 +7118,11 @@ const __windowBridge = {
   postRenderProcessing,
   estimateTokens,
   getMsgText,
+  formatTokenCount,
+  getMessageTokenCount,
+  updateMessageTokenMetadata,
+  getMessageLlmInfo,
+  renderMessageMeta,
   updateTokenInfo,
   openDB,
   idbPut,
@@ -6681,6 +7155,7 @@ const __windowBridge = {
   loadProfiles,
   saveProfiles,
   renderProfileSelect,
+  renderProfileSummary,
   collectProfileSettingsFromInputs,
   applyProfileToInputs,
   applyProfile,

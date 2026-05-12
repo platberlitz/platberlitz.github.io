@@ -39,8 +39,9 @@
   <div class="tag-filter-bar" id="tagFilterBar"></div>
   <div class="conv-list" id="convList"></div>
   <div class="sidebar-footer">
-    made by <a href="https://platberlitz.github.io/" target="_blank">purachina</a> and 100% claude
+    made by <a href="https://platberlitz.github.io/" target="_blank">purachina</a>
     <span class="footer-cta">click for more stuff from me</span>
+    <button class="update-status" id="updateStatus" type="button" onclick="checkLocalUpdateStatus(true)" hidden></button>
   </div>
 </div>
 
@@ -147,6 +148,7 @@
       <button class="settings-tab" onclick="switchSettingsTab('prompts', this)">Prompts</button>
       <button class="settings-tab" onclick="switchSettingsTab('appearance', this)">Appearance</button>
       <button class="settings-tab" onclick="switchSettingsTab('tools', this)">Tools</button>
+      <button class="settings-tab" onclick="switchSettingsTab('debug', this)">Debug</button>
     </div>
 
     <div class="settings-tab-content active" id="settingsTab-api">
@@ -163,15 +165,17 @@
         <button class="model-refresh-btn" onclick="refreshModels('settings', this)" title="Refresh model list">&#x1F504;</button>
       </div>
       <input type="text" id="setModelManual" placeholder="Or type model name manually" oninput="document.getElementById('setModelSelect').value=''">
-      <div class="modal-section">Profiles</div>
-      <label>Profile</label>
+      <div class="modal-section">Connection Profiles</div>
+      <label for="profileSelect">Profile</label>
       <div class="model-selector-row">
         <select id="profileSelect" onchange="applyProfileFromSelect()"><option value="">-- Select profile --</option></select>
-        <button class="model-refresh-btn" onclick="saveCurrentAsProfile()" title="Save profile">&#128190;</button>
-        <button class="model-refresh-btn" onclick="deleteSelectedProfile()" title="Delete profile">&#128465;</button>
+        <button class="model-refresh-btn" onclick="saveCurrentAsProfile()" title="Save current profile" aria-label="Save current profile">&#128190;</button>
+        <button class="model-refresh-btn" onclick="deleteSelectedProfile()" title="Delete selected profile" aria-label="Delete selected profile">&#128465;</button>
       </div>
-      <input type="text" id="profileName" placeholder="New profile name">
-      <label>API Format</label>
+      <div class="profile-summary" id="profileSummary">No profile selected.</div>
+      <label for="profileName">Profile name</label>
+      <input type="text" id="profileName" placeholder="Leave blank to use provider and model">
+      <label for="setApiFormat">API Format</label>
       <select id="setApiFormat">
         <option value="auto">Auto-detect</option>
         <option value="openai">OpenAI</option>
@@ -327,6 +331,31 @@
     <input type="number" id="setInputCost" step="0.01" placeholder="e.g. 2.50">
     <label>Output Cost per 1M tokens</label>
     <input type="number" id="setOutputCost" step="0.01" placeholder="e.g. 10.00">
+    </div>
+
+    <div class="settings-tab-content" id="settingsTab-debug">
+      <label class="toggle-row">
+        <input type="checkbox" id="setDebugLogging" onchange="setDebugPreference()">
+        Debug logging
+        <span class="toggle-hint">Logs summarized API payloads to the console and this panel</span>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="setDebugIncludeText" onchange="setDebugPreference()">
+        Include prompt and file text
+        <span class="toggle-hint">Off keeps message text shortened and file contents redacted</span>
+      </label>
+      <div class="modal-section">Local Updates</div>
+      <div class="debug-status-row">
+        <span class="debug-status-pill" id="localUpdateStatus">Not checked</span>
+        <button class="btn btn-secondary debug-inline-btn" type="button" onclick="checkLocalUpdateStatus(true)">Check</button>
+      </div>
+      <div class="settings-note" id="localUpdateDetails">Update checks only appear while Synapse is running locally.</div>
+      <div class="modal-section">Recent Logs</div>
+      <pre class="debug-log-preview" id="debugLogPreview">No debug events yet.</pre>
+      <div class="debug-actions">
+        <button class="btn btn-secondary" type="button" onclick="copyDebugSnapshot()">Copy snapshot</button>
+        <button class="btn btn-secondary" type="button" onclick="clearDebugLog()">Clear</button>
+      </div>
     </div>
 
     <div class="modal-actions">
