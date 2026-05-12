@@ -2824,10 +2824,10 @@
           <p class="preset-version">Based on SillyTavern 1.17.0 stable</p>
           <div class="preset-desc">
             <ul>
-              <li>Same data, same extensions, better shell. It keeps the SillyTavern workflow you already know, but wraps it in a cleaner UI and a Bun-first runtime.</li>
-              <li>Drop-in compatible with SillyTavern characters, chats, presets, and extensions, so moving over is painless.</li>
-              <li>The SB version of Pura&apos;s Director Preset stays trimmed on purpose: the shared core prompt stack stays in the preset, while the bigger tracker and randomiser ecosystem lives in built-in agents.</li>
-              <li>Default port is <code>4444</code>, Bun is the preferred runtime, and Node.js fallback is there when Bun is not the right fit for the platform.</li>
+              <li>Same data, same extensions, tidier shell. It keeps the SillyTavern workflow, with clearer navigation and Bun as the default runtime.</li>
+              <li>Drop-in compatible with SillyTavern characters, chats, presets, and extensions.</li>
+              <li>The SB version of Pura&apos;s Director Preset stays trimmed: the core prompt stack stays in the preset, while trackers and randomisers live in built-in agents.</li>
+              <li>Default port is <code>4444</code>. Bun is preferred, with Node.js fallback launchers included for platforms where Bun is not the right fit.</li>
             </ul>
           </div>
           <div class="preset-downloads">
@@ -2846,15 +2846,15 @@
           <div class="extensions-list">
             <div class="ext-item">
               <div class="ext-name">Better UI Shell</div>
-              <div class="ext-desc">Custom left/right shell navigation, stronger search, collapsible settings sections, and a homepage/customization flow that feels more intentional than stock SillyTavern.</div>
+              <div class="ext-desc">Left/right navigation, stronger search, collapsible settings sections, and cleaner home/customize screens. Less hunting through stock panels.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">Mobile-Aware Layout</div>
-              <div class="ext-desc">Phone and tablet navigation are treated like first-class layouts rather than an afterthought, so it stays usable when you are not sitting at a desktop.</div>
+              <div class="ext-desc">Phone and tablet layouts get their own navigation and spacing instead of a desktop page squeezed smaller.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">More Personal Customization</div>
-              <div class="ext-desc">Three shell themes, three palette presets, three message styles, plus a cleaner home screen and faster access to the stuff people actually touch all the time.</div>
+              <div class="ext-desc">Three shell themes, three palette presets, three message styles, a cleaner home screen, and faster access to common controls.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">Bun-First Runtime</div>
@@ -2862,7 +2862,7 @@
             </div>
             <div class="ext-item">
               <div class="ext-name">Same Data, Same Extensions</div>
-              <div class="ext-desc">Characters, chats, presets, themes, and extensions carry over cleanly. It is meant to feel like a better shell for the same roleplay stack, not a fork that traps your data.</div>
+              <div class="ext-desc">Characters, chats, presets, themes, and extensions carry over. It is a different shell for the same roleplay folder, not a lock-in fork.</div>
             </div>
           </div>
         </div>
@@ -2875,23 +2875,23 @@
           <div class="extensions-list">
             <div class="ext-item">
               <div class="ext-name">Agent Mode</div>
-              <div class="ext-desc">The lightweight built-in service layer. It is chat-scoped and meant for durable story support, not autonomous internet-task nonsense.</div>
+              <div class="ext-desc">A lightweight built-in service layer for chat-scoped story support.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">In-Chat Agents</div>
-              <div class="ext-desc">Modular prompt blocks you can toggle, group, import, export, refine, and stack around the generation pipeline. They can run before or after the main reply, use regex cleanup, and even use a different connection profile if you want a helper model doing side work.</div>
+              <div class="ext-desc">Modular prompt blocks you can toggle, group, import, export, refine, and place before or after the main reply. They can also use regex cleanup or a different connection profile.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">Why the SB Preset Is Leaner</div>
-              <div class="ext-desc">The SB preset keeps the shared core: main prompt, prose rules, primary toggles, and prefills. Trackers, formatting helpers, directives, and randomisers are a better fit as toggleable agents, which is why the SB download is slimmer while the SB feature set is actually bigger.</div>
+              <div class="ext-desc">The SB preset keeps the shared core: main prompt, prose rules, primary toggles, and prefills. Trackers, formatting helpers, directives, and randomisers move into toggleable agents.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">Bundled Pura Ecosystem</div>
-              <div class="ext-desc">SillyBunny ships bundled templates and groups based on Pura&apos;s Director Preset ecosystem. That means trackers, randomisers, directives, and regex-backed helpers can be swapped in as modular pieces instead of living as one giant preset blob forever.</div>
+              <div class="ext-desc">SillyBunny ships bundled templates and groups based on Pura&apos;s Director Preset. Trackers, randomisers, directives, and regex helpers can be swapped in as modular pieces instead of living in one giant preset file.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">What Ships Right Now</div>
-              <div class="ext-desc">The current bundled setup includes trackers, randomisers, formatting helpers, anti-slop cleanup, content toggles, groups for one-click setups, and prompt-transform passes that can rewrite or append after a generation.</div>
+              <div class="ext-desc">The bundled setup includes trackers, randomisers, formatting helpers, content toggles, preset groups, and passes that can rewrite or append after a reply.</div>
             </div>
           </div>
         </div>
