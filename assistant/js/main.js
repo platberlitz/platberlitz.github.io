@@ -4488,6 +4488,7 @@ const ANTHROPIC_URL_FETCH_TOOL = {
 };
 
 const HANDLED_TOOLS = new Set(['web_search', 'url_fetch']);
+const TOOL_FINAL_ANSWER_NUDGE = 'You have already used tools and received their results above. Do not call any more tools. Produce the final assistant answer now in plain text, using the tool results to address the user\'s original question.';
 
 // Parse tool calls that models output as text instead of using the proper API mechanism
 // Matches: <tool_call>{"name":"web_search",...}</tool_call>, ```json\n{"name":...}\n```, etc.
@@ -4896,6 +4897,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           ];
           const followUpBody = { ...body, messages: followUpMessages, stream: false };
           delete followUpBody.tools;
+          delete followUpBody.tool_choice;
           exclude.forEach(k => delete followUpBody[k]);
           debugLogPayload('API follow-up request', followUpBody, { url, format, model, stage: 'anthropic-tools' });
           const followUpResp = await fetchApiWithHttpSupport(url, {
@@ -4980,6 +4982,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           const followUpMessages = [...body.messages, assistantToolMsg, ...toolResultMsgs];
           const followUpBody = { ...body, messages: followUpMessages, stream: false };
           delete followUpBody.tools;
+          delete followUpBody.tool_choice;
           exclude.forEach(k => delete followUpBody[k]);
           debugLogPayload('API follow-up request', followUpBody, { url, format, model, stage: 'openai-tools' });
           const followUpResp = await fetchApiWithHttpSupport(url, {
@@ -5080,6 +5083,131 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       const decoder = new TextDecoder();
       let buffer = '';
       const streamImages = [];
+
+      const renderStreamProgress = () => {
+        assistantMsg.swipes[swipeIdx] = fullText;
+        assistantMsg.content = fullText;
+        const now = Date.now();
+        if (now - lastRender > 80) {
+          const msgsArea = document.getElementById('messagesArea');
+          const savedScrollTop = userScrolledAway ? msgsArea.scrollTop : null;
+          _suppressScrollFlag = true;
+          const stripped = stripThinkTags(fullText);
+          const displayThinking = stripped.thinking ? thinkingText + stripped.thinking : thinkingText;
+          bubbleEl.innerHTML = renderThinkingHTML(displayThinking) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(stripped.content) + renderGenImages(streamImages);
+          if (savedScrollTop !== null) msgsArea.scrollTop = savedScrollTop;
+          else msgsArea.scrollTop = msgsArea.scrollHeight;
+          _suppressScrollFlag = false;
+          lastRender = now;
+        }
+      };
+
+      const readOpenAiTextStream = async (streamResp) => {
+        const ct = streamResp.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          const data = await streamResp.json();
+          if (data.error) console.warn('Recovery API error:', data.error?.message || JSON.stringify(data.error));
+          const extracted = extractImages(data.choices?.[0]?.message || data);
+          if (extracted.text) fullText += extracted.text;
+          if (extracted.images.length) streamImages.push(...extracted.images);
+          const reasoning = data.choices?.[0]?.message?.reasoning_content
+            || data.choices?.[0]?.message?.reasoning || '';
+          if (reasoning) thinkingText += reasoning;
+          renderStreamProgress();
+          return;
+        }
+
+        const reader = streamResp.body?.getReader();
+        if (!reader) return;
+        const decoder = new TextDecoder();
+        let streamBuffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          streamBuffer += decoder.decode(value, { stream: true });
+          const lines = streamBuffer.split('\n');
+          streamBuffer = lines.pop() || '';
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith('data:')) continue;
+            const payload = trimmed.slice(5).trim();
+            if (payload === '[DONE]') continue;
+            try {
+              const json = JSON.parse(payload);
+              if (json.error) console.warn('Recovery stream error:', json.error?.message || JSON.stringify(json.error));
+              const delta = json.choices?.[0]?.delta?.content;
+              if (typeof delta === 'string') {
+                fullText += delta;
+              } else if (Array.isArray(delta)) {
+                for (const part of delta) {
+                  if (part.type === 'text') fullText += part.text;
+                  else {
+                    const extracted = extractImages({ content: [part] });
+                    if (extracted.images.length) streamImages.push(...extracted.images);
+                  }
+                }
+              }
+              const finishMsg = json.choices?.[0]?.message;
+              if (finishMsg) {
+                const extracted = extractImages(finishMsg);
+                if (extracted.images.length) streamImages.push(...extracted.images);
+                if (extracted.text && !fullText) fullText = extracted.text;
+              }
+              const reasoning = json.choices?.[0]?.delta?.reasoning_content
+                || json.choices?.[0]?.delta?.reasoning;
+              if (reasoning) thinkingText += reasoning;
+              const reasoningDetails = json.choices?.[0]?.delta?.reasoning_details;
+              if (Array.isArray(reasoningDetails)) {
+                for (const rd of reasoningDetails) {
+                  if (rd.type === 'reasoning.text' && rd.text) thinkingText += rd.text;
+                }
+              }
+            } catch(e) {}
+          }
+          renderStreamProgress();
+        }
+      };
+
+      const readAnthropicTextStream = async (streamResp) => {
+        const ct = streamResp.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          const data = await streamResp.json();
+          if (data.type === 'error' || data.error) console.warn('Recovery API error:', data.error?.message || JSON.stringify(data.error));
+          fullText += (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || '';
+          const thinking = (data.content || []).filter(c => c.type === 'thinking').map(c => c.thinking).join('');
+          if (thinking) thinkingText += thinking;
+          renderStreamProgress();
+          return;
+        }
+
+        const reader = streamResp.body?.getReader();
+        if (!reader) return;
+        const decoder = new TextDecoder();
+        let streamBuffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          streamBuffer += decoder.decode(value, { stream: true });
+          const lines = streamBuffer.split('\n');
+          streamBuffer = lines.pop() || '';
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith('data:')) continue;
+            const payload = trimmed.slice(5).trim();
+            if (!payload) continue;
+            try {
+              const json = JSON.parse(payload);
+              if (json.type === 'error') {
+                console.warn('Recovery stream error:', json.error?.message || JSON.stringify(json.error));
+              } else if (json.type === 'content_block_delta') {
+                if (json.delta?.type === 'text_delta' && json.delta?.text) fullText += json.delta.text;
+                else if (json.delta?.type === 'thinking_delta' && json.delta?.thinking) thinkingText += json.delta.thinking;
+              }
+            } catch(e) {}
+          }
+          renderStreamProgress();
+        }
+      };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -5308,6 +5436,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           { role: 'user', content: toolResultBlocks }
         ];
         const followUpBody = { ...body, messages: followUpMessages, stream: true };
+        delete followUpBody.tool_choice;
         if (anthropicToolRound >= 20) delete followUpBody.tools;
         exclude.forEach(k => delete followUpBody[k]);
         debugLogPayload('API follow-up request', followUpBody, { url, format, model, stage: 'anthropic-stream-tools' });
@@ -5440,6 +5569,32 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               _suppressScrollFlag = false;
               lastRender = now2;
             }
+          }
+        }
+        if (!fullText && pendingAnthropicToolCalls.length === 0) {
+          try {
+            const recoveryBody = { ...body, messages: followUpMessages, stream: true };
+            recoveryBody.system = [body.system, TOOL_FINAL_ANSWER_NUDGE].filter(Boolean).join('\n\n');
+            delete recoveryBody.tools;
+            delete recoveryBody.tool_choice;
+            exclude.forEach(k => delete recoveryBody[k]);
+            debugLogPayload('API recovery request', recoveryBody, { url, format, model, stage: 'anthropic-stream-tools-recovery' });
+            const recoveryResp = await fetchApiWithHttpSupport(url, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(recoveryBody),
+              signal: abortController.signal
+            }, baseUrl);
+            if (recoveryResp.ok) {
+              await readAnthropicTextStream(recoveryResp);
+            } else {
+              let errText = '';
+              try { errText = await recoveryResp.text(); } catch(e) {}
+              console.warn('Recovery API returned ' + recoveryResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+            }
+          } catch(e) {
+            if (e.name === 'AbortError') throw e;
+            console.warn('Anthropic tool recovery failed:', e);
           }
         }
         if (!fullText && preToolText) fullText = preToolText;
@@ -5582,6 +5737,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         // Follow-up streaming request with tool results
         openaiRunningMessages = [...openaiRunningMessages, assistantToolMsg, ...toolResultMsgs];
         const followUpBody = { ...body, messages: openaiRunningMessages, stream: true };
+        delete followUpBody.tool_choice;
         if (openaiToolRound >= 20) delete followUpBody.tools;
         exclude.forEach(k => delete followUpBody[k]);
         debugLogPayload('API follow-up request', followUpBody, { url, format, model, stage: 'openai-stream-tools' });
@@ -5658,10 +5814,36 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             lastRender = now2;
           }
         }
-        if (!fullText && preToolText) fullText = preToolText;
         openaiPendingToolCalls = Object.values(toolCallBuffers).filter(tc => HANDLED_TOOLS.has(tc.name));
+        if (!fullText && openaiPendingToolCalls.length === 0) {
+          try {
+            const recoveryMessages = [...openaiRunningMessages, { role: 'system', content: TOOL_FINAL_ANSWER_NUDGE }];
+            const recoveryBody = { ...body, messages: recoveryMessages, stream: true };
+            delete recoveryBody.tools;
+            delete recoveryBody.tool_choice;
+            exclude.forEach(k => delete recoveryBody[k]);
+            debugLogPayload('API recovery request', recoveryBody, { url, format, model, stage: 'openai-stream-tools-recovery' });
+            const recoveryResp = await fetchApiWithHttpSupport(url, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(recoveryBody),
+              signal: abortController.signal
+            }, baseUrl);
+            if (recoveryResp.ok) {
+              await readOpenAiTextStream(recoveryResp);
+            } else {
+              let errText = '';
+              try { errText = await recoveryResp.text(); } catch(e) {}
+              console.warn('Recovery API returned ' + recoveryResp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+            }
+          } catch(e) {
+            if (e.name === 'AbortError') throw e;
+            console.warn('OpenAI tool recovery failed:', e);
+          }
+        }
+        if (!fullText && preToolText) fullText = preToolText;
       }
-      if (!fullText && !thinkingText) fullText = 'No response.';
+      if (!fullText) fullText = 'No response.';
       const stripped = stripThinkTags(fullText);
       if (stripped.thinking) thinkingText += stripped.thinking;
       fullText = stripped.content;
