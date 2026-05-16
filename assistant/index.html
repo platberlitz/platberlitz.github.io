@@ -148,6 +148,7 @@
       <button class="settings-tab" onclick="switchSettingsTab('prompts', this)">Prompts</button>
       <button class="settings-tab" onclick="switchSettingsTab('appearance', this)">Appearance</button>
       <button class="settings-tab" onclick="switchSettingsTab('tools', this)">Tools</button>
+      <button class="settings-tab" onclick="switchSettingsTab('sync', this)">Sync</button>
       <button class="settings-tab" onclick="switchSettingsTab('debug', this)">Debug</button>
     </div>
 
@@ -331,6 +332,53 @@
     <input type="number" id="setInputCost" step="0.01" placeholder="e.g. 2.50">
     <label>Output Cost per 1M tokens</label>
     <input type="number" id="setOutputCost" step="0.01" placeholder="e.g. 10.00">
+    </div>
+
+    <div class="settings-tab-content" id="settingsTab-sync">
+      <div class="modal-section">GitHub Gist</div>
+      <div class="settings-note">Manual sync stores encrypted conversations, memories, presets, prompts, and appearance settings in a private Gist. API keys, provider URLs, search keys, and proxy settings stay on this device.</div>
+      <form class="password-field-form" onsubmit="return false">
+        <input class="sr-only" type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true">
+        <label for="setSyncToken">GitHub token</label>
+        <input type="password" id="setSyncToken" autocomplete="off" placeholder="Token with Gist read/write access">
+      </form>
+      <label for="setSyncGistId">Gist ID</label>
+      <input type="text" id="setSyncGistId" autocomplete="off" placeholder="Leave empty to create one on Push">
+      <label for="setSyncPassphrase">Sync passphrase</label>
+      <div class="model-selector-row sync-passphrase-row">
+        <input type="password" id="setSyncPassphrase" autocomplete="off" placeholder="Used only for local encryption and decryption">
+        <button class="model-refresh-btn" type="button" onclick="syncGeneratePassphrase()" title="Generate passphrase" aria-label="Generate sync passphrase">&#9881;</button>
+      </div>
+      <div class="debug-status-row">
+        <span class="debug-status-pill" id="syncStatus">Not configured</span>
+        <button class="btn btn-secondary debug-inline-btn" type="button" onclick="syncSaveSettings()">Save</button>
+      </div>
+      <div class="settings-note" id="syncDetails">Add a GitHub token and passphrase, then push to create or update your private sync Gist.</div>
+      <div class="sync-actions">
+        <button class="btn btn-primary" type="button" onclick="syncPushToGist()">Push now</button>
+        <button class="btn btn-secondary" type="button" onclick="syncPullFromGist()">Pull now</button>
+      </div>
+
+      <div class="modal-section">Pairing</div>
+      <label class="toggle-row">
+        <input type="checkbox" id="setSyncQrIncludeToken">
+        Include GitHub token in pairing QR
+        <span class="toggle-hint">Off is safer</span>
+      </label>
+      <div class="settings-note">The pairing code can fill the Gist ID and passphrase on another device. Only include the token if you trust the room and the receiving device.</div>
+      <div class="sync-actions">
+        <button class="btn btn-secondary" type="button" onclick="syncRenderPairingQr()">Show QR</button>
+        <button class="btn btn-secondary" type="button" onclick="syncCopyPairingText()">Copy code</button>
+        <button class="btn btn-secondary" type="button" onclick="document.getElementById('syncPairQrInput').click()">Import QR image</button>
+        <input type="file" id="syncPairQrInput" accept="image/*" style="display:none" onchange="syncImportPairingQr(event)">
+      </div>
+      <div class="sync-pairing-output" id="syncPairingOutput" hidden>
+        <canvas id="syncPairingQr" width="192" height="192" aria-label="Sync pairing QR code"></canvas>
+        <textarea id="syncPairingText" readonly rows="4" aria-label="Sync pairing text"></textarea>
+      </div>
+      <label for="syncPairingCode">Paste pairing code</label>
+      <textarea id="syncPairingCode" rows="3" placeholder="sync:..."></textarea>
+      <button class="btn btn-secondary sync-wide-btn" type="button" onclick="syncApplyPairingText()">Apply pairing code</button>
     </div>
 
     <div class="settings-tab-content" id="settingsTab-debug">

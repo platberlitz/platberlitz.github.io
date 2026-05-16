@@ -29,6 +29,20 @@ const APP_VERSION = {
   updateUrl: 'https://platberlitz.github.io/assistant/version.json'
 };
 
+const SYNC_GIST_API_URL = 'https://api.github.com/gists';
+const SYNC_KDF_ITERATIONS = 120000;
+const SYNC_SETTINGS_KEYS = [
+  'llmModel', 'llmApiFormat', 'llmStreaming', 'llmEnterSend', 'llmTemperature',
+  'llmExtraParams', 'llmExcludeParams', 'llmPrefill', 'llmPersona',
+  'llmEnableStMacros', 'llmRpUserName', 'llmInputCost', 'llmOutputCost',
+  'llmWebSearch', 'llmForceSearch', 'llmMemoryEnabled', 'llmHoldScreenshot',
+  'llmPromptEntries', 'assistantPresets', 'assistantProfiles', 'assistantTheme',
+  'assistantCustomTheme', 'assistantFont', 'assistantMsgFontSize', 'assistantMsgMaxWidth'
+];
+const SYNC_PROFILE_SECRET_KEYS = [
+  'llmApiKey', 'llmSearchApiKey', 'llmProxyUrl', 'llmCorsProxy', 'llmSearchApiUrl'
+];
+
 const TAG_COLORS = [
   { name: 'Red', color: '#ef4444' },
   { name: 'Orange', color: '#f97316' },
@@ -3038,6 +3052,7 @@ function openSettings() {
   if (debugIncludeText) debugIncludeText.checked = isDebugTextIncluded();
   renderDebugLogPreview();
   renderLocalUpdateStatus();
+  renderSyncSettings();
 
   // Presets
   loadPresets();
@@ -3272,6 +3287,7 @@ function saveSettings() {
   localStorage.setItem('llmMemoryEnabled', document.getElementById('setMemory').checked ? 'true' : 'false');
   localStorage.setItem('llmHoldScreenshot', document.getElementById('setHoldScreenshot').checked ? 'true' : 'false');
   setDebugPreference();
+  syncSaveSettings(false);
 
   // Warn if web search enabled for non-Anthropic without search URL
   if (document.getElementById('setWebSearch').checked) {
@@ -6241,6 +6257,715 @@ function importConversation(event) {
 }
 
 // ============================================
+// Encrypted GitHub Gist Sync
+// ============================================
+function syncSetStoredValue(key, value) {
+  if (value === null || value === undefined || value === '') localStorage.removeItem(key);
+  else localStorage.setItem(key, String(value));
+}
+
+function syncGetDeviceId() {
+  let id = localStorage.getItem('assistantSyncDeviceId') || '';
+  if (!id) {
+    id = window.crypto?.randomUUID ? window.crypto.randomUUID() : 'device_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('assistantSyncDeviceId', id);
+  }
+  return id;
+}
+
+function syncGetConfigFromInputs() {
+  const tokenEl = document.getElementById('setSyncToken');
+  const gistEl = document.getElementById('setSyncGistId');
+  const passEl = document.getElementById('setSyncPassphrase');
+  return {
+    token: tokenEl ? tokenEl.value.trim() : (localStorage.getItem('assistantSyncGistToken') || ''),
+    gistId: gistEl ? gistEl.value.trim() : (localStorage.getItem('assistantSyncGistId') || ''),
+    passphrase: passEl ? passEl.value : (localStorage.getItem('assistantSyncPassphrase') || '')
+  };
+}
+
+function syncSaveSettings(showSavedToast = true) {
+  const cfg = syncGetConfigFromInputs();
+  syncSetStoredValue('assistantSyncGistToken', cfg.token);
+  syncSetStoredValue('assistantSyncGistId', cfg.gistId);
+  syncSetStoredValue('assistantSyncPassphrase', cfg.passphrase);
+  renderSyncSettings();
+  if (showSavedToast) showToast('Sync settings saved.', 'success');
+  return cfg;
+}
+
+function syncSetStatus(state, message, details) {
+  const status = document.getElementById('syncStatus');
+  const detailsEl = document.getElementById('syncDetails');
+  if (status) {
+    status.textContent = message || 'Not configured';
+    status.className = 'debug-status-pill ' + (state || 'unknown');
+  }
+  if (detailsEl) detailsEl.textContent = details || '';
+}
+
+function renderSyncSettings() {
+  const tokenEl = document.getElementById('setSyncToken');
+  const gistEl = document.getElementById('setSyncGistId');
+  const passEl = document.getElementById('setSyncPassphrase');
+  if (tokenEl) tokenEl.value = localStorage.getItem('assistantSyncGistToken') || '';
+  if (gistEl) gistEl.value = localStorage.getItem('assistantSyncGistId') || '';
+  if (passEl) passEl.value = localStorage.getItem('assistantSyncPassphrase') || '';
+
+  const token = localStorage.getItem('assistantSyncGistToken') || '';
+  const gistId = localStorage.getItem('assistantSyncGistId') || '';
+  const passphrase = localStorage.getItem('assistantSyncPassphrase') || '';
+  const lastPush = Number(localStorage.getItem('assistantSyncLastPushAt') || 0);
+  const lastPull = Number(localStorage.getItem('assistantSyncLastPullAt') || 0);
+  const lastParts = [];
+  if (lastPush) lastParts.push('last push ' + formatRelativeTime(lastPush));
+  if (lastPull) lastParts.push('last pull ' + formatRelativeTime(lastPull));
+
+  if (!token || !passphrase) {
+    syncSetStatus('unknown', 'Not configured', 'Add a GitHub token and sync passphrase before pushing or pulling.');
+  } else if (!gistId) {
+    syncSetStatus('checking', 'Ready to create', 'Push now will create a private encrypted Gist.');
+  } else {
+    syncSetStatus('current', 'Configured', 'Gist ' + gistId + (lastParts.length ? ' | ' + lastParts.join(' | ') : ''));
+  }
+}
+
+function syncValidateConfig(cfg, requireGist = false) {
+  if (!cfg.token) throw new Error('GitHub token is required.');
+  if (!cfg.passphrase) throw new Error('Sync passphrase is required.');
+  if (requireGist && !cfg.gistId) throw new Error('Gist ID is required. Push once to create a Gist or paste a pairing code.');
+}
+
+function syncRequireCrypto() {
+  if (!window.crypto || !window.crypto.subtle || !window.crypto.getRandomValues) {
+    throw new Error('Encrypted sync requires Web Crypto. Use HTTPS, localhost, or a modern browser.');
+  }
+}
+
+function syncRandomBytes(length) {
+  syncRequireCrypto();
+  const bytes = new Uint8Array(length);
+  window.crypto.getRandomValues(bytes);
+  return bytes;
+}
+
+function syncBytesToBase64(bytes) {
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function syncBase64ToBytes(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function syncBytesToBase64Url(bytes) {
+  return syncBytesToBase64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function syncBase64UrlToBytes(text) {
+  let normalized = String(text || '').replace(/-/g, '+').replace(/_/g, '/');
+  while (normalized.length % 4) normalized += '=';
+  return syncBase64ToBytes(normalized);
+}
+
+function syncEncodePairingPayload(payload) {
+  return syncBytesToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
+}
+
+function syncDecodePairingPayload(text) {
+  return JSON.parse(new TextDecoder().decode(syncBase64UrlToBytes(text)));
+}
+
+async function syncSha256Hex(value) {
+  syncRequireCrypto();
+  const json = typeof value === 'string' ? value : JSON.stringify(value);
+  const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(json));
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function syncDeriveKey(passphrase, saltBytes) {
+  syncRequireCrypto();
+  const material = await window.crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(passphrase),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return window.crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: saltBytes, iterations: SYNC_KDF_ITERATIONS, hash: 'SHA-256' },
+    material,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function syncBuildCryptoContext(passphrase, saltBase64) {
+  const salt = saltBase64 ? syncBase64ToBytes(saltBase64) : syncRandomBytes(16);
+  const key = await syncDeriveKey(passphrase, salt);
+  return { key, salt, saltBase64: syncBytesToBase64(salt) };
+}
+
+async function syncEncryptPayloadWithKey(payload, context) {
+  const iv = syncRandomBytes(12);
+  const encoded = new TextEncoder().encode(JSON.stringify(payload));
+  const encrypted = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, context.key, encoded);
+  return JSON.stringify({
+    version: 1,
+    alg: 'AES-GCM',
+    kdf: 'PBKDF2-SHA256',
+    iterations: SYNC_KDF_ITERATIONS,
+    salt: context.saltBase64,
+    iv: syncBytesToBase64(iv),
+    data: syncBytesToBase64(new Uint8Array(encrypted))
+  });
+}
+
+async function syncDecryptPayload(content, passphrase, keyCache = {}) {
+  const envelope = typeof content === 'string' ? JSON.parse(content) : content;
+  if (!envelope || envelope.alg !== 'AES-GCM' || !envelope.salt || !envelope.iv || !envelope.data) {
+    throw new Error('Invalid encrypted sync file.');
+  }
+  if (envelope.iterations && envelope.iterations !== SYNC_KDF_ITERATIONS) {
+    throw new Error('Unsupported sync encryption settings.');
+  }
+  const cacheKey = envelope.salt;
+  if (!keyCache[cacheKey]) keyCache[cacheKey] = await syncDeriveKey(passphrase, syncBase64ToBytes(envelope.salt));
+  const decrypted = await window.crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: syncBase64ToBytes(envelope.iv) },
+    keyCache[cacheKey],
+    syncBase64ToBytes(envelope.data)
+  );
+  return JSON.parse(new TextDecoder().decode(decrypted));
+}
+
+function syncFormatGistError(response, bodyText) {
+  let message = bodyText || response.statusText || 'GitHub request failed';
+  try {
+    const parsed = JSON.parse(bodyText);
+    if (parsed.message) message = parsed.message;
+  } catch(e) {}
+  if (response.status === 401) return 'GitHub token was rejected.';
+  if (response.status === 403) return 'GitHub denied the Gist request. Check token scopes and rate limits.';
+  if (response.status === 404) return 'Gist not found or token cannot access it.';
+  if (response.status === 422) return 'GitHub rejected the Gist payload: ' + message;
+  return 'GitHub error ' + response.status + ': ' + message;
+}
+
+async function fetchGist(url, options = {}, token = '') {
+  const headers = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    ...(options.headers || {})
+  };
+  if (token) headers.Authorization = 'Bearer ' + token;
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok) throw new Error(syncFormatGistError(response, await response.text()));
+  if (response.status === 204) return null;
+  return response.json();
+}
+
+async function fetchGistRawText(url) {
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) throw new Error(syncFormatGistError(response, await response.text()));
+  return response.text();
+}
+
+async function syncGetGistFileContent(gist, filename) {
+  const file = gist?.files?.[filename];
+  if (!file) throw new Error('Missing Gist file: ' + filename);
+  if (!file.truncated && typeof file.content === 'string') return file.content;
+  if (file.raw_url) return fetchGistRawText(file.raw_url);
+  throw new Error('Gist file is truncated and has no raw URL: ' + filename);
+}
+
+async function syncReadManifest(gist, token) {
+  const content = await syncGetGistFileContent(gist, 'manifest.json', token);
+  const manifest = JSON.parse(content);
+  if (!manifest || manifest.app !== 'Synapse' || manifest.schema !== 'gist-sync-v1') {
+    throw new Error('This Gist does not look like a Synapse sync Gist.');
+  }
+  return manifest;
+}
+
+function syncConversationFileName(id) {
+  const safeId = String(id || 'unknown').replace(/[^A-Za-z0-9_-]/g, '_');
+  return (safeId.startsWith('conv_') ? safeId : 'conv_' + safeId) + '.json.enc';
+}
+
+function syncCloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function syncNormalizeConversation(conv) {
+  const normalized = conv && typeof conv === 'object' ? syncCloneJson(conv) : {};
+  normalized.id = normalized.id || genId();
+  normalized.title = normalized.title || 'Untitled Chat';
+  normalized.createdAt = Number(normalized.createdAt) || Date.now();
+  normalized.updatedAt = Number(normalized.updatedAt) || normalized.createdAt || Date.now();
+  normalized.messages = Array.isArray(normalized.messages) ? normalized.messages : [];
+  normalized.messages.forEach(m => {
+    if (m.role === 'assistant' && !m.swipes) {
+      m.swipes = [typeof m.content === 'string' ? m.content : ''];
+      m.swipeIndex = 0;
+    }
+  });
+  return normalized;
+}
+
+function syncScrubProfileSecrets(profile) {
+  if (!profile || typeof profile !== 'object') return {};
+  const cleaned = syncCloneJson(profile);
+  if (!cleaned || typeof cleaned !== 'object') return {};
+  if (cleaned.settings && typeof cleaned.settings === 'object') {
+    SYNC_PROFILE_SECRET_KEYS.forEach(key => delete cleaned.settings[key]);
+  }
+  return cleaned;
+}
+
+function syncPreserveLocalProfileSecrets(remoteProfiles) {
+  const localById = new Map(loadProfiles().map(profile => [profile.id, profile]));
+  return remoteProfiles.map(profile => {
+    const cleaned = syncScrubProfileSecrets(profile);
+    const local = localById.get(cleaned.id);
+    if (!local?.settings) return cleaned;
+    cleaned.settings = cleaned.settings && typeof cleaned.settings === 'object' ? cleaned.settings : {};
+    SYNC_PROFILE_SECRET_KEYS.forEach(key => {
+      if (!cleaned.settings[key] && local.settings[key]) cleaned.settings[key] = local.settings[key];
+    });
+    return cleaned;
+  });
+}
+
+function syncCollectSettings() {
+  const settings = {};
+  SYNC_SETTINGS_KEYS.forEach(key => {
+    const value = localStorage.getItem(key);
+    if (value === null) return;
+    if (key === 'assistantProfiles') {
+      try {
+        const profiles = JSON.parse(value);
+        settings[key] = JSON.stringify(Array.isArray(profiles) ? profiles.map(syncScrubProfileSecrets) : []);
+      } catch(e) {
+        settings[key] = '[]';
+      }
+      return;
+    }
+    settings[key] = value;
+  });
+  return settings;
+}
+
+function syncApplySettings(settings) {
+  if (!settings || typeof settings !== 'object') return;
+  SYNC_SETTINGS_KEYS.forEach(key => {
+    if (!Object.prototype.hasOwnProperty.call(settings, key)) {
+      return;
+    }
+    let value = settings[key];
+    if (key === 'assistantProfiles') {
+      try {
+        const profiles = JSON.parse(value || '[]');
+        value = JSON.stringify(Array.isArray(profiles) ? syncPreserveLocalProfileSecrets(profiles) : []);
+      } catch(e) {
+        value = '[]';
+      }
+    }
+    if (value === null || value === undefined) localStorage.removeItem(key);
+    else localStorage.setItem(key, String(value));
+  });
+  applyTheme(localStorage.getItem('assistantTheme') || 'dark');
+  loadCustomFont(localStorage.getItem('assistantFont') || '');
+  applyMsgOverrides();
+  renderPromptEntries();
+  loadPresets();
+  renderProfileSelect();
+  renderProfileSummary();
+}
+
+async function syncBuildGistFiles(passphrase, existingManifest = null) {
+  clearTimeout(_saveDebounceTimer);
+  if (db) {
+    await idbPutAll('conversations', conversations);
+    await idbPut('meta', { key: 'activeConvId', value: activeConvId || '' });
+  }
+
+  const existingSalt = existingManifest?.salt || localStorage.getItem('assistantSyncSalt') || '';
+  const context = await syncBuildCryptoContext(passphrase, existingSalt || null);
+  localStorage.setItem('assistantSyncSalt', context.saltBase64);
+
+  const now = Date.now();
+  const settingsPayload = { version: 1, exportedAt: new Date(now).toISOString(), settings: syncCollectSettings() };
+  const memoriesPayload = { version: 1, exportedAt: new Date(now).toISOString(), memories: await loadMemories() };
+  const localConversations = conversations.map(syncNormalizeConversation);
+  const files = {
+    'settings.json.enc': { content: await syncEncryptPayloadWithKey(settingsPayload, context) },
+    'memories.json.enc': { content: await syncEncryptPayloadWithKey(memoriesPayload, context) }
+  };
+
+  const conversationEntries = [];
+  for (const conv of localConversations) {
+    const filename = syncConversationFileName(conv.id);
+    const payload = { version: 1, exportedAt: new Date(now).toISOString(), conversation: conv };
+    files[filename] = { content: await syncEncryptPayloadWithKey(payload, context) };
+    conversationEntries.push({
+      id: conv.id,
+      file: filename,
+      updatedAt: Number(conv.updatedAt) || 0,
+      hash: await syncSha256Hex(conv)
+    });
+  }
+
+  const manifest = {
+    version: 1,
+    app: 'Synapse',
+    schema: 'gist-sync-v1',
+    updatedAt: now,
+    deviceId: syncGetDeviceId(),
+    salt: context.saltBase64,
+    kdf: { name: 'PBKDF2-SHA256', iterations: SYNC_KDF_ITERATIONS },
+    files: {
+      settings: 'settings.json.enc',
+      memories: 'memories.json.enc',
+      conversations: conversationEntries
+    },
+    hashes: {
+      settings: await syncSha256Hex(settingsPayload.settings),
+      memories: await syncSha256Hex(memoriesPayload.memories)
+    }
+  };
+  files['manifest.json'] = { content: JSON.stringify(manifest, null, 2) };
+  return { files, manifest };
+}
+
+function syncIsOwnedFileName(name) {
+  return name === 'manifest.json'
+    || name === 'settings.json.enc'
+    || name === 'memories.json.enc'
+    || (name.startsWith('conv_') && name.endsWith('.json.enc'));
+}
+
+async function syncPushToGist() {
+  const cfg = syncSaveSettings(false);
+  try {
+    syncValidateConfig(cfg, false);
+    syncSetStatus('checking', 'Pushing...', 'Encrypting local data and writing Gist files.');
+    let gist = null;
+    let existingManifest = null;
+    if (cfg.gistId) {
+      gist = await fetchGist(SYNC_GIST_API_URL + '/' + encodeURIComponent(cfg.gistId), { cache: 'no-store' }, cfg.token);
+      try {
+        existingManifest = await syncReadManifest(gist, cfg.token);
+      } catch(e) {
+        throw new Error('Existing Gist is not a Synapse sync Gist. Clear the Gist ID to create a new one.');
+      }
+    }
+
+    const built = await syncBuildGistFiles(cfg.passphrase, existingManifest);
+    if (cfg.gistId) {
+      const patchFiles = { ...built.files };
+      Object.keys(gist?.files || {}).forEach(name => {
+        if (syncIsOwnedFileName(name) && !patchFiles[name]) patchFiles[name] = null;
+      });
+      const nonDeletedFiles = Object.values(patchFiles).filter(value => value !== null).length;
+      if (!nonDeletedFiles) patchFiles['manifest.json'] = built.files['manifest.json'];
+      await fetchGist(SYNC_GIST_API_URL + '/' + encodeURIComponent(cfg.gistId), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: 'Synapse encrypted sync data', files: patchFiles })
+      }, cfg.token);
+    } else {
+      gist = await fetchGist(SYNC_GIST_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: 'Synapse encrypted sync data', public: false, files: built.files })
+      }, cfg.token);
+      cfg.gistId = gist.id;
+      localStorage.setItem('assistantSyncGistId', cfg.gistId);
+      const gistEl = document.getElementById('setSyncGistId');
+      if (gistEl) gistEl.value = cfg.gistId;
+    }
+
+    localStorage.setItem('assistantSyncLastPushAt', String(Date.now()));
+    localStorage.setItem('assistantSyncLastHash', await syncSha256Hex(built.manifest));
+    renderSyncSettings();
+    syncSetStatus('current', 'Pushed', 'Encrypted sync Gist updated with ' + conversations.length + ' conversations.');
+    showToast('Sync push complete.', 'success');
+  } catch (err) {
+    console.error('Sync push failed:', err);
+    syncSetStatus('unknown', 'Push failed', err.message || 'Unable to push sync data.');
+    showToast('Sync push failed: ' + (err.message || err), 'error', 6000);
+  }
+}
+
+async function syncMergeConversationLists(localList, remoteList) {
+  const merged = new Map();
+  let added = 0;
+  let updated = 0;
+  let tied = 0;
+  localList.map(syncNormalizeConversation).forEach(conv => merged.set(conv.id, conv));
+
+  for (const remoteRaw of remoteList) {
+    const remote = syncNormalizeConversation(remoteRaw);
+    const local = merged.get(remote.id);
+    if (!local) {
+      merged.set(remote.id, remote);
+      added++;
+      continue;
+    }
+    const remoteUpdated = Number(remote.updatedAt) || 0;
+    const localUpdated = Number(local.updatedAt) || 0;
+    if (remoteUpdated > localUpdated) {
+      merged.set(remote.id, remote);
+      updated++;
+      continue;
+    }
+    if (remoteUpdated === localUpdated) {
+      const localHash = await syncSha256Hex(local);
+      const remoteHash = await syncSha256Hex(remote);
+      if (remoteHash !== localHash && remoteHash > localHash) {
+        merged.set(remote.id, remote);
+        tied++;
+      }
+    }
+  }
+
+  return { conversations: Array.from(merged.values()), added, updated, tied };
+}
+
+function syncMergeMemoryLists(localList, remoteList) {
+  const localNormalized = normalizeMemoryList(localList || []).memories;
+  const remoteNormalized = normalizeMemoryList(remoteList || []).memories;
+  const byId = new Map();
+  localNormalized.forEach(memory => byId.set(memory.id, memory));
+  remoteNormalized.forEach(memory => {
+    const existing = byId.get(memory.id);
+    if (!existing || Number(memory.createdAt) >= Number(existing.createdAt)) byId.set(memory.id, memory);
+  });
+  return Array.from(byId.values()).sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+}
+
+async function syncPullFromGist() {
+  const cfg = syncSaveSettings(false);
+  try {
+    syncValidateConfig(cfg, true);
+    syncSetStatus('checking', 'Pulling...', 'Fetching and decrypting sync files.');
+    const gist = await fetchGist(SYNC_GIST_API_URL + '/' + encodeURIComponent(cfg.gistId), { cache: 'no-store' }, cfg.token);
+    const manifest = await syncReadManifest(gist, cfg.token);
+    if (manifest.salt) localStorage.setItem('assistantSyncSalt', manifest.salt);
+    const keyCache = {};
+
+    const settingsFile = manifest.files?.settings || 'settings.json.enc';
+    const memoriesFile = manifest.files?.memories || 'memories.json.enc';
+    const settingsPayload = await syncDecryptPayload(await syncGetGistFileContent(gist, settingsFile, cfg.token), cfg.passphrase, keyCache);
+    const memoriesPayload = await syncDecryptPayload(await syncGetGistFileContent(gist, memoriesFile, cfg.token), cfg.passphrase, keyCache);
+
+    const remoteConversations = [];
+    const entries = Array.isArray(manifest.files?.conversations) ? manifest.files.conversations : [];
+    for (const entry of entries) {
+      if (!entry?.file) continue;
+      const payload = await syncDecryptPayload(await syncGetGistFileContent(gist, entry.file, cfg.token), cfg.passphrase, keyCache);
+      if (payload?.conversation) remoteConversations.push(payload.conversation);
+    }
+
+    syncApplySettings(settingsPayload.settings || {});
+    const mergedMemories = syncMergeMemoryLists(await loadMemories(), memoriesPayload.memories || []);
+    await saveMemories(mergedMemories);
+
+    const merged = await syncMergeConversationLists(conversations, remoteConversations);
+    conversations = merged.conversations;
+    if (conversations.length > 0 && !conversations.find(c => c.id === activeConvId)) activeConvId = conversations[0].id;
+    if (conversations.length === 0) activeConvId = null;
+    messages = getActiveConv()?.messages || [];
+    if (db) {
+      await idbPutAll('conversations', conversations);
+      await idbPut('meta', { key: 'activeConvId', value: activeConvId || '' });
+    }
+    localStorage.setItem('assistantActiveConvId', activeConvId || '');
+
+    renderSidebar();
+    renderMessages();
+    updateTokenInfo();
+    updateCharacterUI();
+    localStorage.setItem('assistantSyncLastPullAt', String(Date.now()));
+    renderSyncSettings();
+    syncSetStatus('current', 'Pulled', 'Merged ' + remoteConversations.length + ' remote conversations. Added ' + merged.added + ', updated ' + merged.updated + '.');
+    showToast('Sync pull complete.', 'success');
+  } catch (err) {
+    console.error('Sync pull failed:', err);
+    const message = err.name === 'OperationError' ? 'Could not decrypt sync data. Check the passphrase.' : (err.message || 'Unable to pull sync data.');
+    syncSetStatus('unknown', 'Pull failed', message);
+    showToast('Sync pull failed: ' + message, 'error', 6000);
+  }
+}
+
+function syncGeneratePassphrase() {
+  try {
+    const passphrase = syncBytesToBase64Url(syncRandomBytes(24)).match(/.{1,6}/g).join('-');
+    const passEl = document.getElementById('setSyncPassphrase');
+    if (passEl) passEl.value = passphrase;
+    syncSaveSettings(false);
+    showToast('Sync passphrase generated.', 'success');
+  } catch (err) {
+    showToast('Could not generate passphrase: ' + (err.message || err), 'error');
+  }
+}
+
+function syncBuildPairingText() {
+  const cfg = syncSaveSettings(false);
+  if (!cfg.gistId) throw new Error('Push once to create a Gist before pairing.');
+  if (!cfg.passphrase) throw new Error('Sync passphrase is required for pairing.');
+  const includeToken = document.getElementById('setSyncQrIncludeToken')?.checked;
+  const payload = {
+    app: 'synapse',
+    version: 1,
+    gistId: cfg.gistId,
+    passphrase: cfg.passphrase,
+    createdAt: Date.now()
+  };
+  if (includeToken && cfg.token) payload.token = cfg.token;
+  return 'sync:' + syncEncodePairingPayload(payload);
+}
+
+function syncParsePairingText(text) {
+  const raw = String(text || '').trim();
+  if (!raw) throw new Error('Pairing code is empty.');
+  let payload;
+  if (raw.toLowerCase().startsWith('sync:')) payload = syncDecodePairingPayload(raw.slice(5));
+  else payload = JSON.parse(raw);
+  if (!payload || payload.app !== 'synapse' || !payload.gistId || !payload.passphrase) {
+    throw new Error('Invalid Synapse pairing code.');
+  }
+  return payload;
+}
+
+function syncApplyPairingText(text, silent = false) {
+  try {
+    const source = text || document.getElementById('syncPairingCode')?.value || '';
+    const payload = syncParsePairingText(source);
+    const gistEl = document.getElementById('setSyncGistId');
+    const passEl = document.getElementById('setSyncPassphrase');
+    const tokenEl = document.getElementById('setSyncToken');
+    if (gistEl) gistEl.value = payload.gistId;
+    if (passEl) passEl.value = payload.passphrase;
+    if (payload.token && tokenEl) tokenEl.value = payload.token;
+    syncSaveSettings(false);
+    showToast('Pairing code applied.', 'success');
+    return true;
+  } catch (err) {
+    if (!silent) showToast('Pairing failed: ' + (err.message || err), 'error');
+    return false;
+  }
+}
+
+function syncLoadScriptOnce(id, src, globalName) {
+  if (globalName && window[globalName]) return Promise.resolve(window[globalName]);
+  syncLoadScriptOnce.promises = syncLoadScriptOnce.promises || {};
+  if (syncLoadScriptOnce.promises[id]) return syncLoadScriptOnce.promises[id];
+  syncLoadScriptOnce.promises[id] = new Promise((resolve, reject) => {
+    const existing = document.getElementById(id);
+    if (existing) {
+      existing.addEventListener('load', () => resolve(globalName ? window[globalName] : true), { once: true });
+      existing.addEventListener('error', () => reject(new Error('Failed to load ' + src)), { once: true });
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = id;
+    script.src = src;
+    script.onload = () => resolve(globalName ? window[globalName] : true);
+    script.onerror = () => reject(new Error('Failed to load ' + src));
+    document.head.appendChild(script);
+  });
+  return syncLoadScriptOnce.promises[id];
+}
+
+async function syncRenderPairingQr() {
+  try {
+    const text = syncBuildPairingText();
+    const output = document.getElementById('syncPairingOutput');
+    const textArea = document.getElementById('syncPairingText');
+    const canvas = document.getElementById('syncPairingQr');
+    if (output) output.hidden = false;
+    if (textArea) textArea.value = text;
+    await syncLoadScriptOnce('syncQrCodeScript', 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js', 'QRCode');
+    if (!window.QRCode?.toCanvas) throw new Error('QR generator did not load.');
+    await window.QRCode.toCanvas(canvas, text, {
+      width: 192,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+      color: { dark: '#101014', light: '#f7f8ff' }
+    });
+    showToast('Pairing QR ready.', 'success');
+  } catch (err) {
+    showToast('QR failed: ' + (err.message || err), 'error', 6000);
+  }
+}
+
+async function syncCopyPairingText() {
+  try {
+    const text = syncBuildPairingText();
+    const output = document.getElementById('syncPairingOutput');
+    const textArea = document.getElementById('syncPairingText');
+    if (output) output.hidden = false;
+    if (textArea) textArea.value = text;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch(e) {
+      if (!textArea) throw e;
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+    }
+    showToast('Pairing code copied.', 'success');
+  } catch (err) {
+    showToast('Copy failed: ' + (err.message || err), 'error');
+  }
+}
+
+function syncLoadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read QR image.')); };
+    img.src = url;
+  });
+}
+
+async function syncImportPairingQr(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  try {
+    syncSetStatus('checking', 'Reading QR...', 'Decoding selected pairing image.');
+    await syncLoadScriptOnce('syncJsQrScript', 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js', 'jsQR');
+    const img = await syncLoadImageFromFile(file);
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const result = window.jsQR(imageData.data, canvas.width, canvas.height);
+    if (!result?.data) throw new Error('No QR code found in image.');
+    const codeEl = document.getElementById('syncPairingCode');
+    if (codeEl) codeEl.value = result.data;
+    if (!syncApplyPairingText(result.data, true)) throw new Error('Invalid Synapse pairing code.');
+  } catch (err) {
+    syncSetStatus('unknown', 'QR failed', err.message || 'Could not decode QR image.');
+    showToast('QR import failed: ' + (err.message || err), 'error', 6000);
+  }
+}
+
+// ============================================
 // Export as Markdown
 // ============================================
 function exportMarkdown() {
@@ -7387,6 +8112,15 @@ const __windowBridge = {
   exportConversation,
   exportAllConversations,
   importConversation,
+  syncSaveSettings,
+  renderSyncSettings,
+  syncPushToGist,
+  syncPullFromGist,
+  syncGeneratePassphrase,
+  syncRenderPairingQr,
+  syncCopyPairingText,
+  syncApplyPairingText,
+  syncImportPairingQr,
   exportMarkdown,
   enterSelectMode,
   exitSelectMode,

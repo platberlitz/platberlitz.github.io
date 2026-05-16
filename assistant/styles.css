@@ -814,6 +814,45 @@ body {
   font-size: 0.8em;
   line-height: 1.4;
 }
+.sync-passphrase-row input {
+  margin-bottom: 0;
+}
+.sync-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.sync-actions .btn {
+  flex: 1;
+  justify-content: center;
+}
+.sync-pairing-output {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 12px;
+}
+.sync-pairing-output[hidden] {
+  display: none;
+}
+.sync-pairing-output canvas {
+  width: 132px;
+  height: 132px;
+  padding: 8px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: #f7f8ff;
+}
+.sync-pairing-output textarea {
+  min-height: 132px;
+  margin-bottom: 0;
+  font-size: 0.78em;
+}
+.sync-wide-btn {
+  width: 100%;
+  margin-bottom: 10px;
+}
 
 /* Theme color pickers */
 .theme-colors {
@@ -867,6 +906,9 @@ body {
   .global-search-btn { min-height: 44px; }
   .conv-item { min-height: 44px; }
   .settings-tab { min-height: 40px; }
+  .sync-actions { flex-direction: column; }
+  .sync-pairing-output { grid-template-columns: 1fr; }
+  .sync-pairing-output canvas { justify-self: center; width: 160px; height: 160px; }
   .send-btn { min-height: 44px; }
   .msg-wrapper.user, .msg-wrapper.assistant { max-width: 95% !important; }
   .msg-avatar { width: 26px; height: 26px; margin-right: 6px; }
