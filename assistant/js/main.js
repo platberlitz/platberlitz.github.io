@@ -25,7 +25,7 @@ let localUpdateState = { status: 'idle', message: 'Not checked', details: '' };
 
 const APP_VERSION = {
   name: 'Synapse',
-  buildDate: '2026-05-12',
+  buildDate: '2026-05-20',
   updateUrl: 'https://platberlitz.github.io/assistant/version.json'
 };
 
@@ -36,7 +36,7 @@ const SYNC_SETTINGS_KEYS = [
   'llmExtraParams', 'llmExcludeParams', 'llmPrefill', 'llmPersona',
   'llmEnableStMacros', 'llmRpUserName', 'llmInputCost', 'llmOutputCost',
   'llmWebSearch', 'llmForceSearch', 'llmMemoryEnabled', 'llmHoldScreenshot',
-  'llmPromptEntries', 'assistantPresets', 'assistantProfiles', 'assistantTheme',
+  'llmCacheEnabled', 'llmPromptEntries', 'assistantPresets', 'assistantProfiles', 'assistantTheme',
   'assistantCustomTheme', 'assistantFont', 'assistantMsgFontSize', 'assistantMsgMaxWidth'
 ];
 const SYNC_PROFILE_SECRET_KEYS = [
@@ -320,8 +320,15 @@ function renderLocalUpdateStatus() {
   const details = document.getElementById('localUpdateDetails');
   if (footer) {
     footer.hidden = !(isLocalRuntime() && localUpdateState.status === 'update');
-    footer.textContent = localUpdateState.message || 'Update available';
     footer.title = localUpdateState.details || '';
+    if (!footer.hidden) {
+      footer.innerHTML = '<span class="update-status-text">' + escapeHTML(localUpdateState.message || 'Update available') + '</span>' +
+        '<button id="updateNowBtn" class="update-btn" type="button">Update Now</button>';
+      const btn = document.getElementById('updateNowBtn');
+      if (btn) btn.onclick = performSelfUpdate;
+    } else {
+      footer.textContent = '';
+    }
   }
   if (status) {
     status.textContent = localUpdateState.message || 'Not checked';
@@ -362,7 +369,7 @@ async function checkLocalUpdateStatus(manual = false) {
   } catch(e) {}
 
   try {
-    const remote = await fetchJsonNoStore(current.updateUrl || APP_VERSION.updateUrl);
+    const remote = await fetchRemoteJsonNoStore(current.updateUrl || APP_VERSION.updateUrl);
     const cmp = compareBuildDate(remote.buildDate, current.buildDate);
     if (cmp > 0) {
       setLocalUpdateState('update', 'Update available', 'Published build: ' + (remote.buildDate || 'unknown') + '. Local build: ' + (current.buildDate || 'unknown') + '.');
@@ -380,6 +387,141 @@ async function checkLocalUpdateStatus(manual = false) {
 
   setLocalUpdateState('unknown', 'Unable to compare', 'No local /version endpoint or published version metadata was reachable.');
   if (manual) showToast('Could not compare updates automatically.', 'info');
+}
+
+async function fetchRemoteJsonNoStore(url) {
+  const text = await fetchRemoteTextNoStore(url);
+  return JSON.parse(text);
+}
+
+async function fetchRemoteTextNoStore(url) {
+  const separator = url.includes('?') ? '&' : '?';
+  const cacheBustedUrl = url + separator + 't=' + Date.now();
+  const options = { cache: 'no-store' };
+  try {
+    const response = await fetch(cacheBustedUrl, options);
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    return response.text();
+  } catch (err) {
+    if (err.name === 'AbortError') throw err;
+    const response = await proxiedFetch(cacheBustedUrl, options);
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    return response.text();
+  }
+}
+
+function getUpdateHtmlUrl(versionInfo = {}) {
+  const explicit = versionInfo.htmlUrl || versionInfo.downloadUrl || versionInfo.updateHtmlUrl || APP_VERSION.htmlUrl;
+  if (explicit) return explicit;
+  const updateUrl = versionInfo.updateUrl || APP_VERSION.updateUrl;
+  return String(updateUrl || 'https://platberlitz.github.io/assistant/version.json').replace(/version\.json(?:\?.*)?$/, 'synapse.html');
+}
+
+function extractBuildDateFromHtml(html) {
+  const match = String(html || '').match(/buildDate:\s*['"]([^'"]+)['"]/);
+  return match ? match[1] : '';
+}
+
+function validateDownloadedSynapseHtml(html) {
+  const text = String(html || '');
+  return text.includes('<title>Synapse</title>') &&
+    text.includes('APP_VERSION') &&
+    text.includes('assistantDB') &&
+    text.includes('streamResponse');
+}
+
+async function downloadUpdate() {
+  let versionInfo = {};
+  try {
+    versionInfo = await fetchRemoteJsonNoStore(APP_VERSION.updateUrl);
+  } catch (err) {
+    console.warn('Could not fetch remote version metadata before download:', err);
+  }
+  const htmlUrl = getUpdateHtmlUrl(versionInfo);
+  const htmlContent = await fetchRemoteTextNoStore(htmlUrl);
+  if (!validateDownloadedSynapseHtml(htmlContent)) {
+    throw new Error('Downloaded file did not look like a Synapse standalone build.');
+  }
+  const buildDate = extractBuildDateFromHtml(htmlContent) || versionInfo.buildDate || 'unknown';
+  return { htmlContent, htmlUrl, versionInfo, buildDate };
+}
+
+function triggerFileDownload(htmlContent, filename) {
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function performSelfUpdate() {
+  const btn = document.getElementById('updateNowBtn');
+  const oldText = btn ? btn.textContent : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Downloading...';
+  }
+  setLocalUpdateState('update', 'Downloading update...', 'Downloading the published standalone Synapse build.');
+  const activeBtn = document.getElementById('updateNowBtn');
+  if (activeBtn) {
+    activeBtn.disabled = true;
+    activeBtn.textContent = 'Downloading...';
+  }
+  try {
+    const update = await downloadUpdate();
+    triggerFileDownload(update.htmlContent, 'synapse.html');
+    setLocalUpdateState('update', 'Update downloaded', 'Downloaded build: ' + update.buildDate + '. Replace your old synapse.html with the downloaded file.');
+    showUpdateInstructions(update.buildDate);
+    showToast('Update downloaded.', 'success');
+  } catch (err) {
+    setLocalUpdateState('update', 'Update available', 'Download failed: ' + (err.message || err));
+    showToast('Update failed: ' + (err.message || err), 'error', 6000);
+  } finally {
+    const nextBtn = document.getElementById('updateNowBtn');
+    if (nextBtn) {
+      nextBtn.disabled = false;
+      nextBtn.textContent = oldText || 'Update Now';
+    }
+  }
+}
+
+function createUpdateModal() {
+  let modal = document.getElementById('updateInstructionsModal');
+  if (modal) return modal;
+  modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'updateInstructionsModal';
+  modal.setAttribute('aria-hidden', 'true');
+  modal.innerHTML = '<div class="modal update-instructions-modal" aria-labelledby="updateInstructionsTitle">' +
+    '<h2 id="updateInstructionsTitle">Update Instructions</h2>' +
+    '<div class="modal-body" id="updateInstructionsBody"></div>' +
+    '<div class="modal-actions"><button class="btn btn-primary" type="button" onclick="closeModal(\'updateInstructionsModal\')">Close</button></div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  initModalAccessibility();
+  return modal;
+}
+
+function showUpdateInstructions(newVersion) {
+  const modal = createUpdateModal();
+  const body = modal.querySelector('#updateInstructionsBody') || modal.querySelector('.modal-body');
+  if (body) {
+    body.innerHTML = '<div class="update-instructions">' +
+      '<p>A fresh <strong>synapse.html</strong> has been saved to your Downloads folder.</p>' +
+      '<ol>' +
+      '<li>Close any open local Synapse tabs.</li>' +
+      '<li>Move the downloaded <strong>synapse.html</strong> over your old copy.</li>' +
+      '<li>Open the replaced file to run the new build.</li>' +
+      '</ol>' +
+      '<div class="update-warning">Browsers cannot replace files opened with <code>file://</code>, so this last swap has to stay manual. Your conversations and settings stay in this browser profile.</div>' +
+      (newVersion ? '<p class="update-version-note">Downloaded build: ' + escapeHTML(newVersion) + '</p>' : '') +
+      '</div>';
+  }
+  openModal(modal);
 }
 
 // ============================================
@@ -1671,6 +1813,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   localStorage.setItem('llmCorsProxy', getCorsProxyUrl());
 
   await openDB();
+  try {
+    const deleted = await cacheCleanupExpired();
+    if (deleted > 0) console.log('Cleaned up ' + deleted + ' expired cache entries');
+  } catch (e) {
+    console.warn('Cache cleanup failed:', e);
+  }
   migrateToPromptEntries();
   await loadConversations();
   loadTheme();
@@ -2473,7 +2621,9 @@ function updateTokenInfo() {
 // IndexedDB Storage Layer
 // ============================================
 const DB_NAME = 'assistantDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
+const RESPONSE_CACHE_STORE = 'responseCache';
+const RESPONSE_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 let db = null;
 
 function openDB() {
@@ -2481,9 +2631,17 @@ function openDB() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = (e) => {
       const d = e.target.result;
+      const oldVersion = e.oldVersion;
       if (!d.objectStoreNames.contains('conversations')) d.createObjectStore('conversations', { keyPath: 'id' });
       if (!d.objectStoreNames.contains('memories')) d.createObjectStore('memories', { keyPath: 'id' });
       if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'key' });
+      if (oldVersion < 2 || !d.objectStoreNames.contains(RESPONSE_CACHE_STORE)) {
+        const cacheObjectStore = d.objectStoreNames.contains(RESPONSE_CACHE_STORE)
+          ? e.target.transaction.objectStore(RESPONSE_CACHE_STORE)
+          : d.createObjectStore(RESPONSE_CACHE_STORE, { keyPath: 'cacheKey' });
+        if (!cacheObjectStore.indexNames.contains('cachedAt')) cacheObjectStore.createIndex('cachedAt', 'cachedAt', { unique: false });
+        if (!cacheObjectStore.indexNames.contains('model')) cacheObjectStore.createIndex('model', 'model', { unique: false });
+      }
     };
     req.onsuccess = (e) => { db = e.target.result; resolve(db); };
     req.onerror = (e) => reject(e.target.error);
@@ -2497,6 +2655,16 @@ function idbPut(store, data) {
     s.put(data);
     tx.oncomplete = resolve;
     tx.onerror = () => reject(tx.error);
+  });
+}
+
+function idbGet(store, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const s = tx.objectStore(store);
+    const req = s.get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
   });
 }
 
@@ -2537,6 +2705,199 @@ function idbPutAll(store, items) {
     items.forEach(item => s.put(item));
     tx.oncomplete = resolve;
     tx.onerror = () => reject(tx.error);
+  });
+}
+
+function isResponseCacheEnabled() {
+  return localStorage.getItem('llmCacheEnabled') !== 'false';
+}
+
+function normalizeForCache(value) {
+  if (value === undefined || typeof value === 'function' || typeof value === 'symbol') return null;
+  if (value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(normalizeForCache);
+  const out = {};
+  Object.keys(value).sort().forEach(key => {
+    out[key] = normalizeForCache(value[key]);
+  });
+  return out;
+}
+
+function stableCacheJson(value) {
+  return JSON.stringify(normalizeForCache(value));
+}
+
+function fallbackHash(text) {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 'fallback_' + (h2 >>> 0).toString(16).padStart(8, '0') + (h1 >>> 0).toString(16).padStart(8, '0');
+}
+
+async function generateCacheKey(userMessage, model, systemMessages) {
+  const payload = stableCacheJson({
+    version: 1,
+    model: model || '',
+    userMessage,
+    systemMessages: systemMessages || []
+  });
+  if (!window.crypto?.subtle) return fallbackHash(payload);
+  const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload));
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getResponseCacheRequestParts(apiMessages) {
+  const systemMessages = [];
+  let userMessage = null;
+  (apiMessages || []).forEach(message => {
+    if (!message || !message.role) return;
+    if (message.role === 'system') {
+      systemMessages.push({ role: 'system', content: message.content || '' });
+    } else if (message.role === 'user') {
+      userMessage = { role: 'user', content: normalizeForCache(message.content) };
+    }
+  });
+  return { userMessage, systemMessages };
+}
+
+async function cacheLookup(cacheKey) {
+  if (!db || !cacheKey) return null;
+  const entry = await idbGet(RESPONSE_CACHE_STORE, cacheKey);
+  if (!entry) return null;
+  const now = Date.now();
+  if (entry.expiresAt && entry.expiresAt <= now) {
+    await cacheDelete(cacheKey);
+    return null;
+  }
+  entry.hitCount = (entry.hitCount || 0) + 1;
+  entry.lastHitAt = now;
+  try { await idbPut(RESPONSE_CACHE_STORE, entry); } catch(e) { console.warn('Cache hit update failed:', e); }
+  return entry;
+}
+
+async function cacheStore(entry) {
+  if (!db || !entry?.cacheKey) return;
+  const existing = await idbGet(RESPONSE_CACHE_STORE, entry.cacheKey).catch(() => null);
+  const now = Date.now();
+  const normalized = {
+    ...entry,
+    cachedAt: entry.cachedAt || now,
+    expiresAt: entry.expiresAt || (now + RESPONSE_CACHE_TTL_MS),
+    hitCount: existing?.hitCount || 0,
+    lastHitAt: existing?.lastHitAt || null
+  };
+  await idbPut(RESPONSE_CACHE_STORE, normalized);
+}
+
+async function cacheDelete(cacheKey) {
+  if (!db || !cacheKey) return;
+  await idbDelete(RESPONSE_CACHE_STORE, cacheKey);
+}
+
+async function cacheClear() {
+  if (!db) return;
+  await idbClear(RESPONSE_CACHE_STORE);
+}
+
+async function cacheCleanupExpired() {
+  if (!db) return 0;
+  const now = Date.now();
+  const entries = await idbGetAll(RESPONSE_CACHE_STORE);
+  let deleted = 0;
+  for (const entry of entries) {
+    if (entry.expiresAt && entry.expiresAt <= now) {
+      await idbDelete(RESPONSE_CACHE_STORE, entry.cacheKey);
+      deleted++;
+    }
+  }
+  return deleted;
+}
+
+function formatCacheBytes(bytes) {
+  if (!bytes) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  return (unit === 0 ? value : value.toFixed(value >= 10 ? 1 : 2)) + ' ' + units[unit];
+}
+
+async function cacheGetStats() {
+  if (!db) return { count: 0, sizeBytes: 0, hits: 0, expired: 0 };
+  const entries = await idbGetAll(RESPONSE_CACHE_STORE);
+  const now = Date.now();
+  return entries.reduce((stats, entry) => {
+    stats.count++;
+    stats.sizeBytes += stableCacheJson(entry).length * 2;
+    stats.hits += entry.hitCount || 0;
+    if (entry.expiresAt && entry.expiresAt <= now) stats.expired++;
+    return stats;
+  }, { count: 0, sizeBytes: 0, hits: 0, expired: 0 });
+}
+
+function buildResponseCacheEntry(cacheKey, userMessage, systemMessages, model, format, fullText, thinkingText, toolBlocks, assistantMsg, swipeIdx) {
+  const now = Date.now();
+  const images = assistantMsg.swipeImages?.[swipeIdx] || assistantMsg.images || [];
+  return {
+    cacheKey,
+    cachedAt: now,
+    expiresAt: now + RESPONSE_CACHE_TTL_MS,
+    model,
+    format,
+    userMessage,
+    systemMessages,
+    response: {
+      content: fullText || '',
+      thinking: thinkingText || '',
+      toolUse: normalizeForCache(toolBlocks || []),
+      images: normalizeForCache(images || []),
+      metadata: { model, format, timestamp: now }
+    },
+    hitCount: 0
+  };
+}
+
+function restoreCachedResponse(entry, assistantMsg, swipeIdx, bubbleEl) {
+  const response = entry?.response || {};
+  const content = response.content || '';
+  const thinking = response.thinking || '';
+  const toolUse = Array.isArray(response.toolUse) ? response.toolUse : [];
+  const images = Array.isArray(response.images) ? response.images : [];
+  assistantMsg._responseCacheHit = true;
+  assistantMsg.swipes = assistantMsg.swipes || [];
+  assistantMsg.swipes[swipeIdx] = content;
+  assistantMsg.content = content;
+  if (thinking) {
+    assistantMsg.swipeThinking = assistantMsg.swipeThinking || [];
+    assistantMsg.swipeThinking[swipeIdx] = thinking;
+  }
+  if (toolUse.length > 0) {
+    assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
+    assistantMsg.swipeToolUse[swipeIdx] = toolUse;
+  }
+  if (images.length > 0) {
+    assistantMsg.swipeImages = assistantMsg.swipeImages || [];
+    assistantMsg.swipeImages[swipeIdx] = images;
+    assistantMsg.images = images;
+  }
+  bubbleEl.innerHTML = renderThinkingHTML(thinking) + renderToolBlocksHTML(toolUse) + renderMarkdown(content) + renderGenImages(images);
+  postRenderProcessing(bubbleEl);
+  const msgsArea = document.getElementById('messagesArea');
+  if (msgsArea) msgsArea.scrollTop = msgsArea.scrollHeight;
+  updateMessageTokenMetadata(assistantMsg, swipeIdx);
+  debugLog('Response cache hit', {
+    model: entry.model,
+    hits: entry.hitCount || 0,
+    cachedAt: entry.cachedAt ? new Date(entry.cachedAt).toISOString() : ''
   });
 }
 
@@ -3009,6 +3370,55 @@ function switchSettingsTab(tabName, btn) {
   document.getElementById('settingsTab-' + tabName).classList.add('active');
 }
 
+function toggleCache(enabled) {
+  localStorage.setItem('llmCacheEnabled', enabled ? 'true' : 'false');
+  updateCacheStats();
+  showToast(enabled ? 'Response cache enabled.' : 'Response cache disabled.', 'info');
+}
+
+async function clearResponseCache() {
+  if (!confirm('Clear all cached responses?')) return;
+  try {
+    await cacheClear();
+    await updateCacheStats();
+    showToast('Response cache cleared.', 'success');
+  } catch (err) {
+    showToast('Could not clear cache: ' + (err.message || err), 'error');
+  }
+}
+
+async function cleanupExpiredCache() {
+  try {
+    const deleted = await cacheCleanupExpired();
+    await updateCacheStats();
+    showToast(deleted ? ('Removed ' + deleted + ' expired cache ' + (deleted === 1 ? 'entry.' : 'entries.')) : 'No expired cache entries.', 'info');
+  } catch (err) {
+    showToast('Cache cleanup failed: ' + (err.message || err), 'error');
+  }
+}
+
+async function updateCacheStats() {
+  const el = document.getElementById('cacheStats');
+  if (!el) return;
+  if (!db) {
+    el.textContent = 'Unavailable';
+    return;
+  }
+  el.textContent = 'Loading...';
+  try {
+    const stats = await cacheGetStats();
+    const parts = [
+      stats.count + ' ' + (stats.count === 1 ? 'entry' : 'entries'),
+      formatCacheBytes(stats.sizeBytes),
+      stats.hits + ' ' + (stats.hits === 1 ? 'hit' : 'hits')
+    ];
+    if (stats.expired) parts.push(stats.expired + ' expired');
+    el.textContent = parts.join(' | ');
+  } catch (err) {
+    el.textContent = 'Could not load';
+  }
+}
+
 function openSettings() {
   document.getElementById('setProxy').value = localStorage.getItem('llmProxyUrl') || '';
   document.getElementById('setKey').value = localStorage.getItem('llmApiKey') || '';
@@ -3052,6 +3462,9 @@ function openSettings() {
   if (debugIncludeText) debugIncludeText.checked = isDebugTextIncluded();
   renderDebugLogPreview();
   renderLocalUpdateStatus();
+  const cacheEnabled = document.getElementById('cacheEnabled');
+  if (cacheEnabled) cacheEnabled.checked = isResponseCacheEnabled();
+  updateCacheStats();
   renderSyncSettings();
 
   // Presets
@@ -4136,7 +4549,11 @@ async function resendAfterEdit() {
 
   await streamResponse(apiMessages, assistantMsg, 0, bubble, null, null);
 
-  extractMemories(apiMessages);
+  if (assistantMsg._responseCacheHit) {
+    delete assistantMsg._responseCacheHit;
+  } else {
+    extractMemories(apiMessages);
+  }
   if (conv) conv.updatedAt = Date.now();
   saveConversations();
   renderMessages();
@@ -4715,6 +5132,29 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
   let extra = {};
   try { extra = JSON.parse(localStorage.getItem('llmExtraParams') || '{}'); } catch(e) { console.warn('Extra params parse error:', e); }
   const exclude = (localStorage.getItem('llmExcludeParams') || '').split(',').map(s => s.trim()).filter(Boolean);
+
+  let responseCacheKey = '';
+  let responseCacheUserMessage = null;
+  let responseCacheSystemMessages = [];
+  if (isResponseCacheEnabled() && !prefixText) {
+    try {
+      const cacheParts = getResponseCacheRequestParts(apiMessages);
+      responseCacheUserMessage = cacheParts.userMessage;
+      responseCacheSystemMessages = cacheParts.systemMessages;
+      if (responseCacheUserMessage) {
+        responseCacheKey = await generateCacheKey(responseCacheUserMessage, model, responseCacheSystemMessages);
+        const cached = await cacheLookup(responseCacheKey);
+        if (cached) {
+          restoreCachedResponse(cached, assistantMsg, swipeIdx, bubbleEl);
+          showToast('Loaded cached response.', 'success');
+          return;
+        }
+      }
+    } catch (cacheErr) {
+      console.warn('Response cache lookup failed:', cacheErr);
+      responseCacheKey = '';
+    }
+  }
 
   abortController = new AbortController();
   streaming = true;
@@ -5890,6 +6330,25 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       }
       _suppressScrollFlag = false;
     }
+    if (responseCacheKey && fullText && !abortController?.signal?.aborted) {
+      try {
+        await cacheStore(buildResponseCacheEntry(
+          responseCacheKey,
+          responseCacheUserMessage,
+          responseCacheSystemMessages,
+          model,
+          format,
+          fullText,
+          thinkingText,
+          toolBlocks,
+          assistantMsg,
+          swipeIdx
+        ));
+        debugLog('Response cached', { model, format, cacheKey: responseCacheKey });
+      } catch (cacheErr) {
+        console.warn('Response cache storage failed:', cacheErr);
+      }
+    }
   } catch (e) {
     if (e.name === 'AbortError') {
       if (!fullText) fullText = '(stopped)';
@@ -6064,7 +6523,11 @@ async function sendMessage() {
 
   await streamResponse(apiMessages, assistantMsg, 0, bubble, overrideModel, null);
 
-  extractMemories(apiMessages);
+  if (assistantMsg._responseCacheHit) {
+    delete assistantMsg._responseCacheHit;
+  } else {
+    extractMemories(apiMessages);
+  }
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
   renderMessages();
@@ -6102,6 +6565,7 @@ async function regenerate() {
   }
 
   await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, null);
+  if (msg._responseCacheHit) delete msg._responseCacheHit;
 
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
@@ -6138,6 +6602,7 @@ async function continueMessage() {
   const bubble = lastWrapper.querySelector('.msg-bubble');
 
   await streamResponse(apiMessages, msg, msg.swipeIndex, bubble, null, existingText);
+  if (msg._responseCacheHit) delete msg._responseCacheHit;
 
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
@@ -7970,6 +8435,9 @@ const __windowBridge = {
   isLocalRuntime,
   checkLocalUpdateStatus,
   renderLocalUpdateStatus,
+  downloadUpdate,
+  performSelfUpdate,
+  showUpdateInstructions,
   showToast,
   applyTheme,
   applyMsgOverrides,
@@ -8033,10 +8501,22 @@ const __windowBridge = {
   updateTokenInfo,
   openDB,
   idbPut,
+  idbGet,
   idbGetAll,
   idbDelete,
   idbClear,
   idbPutAll,
+  generateCacheKey,
+  cacheLookup,
+  cacheStore,
+  cacheDelete,
+  cacheClear,
+  cacheCleanupExpired,
+  cacheGetStats,
+  toggleCache,
+  clearResponseCache,
+  cleanupExpiredCache,
+  updateCacheStats,
   genId,
   saveConversations,
   debouncedSave,

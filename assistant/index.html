@@ -41,7 +41,7 @@
   <div class="sidebar-footer">
     made by <a href="https://platberlitz.github.io/" target="_blank">purachina</a>
     <span class="footer-cta">click for more stuff from me</span>
-    <button class="update-status" id="updateStatus" type="button" onclick="checkLocalUpdateStatus(true)" hidden></button>
+    <div class="update-status" id="updateStatus" hidden></div>
   </div>
 </div>
 
@@ -398,6 +398,19 @@
         <button class="btn btn-secondary debug-inline-btn" type="button" onclick="checkLocalUpdateStatus(true)">Check</button>
       </div>
       <div class="settings-note" id="localUpdateDetails">Update checks only appear while Synapse is running locally.</div>
+      <div class="modal-section">Response Caching</div>
+      <label class="toggle-row">
+        <input type="checkbox" id="cacheEnabled" onchange="toggleCache(this.checked)">
+        Enable Response Cache
+        <span class="toggle-hint">7 day TTL</span>
+      </label>
+      <div class="debug-status-row">
+        <span class="settings-stat" id="cacheStats">Loading...</span>
+      </div>
+      <div class="debug-actions">
+        <button class="btn btn-secondary" type="button" onclick="clearResponseCache()">Clear cache</button>
+        <button class="btn btn-secondary" type="button" onclick="cleanupExpiredCache()">Cleanup expired</button>
+      </div>
       <div class="modal-section">Recent Logs</div>
       <pre class="debug-log-preview" id="debugLogPreview">No debug events yet.</pre>
       <div class="debug-actions">
@@ -433,6 +446,17 @@
     </div>
     <div class="modal-actions" style="margin-top:16px">
       <button class="btn btn-primary" onclick="closeModal('shortcutsModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Update Instructions Modal -->
+<div class="modal-overlay" id="updateInstructionsModal" aria-hidden="true">
+  <div class="modal update-instructions-modal" aria-labelledby="updateInstructionsTitle">
+    <h2 id="updateInstructionsTitle">Update Instructions</h2>
+    <div class="modal-body" id="updateInstructionsBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" type="button" onclick="closeModal('updateInstructionsModal')">Close</button>
     </div>
   </div>
 </div>
