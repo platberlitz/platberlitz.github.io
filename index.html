@@ -542,6 +542,28 @@
       font-weight: 600;
     }
 
+    .preset-release-art {
+      display: block;
+      margin-top: 1rem;
+      border: 1px solid #2a3445;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #0f1019;
+      line-height: 0;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .preset-release-art:hover {
+      border-color: #415069;
+      box-shadow: 0 2px 18px rgba(84, 160, 255, 0.1);
+    }
+
+    .preset-release-art img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
     .preset-downloads {
       display: flex;
       gap: 0.75rem;
@@ -1137,7 +1159,7 @@
     <img class="hero-favicon" src="favicon-256.png" alt="" aria-hidden="true" decoding="async">
     <h1 class="rainbow">welcome :3</h1>
     <p class="subtitle">purachina's stuff</p>
-    <p class="last-updated">Last Updated May 12, 2026</p>
+    <p class="last-updated">Last Updated May 21, 2026</p>
     <div class="links">
       <a href="https://platberlitz.github.io/platinum-startpage/" class="glow-pill startpage-link">startpage<span class="link-info">localStorage customisable startpage</span></a>
       <a href="assistant/" class="glow-pill synapse-link">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
@@ -1185,22 +1207,25 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 13.1</p>
+          <p class="preset-version">Latest Version: 13.2</p>
           <div class="preset-desc">
-            <p>This is a universal preset that should work with most LLMs. The 13.1 main prompt is more assertive about the style I actually want and lands around ~900 tokens depending on tokeniser. Grounded Prose sits in post-history at around ~400 tokens. Tested on just about most LLMs I can get my hands on - Opus, Gemini, GPT, GLM 4.6, 4.7, 5, Kimi K2.5, Qwen 3.5, small models like Rocinante 12B, Cydonia 24B, and even WizardLM 8x22B. Even Bielik 11B, which I randomly found on Nvidia NIM.</p>
-            <p>IMPORTANT! If you're using a smaller model, you can turn off Post-History Instructions. It will probably mess it up anyway, it has a lot of *avoid* and *banned* statements that will just make the LLM do it more. In 13.1, Post-History Instructions are back to Relative, System, which seems to adhere better with None/Merge post-processing.</p>
+            <p>This is a universal preset that should work with most LLMs. The 13.2 main prompt is about ~1200 tokens depending on tokeniser, with stronger narration voice and a more neutral default. Grounded Prose is about ~400 tokens, but is no longer really required and is now off by default. Tested on just about most LLMs I can get my hands on - Opus, Gemini, GPT, GLM 4.6, 4.7, 5, Kimi K2.5, Qwen 3.5, small models like Rocinante 12B, Cydonia 24B, and even WizardLM 8x22B. Even Bielik 11B, which I randomly found on Nvidia NIM.</p>
+            <p>IMPORTANT! If you're using a smaller model, keep Post-History Instructions turned off. It will probably mess it up anyway, it has a lot of *avoid* and *banned* statements that will just make the LLM do it more. 13.2 also includes a simplified ~600-token main prompt for smaller models and the token-conscious.</p>
             <p>The idea behind the prompt was that I like to make the LLM go the direction I want it to, and I wanted it to write for me, since I'm lazy. In the end, it turned into a preset that adheres to a writing style I personally enjoy. Instead of simply being functional, I wanted the prose, the world, and the characters to sound lively, while removing as much slop as I possibly can.</p>
-            <p>The 13.1 style is stronger and blunter, so read through the main prompt if you want a softer version. The wording may increase negativity bias a bit. If you want warmer or nicer characters, reinforce that in Optional User Instructions.</p>
+            <p>The 13.2 style has more personality. If the prose feels too cheeky, remove the Narration Voice section in the Main Prompt. If you want warmer or nicer characters, reinforce that in Optional User Instructions.</p>
             <p>Turn off reasoning if, like me, you're not a fan of waiting, but it's not necessary. This preset works regardless, even in terms of anti-slop.</p>
             <p>I designed the preset to be as easily customisable as possible, so hopefully that works out for your personal use case! All trackers are optional and token-efficient. My intent for them is actually not for the LLM, but for me, since I like pretty things. It doesn't really hurt the LLM if you don't activate all of them (I mean, you can, I did it, but it's probably not optimal), but you don't need them, either.</p>
             <ul>
               <li><strong>SillyTavern version</strong>: the full preset with all toggles: trackers, randomisers, and everything else</li>
               <li><strong>SillyBunny version</strong>: a trimmed version with only the Main, Primary Toggles, and Prefills; trackers and randomisers are now built into SillyBunny itself</li>
             </ul>
+            <a class="preset-release-art" href="#lb-preset-13-2" aria-label="Open Pura's Director Preset 13.2 release art">
+              <img src="preset/screenshots/pura-director-preset-13.2.jpg" alt="Pura's Director Preset 13.2 release art" loading="lazy">
+            </a>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%2013.1%20(SillyTavern).json" download="Pura's Director Preset 13.1 (SillyTavern).json">Download (SillyTavern)</a>
-            <a href="preset/Pura's%20Director%20Preset%2013.1%20(SillyBunny).json" download="Pura's Director Preset 13.1 (SillyBunny).json">Download (SillyBunny)</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.2%20(SillyTavern).json" download="Pura's Director Preset 13.2 (SillyTavern).json">Download (SillyTavern)</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.2%20(SillyBunny).json" download="Pura's Director Preset 13.2 (SillyBunny).json">Download (SillyBunny)</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -1228,7 +1253,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The main brain of the preset, now more assertive about the blunt, grounded style. It treats you like the director, slows GPT 5.5 down a little, pushes fresh consequence over filler, and attacks echoing, mouth open-close cycling, and "not a question" loops at the source.</p>
+                <p class="option-card-copy">The main brain of the preset, now about ~1200 tokens with a stronger narration voice and a more neutral default. It treats you like the director, pushes fresh consequence over filler, and attacks echoing, mouth open-close cycling, and "not a question" loops at the source.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1238,7 +1263,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The anti-slop post-history layer, back to Relative, System for better adherence with None/Merge post-processing. It pushes concrete detail, actual pressure shifts, natural contractions, and observable behavior so the writing feels more like people and less like an LLM reporting statistics about a scene.</p>
+                <p class="option-card-copy">The anti-slop post-history layer. In 13.2 it is off by default because the main prompt carries more of the style now, but it is still there if ozone, stock metaphors, or familiar LLM tics start creeping back into a chat.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1258,7 +1283,17 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Three mutually exclusive response-length nudges: Short, Medium, and Long. Pick only one if you want a desired length. Choose none to leave length purely flexible and scene-dependent.</p>
+                <p class="option-card-copy">Four response-length nudges: Flexible, Short, Medium, and Long. Flexible is on by default, while Short, Medium, and Long now use paragraph ranges instead of word counts. Pick only one.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Simplified Director Main Prompt</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">A shorter ~600-token main prompt for smaller models and token-conscious setups. It keeps the core world logic, direct style, and anti-echoing pressure without carrying the full nuance of the larger prompt.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1278,7 +1313,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">An extra injection slot for your own preferences. Good for reinforcing warmer characters if 13.1 feels too sharp, or for adding relationship rules, special formatting requests, and recurring scene-direction notes you want the model to honor more strongly.</p>
+                <p class="option-card-copy">An extra injection slot for your own preferences. Good for reinforcing warmer characters if 13.2 feels too sharp, or for adding relationship rules, special formatting requests, and recurring scene-direction notes you want the model to honor more strongly.</p>
               </div>
             </div>
           </div>
@@ -1294,7 +1329,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Makes the model write everyone, including you. The 13.1 wording is shorter and stricter about fresh action, reaction, and cutting at the first meaningful choice point, which should reduce user-echoing even when the model has been writing for you for a while.</p>
+                <p class="option-card-copy">Makes the model write everyone, including you. The newer wording stays strict about fresh action, reaction, and cutting at the first meaningful choice point, which should reduce user-echoing even when the model has been writing for you for a while.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1304,7 +1339,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The default anti-overlap toggle. The 13.1 wording is trimmed and more direct: write everyone except you, add genuinely new pressure or information, then stop the moment the next move belongs to the user.</p>
+                <p class="option-card-copy">The default anti-overlap toggle. It tells the model to write everyone except you, add genuinely new pressure or information, then stop the moment the next move belongs to the user.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1388,13 +1423,13 @@
               </div>
               <div class="option-card">
                 <div class="option-card-head">
-                  <div class="option-card-title">Difficulty Increase</div>
+                  <div class="option-card-title">Nightmare Difficulty Increase</div>
                   <div class="option-legend">
                     <span class="option-badge option-badge-st">SillyTavern preset</span>
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Turns the world meaner and harder to move. Trust becomes conditional, characters protect their interests first, and good outcomes have to be earned through leverage, persistence, or actual sacrifice.</p>
+                <p class="option-card-copy">Turns the world meaner and harder to move. The 13.2 wording is more direct: trust becomes conditional, characters protect their interests first, and good outcomes have to be earned through leverage, persistence, or actual sacrifice.</p>
               </div>
             </div>
           </div>
@@ -1436,7 +1471,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">A structured header for location, time, and atmosphere whenever the scene actually changes. The 13.1 wording clarifies that it belongs at the top only on real setting, time, or location shifts, not every ordinary reply.</p>
+                <p class="option-card-copy">A structured header for location, time, and atmosphere whenever the scene actually changes. It belongs at the top only on real setting, time, or location shifts, not every ordinary reply.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1466,7 +1501,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Keeps tabs on quests, promises, threats, deadlines, and loose threads. It only updates when something is added, resolved, or fails, so the list stays useful instead of turning into a second transcript.</p>
+                <p class="option-card-copy">Keeps tabs on quests, promises, threats, deadlines, and loose threads. It only updates when something is added, resolved, or fails, and 13.2 clarifies that low-stakes items should be ignored.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1476,7 +1511,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Awards one-off milestone tags for scenes that feel memorable enough to deserve it. The 13.1 wording clarifies that most scenes should receive nothing, with a maximum of one achievement when a moment is actually significant or entertaining.</p>
+                <p class="option-card-copy">Awards one-off milestone tags for scenes that feel memorable enough to deserve it. Most scenes should receive nothing, with a maximum of one achievement when a moment is actually significant or entertaining.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1689,6 +1724,11 @@
                   <td data-label="Recommended Post Processing">Any</td>
                 </tr>
                 <tr>
+                  <td data-label="Model">Gemini 3.5 Flash</td>
+                  <td data-label="Opinion">Better than Gemini 3.1 Pro and follows instructions very well. It's like Gemma 4 but with a bigger knowledge base. It's more expensive, so... is it worth it for the price? Who knows. It's fun though. I get 100+ messages pretty often with it.</td>
+                  <td data-label="Recommended Post Processing">None/Merge</td>
+                </tr>
+                <tr>
                   <td data-label="Model">Gemini 3 Flash</td>
                   <td data-label="Opinion">This was better for the first month. It seems to have gotten worse in instruction following, going for 'knuckles turning pale' a lot despite obviously thinking. The funny part is it's still much, much better than Gemini 3.1 Pro Preview. It's also faster. It's still very knowledgeable, so it's worth trying.</td>
                   <td data-label="Recommended Post Processing">None/Merge</td>
@@ -1719,6 +1759,8 @@
           <h2 class="preset-title">Previous Preset Versions</h2>
           <p class="preset-version">Older stable releases</p>
           <div class="preset-downloads" id="previous-versions-list">
+            <a href="preset/Pura's%20Director%20Preset%2013.1%20(SillyTavern).json" download="Pura's Director Preset 13.1 (SillyTavern).json">Preset 13.1 (SillyTavern)</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.1%20(SillyBunny).json" download="Pura's Director Preset 13.1 (SillyBunny).json">Preset 13.1 (SillyBunny)</a>
             <a href="preset/Pura's%20Director%20Preset%2013.0%20(SillyTavern).json" download="Pura's Director Preset 13.0 (SillyTavern).json">Preset 13.0 (SillyTavern)</a>
             <a href="preset/Pura's%20Director%20Preset%2013.0%20(SillyBunny).json" download="Pura's Director Preset 13.0 (SillyBunny).json">Preset 13.0 (SillyBunny)</a>
             <a href="preset/Pura's%20Director%20Preset%2011.5.json" download="Pura's Director Preset 11.5.json">Preset 11.5</a>
@@ -1819,6 +1861,19 @@
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">13.2</h3>
+          <ul>
+            <li>Main Prompt is now ~1200 tokens with a much stronger style, loosely influenced by Pseudonymous Bosch and Albert Camus. If the cheekier narration is not for you, remove the Narration Voice section in the Main Prompt.</li>
+            <li>Added a simplified ~600-token Main Prompt for smaller models and token-conscious setups.</li>
+            <li>Grounded Prose Rules is no longer required and is turned off by default. Turn it back on if familiar anti-slop issues start appearing.</li>
+            <li>Rewrote Friction Mode, Nightmare Difficulty Increase, NSFW Mode, and Gooner Mode to be more assertive and direct.</li>
+            <li>Adjusted Gooner Mode so GLM 5.1 is less likely to treat it as contradicting the main prompt.</li>
+            <li>Rewrote GPT Assistant Prefill to be less censored, though GPT 5.5 may still vary.</li>
+            <li>Main Prompt is now more neutral by default rather than always pushing a killer GM tone.</li>
+            <li>Added a Flexible Length Toggle, on by default. Short, Medium, and Long now use paragraph ranges instead of word counts.</li>
+            <li>Clarified tracker behavior so enabled trackers are considered consistently, with Pending Events limited to important events.</li>
+          </ul>
+
           <h3 class="changelog-version">13.1</h3>
           <ul>
             <li>Made the Main Prompt more assertive about the actual style I want. It is now about ~900 tokens and has been working well in testing.</li>
@@ -2832,8 +2887,8 @@
           </div>
           <div class="preset-downloads">
             <a href="https://github.com/platberlitz/SillyBunny">GitHub</a>
-            <a href="preset/Pura's%20Director%20Preset%2013.1%20(SillyBunny).json" download="Pura's Director Preset 13.1 (SillyBunny).json">Download SB Preset</a>
-            <a href="preset/Pura's%20Director%20Preset%2013.1%20(SillyTavern).json" download="Pura's Director Preset 13.1 (SillyTavern).json">Download ST Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.2%20(SillyBunny).json" download="Pura's Director Preset 13.2 (SillyBunny).json">Download SB Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.2%20(SillyTavern).json" download="Pura's Director Preset 13.2 (SillyTavern).json">Download ST Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -3005,6 +3060,7 @@
   <a class="lightbox" id="lb-sb-11" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.6.0.png" alt="SillyBunny mobile Customize"></a>
   <a class="lightbox" id="lb-sb-12" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.6.0.png" alt="SillyBunny mobile Agents"></a>
   <a class="lightbox" id="lb-sb-13" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.6.0.png" alt="SillyBunny mobile Characters"></a>
+  <a class="lightbox" id="lb-preset-13-2" href="#close"><img src="preset/screenshots/pura-director-preset-13.2.jpg" alt="Pura's Director Preset 13.2 release art"></a>
 
   <script>
     (function () {
@@ -3014,7 +3070,7 @@
       const owner = "platberlitz";
       const repo = "platberlitz.github.io";
       const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/preset`;
-      const currentPresetVersion = "13.1";
+      const currentPresetVersion = "13.2";
       const presetPattern = /^Pura's Director Preset ([0-9]+(?:\.[0-9]+)*)(?: \((SillyTavern|SillyBunny)\))?\.json$/;
 
       function compareVersionsDesc(a, b) {
