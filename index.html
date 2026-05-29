@@ -1159,7 +1159,7 @@
     <img class="hero-favicon" src="favicon-256.png" alt="" aria-hidden="true" decoding="async">
     <h1 class="rainbow">welcome :3</h1>
     <p class="subtitle">purachina's stuff</p>
-    <p class="last-updated">Last Updated May 21, 2026</p>
+    <p class="last-updated">Last Updated May 29, 2026</p>
     <div class="links">
       <a href="https://platberlitz.github.io/platinum-startpage/" class="glow-pill startpage-link">startpage<span class="link-info">localStorage customisable startpage</span></a>
       <a href="assistant/" class="glow-pill synapse-link">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
@@ -1207,25 +1207,27 @@
       <div class="tab-content tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
-          <p class="preset-version">Latest Version: 13.2</p>
+          <p class="preset-version">Latest Version: 13.3</p>
           <div class="preset-desc">
-            <p>This is a universal preset that should work with most LLMs. The 13.2 main prompt is about ~1200 tokens depending on tokeniser, with stronger narration voice and a more neutral default. Grounded Prose is about ~400 tokens, but is no longer really required and is now off by default. Tested on just about most LLMs I can get my hands on - Opus, Gemini, GPT, GLM 4.6, 4.7, 5, Kimi K2.5, Qwen 3.5, small models like Rocinante 12B, Cydonia 24B, and even WizardLM 8x22B. Even Bielik 11B, which I randomly found on Nvidia NIM.</p>
-            <p>IMPORTANT! If you're using a smaller model, keep Post-History Instructions turned off. It will probably mess it up anyway, it has a lot of *avoid* and *banned* statements that will just make the LLM do it more. 13.2 also includes a simplified ~600-token main prompt for smaller models and the token-conscious.</p>
+            <p>This is a universal preset that should work with most LLMs. The 13.3 main prompt is about 750-800 tokens depending on tokeniser, tighter, less contradictory, and more literary. Grounded Prose Rules is about 450-500 tokens, expanded and less dry, but still optional. Tested on just about most LLMs I can get my hands on: Opus, Gemini, GPT, GLM 4.6, 4.7, 5, Kimi K2.5, Qwen 3.5, small models like Rocinante 12B, Cydonia 24B, and even WizardLM 8x22B. Even Bielik 11B, which I randomly found on Nvidia NIM.</p>
+            <p>IMPORTANT! If you're using a smaller model, keep Post-History Instructions turned off. It will probably mess it up anyway, it has a lot of *avoid* and *banned* statements that will just make the LLM do it more.</p>
             <p>The idea behind the prompt was that I like to make the LLM go the direction I want it to, and I wanted it to write for me, since I'm lazy. In the end, it turned into a preset that adheres to a writing style I personally enjoy. Instead of simply being functional, I wanted the prose, the world, and the characters to sound lively, while removing as much slop as I possibly can.</p>
-            <p>The 13.2 style has more personality. If the prose feels too cheeky, remove the Narration Voice section in the Main Prompt. If you want warmer or nicer characters, reinforce that in Optional User Instructions.</p>
+            <p>Prose Voice is now its own narration voice layer, with Disabled as the default. Options are Conspiratorial Absurdity, Bureaucratic Irony, Cosmic Playbook, Beige Undercurrents, Cruel Realism, Solemn Witness, Grand Satirical Stage, and Randomised.</p>
+            <p>Reasoning Encouragement is there for GLM and its fake thinking. It is not a custom CoT, just a toggle for models that pretend they thought when they did not. Write for User and Don&apos;t Write for User are shorter now, and the tracker wording is firmer.</p>
+            <p>I also tried to make GPT 5.5 less wordy and less like it thinks every exchange needs Joss Whedon/Marvel banter. This may depend on the model behaving like a person that day, so good luck to all of us.</p>
             <p>Turn off reasoning if, like me, you're not a fan of waiting, but it's not necessary. This preset works regardless, even in terms of anti-slop.</p>
             <p>I designed the preset to be as easily customisable as possible, so hopefully that works out for your personal use case! All trackers are optional and token-efficient. My intent for them is actually not for the LLM, but for me, since I like pretty things. It doesn't really hurt the LLM if you don't activate all of them (I mean, you can, I did it, but it's probably not optimal), but you don't need them, either.</p>
             <ul>
               <li><strong>SillyTavern version</strong>: the full preset with all toggles: trackers, randomisers, and everything else</li>
               <li><strong>SillyBunny version</strong>: a trimmed version with only the Main, Primary Toggles, and Prefills; trackers and randomisers are now built into SillyBunny itself</li>
             </ul>
-            <a class="preset-release-art" href="#lb-preset-13-2" aria-label="Open Pura's Director Preset 13.2 release art">
-              <img src="preset/screenshots/pura-director-preset-13.2.jpg" alt="Pura's Director Preset 13.2 release art" loading="lazy">
+            <a class="preset-release-art" href="#lb-preset-13-3" aria-label="Open Pura's Director Preset 13.3 release art">
+              <img src="preset/screenshots/pura-director-preset-13.3.png" alt="Pura's Director Preset 13.3 release art" loading="lazy">
             </a>
           </div>
           <div class="preset-downloads">
-            <a href="preset/Pura's%20Director%20Preset%2013.2%20(SillyTavern).json" download="Pura's Director Preset 13.2 (SillyTavern).json">Download (SillyTavern)</a>
-            <a href="preset/Pura's%20Director%20Preset%2013.2%20(SillyBunny).json" download="Pura's Director Preset 13.2 (SillyBunny).json">Download (SillyBunny)</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.3%20(SillyTavern).json" download="Pura's Director Preset 13.3 (SillyTavern).json">Download (SillyTavern)</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.3%20(SillyBunny).json" download="Pura's Director Preset 13.3 (SillyBunny).json">Download (SillyBunny)</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -1253,7 +1255,17 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The main brain of the preset, now about ~1200 tokens with a stronger narration voice and a more neutral default. It treats you like the director, pushes fresh consequence over filler, and attacks echoing, mouth open-close cycling, and "not a question" loops at the source.</p>
+                <p class="option-card-copy">The main brain of the preset, now about 750-800 tokens. It is tighter, less contradictory, and more literary, while still treating you like the director and attacking echoing, mouth open-close cycling, and "not a question" loops at the source.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Prose Voice</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">Narration voice presets with Disabled as the default: Conspiratorial Absurdity, Bureaucratic Irony, Cosmic Playbook, Beige Undercurrents, Cruel Realism, Solemn Witness, Grand Satirical Stage, and Randomised. It says Prose Voice in-text because models love taking &quot;narrator&quot; too literally.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1263,7 +1275,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The anti-slop post-history layer. In 13.2 it is off by default because the main prompt carries more of the style now, but it is still there if ozone, stock metaphors, or familiar LLM tics start creeping back into a chat.</p>
+                <p class="option-card-copy">The optional anti-slop post-history layer, now about 450-500 tokens. 13.3 expands it and makes it less dry when enabled, but smaller models should still keep Post-History Instructions off unless you enjoy watching banned phrases reproduce.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1313,7 +1325,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">An extra injection slot for your own preferences. Good for reinforcing warmer characters if 13.2 feels too sharp, or for adding relationship rules, special formatting requests, and recurring scene-direction notes you want the model to honor more strongly.</p>
+                <p class="option-card-copy">An extra injection slot for your own preferences. Good for reinforcing warmer characters if 13.3 feels too sharp, or for adding relationship rules, special formatting requests, and recurring scene-direction notes you want the model to honor more strongly.</p>
               </div>
             </div>
           </div>
@@ -1329,7 +1341,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Makes the model write everyone, including you. The newer wording stays strict about fresh action, reaction, and cutting at the first meaningful choice point, which should reduce user-echoing even when the model has been writing for you for a while.</p>
+                <p class="option-card-copy">Makes the model write everyone, including you. The 13.3 wording is shorter and stricter about fresh action, clean reactions, and stopping at the first meaningful choice point.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1339,7 +1351,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The default anti-overlap toggle. It tells the model to write everyone except you, add genuinely new pressure or information, then stop the moment the next move belongs to the user.</p>
+                <p class="option-card-copy">The default anti-overlap toggle. The 13.3 wording is shorter: write everyone except you, add real pressure or information, then stop when the next move belongs to the user.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1429,7 +1441,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Turns the world meaner and harder to move. The 13.2 wording is more direct: trust becomes conditional, characters protect their interests first, and good outcomes have to be earned through leverage, persistence, or actual sacrifice.</p>
+                <p class="option-card-copy">Turns the world meaner and harder to move. The current wording is direct: trust becomes conditional, characters protect their interests first, and good outcomes have to be earned through leverage, persistence, or actual sacrifice.</p>
               </div>
             </div>
           </div>
@@ -1456,6 +1468,16 @@
                   </div>
                 </div>
                 <p class="option-card-copy">A GPT-specific contemplation prefill for explicit scenes. It tries to keep GPT grounded and physically specific when the model would otherwise get precious, evasive, or weirdly sterile.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Reasoning Encouragement</div>
+                  <div class="option-legend">
+                    <span class="option-badge option-badge-st">SillyTavern preset</span>
+                    <span class="option-badge option-badge-sb">SillyBunny preset</span>
+                  </div>
+                </div>
+                <p class="option-card-copy">A small GLM nudge for fake thinking. It asks for actual internal deliberation before the reply without turning the preset into a custom CoT ritual. Leave it off if it slows you down or does nothing useful.</p>
               </div>
             </div>
           </div>
@@ -1501,7 +1523,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Keeps tabs on quests, promises, threats, deadlines, and loose threads. It only updates when something is added, resolved, or fails, and 13.2 clarifies that low-stakes items should be ignored.</p>
+                <p class="option-card-copy">Keeps tabs on quests, promises, threats, deadlines, and loose threads. It only updates when something is added, resolved, or fails, and the current wording makes it clearer that low-stakes items should be ignored.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1759,6 +1781,8 @@
           <h2 class="preset-title">Previous Preset Versions</h2>
           <p class="preset-version">Older stable releases</p>
           <div class="preset-downloads" id="previous-versions-list">
+            <a href="preset/Pura's%20Director%20Preset%2013.2%20(SillyTavern).json" download="Pura's Director Preset 13.2 (SillyTavern).json">Preset 13.2 (SillyTavern)</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.2%20(SillyBunny).json" download="Pura's Director Preset 13.2 (SillyBunny).json">Preset 13.2 (SillyBunny)</a>
             <a href="preset/Pura's%20Director%20Preset%2013.1%20(SillyTavern).json" download="Pura's Director Preset 13.1 (SillyTavern).json">Preset 13.1 (SillyTavern)</a>
             <a href="preset/Pura's%20Director%20Preset%2013.1%20(SillyBunny).json" download="Pura's Director Preset 13.1 (SillyBunny).json">Preset 13.1 (SillyBunny)</a>
             <a href="preset/Pura's%20Director%20Preset%2013.0%20(SillyTavern).json" download="Pura's Director Preset 13.0 (SillyTavern).json">Preset 13.0 (SillyTavern)</a>
@@ -1861,6 +1885,18 @@
 
       <div class="tab-content tab-content-changelog">
         <div class="changelog">
+          <h3 class="changelog-version">13.3</h3>
+          <ul>
+            <li>Rewrote the Main Prompt tighter, less contradictory, and more literary. It is now about 750-800 tokens depending on tokeniser.</li>
+            <li>Expanded Grounded Prose Rules to about 450-500 tokens and made it less dry when enabled.</li>
+            <li>Added Reasoning Encouragement for GLM doing fake thinking. It is not a custom CoT, just a small nudge for models that pretend they reasoned.</li>
+            <li>Made Don&apos;t Write for User and Write for User more concise.</li>
+            <li>Added Prose Voice options with Disabled as the default: Conspiratorial Absurdity, Bureaucratic Irony, Cosmic Playbook, Beige Undercurrents, Cruel Realism, Solemn Witness, Grand Satirical Stage, and Randomised.</li>
+            <li>Called it Prose Voice in-text so the model is less likely to start saying &quot;the narrator&quot; like it discovered a new toy.</li>
+            <li>Tried to make GPT 5.5 less wordy, or at least less like it ate Joss Whedon and Marvel movie scripts as its primary writing style source.</li>
+            <li>Strengthened tracker wording so enabled trackers should behave more consistently.</li>
+          </ul>
+
           <h3 class="changelog-version">13.2</h3>
           <ul>
             <li>Main Prompt is now ~1200 tokens with a much stronger style, loosely influenced by Pseudonymous Bosch and Albert Camus. If the cheekier narration is not for you, remove the Narration Voice section in the Main Prompt.</li>
@@ -2891,8 +2927,8 @@
           </div>
           <div class="preset-downloads">
             <a href="https://github.com/platberlitz/SillyBunny">GitHub</a>
-            <a href="preset/Pura's%20Director%20Preset%2013.2%20(SillyBunny).json" download="Pura's Director Preset 13.2 (SillyBunny).json">Download SB Preset</a>
-            <a href="preset/Pura's%20Director%20Preset%2013.2%20(SillyTavern).json" download="Pura's Director Preset 13.2 (SillyTavern).json">Download ST Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.3%20(SillyBunny).json" download="Pura's Director Preset 13.3 (SillyBunny).json">Download SB Preset</a>
+            <a href="preset/Pura's%20Director%20Preset%2013.3%20(SillyTavern).json" download="Pura's Director Preset 13.3 (SillyTavern).json">Download ST Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -3064,6 +3100,7 @@
   <a class="lightbox" id="lb-sb-11" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.6.0.png" alt="SillyBunny mobile Customize"></a>
   <a class="lightbox" id="lb-sb-12" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.6.0.png" alt="SillyBunny mobile Agents"></a>
   <a class="lightbox" id="lb-sb-13" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.6.0.png" alt="SillyBunny mobile Characters"></a>
+  <a class="lightbox" id="lb-preset-13-3" href="#close"><img src="preset/screenshots/pura-director-preset-13.3.png" alt="Pura's Director Preset 13.3 release art"></a>
   <a class="lightbox" id="lb-preset-13-2" href="#close"><img src="preset/screenshots/pura-director-preset-13.2.jpg" alt="Pura's Director Preset 13.2 release art"></a>
 
   <script>
@@ -3074,7 +3111,7 @@
       const owner = "platberlitz";
       const repo = "platberlitz.github.io";
       const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/preset`;
-      const currentPresetVersion = "13.2";
+      const currentPresetVersion = "13.3";
       const presetPattern = /^Pura's Director Preset ([0-9]+(?:\.[0-9]+)*)(?: \((SillyTavern|SillyBunny)\))?\.json$/;
 
       function compareVersionsDesc(a, b) {
