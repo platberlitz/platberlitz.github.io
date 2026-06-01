@@ -426,6 +426,8 @@
     #theme-dark:focus-visible ~ .theme-tab-labels label[for="theme-dark"],
     #theme-light:focus-visible ~ .theme-tab-labels label[for="theme-light"],
     #card-subtab-genshin:focus-visible ~ .card-subtab-labels label[for="card-subtab-genshin"],
+    #card-subtab-limbus:focus-visible ~ .card-subtab-labels label[for="card-subtab-limbus"],
+    #card-subtab-wuwa:focus-visible ~ .card-subtab-labels label[for="card-subtab-wuwa"],
     #card-subtab-oc:focus-visible ~ .card-subtab-labels label[for="card-subtab-oc"] {
       outline: 2px solid #8fb8df;
       outline-offset: 4px;
@@ -462,10 +464,13 @@
     /* Card sub-tabs */
     .card-subtab-content { display: none; }
     #card-subtab-genshin:checked ~ .card-subtab-content-genshin { display: block; }
+    #card-subtab-limbus:checked ~ .card-subtab-content-limbus { display: block; }
+    #card-subtab-wuwa:checked ~ .card-subtab-content-wuwa { display: block; }
     #card-subtab-oc:checked ~ .card-subtab-content-oc { display: block; }
 
     .card-subtab-labels {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
       margin-bottom: 1.5rem;
       justify-content: center;
@@ -493,6 +498,8 @@
     }
 
     #card-subtab-genshin:checked ~ .card-subtab-labels label[for="card-subtab-genshin"],
+    #card-subtab-limbus:checked ~ .card-subtab-labels label[for="card-subtab-limbus"],
+    #card-subtab-wuwa:checked ~ .card-subtab-labels label[for="card-subtab-wuwa"],
     #card-subtab-oc:checked ~ .card-subtab-labels label[for="card-subtab-oc"] {
       background: rgba(31, 42, 54, 0.95);
       border-color: #5a6b86;
@@ -1060,16 +1067,93 @@
 
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: clamp(0.85rem, 2vw, 1.2rem);
+      align-items: start;
+    }
+
+    .card-section-intro {
+      max-width: 62ch;
+      margin: 0 auto 1.25rem;
+      color: #89aa99;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      text-align: center;
+    }
+
+    .card-section-intro strong {
+      color: #d8eee2;
+      font-weight: 600;
+    }
+
+    .card-item {
+      display: grid;
+      gap: 0.55rem;
+      padding: 0.65rem;
+      color: inherit;
+      text-decoration: none;
+      background: rgba(15, 17, 27, 0.68);
+      border: 1px solid rgba(42, 52, 69, 0.82);
+      border-radius: 14px;
+      transition: transform 0.22s ease-out, border-color 0.22s ease-out, background 0.22s ease-out, box-shadow 0.22s ease-out;
+    }
+
+    .card-item:hover {
+      transform: translateY(-2px);
+      background: rgba(18, 22, 32, 0.9);
+      border-color: #465b77;
+      box-shadow: 0 2px 18px rgba(84, 160, 255, 0.09);
+    }
+
+    .card-item:focus-visible {
+      outline: 2px solid #8fb8df;
+      outline-offset: 4px;
+      border-color: #8ea99b;
+      box-shadow: 0 0 0 3px rgba(84, 160, 255, 0.24), 0 0 18px rgba(84, 160, 255, 0.16);
+    }
+
+    .card-item img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      display: block;
+      background: #0a0a0f;
+      border: 1px solid rgba(42, 52, 69, 0.9);
+      border-radius: 8px;
+      transition: border-color 0.22s ease-out;
+    }
+
+    .card-item:hover img {
+      border-color: rgba(114, 142, 180, 0.78);
+    }
+
+    .card-caption {
+      display: grid;
+      gap: 0.18rem;
+      color: #789889;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .card-caption strong {
+      color: #d8eee2;
+      font-size: 0.84rem;
+      line-height: 1.3;
+      font-weight: 600;
+    }
+
+    .card-copy {
+      display: block;
     }
 
     @media (max-width: 768px) {
-      .cards-grid { grid-template-columns: repeat(2, 1fr); }
+      .cards-grid { grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); }
     }
 
     @media (max-width: 540px) {
       .cards-grid { grid-template-columns: 1fr; }
+      .card-subtab-labels label { flex: 1 1 calc(50% - 0.5rem); }
     }
 
     @media (max-width: 600px) {
@@ -2765,131 +2849,177 @@
 
       <div class="tab-content tab-content-cards">
         <input type="radio" name="card-subtab" id="card-subtab-genshin" checked>
+        <input type="radio" name="card-subtab" id="card-subtab-limbus">
+        <input type="radio" name="card-subtab" id="card-subtab-wuwa">
         <input type="radio" name="card-subtab" id="card-subtab-oc">
 
         <div class="card-subtab-labels">
-          <label for="card-subtab-genshin">Genshin</label>
+          <label for="card-subtab-genshin">Genshin Impact</label>
+          <label for="card-subtab-limbus">Limbus</label>
+          <label for="card-subtab-wuwa">Wuthering Waves</label>
           <label for="card-subtab-oc">OC</label>
         </div>
 
         <div class="card-subtab-content card-subtab-content-genshin">
+          <p class="card-section-intro"><strong>26 Genshin Impact cards.</strong> Sorted into the new folder layout so the published links match the maintained card set.</p>
           <div class="cards-grid">
-          <a class="tracker-item" href="cards/Alhaitham.png" target="_blank">
-            <img src="cards/Alhaitham.png" alt="Alhaitham" loading="lazy">
-            <span class="tracker-caption"><strong>Alhaitham</strong><br>Scholarly scribe with analytical mind</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Alhaitham.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Alhaitham.png" alt="Alhaitham" loading="lazy">
+            <span class="card-caption"><strong>Alhaitham</strong><span class="card-copy">A cool-headed Akademiya scribe who weaponizes logic, privacy, and the patience to let everyone else panic first.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Arlecchino.png" target="_blank">
-            <img src="cards/Arlecchino.png" alt="Arlecchino" loading="lazy">
-            <span class="tracker-caption"><strong>Arlecchino</strong><br>Elegant Fatui Harbinger</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Arataki%20Itto.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Arataki%20Itto.png" alt="Arataki Itto" loading="lazy">
+            <span class="card-caption"><strong>Arataki Itto</strong><span class="card-copy">A loud Inazuman oni, gang boss, beetle brawler, and full-time believer in his own terrible ideas.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Arataki Itto.png" target="_blank">
-            <img src="cards/Arataki Itto.png" alt="Arataki Itto" loading="lazy">
-            <span class="tracker-caption"><strong>Arataki Itto</strong><br>Boisterous oni gang leader</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Arlecchino.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Arlecchino.png" alt="Arlecchino" loading="lazy">
+            <span class="card-caption"><strong>Arlecchino</strong><span class="card-copy">The Knave, a poised Fatui Harbinger and House of the Hearth director with a knife-edge sense of care.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Ayato.png" target="_blank">
-            <img src="cards/Ayato.png" alt="Ayato" loading="lazy">
-            <span class="tracker-caption"><strong>Ayato</strong><br>Elegant Yashiro Commissioner</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Ayato.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Ayato.png" alt="Ayato" loading="lazy">
+            <span class="card-caption"><strong>Ayato</strong><span class="card-copy">The Yashiro Commissioner hides sharp political control behind perfect manners, boba, and a harmless smile.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Cyno.png" target="_blank">
-            <img src="cards/Cyno.png" alt="Cyno" loading="lazy">
-            <span class="tracker-caption"><strong>Cyno</strong><br>Stoic General Mahamatra</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Cyno.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Cyno.png" alt="Cyno" loading="lazy">
+            <span class="card-caption"><strong>Cyno</strong><span class="card-copy">Sumeru's General Mahamatra, all dry jokes and harsher judgment when the law gets personal.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Diluc.png" target="_blank">
-            <img src="cards/Diluc.png" alt="Diluc" loading="lazy">
-            <span class="tracker-caption"><strong>Diluc</strong><br>Brooding vigilante of Mondstadt</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Diluc.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Diluc.png" alt="Diluc" loading="lazy">
+            <span class="card-caption"><strong>Diluc</strong><span class="card-copy">Mondstadt's wine heir turned night vigilante, still angry enough to keep protecting a city he pretends to resent.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Furina%20%26%20Neuvillette.png" target="_blank">
-            <img src="cards/Furina%20%26%20Neuvillette.png" alt="Furina &amp; Neuvillette" loading="lazy">
-            <span class="tracker-caption"><strong>Furina &amp; Neuvillette</strong><br>Fontaine's divine and judicial duo</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Furina%20%26%20Neuvillette.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Furina%20%26%20Neuvillette.png" alt="Furina &amp; Neuvillette" loading="lazy">
+            <span class="card-caption"><strong>Furina &amp; Neuvillette</strong><span class="card-copy">Fontaine's ex-divine actress and solemn judge, tangled in guilt, duty, and a painfully formal kind of trust.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Ifa.png" target="_blank">
-            <img src="cards/Ifa.png" alt="Ifa" loading="lazy">
-            <span class="tracker-caption"><strong>Ifa</strong><br>Spirited tribal warrior</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Ifa.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Ifa.png" alt="Ifa" loading="lazy">
+            <span class="card-caption"><strong>Ifa</strong><span class="card-copy">A Natlan field doctor with laid-back warmth, saurian know-how, and the grin of someone used to trouble landing nearby.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Il Dottore.png" target="_blank">
-            <img src="cards/Il Dottore.png" alt="Il Dottore" loading="lazy">
-            <span class="tracker-caption"><strong>Il Dottore</strong><br>Calculating Fatui Harbinger</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Il%20Dottore.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Il%20Dottore.png" alt="Il Dottore" loading="lazy">
+            <span class="card-caption"><strong>Il Dottore</strong><span class="card-copy">The Doctor, a Fatui Harbinger whose charm is mostly a lab coat over cruelty, ego, and unethical curiosity.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Jean%20%26%20Diluc%20%26%20Lisa.png" target="_blank">
-            <img src="cards/Jean%20%26%20Diluc%20%26%20Lisa.png" alt="Jean &amp; Diluc &amp; Lisa" loading="lazy">
-            <span class="tracker-caption"><strong>Jean &amp; Diluc &amp; Lisa</strong><br>Mondstadt's founding protectors</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Jean%20%26%20Diluc%20%26%20Lisa.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Jean%20%26%20Diluc%20%26%20Lisa.png" alt="Jean &amp; Diluc &amp; Lisa" loading="lazy">
+            <span class="card-caption"><strong>Jean &amp; Diluc &amp; Lisa</strong><span class="card-copy">Mondstadt's overworked knight, estranged vigilante, and unreadably lazy mage forced into one old ache.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Kaeya.png" target="_blank">
-            <img src="cards/Kaeya.png" alt="Kaeya" loading="lazy">
-            <span class="tracker-caption"><strong>Kaeya</strong><br>Charming Cavalry Captain</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Kaeya.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Kaeya.png" alt="Kaeya" loading="lazy">
+            <span class="card-caption"><strong>Kaeya</strong><span class="card-copy">A charming cavalry captain who turns secrets, flirtation, and plausible deniability into a personal survival kit.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Kaveh%20%26%20Alhaitham.png" target="_blank">
-            <img src="cards/Kaveh%20%26%20Alhaitham.png" alt="Kaveh &amp; Alhaitham" loading="lazy">
-            <span class="tracker-caption"><strong>Kaveh &amp; Alhaitham</strong><br>Roommates with contrasting personalities</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Kaveh%20%26%20Alhaitham.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Kaveh%20%26%20Alhaitham.png" alt="Kaveh &amp; Alhaitham" loading="lazy">
+            <span class="card-caption"><strong>Kaveh &amp; Alhaitham</strong><span class="card-copy">A bickering Sumeru roommate pair where wounded idealism and ruthless practicality keep sharing the same house.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Kaveh.png" target="_blank">
-            <img src="cards/Kaveh.png" alt="Kaveh" loading="lazy">
-            <span class="tracker-caption"><strong>Kaveh</strong><br>Passionate architect with ideals</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Kaveh.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Kaveh.png" alt="Kaveh" loading="lazy">
+            <span class="card-caption"><strong>Kaveh</strong><span class="card-copy">A brilliant architect with expensive morals, bleeding-heart instincts, and a talent for making debt look romantic.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Kuki%20Shinobu%20%26%20Arataki%20Itto.png" target="_blank">
-            <img src="cards/Kuki%20Shinobu%20%26%20Arataki%20Itto.png" alt="Kuki Shinobu &amp; Arataki Itto" loading="lazy">
-            <span class="tracker-caption"><strong>Kuki Shinobu &amp; Arataki Itto</strong><br>Gang deputy and boss</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Kuki%20Shinobu%20%26%20Arataki%20Itto.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Kuki%20Shinobu%20%26%20Arataki%20Itto.png" alt="Kuki Shinobu &amp; Arataki Itto" loading="lazy">
+            <span class="card-caption"><strong>Kuki Shinobu &amp; Arataki Itto</strong><span class="card-copy">The Arataki Gang's competent deputy and catastrophic boss, proof that babysitting can be a criminal career.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Lisa.png" target="_blank">
-            <img src="cards/Lisa.png" alt="Lisa" loading="lazy">
-            <span class="tracker-caption"><strong>Lisa</strong><br>Languid librarian sorceress</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Lisa.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Lisa.png" alt="Lisa" loading="lazy">
+            <span class="card-caption"><strong>Lisa</strong><span class="card-copy">Mondstadt's librarian, a terrifyingly gifted witch hiding dangerous knowledge behind velvet laziness and teasing smiles.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Mika.png" target="_blank">
-            <img src="cards/Mika.png" alt="Mika" loading="lazy">
-            <span class="tracker-caption"><strong>Mika</strong><br>Earnest reconnaissance knight</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Mika.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Mika.png" alt="Mika" loading="lazy">
+            <span class="card-caption"><strong>Mika</strong><span class="card-copy">A shy Knights surveyor and cartographer whose nervous reports come with more courage than he gives himself credit for.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Navia.png" target="_blank">
-            <img src="cards/Navia.png" alt="Navia" loading="lazy">
-            <span class="tracker-caption"><strong>Navia</strong><br>Resolute Spina di Rosula leader</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Navia.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Navia.png" alt="Navia" loading="lazy">
+            <span class="card-caption"><strong>Navia</strong><span class="card-copy">Spina di Rosula's sunny boss, carrying grief, grit, and a very Fontaine approach to solving problems with style.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Neuvillette.png" target="_blank">
-            <img src="cards/Neuvillette.png" alt="Neuvillette" loading="lazy">
-            <span class="tracker-caption"><strong>Neuvillette</strong><br>Impartial Chief Justice of Fontaine</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Neuvillette.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Neuvillette.png" alt="Neuvillette" loading="lazy">
+            <span class="card-caption"><strong>Neuvillette</strong><span class="card-copy">Fontaine's Chief Justice, ancient, restrained, and still learning how grief sounds when it is allowed to be human.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Ororon.png" target="_blank">
-            <img src="cards/Ororon.png" alt="Ororon" loading="lazy">
-            <span class="tracker-caption"><strong>Ororon</strong><br>Mysterious nocturnal guide</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Ororon.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Ororon.png" alt="Ororon" loading="lazy">
+            <span class="card-caption"><strong>Ororon</strong><span class="card-copy">A strange Natlan night-soul with gentle manners, odd instincts, and the vibe of someone adopted by ominous weather.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Tartaglia.png" target="_blank">
-            <img src="cards/Tartaglia.png" alt="Tartaglia" loading="lazy">
-            <span class="tracker-caption"><strong>Tartaglia</strong><br>Ambitious Fatui Harbinger</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Tartaglia.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Tartaglia.png" alt="Tartaglia" loading="lazy">
+            <span class="card-caption"><strong>Tartaglia</strong><span class="card-copy">Childe, a battle-hungry Fatui Harbinger whose family-man warmth and abyssal violence keep sharing the same grin.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Tighnari%20%26%20Cyno.png" target="_blank">
-            <img src="cards/Tighnari%20%26%20Cyno.png" alt="Tighnari &amp; Cyno" loading="lazy">
-            <span class="tracker-caption"><strong>Tighnari &amp; Cyno</strong><br>Desert scholar and lawman duo</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Tighnari%20%26%20Cyno.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Tighnari%20%26%20Cyno.png" alt="Tighnari &amp; Cyno" loading="lazy">
+            <span class="card-caption"><strong>Tighnari &amp; Cyno</strong><span class="card-copy">A forest ranger and lawman duo built on dry teasing, field competence, and the kind of trust that survives bad jokes.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Tighnari.png" target="_blank">
-            <img src="cards/Tighnari.png" alt="Tighnari" loading="lazy">
-            <span class="tracker-caption"><strong>Tighnari</strong><br>Pragmatic forest ranger</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Tighnari.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Tighnari.png" alt="Tighnari" loading="lazy">
+            <span class="card-caption"><strong>Tighnari</strong><span class="card-copy">A sharp-tongued forest watcher who treats stupidity like a field hazard and kindness like practical maintenance.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Venti.png" target="_blank">
-            <img src="cards/Venti.png" alt="Venti" loading="lazy">
-            <span class="tracker-caption"><strong>Venti</strong><br>Carefree bard with secrets</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Venti.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Venti.png" alt="Venti" loading="lazy">
+            <span class="card-caption"><strong>Venti</strong><span class="card-copy">A carefree bard, absentee god, and walking hangover of Mondstadt's freedom, hiding centuries beneath a song.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Wanderer.png" target="_blank">
-            <img src="cards/Wanderer.png" alt="Wanderer" loading="lazy">
-            <span class="tracker-caption"><strong>Wanderer</strong><br>Reformed puppet seeking purpose</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Wanderer.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Wanderer.png" alt="Wanderer" loading="lazy">
+            <span class="card-caption"><strong>Wanderer</strong><span class="card-copy">A bitter puppet godling remade into a wanderer, still deciding what to do with a self he cannot delete.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Wriothesley.png" target="_blank">
-            <img src="cards/Wriothesley.png" alt="Wriothesley" loading="lazy">
-            <span class="tracker-caption"><strong>Wriothesley</strong><br>Duke of the Fortress of Meropide</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Wriothesley.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Wriothesley.png" alt="Wriothesley" loading="lazy">
+            <span class="card-caption"><strong>Wriothesley</strong><span class="card-copy">The Duke of Meropide runs an underwater prison with tea, fists, and an annoyingly steady moral compass.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Zhongli.png" target="_blank">
-            <img src="cards/Zhongli.png" alt="Zhongli" loading="lazy">
-            <span class="tracker-caption"><strong>Zhongli</strong><br>Wise consultant with secrets</span>
+          <a class="card-item" href="cards/Genshin%20Impact/Zhongli.png" target="_blank" rel="noopener">
+            <img src="cards/Genshin%20Impact/Zhongli.png" alt="Zhongli" loading="lazy">
+            <span class="card-caption"><strong>Zhongli</strong><span class="card-copy">A retired archon, funeral consultant, and walking contract clause trying to enjoy tea without accidentally sounding ancient.</span></span>
+          </a>
+        </div>
+        </div>
+
+        <div class="card-subtab-content card-subtab-content-limbus">
+          <p class="card-section-intro"><strong>6 Limbus cards.</strong> Kept out of the WIP pile and grouped where people can actually find them.</p>
+          <div class="cards-grid">
+          <a class="card-item" href="cards/Limbus/Don%20Quixote.png" target="_blank" rel="noopener">
+            <img src="cards/Limbus/Don%20Quixote.png" alt="Don Quixote" loading="lazy">
+            <span class="card-caption"><strong>Don Quixote</strong><span class="card-copy">A justice-drunk Fixer fangirl whose heroic speeches keep crashing into the uglier machinery of the City.</span></span>
+          </a>
+          <a class="card-item" href="cards/Limbus/Heathcliff.png" target="_blank" rel="noopener">
+            <img src="cards/Limbus/Heathcliff.png" alt="Heathcliff" loading="lazy">
+            <span class="card-caption"><strong>Heathcliff</strong><span class="card-copy">A bruising, heartsick brawler with a short fuse, a buried wound, and exactly zero patience for polite cruelty.</span></span>
+          </a>
+          <a class="card-item" href="cards/Limbus/Hong%20Lu.png" target="_blank" rel="noopener">
+            <img src="cards/Limbus/Hong%20Lu.png" alt="Hong Lu" loading="lazy">
+            <span class="card-caption"><strong>Hong Lu</strong><span class="card-copy">A bright-eyed heir drifting through horror with unsettling cheer, old money softness, and secrets under the smile.</span></span>
+          </a>
+          <a class="card-item" href="cards/Limbus/Ishmael.png" target="_blank" rel="noopener">
+            <img src="cards/Limbus/Ishmael.png" alt="Ishmael" loading="lazy">
+            <span class="card-caption"><strong>Ishmael</strong><span class="card-copy">A blunt sailor with sea-salted trauma, survival instincts, and an anchor-heavy grudge she refuses to dress up.</span></span>
+          </a>
+          <a class="card-item" href="cards/Limbus/Ry%C5%8Dsh%C5%AB.png" target="_blank" rel="noopener">
+            <img src="cards/Limbus/Ry%C5%8Dsh%C5%AB.png" alt="Ry&#333;sh&#363;" loading="lazy">
+            <span class="card-caption"><strong>Ry&#333;sh&#363;</strong><span class="card-copy">An art-obsessed killer who compresses threats into initials, violence into craft, and boredom into everyone's problem.</span></span>
+          </a>
+          <a class="card-item" href="cards/Limbus/Yi%20Sang.png" target="_blank" rel="noopener">
+            <img src="cards/Limbus/Yi%20Sang.png" alt="Yi Sang" loading="lazy">
+            <span class="card-caption"><strong>Yi Sang</strong><span class="card-copy">A detached inventor-poet whose quiet misery, mirror logic, and birdlike distance make him harder to reach than he looks.</span></span>
+          </a>
+        </div>
+        </div>
+
+        <div class="card-subtab-content card-subtab-content-wuwa">
+          <p class="card-section-intro"><strong>1 Wuthering Waves card.</strong> Published cards only; the whole WIP bench stays ignored by git.</p>
+          <div class="cards-grid">
+          <a class="card-item" href="cards/Wuthering%20Waves/Cartethyia.png" target="_blank" rel="noopener">
+            <img src="cards/Wuthering%20Waves/Cartethyia.png" alt="Cartethyia" loading="lazy">
+            <span class="card-caption"><strong>Cartethyia</strong><span class="card-copy">A Rinascita myth in human shape, all polished devotion, poised danger, and the calm of someone already becoming legend.</span></span>
           </a>
         </div>
         </div>
 
         <div class="card-subtab-content card-subtab-content-oc">
+          <p class="card-section-intro"><strong>2 original cards.</strong> The personal weirdos, separated from franchise cards instead of being dumped into the same pile.</p>
           <div class="cards-grid">
-          <a class="tracker-item" href="cards/Garrett%20Winslow.png" target="_blank">
-            <img src="cards/Garrett Winslow.png" alt="Garrett Winslow" loading="lazy">
-            <span class="tracker-caption"><strong>Garrett Winslow</strong><br>Your boss who's secretly your best Marvel Rivals teammate</span>
+          <a class="card-item" href="cards/OC/Garrett%20Winslow.png" target="_blank" rel="noopener">
+            <img src="cards/OC/Garrett%20Winslow.png" alt="Garrett Winslow" loading="lazy">
+            <span class="card-caption"><strong>Garrett Winslow</strong><span class="card-copy">Your buttoned-up boss by daylight, your suspiciously cracked Marvel Rivals duo partner after hours.</span></span>
           </a>
-          <a class="tracker-item" href="cards/Silas%20Beaumont-Charbonneau.png" target="_blank">
-            <img src="cards/Silas Beaumont-Charbonneau.png" alt="Silas Beaumont-Charbonneau" loading="lazy">
-            <span class="tracker-caption"><strong>Silas Beaumont-Charbonneau</strong><br>Former Canadian PM living anonymously in Montreal</span>
+          <a class="card-item" href="cards/OC/Silas%20Beaumont-Charbonneau.png" target="_blank" rel="noopener">
+            <img src="cards/OC/Silas%20Beaumont-Charbonneau.png" alt="Silas Beaumont-Charbonneau" loading="lazy">
+            <span class="card-caption"><strong>Silas Beaumont-Charbonneau</strong><span class="card-copy">A former Canadian prime minister hiding in Montreal with old power, new anonymity, and a habit of not staying buried.</span></span>
           </a>
         </div>
         </div>
