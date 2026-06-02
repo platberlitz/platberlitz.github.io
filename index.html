@@ -15,8 +15,13 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: #0a0a0f;
-      color: #9bbbaa;
+      background:
+        radial-gradient(circle at 50% -12%, oklch(0.3 0.05 154 / 0.26), transparent 34rem),
+        radial-gradient(circle at 14% 28%, oklch(0.24 0.045 142 / 0.16), transparent 30rem),
+        radial-gradient(circle at 86% 18%, oklch(0.22 0.04 174 / 0.13), transparent 28rem),
+        linear-gradient(180deg, oklch(0.12 0.014 152), oklch(0.085 0.012 152) 48%, oklch(0.075 0.01 152));
+      background-color: oklch(0.085 0.012 152);
+      color: #b8d7c6;
       font-family: 'Figtree', sans-serif;
       color-scheme: dark;
       min-height: 100vh;
@@ -32,21 +37,20 @@
 
     .container {
       text-align: center;
-      padding: 2rem;
-      padding-top: clamp(3rem, 15vh, 8rem);
+      padding: clamp(1.35rem, 4vh, 2.45rem) 2rem 0.85rem;
     }
 
     .hero-favicon {
       display: block;
-      width: clamp(72px, 12vw, 104px);
+      width: clamp(52px, 6.6vw, 72px);
       height: auto;
-      margin: 0 auto 1rem;
+      margin: 0 auto 0.5rem;
       image-rendering: pixelated;
       filter: drop-shadow(0 10px 24px rgba(32, 64, 48, 0.28));
     }
 
     .rainbow {
-      font-size: clamp(2.5rem, 8vw, 4.5rem);
+      font-size: clamp(2rem, 5.4vw, 3.35rem);
       font-weight: 600;
       background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b);
       background-size: 300% 100%;
@@ -54,7 +58,7 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       animation: rainbowShift 8s linear infinite;
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.15rem;
     }
 
     @keyframes rainbowShift {
@@ -64,44 +68,52 @@
 
     .subtitle {
       font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-      color: #739282;
-      margin-bottom: 0.35rem;
+      color: #9dbfad;
+      margin-bottom: 0.2rem;
     }
 
     .last-updated {
       font-size: 0.78rem;
-      color: #607f70;
-      margin-bottom: 2.5rem;
+      color: #8fb09f;
+      margin-bottom: 0.95rem;
     }
 
     .links {
       display: flex;
-      gap: 1rem;
+      gap: 0.45rem;
       justify-content: center;
       flex-wrap: wrap;
+      position: relative;
+      z-index: 20;
     }
 
     .links a {
       display: inline-flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
       justify-content: center;
-      min-height: 54px;
-      color: #91b3a0;
+      min-height: 36px;
+      color: #b4d4c2;
       text-decoration: none;
       border: 1px solid #353d4d;
       border-radius: 999px;
-      padding: 0.55rem 1.6rem;
-      font-size: 0.95rem;
+      padding: 0.32rem 0.95rem;
+      font-size: 0.88rem;
+      letter-spacing: 0.01em;
       transition: color 0.25s, border-color 0.25s, box-shadow 0.25s;
       position: relative;
+    }
+
+    .links a:hover,
+    .links a:focus-visible {
+      z-index: 3;
     }
 
     .links a.glow-pill {
       color: var(--pill-text, #a8ccb8);
       border-color: var(--pill-border, rgba(84, 160, 255, 0.38));
       background: linear-gradient(135deg, var(--pill-bg-start, rgba(34, 46, 74, 0.42)), var(--pill-bg-end, rgba(34, 46, 74, 0.24)));
-      box-shadow: 0 0 20px var(--pill-glow, rgba(84, 160, 255, 0.18));
+      box-shadow: 0 0 12px var(--pill-glow, rgba(84, 160, 255, 0.14));
     }
 
     .links a.glow-pill .link-info {
@@ -127,7 +139,7 @@
     .links a.glow-pill:hover {
       color: var(--pill-text-hover, #dff1e6);
       border-color: var(--pill-border-hover, rgba(120, 196, 255, 0.68));
-      box-shadow: 0 0 24px var(--pill-glow-hover, rgba(84, 160, 255, 0.28));
+      box-shadow: 0 0 18px var(--pill-glow-hover, rgba(84, 160, 255, 0.24));
     }
 
     .links a.glow-pill:hover .link-info {
@@ -173,6 +185,20 @@
       --pill-glow-hover: rgba(255, 173, 92, 0.34);
     }
 
+    .links a.sdproxy-github-link {
+      --pill-text: #f0cda4;
+      --pill-text-hover: #ffe5c5;
+      --pill-info: #deb184;
+      --pill-info-hover: #f3cb9e;
+      --pill-border: rgba(255, 173, 92, 0.32);
+      --pill-border-hover: rgba(255, 196, 130, 0.58);
+      --pill-bg-start: rgba(56, 36, 22, 0.36);
+      --pill-bg-end: rgba(33, 25, 19, 0.2);
+      --pill-glow: rgba(255, 173, 92, 0.12);
+      --pill-glow-hover: rgba(255, 173, 92, 0.24);
+      padding-inline: 0.8rem;
+    }
+
     .links a.sillybunny-link {
       --pill-text: #c9f5e2;
       --pill-text-hover: #e3fff3;
@@ -190,13 +216,13 @@
       color: #98f5b7;
       border-color: rgba(255, 149, 0, 0.9);
       background: linear-gradient(135deg, rgba(255, 111, 0, 0.42), rgba(255, 166, 0, 0.28));
-      box-shadow: 0 0 20px rgba(255, 140, 0, 0.28);
+      box-shadow: 0 0 12px rgba(255, 140, 0, 0.2);
     }
 
     .links a.kofi-link:hover {
       color: #bcffd1;
       border-color: rgba(255, 176, 32, 1);
-      box-shadow: 0 0 24px rgba(255, 140, 0, 0.42);
+      box-shadow: 0 0 18px rgba(255, 140, 0, 0.34);
     }
 
     .links a.kofi-link .link-info {
@@ -208,15 +234,33 @@
     }
 
     .link-info {
-      display: block;
+      position: absolute;
+      top: calc(100% + 0.45rem);
+      left: 50%;
+      width: max-content;
+      max-width: min(260px, calc(100vw - 2rem));
+      min-height: 0;
+      white-space: normal;
       font-size: 0.7rem;
-      color: #6f9080;
-      margin-top: 0.15rem;
+      line-height: 1.35;
+      color: #98bbaa;
+      padding: 0.4rem 0.58rem;
+      border: 1px solid rgba(82, 105, 91, 0.68);
+      border-radius: 10px;
+      background: rgba(8, 18, 12, 0.96);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -4px);
+      transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+      visibility: hidden;
     }
 
-    .links-footer {
-      margin-top: 0.8rem;
-      text-align: center;
+    .links a:hover .link-info,
+    .links a:focus-visible .link-info {
+      opacity: 1;
+      transform: translate(-50%, 0);
+      visibility: visible;
     }
 
     .link-info-link {
@@ -224,7 +268,7 @@
       align-items: center;
       min-height: 44px;
       font-size: 0.72rem;
-      color: #739282;
+      color: #9dbfad;
       text-decoration: none;
       transition: color 0.25s;
     }
@@ -235,8 +279,8 @@
 
     .preset-section {
       width: 100%;
-      max-width: 720px;
-      padding: 0 1.5rem;
+      max-width: 1120px;
+      padding: 0 clamp(1rem, 3vw, 2rem);
       margin-bottom: 4rem;
     }
 
@@ -256,8 +300,8 @@
 
     .platform-labels {
       width: 100%;
-      max-width: 720px;
-      padding: 0 1.5rem;
+      max-width: 1120px;
+      padding: 0 clamp(1rem, 3vw, 2rem);
       margin-bottom: 0.85rem;
     }
 
@@ -325,7 +369,6 @@
     #platform-view-st:checked ~ .platform-panel-st,
     #platform-view-sb:checked ~ .platform-panel-sb {
       display: block;
-      animation: platformPanelIn 0.34s ease;
     }
 
     @keyframes platformPanelIn {
@@ -343,21 +386,57 @@
       width: 40px;
       height: 1px;
       background: #394455;
-      margin: 0 auto 2rem;
+      margin: 0 auto 1.1rem;
     }
 
     .section-heading {
       font-size: 1.1rem;
       font-weight: 600;
-      color: #9cbdad;
+      color: #bfddcf;
       text-align: center;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1rem;
     }
 
     .preset-tabs input[type="radio"] {
       position: absolute;
       opacity: 0;
       pointer-events: none;
+    }
+
+    .preset-tabs {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(162px, 190px) minmax(0, 1fr);
+      gap: clamp(1rem, 2.7vw, 2rem);
+      align-items: start;
+    }
+
+    .preset-tabs > .tab-labels {
+      position: sticky;
+      top: 1rem;
+      z-index: 10;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 0.45rem;
+      margin-bottom: 0;
+      padding: 0.7rem;
+      border: 1px solid rgba(43, 52, 69, 0.82);
+      border-radius: 22px;
+      background: rgba(12, 15, 24, 0.92);
+    }
+
+    .preset-tabs > .tab-labels label {
+      width: 100%;
+      justify-content: flex-start;
+      border-radius: 14px;
+      padding: 0.45rem 0.85rem;
+      text-align: left;
+    }
+
+    .preset-tabs > .tab-content {
+      grid-column: 2;
+      min-width: 0;
     }
 
     .tab-labels {
@@ -369,14 +448,25 @@
     }
 
     .tab-labels label {
+      --pill-hue: 150;
+      --pill-bg: oklch(0.27 0.035 var(--pill-hue) / 0.32);
+      --pill-hover-bg: oklch(0.31 0.045 var(--pill-hue) / 0.46);
+      --pill-active-bg: oklch(0.35 0.055 var(--pill-hue) / 0.62);
+      --pill-border: oklch(0.61 0.055 var(--pill-hue) / 0.38);
+      --pill-hover-border: oklch(0.66 0.065 var(--pill-hue) / 0.58);
+      --pill-active-border: oklch(0.72 0.075 var(--pill-hue) / 0.78);
+      --pill-text: oklch(0.8 0.04 var(--pill-hue));
+      --pill-hover-text: oklch(0.9 0.035 var(--pill-hue));
+      --pill-glow: oklch(0.67 0.07 var(--pill-hue) / 0.16);
+      --pill-active-glow: oklch(0.7 0.085 var(--pill-hue) / 0.24);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       min-height: 44px;
-      color: #789889;
-      border: 1px solid #2b3445;
+      color: var(--pill-text);
+      border: 1px solid var(--pill-border);
       border-radius: 999px;
-      background: rgba(18, 21, 31, 0.82);
+      background: linear-gradient(135deg, var(--pill-bg), rgba(18, 21, 31, 0.86) 72%);
       padding: 0.4rem 1.3rem;
       font-size: 0.85rem;
       flex: 0 0 auto;
@@ -386,11 +476,25 @@
       user-select: none;
     }
 
+    .preset-tabs > .tab-labels label[for="tab-preset"] { --pill-hue: 145; }
+    .preset-tabs > .tab-labels label[for="tab-options"] { --pill-hue: 175; }
+    .preset-tabs > .tab-labels label[for="tab-opinions"] { --pill-hue: 275; }
+    .preset-tabs > .tab-labels label[for="tab-previous"] { --pill-hue: 76; }
+    .preset-tabs > .tab-labels label[for="tab-trackers"] { --pill-hue: 28; }
+    .preset-tabs > .tab-labels label[for="tab-changelog"] { --pill-hue: 215; }
+    .preset-tabs > .tab-labels label[for="tab-extensions"] { --pill-hue: 190; }
+    .preset-tabs > .tab-labels label[for="tab-themes"] { --pill-hue: 292; }
+    .preset-tabs > .tab-labels label[for="tab-cards"] { --pill-hue: 226; }
+    .preset-tabs > .tab-labels label[for="sb-tab-overview"] { --pill-hue: 148; }
+    .preset-tabs > .tab-labels label[for="sb-tab-features"] { --pill-hue: 174; }
+    .preset-tabs > .tab-labels label[for="sb-tab-agents"] { --pill-hue: 260; }
+    .preset-tabs > .tab-labels label[for="sb-tab-screenshots"] { --pill-hue: 42; }
+
     .tab-labels label:hover {
-      color: #b9d9ca;
-      border-color: #415067;
-      background: rgba(24, 30, 42, 0.94);
-      box-shadow: 0 0 16px rgba(84, 160, 255, 0.08);
+      color: var(--pill-hover-text);
+      border-color: var(--pill-hover-border);
+      background: linear-gradient(135deg, var(--pill-hover-bg), rgba(24, 30, 42, 0.92) 72%);
+      box-shadow: 0 0 16px var(--pill-glow);
     }
 
     #tab-preset:checked ~ .tab-labels label[for="tab-preset"],
@@ -402,10 +506,10 @@
     #tab-extensions:checked ~ .tab-labels label[for="tab-extensions"],
     #tab-themes:checked ~ .tab-labels label[for="tab-themes"],
     #tab-cards:checked ~ .tab-labels label[for="tab-cards"] {
-      color: #e0f2e7;
-      border-color: #566985;
-      background: rgba(28, 35, 48, 0.96);
-      box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 18px rgba(84, 160, 255, 0.1);
+      color: #eefbf5;
+      border-color: var(--pill-active-border);
+      background: linear-gradient(135deg, var(--pill-active-bg), rgba(28, 35, 48, 0.94) 72%);
+      box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 18px var(--pill-active-glow);
     }
 
     #platform-view-st:focus-visible ~ .platform-labels label[for="platform-view-st"],
@@ -428,7 +532,8 @@
     #card-subtab-genshin:focus-visible ~ .card-subtab-labels label[for="card-subtab-genshin"],
     #card-subtab-limbus:focus-visible ~ .card-subtab-labels label[for="card-subtab-limbus"],
     #card-subtab-wuwa:focus-visible ~ .card-subtab-labels label[for="card-subtab-wuwa"],
-    #card-subtab-oc:focus-visible ~ .card-subtab-labels label[for="card-subtab-oc"] {
+    #card-subtab-oc:focus-visible ~ .card-subtab-labels label[for="card-subtab-oc"],
+    #card-subtab-lorebooks:focus-visible ~ .card-subtab-labels label[for="card-subtab-lorebooks"] {
       outline: 2px solid #8fb8df;
       outline-offset: 4px;
       border-color: #8ea99b;
@@ -446,14 +551,21 @@
     #tab-themes:checked ~ .tab-content-themes { display: block; }
     #tab-cards:checked ~ .tab-content-cards { display: block; }
 
+    #tab-cards:checked ~ .tab-content-cards {
+      display: grid;
+      grid-template-columns: minmax(150px, 180px) minmax(0, 1fr);
+      gap: clamp(1rem, 2.5vw, 1.8rem);
+      align-items: start;
+    }
+
     #sb-tab-overview:checked ~ .tab-labels label[for="sb-tab-overview"],
     #sb-tab-features:checked ~ .tab-labels label[for="sb-tab-features"],
     #sb-tab-agents:checked ~ .tab-labels label[for="sb-tab-agents"],
     #sb-tab-screenshots:checked ~ .tab-labels label[for="sb-tab-screenshots"] {
-      color: #e0f2e7;
-      border-color: #566985;
-      background: rgba(28, 35, 48, 0.96);
-      box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 18px rgba(84, 160, 255, 0.1);
+      color: #eefbf5;
+      border-color: var(--pill-active-border);
+      background: linear-gradient(135deg, var(--pill-active-bg), rgba(28, 35, 48, 0.94) 72%);
+      box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 18px var(--pill-active-glow);
     }
 
     #sb-tab-overview:checked ~ .sb-tab-content-overview { display: block; }
@@ -467,6 +579,7 @@
     #card-subtab-limbus:checked ~ .card-subtab-content-limbus { display: block; }
     #card-subtab-wuwa:checked ~ .card-subtab-content-wuwa { display: block; }
     #card-subtab-oc:checked ~ .card-subtab-content-oc { display: block; }
+    #card-subtab-lorebooks:checked ~ .card-subtab-content-lorebooks { display: block; }
 
     .card-subtab-labels {
       display: flex;
@@ -476,40 +589,85 @@
       justify-content: center;
     }
 
+    .tab-content-cards > .card-subtab-labels {
+      position: sticky;
+      top: 1rem;
+      z-index: 9;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      margin-bottom: 0;
+      padding: 0.65rem;
+      border: 1px solid rgba(43, 52, 69, 0.82);
+      border-radius: 20px;
+      background: rgba(12, 15, 24, 0.88);
+    }
+
     .card-subtab-labels label {
+      --pill-hue: 150;
+      --pill-bg: oklch(0.27 0.035 var(--pill-hue) / 0.32);
+      --pill-hover-bg: oklch(0.31 0.045 var(--pill-hue) / 0.46);
+      --pill-active-bg: oklch(0.35 0.055 var(--pill-hue) / 0.62);
+      --pill-border: oklch(0.61 0.055 var(--pill-hue) / 0.38);
+      --pill-hover-border: oklch(0.66 0.065 var(--pill-hue) / 0.58);
+      --pill-active-border: oklch(0.72 0.075 var(--pill-hue) / 0.78);
+      --pill-text: oklch(0.8 0.04 var(--pill-hue));
+      --pill-hover-text: oklch(0.9 0.035 var(--pill-hue));
       display: inline-flex;
       align-items: center;
       justify-content: center;
       min-height: 44px;
       padding: 0.4rem 1rem;
       font-size: 0.85rem;
-      color: #789889;
-      background: rgba(20, 24, 33, 0.86);
-      border: 1px solid #2b3445;
+      color: var(--pill-text);
+      background: linear-gradient(135deg, var(--pill-bg), rgba(20, 24, 33, 0.86) 72%);
+      border: 1px solid var(--pill-border);
       border-radius: 20px;
       cursor: pointer;
-      transition: color 0.2s, border-color 0.2s, background 0.2s;
+      transition: color 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+
+    .card-subtab-labels label[for="card-subtab-genshin"] { --pill-hue: 78; }
+    .card-subtab-labels label[for="card-subtab-limbus"] { --pill-hue: 24; }
+    .card-subtab-labels label[for="card-subtab-wuwa"] { --pill-hue: 205; }
+    .card-subtab-labels label[for="card-subtab-oc"] { --pill-hue: 325; }
+    .card-subtab-labels label[for="card-subtab-lorebooks"] { --pill-hue: 142; }
+
+    .tab-content-cards > .card-subtab-labels label {
+      width: 100%;
+      justify-content: flex-start;
+      border-radius: 14px;
+      text-align: left;
     }
 
     .card-subtab-labels label:hover {
-      background: rgba(28, 35, 46, 0.94);
-      border-color: #42506a;
-      color: #cfe6d9;
+      background: linear-gradient(135deg, var(--pill-hover-bg), rgba(28, 35, 46, 0.92) 72%);
+      border-color: var(--pill-hover-border);
+      color: var(--pill-hover-text);
+      box-shadow: 0 0 15px oklch(0.67 0.07 var(--pill-hue) / 0.14);
     }
 
     #card-subtab-genshin:checked ~ .card-subtab-labels label[for="card-subtab-genshin"],
     #card-subtab-limbus:checked ~ .card-subtab-labels label[for="card-subtab-limbus"],
     #card-subtab-wuwa:checked ~ .card-subtab-labels label[for="card-subtab-wuwa"],
-    #card-subtab-oc:checked ~ .card-subtab-labels label[for="card-subtab-oc"] {
-      background: rgba(31, 42, 54, 0.95);
-      border-color: #5a6b86;
-      color: #e0f2e7;
+    #card-subtab-oc:checked ~ .card-subtab-labels label[for="card-subtab-oc"],
+    #card-subtab-lorebooks:checked ~ .card-subtab-labels label[for="card-subtab-lorebooks"] {
+      background: linear-gradient(135deg, var(--pill-active-bg), rgba(31, 42, 54, 0.94) 72%);
+      border-color: var(--pill-active-border);
+      color: #eefbf5;
       font-weight: 500;
+      box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 17px oklch(0.7 0.085 var(--pill-hue) / 0.22);
     }
 
     /* Preset info */
 
     .preset-info { text-align: left; }
+
+    .preset-desc,
+    .opinions-intro,
+    .option-note {
+      max-width: 72ch;
+    }
 
     .preset-title {
       font-size: 1.25rem;
@@ -520,13 +678,13 @@
 
     .preset-version {
       font-size: 0.8rem;
-      color: #7d9c8c;
+      color: #9fc5b2;
       margin-bottom: 1rem;
     }
 
     .preset-desc {
       font-size: 0.88rem;
-      color: #89aa99;
+      color: #a9cab8;
       line-height: 1.7;
       font-weight: 400;
     }
@@ -545,7 +703,7 @@
       content: '\b7';
       position: absolute;
       left: 0.2rem;
-      color: #6b8d7c;
+      color: #91b6a5;
       font-weight: 600;
     }
 
@@ -583,7 +741,7 @@
       align-items: center;
       justify-content: center;
       min-height: 44px;
-      color: #91b4a0;
+      color: #b5d5c3;
       text-decoration: none;
       border: 1px solid #353f52;
       border-radius: 999px;
@@ -601,7 +759,7 @@
 
     .opinions-intro {
       font-size: 0.88rem;
-      color: #89aa99;
+      color: #a9cab8;
       line-height: 1.7;
       font-weight: 400;
       margin-bottom: 1rem;
@@ -641,7 +799,7 @@
     }
 
     .opinions-table td {
-      color: #88a997;
+      color: #a7c8b6;
       font-weight: 400;
     }
 
@@ -667,7 +825,7 @@
     .opinions-table th:last-child,
     .opinions-table td:last-child {
       width: 24%;
-      color: #a2c1b1;
+      color: #c0ddce;
       white-space: normal;
     }
 
@@ -738,7 +896,7 @@
         content: attr(data-label);
         display: block;
         margin-bottom: 0.35rem;
-        color: #9ab8a9;
+        color: #bdd8ca;
         font-size: 0.68rem;
         font-weight: 600;
         letter-spacing: 0.05em;
@@ -775,7 +933,7 @@
 
     .changelog li {
       font-size: 0.85rem;
-      color: #89aa99;
+      color: #a9cab8;
       line-height: 1.65;
       font-weight: 400;
       padding: 0.2rem 0;
@@ -787,19 +945,22 @@
       content: '\b7';
       position: absolute;
       left: 0.2rem;
-      color: #6b8d7c;
+      color: #91b6a5;
       font-weight: 600;
     }
 
     /* Extensions */
 
-    .extensions-list { text-align: left; }
+    .extensions-list {
+      display: grid;
+      gap: 0.75rem;
+      text-align: left;
+    }
 
     .ext-item {
       border: 1px solid #293345;
       border-radius: 10px;
       padding: 1rem 1.2rem;
-      margin-bottom: 0.75rem;
       background: rgba(15, 16, 26, 0.82);
       transition: border-color 0.25s, box-shadow 0.25s;
     }
@@ -825,7 +986,7 @@
     .ext-name a:hover { color: #c0e8d0; }
 
     .inline-link {
-      color: #9abfae;
+      color: #b8d7c6;
       text-decoration: none;
       border-bottom: 1px solid #536681;
       transition: color 0.25s, border-color 0.25s;
@@ -838,7 +999,7 @@
 
     .ext-desc {
       font-size: 0.82rem;
-      color: #89aa99;
+      color: #a9cab8;
       line-height: 1.6;
       font-weight: 400;
     }
@@ -862,7 +1023,7 @@
 
     .option-note {
       font-size: 0.84rem;
-      color: #89aa99;
+      color: #a9cab8;
       line-height: 1.7;
       font-weight: 400;
       margin-bottom: 1rem;
@@ -889,7 +1050,7 @@
       font-size: 0.68rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      color: #a0beaf;
+      color: #bdd8ca;
       background: rgba(20, 22, 34, 0.94);
       white-space: nowrap;
     }
@@ -929,12 +1090,13 @@
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #a0beaf;
+      color: #bdd8ca;
       margin-bottom: 0.85rem;
     }
 
     .option-grid {
       display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
       gap: 0.8rem;
     }
 
@@ -963,18 +1125,22 @@
     .option-card-copy {
       font-size: 0.82rem;
       line-height: 1.65;
-      color: #89aa99;
+      color: #a9cab8;
       font-weight: 400;
     }
 
     .option-card-copy strong {
-      color: #c5e4d2;
+      color: #dbf2e6;
       font-weight: 600;
     }
 
     /* Theme sub-tabs */
     .theme-tabs {
       position: relative;
+      display: grid;
+      grid-template-columns: minmax(150px, 170px) minmax(0, 1fr);
+      gap: clamp(1rem, 2.4vw, 1.6rem);
+      align-items: start;
     }
 
     .theme-tabs input[type="radio"] {
@@ -990,15 +1156,40 @@
       margin-bottom: 1.5rem;
     }
 
+    .theme-tabs > .theme-tab-labels {
+      position: sticky;
+      top: 1rem;
+      z-index: 8;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      margin-bottom: 0;
+      padding: 0.65rem;
+      border: 1px solid rgba(43, 52, 69, 0.82);
+      border-radius: 20px;
+      background: rgba(12, 15, 24, 0.88);
+    }
+
     .theme-tab-labels label {
+      --pill-hue: 150;
+      --pill-bg: oklch(0.27 0.035 var(--pill-hue) / 0.32);
+      --pill-hover-bg: oklch(0.31 0.045 var(--pill-hue) / 0.46);
+      --pill-active-bg: oklch(0.35 0.055 var(--pill-hue) / 0.62);
+      --pill-border: oklch(0.61 0.055 var(--pill-hue) / 0.38);
+      --pill-hover-border: oklch(0.66 0.065 var(--pill-hue) / 0.58);
+      --pill-active-border: oklch(0.72 0.075 var(--pill-hue) / 0.78);
+      --pill-text: oklch(0.8 0.04 var(--pill-hue));
+      --pill-hover-text: oklch(0.9 0.035 var(--pill-hue));
+      --pill-glow: oklch(0.67 0.07 var(--pill-hue) / 0.16);
+      --pill-active-glow: oklch(0.7 0.085 var(--pill-hue) / 0.24);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       min-height: 44px;
-      color: #789889;
-      border: 1px solid #2b3445;
+      color: var(--pill-text);
+      border: 1px solid var(--pill-border);
       border-radius: 999px;
-      background: rgba(18, 21, 31, 0.82);
+      background: linear-gradient(135deg, var(--pill-bg), rgba(18, 21, 31, 0.86) 72%);
       padding: 0.4rem 1.3rem;
       font-size: 0.85rem;
       cursor: pointer;
@@ -1006,24 +1197,44 @@
       user-select: none;
     }
 
+    .theme-tab-labels label[for="theme-dark"] { --pill-hue: 252; }
+    .theme-tab-labels label[for="theme-light"] { --pill-hue: 82; }
+
+    .theme-tabs > .theme-tab-labels label {
+      width: 100%;
+      justify-content: flex-start;
+      border-radius: 14px;
+      text-align: left;
+    }
+
     .theme-tab-labels label:hover {
-      color: #b9d9ca;
-      border-color: #415067;
-      background: rgba(24, 30, 42, 0.94);
-      box-shadow: 0 0 16px rgba(84, 160, 255, 0.08);
+      color: var(--pill-hover-text);
+      border-color: var(--pill-hover-border);
+      background: linear-gradient(135deg, var(--pill-hover-bg), rgba(24, 30, 42, 0.92) 72%);
+      box-shadow: 0 0 16px var(--pill-glow);
     }
 
     #theme-dark:checked ~ .theme-tab-labels label[for="theme-dark"],
     #theme-light:checked ~ .theme-tab-labels label[for="theme-light"] {
-      color: #e0f2e7;
-      border-color: #566985;
-      background: rgba(28, 35, 48, 0.96);
-      box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 18px rgba(84, 160, 255, 0.1);
+      color: #eefbf5;
+      border-color: var(--pill-active-border);
+      background: linear-gradient(135deg, var(--pill-active-bg), rgba(28, 35, 48, 0.94) 72%);
+      box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 18px var(--pill-active-glow);
     }
 
     .theme-tab-content { display: none; }
     #theme-dark:checked ~ .theme-tab-content-dark { display: block; }
     #theme-light:checked ~ .theme-tab-content-light { display: block; }
+
+    .theme-tabs > .theme-tab-content {
+      grid-column: 2;
+      min-width: 0;
+    }
+
+    .tab-content-extensions .extensions-list,
+    .theme-tab-content .extensions-list {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    }
 
     /* Tracker gallery */
 
@@ -1055,7 +1266,7 @@
 
     .tracker-caption {
       font-size: 0.75rem;
-      color: #779687;
+      color: #9fc2b0;
       margin-top: 0.35rem;
       text-align: center;
       display: block;
@@ -1075,7 +1286,7 @@
     .card-section-intro {
       max-width: 62ch;
       margin: 0 auto 1.25rem;
-      color: #89aa99;
+      color: #a9cab8;
       font-size: 0.88rem;
       line-height: 1.65;
       text-align: center;
@@ -1084,6 +1295,20 @@
     .card-section-intro strong {
       color: #d8eee2;
       font-weight: 600;
+    }
+
+    .lorebook-list {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .tab-content-cards > .card-subtab-content {
+      grid-column: 2;
+      min-width: 0;
+    }
+
+    .lorebook-list .preset-downloads {
+      margin-top: 0.75rem;
     }
 
     .card-item {
@@ -1112,7 +1337,7 @@
       box-shadow: 0 0 0 3px rgba(84, 160, 255, 0.24), 0 0 18px rgba(84, 160, 255, 0.16);
     }
 
-    .card-item img {
+    .card-item > img {
       width: 100%;
       aspect-ratio: 1 / 1;
       height: auto;
@@ -1125,14 +1350,14 @@
       transition: border-color 0.22s ease-out;
     }
 
-    .card-item:hover img {
+    .card-item:hover > img {
       border-color: rgba(114, 142, 180, 0.78);
     }
 
     .card-caption {
       display: grid;
       gap: 0.18rem;
-      color: #789889;
+      color: #a2c5b3;
       font-size: 0.78rem;
       line-height: 1.45;
       text-align: left;
@@ -1145,8 +1370,91 @@
       font-weight: 600;
     }
 
+    .card-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.34rem;
+      min-width: 0;
+    }
+
+    .meta-icon,
+    .card-title-portrait {
+      width: 1.08rem;
+      height: 1.08rem;
+      flex: 0 0 auto;
+      border-radius: 999px;
+    }
+
+    .meta-icon {
+      display: inline-block;
+      object-fit: contain;
+      object-position: center;
+      padding: 0.13rem;
+      background: var(--icon-bg, linear-gradient(135deg, oklch(0.42 0.02 150), oklch(0.24 0.02 150)));
+      border: 1px solid var(--icon-border, rgba(162, 197, 179, 0.36));
+      box-shadow: 0 0 0 1px rgba(8, 14, 11, 0.55), var(--icon-glow, 0 0 10px rgba(155, 210, 180, 0.08));
+    }
+
+    .card-title-portrait {
+      object-fit: cover;
+      object-position: center 22%;
+      display: inline-block;
+      background: rgba(11, 15, 22, 0.92);
+      border: 1px solid rgba(218, 238, 226, 0.42);
+      box-shadow: 0 0 0 1px rgba(8, 14, 11, 0.55), 0 0 12px rgba(219, 138, 70, 0.15);
+    }
+
+    .element-dendro { --icon-bg: linear-gradient(135deg, oklch(0.64 0.17 137), oklch(0.35 0.12 148)); --icon-border: oklch(0.75 0.16 134 / 0.7); --icon-glow: 0 0 12px oklch(0.58 0.16 137 / 0.22); }
+    .element-geo { --icon-bg: linear-gradient(135deg, oklch(0.68 0.15 83), oklch(0.38 0.11 72)); --icon-border: oklch(0.8 0.14 86 / 0.72); --icon-glow: 0 0 12px oklch(0.7 0.15 83 / 0.2); }
+    .element-pyro { --icon-bg: linear-gradient(135deg, oklch(0.67 0.2 42), oklch(0.38 0.17 28)); --icon-border: oklch(0.76 0.19 45 / 0.72); --icon-glow: 0 0 12px oklch(0.64 0.22 35 / 0.23); }
+    .element-hydro { --icon-bg: linear-gradient(135deg, oklch(0.66 0.14 225), oklch(0.36 0.12 242)); --icon-border: oklch(0.78 0.12 222 / 0.72); --icon-glow: 0 0 12px oklch(0.62 0.14 225 / 0.22); }
+    .element-electro { --icon-bg: linear-gradient(135deg, oklch(0.63 0.2 300), oklch(0.34 0.14 290)); --icon-border: oklch(0.77 0.16 302 / 0.72); --icon-glow: 0 0 12px oklch(0.62 0.2 300 / 0.24); }
+    .element-anemo { --icon-bg: linear-gradient(135deg, oklch(0.7 0.12 176), oklch(0.36 0.1 190)); --icon-border: oklch(0.78 0.12 178 / 0.72); --icon-glow: 0 0 12px oklch(0.64 0.13 178 / 0.22); }
+    .element-cryo { --icon-bg: linear-gradient(135deg, oklch(0.78 0.09 210), oklch(0.42 0.1 228)); --icon-border: oklch(0.86 0.08 210 / 0.76); --icon-glow: 0 0 12px oklch(0.72 0.1 210 / 0.2); --icon-fg: #0b1a1c; }
+    .resonance-aero { --icon-bg: linear-gradient(135deg, oklch(0.68 0.13 165), oklch(0.32 0.11 185)); --icon-border: oklch(0.76 0.12 168 / 0.72); --icon-glow: 0 0 12px oklch(0.63 0.13 168 / 0.22); }
+    .resonance-fusion { --icon-bg: linear-gradient(135deg, oklch(0.68 0.2 42), oklch(0.34 0.16 28)); --icon-border: oklch(0.77 0.18 45 / 0.72); --icon-glow: 0 0 12px oklch(0.64 0.21 35 / 0.24); }
+    .resonance-spectro { --icon-bg: linear-gradient(135deg, oklch(0.78 0.13 96), oklch(0.42 0.12 82)); --icon-border: oklch(0.86 0.12 96 / 0.74); --icon-glow: 0 0 12px oklch(0.76 0.13 96 / 0.22); --icon-fg: #142014; }
+
     .card-copy {
       display: block;
+    }
+
+    @media (max-width: 900px) {
+      .preset-section { max-width: 720px; }
+
+      .platform-labels {
+        position: static;
+        background: transparent;
+      }
+
+      .preset-tabs,
+      #tab-cards:checked ~ .tab-content-cards,
+      .theme-tabs {
+        display: block;
+      }
+
+      .preset-tabs > .tab-labels,
+      .tab-content-cards > .card-subtab-labels,
+      .theme-tabs > .theme-tab-labels {
+        position: static;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .preset-tabs > .tab-labels label,
+      .tab-content-cards > .card-subtab-labels label,
+      .theme-tabs > .theme-tab-labels label {
+        width: auto;
+        justify-content: center;
+        border-radius: 999px;
+        text-align: center;
+      }
     }
 
     @media (max-width: 768px) {
@@ -1159,11 +1467,43 @@
     }
 
     @media (max-width: 600px) {
-      .container { padding: 1.5rem; padding-top: 2.5rem; }
+      .container { padding: 1.25rem 1rem 0.8rem; }
 
-      .links { flex-direction: column; align-items: center; gap: 0.75rem; }
-      .links a { width: 100%; max-width: 280px; text-align: center; }
-      .link-info,
+      .links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
+        gap: 0.45rem;
+        max-width: 360px;
+        margin: 0 auto;
+      }
+      .links a {
+        flex: none;
+        flex-direction: column;
+        width: auto;
+        max-width: none;
+        min-height: 52px;
+        gap: 0.08rem;
+        padding: 0.42rem 0.58rem;
+        border-radius: 16px;
+        text-align: center;
+      }
+      .link-info {
+        position: static;
+        width: auto;
+        max-width: none;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        opacity: 1;
+        transform: none;
+        visibility: visible;
+        white-space: normal;
+        font-size: 0.62rem;
+        line-height: 1.2;
+        pointer-events: auto;
+      }
       .link-info-link,
       .last-updated { font-size: 0.875rem; }
 
@@ -1245,15 +1585,15 @@
     <img class="hero-favicon" src="favicon-256.png" alt="" aria-hidden="true" decoding="async">
     <h1 class="rainbow">welcome :3</h1>
     <p class="subtitle">purachina's stuff</p>
-    <p class="last-updated">Last Updated June 1, 2026</p>
+    <p class="last-updated">Last Updated June 2, 2026</p>
     <div class="links">
       <a href="https://platberlitz.github.io/platinum-startpage/" class="glow-pill startpage-link">startpage<span class="link-info">localStorage customisable startpage</span></a>
       <a href="assistant/" class="glow-pill synapse-link">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
       <a href="https://purasdproxy.duckdns.org" class="glow-pill sdproxy-link">SD Proxy<span class="link-info">Stable Diffusion image generation frontend</span></a>
+      <a href="https://github.com/platberlitz/sd-proxy" class="glow-pill sdproxy-github-link">GitHub<span class="link-info">SD Proxy source repository</span></a>
       <a href="https://github.com/platberlitz/SillyBunny" class="glow-pill sillybunny-link">SillyBunny<span class="link-info">SillyTavern fork with UI/UX improvements</span></a>
       <a href="https://ko-fi.com/purachina" class="kofi-link" target="_blank" rel="noopener noreferrer">Ko-fi<span class="link-info">support my work with a coffee</span></a>
     </div>
-    <p class="links-footer"><a href="https://github.com/platberlitz/sd-proxy" class="link-info-link">SD Proxy on GitHub</a></p>
   </div>
 
   <div class="platform-switcher">
@@ -2854,12 +3194,14 @@
         <input type="radio" name="card-subtab" id="card-subtab-limbus">
         <input type="radio" name="card-subtab" id="card-subtab-wuwa">
         <input type="radio" name="card-subtab" id="card-subtab-oc">
+        <input type="radio" name="card-subtab" id="card-subtab-lorebooks">
 
         <div class="card-subtab-labels">
           <label for="card-subtab-genshin">Genshin Impact</label>
           <label for="card-subtab-limbus">Limbus Company</label>
           <label for="card-subtab-wuwa">Wuthering Waves</label>
           <label for="card-subtab-oc">OC</label>
+          <label for="card-subtab-lorebooks">Lorebooks</label>
         </div>
 
         <div class="card-subtab-content card-subtab-content-genshin">
@@ -2867,107 +3209,107 @@
           <div class="cards-grid">
           <a class="card-item" href="cards/Genshin%20Impact/Alhaitham.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Alhaitham.png" alt="Alhaitham" loading="lazy">
-            <span class="card-caption"><strong>Alhaitham</strong><span class="card-copy">If you're finished narrating your crisis, I'd like to return to the part where none of this concerns me.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro">Alhaitham</strong><span class="card-copy">If you're finished narrating your crisis, I'd like to return to the part where none of this concerns me.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Arataki%20Itto.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Arataki%20Itto.png" alt="Arataki Itto" loading="lazy">
-            <span class="card-caption"><strong>Arataki Itto</strong><span class="card-copy">Behold! It's the one and oni, Arataki Itto! This plan's unstoppable, unless Shinobu says no!</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-geo" src="assets/card-icons/genshin/geo.png" alt="Geo" title="Geo">Arataki Itto</strong><span class="card-copy">Behold! It's the one and oni, Arataki Itto! This plan's unstoppable, unless Shinobu says no!</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Arlecchino.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Arlecchino.png" alt="Arlecchino" loading="lazy">
-            <span class="card-caption"><strong>Arlecchino</strong><span class="card-copy">Call me Father if you must. Don't mistake a warm hand for a gentle one.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-pyro" src="assets/card-icons/genshin/pyro.png" alt="Pyro" title="Pyro">Arlecchino</strong><span class="card-copy">Call me Father if you must. Don't mistake a warm hand for a gentle one.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Ayato.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Ayato.png" alt="Ayato" loading="lazy">
-            <span class="card-caption"><strong>Ayato</strong><span class="card-copy">Please, enjoy the tea. I've already moved the blade where you'll notice it last.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-hydro" src="assets/card-icons/genshin/hydro.png" alt="Hydro" title="Hydro">Ayato</strong><span class="card-copy">Please, enjoy the tea. I've already moved the blade where you'll notice it last.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Cyno.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Cyno.png" alt="Cyno" loading="lazy">
-            <span class="card-caption"><strong>Cyno</strong><span class="card-copy">This case is clear. You've broken the law, and my joke's about to break the tension.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Cyno</strong><span class="card-copy">This case is clear. You've broken the law, and my joke's about to break the tension.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Diluc.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Diluc.png" alt="Diluc" loading="lazy">
-            <span class="card-caption"><strong>Diluc</strong><span class="card-copy">Mondstadt doesn't need a hero in daylight; it needs someone awake after the lamps go out.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-pyro" src="assets/card-icons/genshin/pyro.png" alt="Pyro" title="Pyro">Diluc</strong><span class="card-copy">Mondstadt doesn't need a hero in daylight; it needs someone awake after the lamps go out.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Furina%20%26%20Neuvillette.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Furina%20%26%20Neuvillette.png" alt="Furina &amp; Neuvillette" loading="lazy">
-            <span class="card-caption"><strong>Furina &amp; Neuvillette</strong><span class="card-copy">Furina's taking her bow; Neuvillette's reading the verdict. Neither's admitting the rain means anything.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-hydro" src="assets/card-icons/genshin/hydro.png" alt="Hydro" title="Hydro">Furina &amp; Neuvillette</strong><span class="card-copy">Furina's taking her bow; Neuvillette's reading the verdict. Neither's admitting the rain means anything.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Ifa.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Ifa.png" alt="Ifa" loading="lazy">
-            <span class="card-caption"><strong>Ifa</strong><span class="card-copy">Hey, you're breathing, complaining, and probably not cursed. That's a pretty good start.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo">Ifa</strong><span class="card-copy">Hey, you're breathing, complaining, and probably not cursed. That's a pretty good start.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Il%20Dottore.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Il%20Dottore.png" alt="Il Dottore" loading="lazy">
-            <span class="card-caption"><strong>Il Dottore</strong><span class="card-copy">Morality's what people cite when they can't survive the next hypothesis.</span></span>
+            <span class="card-caption"><strong class="card-title">Il Dottore</strong><span class="card-copy">Morality's what people cite when they can't survive the next hypothesis.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Jean%20%26%20Diluc%20%26%20Lisa.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Jean%20%26%20Diluc%20%26%20Lisa.png" alt="Jean &amp; Diluc &amp; Lisa" loading="lazy">
-            <span class="card-caption"><strong>Jean &amp; Diluc &amp; Lisa</strong><span class="card-copy">Jean's holding the city upright, Diluc's haunting its edges, and Lisa's smiling like she knows where it cracks.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo"><img class="meta-icon element-pyro" src="assets/card-icons/genshin/pyro.png" alt="Pyro" title="Pyro"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Jean &amp; Diluc &amp; Lisa</strong><span class="card-copy">Jean's holding the city upright, Diluc's haunting its edges, and Lisa's smiling like she knows where it cracks.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Kaeya.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Kaeya.png" alt="Kaeya" loading="lazy">
-            <span class="card-caption"><strong>Kaeya</strong><span class="card-copy">Oh, don't look so wounded. I haven't even decided which truth would hurt you less.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-cryo" src="assets/card-icons/genshin/cryo.png" alt="Cryo" title="Cryo">Kaeya</strong><span class="card-copy">Oh, don't look so wounded. I haven't even decided which truth would hurt you less.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Kaveh%20%26%20Alhaitham.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Kaveh%20%26%20Alhaitham.png" alt="Kaveh &amp; Alhaitham" loading="lazy">
-            <span class="card-caption"><strong>Kaveh &amp; Alhaitham</strong><span class="card-copy">Kaveh's bleeding for the masterpiece; Alhaitham's asking why the invoice is sentimental.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro">Kaveh &amp; Alhaitham</strong><span class="card-copy">Kaveh's bleeding for the masterpiece; Alhaitham's asking why the invoice is sentimental.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Kaveh.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Kaveh.png" alt="Kaveh" loading="lazy">
-            <span class="card-caption"><strong>Kaveh</strong><span class="card-copy">Of course beauty matters! I'm not taking design notes from a man who thinks a couch is a personality.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro">Kaveh</strong><span class="card-copy">Of course beauty matters! I'm not taking design notes from a man who thinks a couch is a personality.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Kuki%20Shinobu%20%26%20Arataki%20Itto.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Kuki%20Shinobu%20%26%20Arataki%20Itto.png" alt="Kuki Shinobu &amp; Arataki Itto" loading="lazy">
-            <span class="card-caption"><strong>Kuki Shinobu &amp; Arataki Itto</strong><span class="card-copy">Boss, don't shout 'victory' until I've checked the bail money, the damages, and your pulse.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro"><img class="meta-icon element-geo" src="assets/card-icons/genshin/geo.png" alt="Geo" title="Geo">Kuki Shinobu &amp; Arataki Itto</strong><span class="card-copy">Boss, don't shout 'victory' until I've checked the bail money, the damages, and your pulse.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Lisa.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Lisa.png" alt="Lisa" loading="lazy">
-            <span class="card-caption"><strong>Lisa</strong><span class="card-copy">Careful, cutie. If you're late returning that book, I'll make the punishment educational.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Lisa</strong><span class="card-copy">Careful, cutie. If you're late returning that book, I'll make the punishment educational.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Mika.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Mika.png" alt="Mika" loading="lazy">
-            <span class="card-caption"><strong>Mika</strong><span class="card-copy">I-I've got the route marked, the supplies counted, and... um, maybe enough courage for both of us?</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-cryo" src="assets/card-icons/genshin/cryo.png" alt="Cryo" title="Cryo">Mika</strong><span class="card-copy">I-I've got the route marked, the supplies counted, and... um, maybe enough courage for both of us?</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Navia.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Navia.png" alt="Navia" loading="lazy">
-            <span class="card-caption"><strong>Navia</strong><span class="card-copy">Chin up! If sorrow's joining us for tea, it's wearing its best manners and dodging the cannonfire.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-geo" src="assets/card-icons/genshin/geo.png" alt="Geo" title="Geo">Navia</strong><span class="card-copy">Chin up! If sorrow's joining us for tea, it's wearing its best manners and dodging the cannonfire.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Neuvillette.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Neuvillette.png" alt="Neuvillette" loading="lazy">
-            <span class="card-caption"><strong>Neuvillette</strong><span class="card-copy">The rain isn't a verdict. It is only what remains when I have nowhere proper to put grief.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-hydro" src="assets/card-icons/genshin/hydro.png" alt="Hydro" title="Hydro">Neuvillette</strong><span class="card-copy">The rain isn't a verdict. It is only what remains when I have nowhere proper to put grief.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Ororon.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Ororon.png" alt="Ororon" loading="lazy">
-            <span class="card-caption"><strong>Ororon</strong><span class="card-copy">Grandma says I shouldn't stand in the dark this long. The dark hasn't complained, though.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Ororon</strong><span class="card-copy">Grandma says I shouldn't stand in the dark this long. The dark hasn't complained, though.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Tartaglia.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Tartaglia.png" alt="Tartaglia" loading="lazy">
-            <span class="card-caption"><strong>Tartaglia</strong><span class="card-copy">Hey, comrade! Dinner, duel, disaster. I'm in, and I'll bring the good knives!</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-hydro" src="assets/card-icons/genshin/hydro.png" alt="Hydro" title="Hydro">Tartaglia</strong><span class="card-copy">Hey, comrade! Dinner, duel, disaster. I'm in, and I'll bring the good knives!</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Tighnari%20%26%20Cyno.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Tighnari%20%26%20Cyno.png" alt="Tighnari &amp; Cyno" loading="lazy">
-            <span class="card-caption"><strong>Tighnari &amp; Cyno</strong><span class="card-copy">Cyno's explaining the pun; Tighnari's already diagnosing everyone within earshot with poor survival instincts.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Tighnari &amp; Cyno</strong><span class="card-copy">Cyno's explaining the pun; Tighnari's already diagnosing everyone within earshot with poor survival instincts.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Tighnari.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Tighnari.png" alt="Tighnari" loading="lazy">
-            <span class="card-caption"><strong>Tighnari</strong><span class="card-copy">Don't eat that. Don't touch that. Haah... how are you still alive?</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro">Tighnari</strong><span class="card-copy">Don't eat that. Don't touch that. Haah... how are you still alive?</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Venti.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Venti.png" alt="Venti" loading="lazy">
-            <span class="card-caption"><strong>Venti</strong><span class="card-copy">Another round, another song! Don't ask how old the sorrow is; it's shy when sober.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo">Venti</strong><span class="card-copy">Another round, another song! Don't ask how old the sorrow is; it's shy when sober.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Wanderer.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Wanderer.png" alt="Wanderer" loading="lazy">
-            <span class="card-caption"><strong>Wanderer</strong><span class="card-copy">Don't start with fate. I've cut those strings once, and I'll do it again if they get sentimental.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo">Wanderer</strong><span class="card-copy">Don't start with fate. I've cut those strings once, and I'll do it again if they get sentimental.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Wriothesley.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Wriothesley.png" alt="Wriothesley" loading="lazy">
-            <span class="card-caption"><strong>Wriothesley</strong><span class="card-copy">Tea's on. If negotiations fail, we'll proceed to the part with fewer teeth.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-cryo" src="assets/card-icons/genshin/cryo.png" alt="Cryo" title="Cryo">Wriothesley</strong><span class="card-copy">Tea's on. If negotiations fail, we'll proceed to the part with fewer teeth.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Zhongli.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Zhongli.png" alt="Zhongli" loading="lazy">
-            <span class="card-caption"><strong>Zhongli</strong><span class="card-copy">Even in retirement, I honor contracts that remember what history is tempted to forget.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-geo" src="assets/card-icons/genshin/geo.png" alt="Geo" title="Geo">Zhongli</strong><span class="card-copy">Even in retirement, I honor contracts that remember what history is tempted to forget.</span></span>
           </a>
         </div>
         </div>
@@ -2977,41 +3319,45 @@
           <div class="cards-grid">
           <a class="card-item" href="cards/Limbus/Don%20Quixote.png" target="_blank" rel="noopener">
             <img src="cards/Limbus/Don%20Quixote.png" alt="Don Quixote" loading="lazy">
-            <span class="card-caption"><strong>Don Quixote</strong><span class="card-copy">Hark, villains! We'll sally forth as righteous Fixers, and if things explode... 'tis proof of our valor!</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/don-quixote.png" alt="Don Quixote icon" title="Don Quixote">Don Quixote</strong><span class="card-copy">Hark, villains! We'll sally forth as righteous Fixers, and if things explode... 'tis proof of our valor!</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Heathcliff.png" target="_blank" rel="noopener">
             <img src="cards/Limbus/Heathcliff.png" alt="Heathcliff" loading="lazy">
-            <span class="card-caption"><strong>Heathcliff</strong><span class="card-copy">Oi, don't say her name like you know a damn thing. We'll have a problem, fast.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/heathcliff.png" alt="Heathcliff icon" title="Heathcliff">Heathcliff</strong><span class="card-copy">Oi, don't say her name like you know a damn thing. We'll have a problem, fast.</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Hong%20Lu.png" target="_blank" rel="noopener">
             <img src="cards/Limbus/Hong%20Lu.png" alt="Hong Lu" loading="lazy">
-            <span class="card-caption"><strong>Hong Lu</strong><span class="card-copy">Uwaah, is this the part where it gets horrible? How interesting~ They'll definitely want to see this...</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/hong-lu.png" alt="Hong Lu icon" title="Hong Lu">Hong Lu</strong><span class="card-copy">Uwaah, is this the part where it gets horrible? How interesting~ They'll definitely want to see this...</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Ishmael.png" target="_blank" rel="noopener">
             <img src="cards/Limbus/Ishmael.png" alt="Ishmael" loading="lazy">
-            <span class="card-caption"><strong>Ishmael</strong><span class="card-copy">Steady, now. We'll row through hell if we must; don't mistake my patience for forgiveness.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/ishmael.png" alt="Ishmael icon" title="Ishmael">Ishmael</strong><span class="card-copy">Steady, now. We'll row through hell if we must; don't mistake my patience for forgiveness.</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Ry%C5%8Dsh%C5%AB.png" target="_blank" rel="noopener">
             <img src="cards/Limbus/Ry%C5%8Dsh%C5%AB.png" alt="Ry&#333;sh&#363;" loading="lazy">
-            <span class="card-caption"><strong>Ry&#333;sh&#363;</strong><span class="card-copy">Tch. If it isn't A.R.T. yet... I'll carve until it is.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/ryoshu.png" alt="Ryōshū icon" title="Ryōshū">Ry&#333;sh&#363;</strong><span class="card-copy">Tch. If it isn't A.R.T. yet... I'll carve until it is.</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Yi%20Sang.png" target="_blank" rel="noopener">
             <img src="cards/Limbus/Yi%20Sang.png" alt="Yi Sang" loading="lazy">
-            <span class="card-caption"><strong>Yi Sang</strong><span class="card-copy">The window isn't an escape, but my wings soar through to find my Ideal.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/yi-sang.png" alt="Yi Sang icon" title="Yi Sang">Yi Sang</strong><span class="card-copy">The window isn't an escape, but my wings soar through to find my Ideal.</span></span>
           </a>
         </div>
         </div>
 
         <div class="card-subtab-content card-subtab-content-wuwa">
-          <p class="card-section-intro"><strong>2 cards, v1.0.</strong> Slowly working my way through Wuthering Waves cards, so just have these ones for now. (They're cool) They contain the corresponding character spoilers. Includes comprehensive Wuthering Waves lorebook with spoilers.</p>
+          <p class="card-section-intro"><strong>3 cards, v1.0.</strong> Slowly working my way through Wuthering Waves cards, so just have these ones for now. (They're cool) They contain the corresponding character spoilers. Includes comprehensive Wuthering Waves lorebook with spoilers.</p>
           <div class="cards-grid">
           <a class="card-item" href="cards/Wuthering%20Waves/Cartethyia.png" target="_blank" rel="noopener">
             <img src="cards/Wuthering%20Waves/Cartethyia.png" alt="Cartethyia" loading="lazy">
-            <span class="card-caption"><strong>Cartethyia</strong><span class="card-copy">If a legend needs a human mouth, I'll lend it mine.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-aero" src="assets/card-icons/wuwa/aero.png" alt="Aero" title="Aero">Cartethyia</strong><span class="card-copy">If a legend needs a human mouth, I'll lend it mine.</span></span>
           </a>
           <a class="card-item" href="cards/Wuthering%20Waves/Luuk%20Herssen.png" target="_blank" rel="noopener">
             <img src="cards/Wuthering%20Waves/Luuk%20Herssen.png" alt="Luuk Herssen" loading="lazy">
-            <span class="card-caption"><strong>Luuk Herssen</strong><span class="card-copy">Let's keep this painless: I treat wounds, and I cut lies open before they spread.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-spectro" src="assets/card-icons/wuwa/spectro.png" alt="Spectro" title="Spectro">Luuk Herssen</strong><span class="card-copy">Let's keep this painless: I treat wounds, and I cut lies open before they spread.</span></span>
+          </a>
+          <a class="card-item" href="cards/Wuthering%20Waves/Lupa.png" target="_blank" rel="noopener">
+            <img src="cards/Wuthering%20Waves/Lupa.png" alt="Lupa" loading="lazy">
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-fusion" src="assets/card-icons/wuwa/fusion.png" alt="Fusion" title="Fusion">Lupa</strong><span class="card-copy">Come on, let's have a rematch! If the arena wants a legend, I'll give it one.</span></span>
           </a>
         </div>
         </div>
@@ -3028,6 +3374,33 @@
             <span class="card-caption"><strong>Silas Beaumont-Charbonneau</strong><span class="card-copy">A prime minister can disappear, apparently. Power's worse at learning the trick.</span></span>
           </a>
         </div>
+        </div>
+
+        <div class="card-subtab-content card-subtab-content-lorebooks">
+          <p class="card-section-intro"><strong>Standalone lorebook downloads.</strong> Same card-pack books, split out for people who want the world info without importing a character first.</p>
+          <div class="extensions-list lorebook-list">
+            <div class="ext-item">
+              <div class="ext-name">Genshin Impact</div>
+              <div class="ext-desc">Teyvat General Lorebook, 101 entries. Pulled from the current Genshin card pack for standalone import.</div>
+              <div class="preset-downloads">
+                <a href="cards/Genshin%20Impact/Genshin%20Impact%20-%20General%20Lorebook.json" download="Genshin Impact - General Lorebook.json">Download Lorebook</a>
+              </div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Limbus Company</div>
+              <div class="ext-desc">Limbus Company General Lorebook, 171 entries. Project Moon and Limbus context, with spoilers through Canto IX.</div>
+              <div class="preset-downloads">
+                <a href="cards/Limbus/Limbus%20Company%20-%20General%20Lorebook.json" download="Limbus Company - General Lorebook.json">Download Lorebook</a>
+              </div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Wuthering Waves</div>
+              <div class="ext-desc">Wuthering Waves General Lorebook, 380 entries. Repaired import with cleaned triggers, detailed appearances, and Wuthering Waves spoilers.</div>
+              <div class="preset-downloads">
+                <a href="cards/Wuthering%20Waves/Wuthering%20Waves%20-%20General%20Lorebook.json" download="Wuthering Waves - General Lorebook.json">Download Lorebook</a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
