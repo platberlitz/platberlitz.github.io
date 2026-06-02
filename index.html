@@ -578,6 +578,7 @@
     #card-subtab-genshin:checked ~ .card-subtab-content-genshin { display: block; }
     #card-subtab-limbus:checked ~ .card-subtab-content-limbus { display: block; }
     #card-subtab-wuwa:checked ~ .card-subtab-content-wuwa { display: block; }
+    #card-subtab-persona:checked ~ .card-subtab-content-persona { display: block; }
     #card-subtab-oc:checked ~ .card-subtab-content-oc { display: block; }
     #card-subtab-lorebooks:checked ~ .card-subtab-content-lorebooks { display: block; }
 
@@ -630,6 +631,7 @@
     .card-subtab-labels label[for="card-subtab-genshin"] { --pill-hue: 78; }
     .card-subtab-labels label[for="card-subtab-limbus"] { --pill-hue: 24; }
     .card-subtab-labels label[for="card-subtab-wuwa"] { --pill-hue: 205; }
+    .card-subtab-labels label[for="card-subtab-persona"] { --pill-hue: 265; }
     .card-subtab-labels label[for="card-subtab-oc"] { --pill-hue: 325; }
     .card-subtab-labels label[for="card-subtab-lorebooks"] { --pill-hue: 142; }
 
@@ -650,6 +652,7 @@
     #card-subtab-genshin:checked ~ .card-subtab-labels label[for="card-subtab-genshin"],
     #card-subtab-limbus:checked ~ .card-subtab-labels label[for="card-subtab-limbus"],
     #card-subtab-wuwa:checked ~ .card-subtab-labels label[for="card-subtab-wuwa"],
+    #card-subtab-persona:checked ~ .card-subtab-labels label[for="card-subtab-persona"],
     #card-subtab-oc:checked ~ .card-subtab-labels label[for="card-subtab-oc"],
     #card-subtab-lorebooks:checked ~ .card-subtab-labels label[for="card-subtab-lorebooks"] {
       background: linear-gradient(135deg, var(--pill-active-bg), rgba(31, 42, 54, 0.94) 72%);
@@ -3193,6 +3196,7 @@
         <input type="radio" name="card-subtab" id="card-subtab-genshin" checked>
         <input type="radio" name="card-subtab" id="card-subtab-limbus">
         <input type="radio" name="card-subtab" id="card-subtab-wuwa">
+        <input type="radio" name="card-subtab" id="card-subtab-persona">
         <input type="radio" name="card-subtab" id="card-subtab-oc">
         <input type="radio" name="card-subtab" id="card-subtab-lorebooks">
 
@@ -3200,6 +3204,7 @@
           <label for="card-subtab-genshin">Genshin Impact</label>
           <label for="card-subtab-limbus">Limbus Company</label>
           <label for="card-subtab-wuwa">Wuthering Waves</label>
+          <label for="card-subtab-persona">Persona</label>
           <label for="card-subtab-oc">OC</label>
           <label for="card-subtab-lorebooks">Lorebooks</label>
         </div>
@@ -3225,11 +3230,11 @@
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Cyno.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Cyno.png" alt="Cyno" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Cyno</strong><span class="card-copy">This case is clear. You've broken the law, and my joke's about to break the tension.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Cyno</strong><span class="card-copy">The case is clear. You've broken the law, and my joke's grinding straight to your humerus. ... Get it? Because-</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Diluc.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Diluc.png" alt="Diluc" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-pyro" src="assets/card-icons/genshin/pyro.png" alt="Pyro" title="Pyro">Diluc</strong><span class="card-copy">Mondstadt doesn't need a hero in daylight; it needs someone awake after the lamps go out.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-pyro" src="assets/card-icons/genshin/pyro.png" alt="Pyro" title="Pyro">Diluc</strong><span class="card-copy">Mondstadt needs a hero that's wide awake after the lamps go out.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Furina%20%26%20Neuvillette.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Furina%20%26%20Neuvillette.png" alt="Furina &amp; Neuvillette" loading="lazy">
@@ -3253,7 +3258,7 @@
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Kaveh%20%26%20Alhaitham.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Kaveh%20%26%20Alhaitham.png" alt="Kaveh &amp; Alhaitham" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro">Kaveh &amp; Alhaitham</strong><span class="card-copy">Kaveh's bleeding for the masterpiece; Alhaitham's asking why the invoice is sentimental.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro">Kaveh &amp; Alhaitham</strong><span class="card-copy">Kaveh's bleeding for the masterpiece; Alhaitham just wants his rent, peace, and quiet.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Kaveh.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Kaveh.png" alt="Kaveh" loading="lazy">
@@ -3277,7 +3282,7 @@
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Neuvillette.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Neuvillette.png" alt="Neuvillette" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-hydro" src="assets/card-icons/genshin/hydro.png" alt="Hydro" title="Hydro">Neuvillette</strong><span class="card-copy">The rain isn't a verdict. It is only what remains when I have nowhere proper to put grief.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-hydro" src="assets/card-icons/genshin/hydro.png" alt="Hydro" title="Hydro">Neuvillette</strong><span class="card-copy">The rain is what we make it. Grief is a sign that we're still here.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Ororon.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Ororon.png" alt="Ororon" loading="lazy">
@@ -3297,15 +3302,15 @@
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Venti.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Venti.png" alt="Venti" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo">Venti</strong><span class="card-copy">Another round, another song! Don't ask how old the sorrow is; it's shy when sober.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo">Venti</strong><span class="card-copy">Another round, another song! Don't ask how old the sorrow is... I'm too sober for that.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Wanderer.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Wanderer.png" alt="Wanderer" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo">Wanderer</strong><span class="card-copy">Don't start with fate. I've cut those strings once, and I'll do it again if they get sentimental.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo">Wanderer</strong><span class="card-copy">Don't start with fate. I've cut those strings once, and I'll do it again.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Wriothesley.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Wriothesley.png" alt="Wriothesley" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-cryo" src="assets/card-icons/genshin/cryo.png" alt="Cryo" title="Cryo">Wriothesley</strong><span class="card-copy">Tea's on. If negotiations fail, we'll proceed to the part with fewer teeth.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon element-cryo" src="assets/card-icons/genshin/cryo.png" alt="Cryo" title="Cryo">Wriothesley</strong><span class="card-copy">Tea's on. If negotiations fail, we'll proceed to fewer teeth and far more blood.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Zhongli.png" target="_blank" rel="noopener">
             <img src="cards/Genshin%20Impact/Zhongli.png" alt="Zhongli" loading="lazy">
@@ -3315,7 +3320,7 @@
         </div>
 
         <div class="card-subtab-content card-subtab-content-limbus">
-          <p class="card-section-intro"><strong>6 cards, v1.0.</strong> Includes comprehensive Project Moon + Limbus Company lorebook, though it's more focused on Limbus Company lore. All of them contain spoilers up to Canto IX, so tread carefully.</p>
+          <p class="card-section-intro"><strong>7 cards, v1.0.</strong> Includes comprehensive Project Moon + Limbus Company lorebook, though it's more focused on Limbus Company lore. All of them contain spoilers up to Canto IX, so tread carefully.</p>
           <div class="cards-grid">
           <a class="card-item" href="cards/Limbus/Don%20Quixote.png" target="_blank" rel="noopener">
             <img src="cards/Limbus/Don%20Quixote.png" alt="Don Quixote" loading="lazy">
@@ -3333,6 +3338,10 @@
             <img src="cards/Limbus/Ishmael.png" alt="Ishmael" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/ishmael.png" alt="Ishmael icon" title="Ishmael">Ishmael</strong><span class="card-copy">Steady, now. We'll row through hell if we must; don't mistake my patience for forgiveness.</span></span>
           </a>
+          <a class="card-item" href="cards/Limbus/Rien.png" target="_blank" rel="noopener">
+            <img src="cards/Limbus/Rien.png" alt="Rien" loading="lazy">
+            <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/index.png" alt="The Index icon" title="The Index">Rien</strong><span class="card-copy">The waves built those sand castles because the wind pulled them in. They have no reason to feel sad.<br>Art by Daremkara Mame.</span></span>
+          </a>
           <a class="card-item" href="cards/Limbus/Ry%C5%8Dsh%C5%AB.png" target="_blank" rel="noopener">
             <img src="cards/Limbus/Ry%C5%8Dsh%C5%AB.png" alt="Ry&#333;sh&#363;" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/ryoshu.png" alt="Ryōshū icon" title="Ryōshū">Ry&#333;sh&#363;</strong><span class="card-copy">Tch. If it isn't A.R.T. yet... I'll carve until it is.</span></span>
@@ -3349,15 +3358,29 @@
           <div class="cards-grid">
           <a class="card-item" href="cards/Wuthering%20Waves/Cartethyia.png" target="_blank" rel="noopener">
             <img src="cards/Wuthering%20Waves/Cartethyia.png" alt="Cartethyia" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-aero" src="assets/card-icons/wuwa/aero.png" alt="Aero" title="Aero">Cartethyia</strong><span class="card-copy">If a legend needs a human mouth, I'll lend it mine.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-aero" src="assets/card-icons/wuwa/aero.png" alt="Aero" title="Aero">Cartethyia</strong><span class="card-copy">If a legend needs a human mouth, I'll lend it mine.<br>Art by kaekaeki.</span></span>
           </a>
           <a class="card-item" href="cards/Wuthering%20Waves/Luuk%20Herssen.png" target="_blank" rel="noopener">
             <img src="cards/Wuthering%20Waves/Luuk%20Herssen.png" alt="Luuk Herssen" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-spectro" src="assets/card-icons/wuwa/spectro.png" alt="Spectro" title="Spectro">Luuk Herssen</strong><span class="card-copy">Let's keep this painless: I treat wounds, and I cut lies open before they spread.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-spectro" src="assets/card-icons/wuwa/spectro.png" alt="Spectro" title="Spectro">Luuk Herssen</strong><span class="card-copy">Let's keep this painless: I treat wounds, and I cut lies open before they spread.<br>Official art by Kanoko Lu.</span></span>
           </a>
           <a class="card-item" href="cards/Wuthering%20Waves/Lupa.png" target="_blank" rel="noopener">
             <img src="cards/Wuthering%20Waves/Lupa.png" alt="Lupa" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-fusion" src="assets/card-icons/wuwa/fusion.png" alt="Fusion" title="Fusion">Lupa</strong><span class="card-copy">Come on, let's have a rematch! If the arena wants a legend, I'll give it one.</span></span>
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-fusion" src="assets/card-icons/wuwa/fusion.png" alt="Fusion" title="Fusion">Lupa</strong><span class="card-copy">Come on, let's have a rematch! If the arena wants a legend, I'll give it one.<br>Official art by sqloveraven.</span></span>
+          </a>
+        </div>
+        </div>
+
+        <div class="card-subtab-content card-subtab-content-persona">
+          <p class="card-section-intro"><strong>2 cards, v1.0.</strong> Persona cards with the comprehensive Persona General Lorebook embedded. Contains Persona 3 Portable and Persona 5 Royal spoilers.</p>
+          <div class="cards-grid">
+          <a class="card-item" href="cards/Persona/Takuto%20Maruki.png" target="_blank" rel="noopener">
+            <img src="cards/Persona/Takuto%20Maruki.png" alt="Takuto Maruki" loading="lazy">
+            <span class="card-caption"><strong class="card-title">Takuto Maruki</strong><span class="card-copy">Why don't you come with me to Paradise? O-oh, I just realized that sounds like a cult, ahaha...<br>Art by anarogiizu.</span></span>
+          </a>
+          <a class="card-item" href="cards/Persona/Kotone%20Shiomi.png" target="_blank" rel="noopener">
+            <img src="cards/Persona/Kotone%20Shiomi.png" alt="Kotone Shiomi" loading="lazy">
+            <span class="card-caption"><strong class="card-title">Kotone Shiomi</strong><span class="card-copy">Headphones on, emotionally vulnerable people spotted: Yeah, it's Social Link time.</span></span>
           </a>
         </div>
         </div>
@@ -3388,9 +3411,16 @@
             </div>
             <div class="ext-item">
               <div class="ext-name">Limbus Company</div>
-              <div class="ext-desc">Limbus Company General Lorebook, 171 entries. Project Moon and Limbus context, with spoilers through Canto IX.</div>
+              <div class="ext-desc">Limbus Company General Lorebook, 173 entries. Project Moon and Limbus context, with spoilers through Canto IX.</div>
               <div class="preset-downloads">
                 <a href="cards/Limbus/Limbus%20Company%20-%20General%20Lorebook.json" download="Limbus Company - General Lorebook.json">Download Lorebook</a>
+              </div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Persona</div>
+              <div class="ext-desc">Persona General Lorebook, 180 entries. In-universe systems, locations, teams, characters, Personas, and major story contexts for the Persona card set.</div>
+              <div class="preset-downloads">
+                <a href="cards/Persona/Persona%20-%20General%20Lorebook.json" download="Persona - General Lorebook.json">Download Lorebook</a>
               </div>
             </div>
             <div class="ext-item">
