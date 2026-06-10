@@ -1,7 +1,7 @@
 {
   "name": "Persona General Lorebook",
   "description": "Persona-focused lorebook: one in-universe concept or character per entry, with trigger-safe plain keys.",
-  "scan_depth": 10,
+  "scan_depth": 4,
   "token_budget": 100000,
   "recursive_scanning": false,
   "extensions": {},
@@ -38,7 +38,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -65,7 +65,7 @@
       "order": 100,
       "displayIndex": 100,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -101,7 +101,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -128,7 +128,7 @@
       "order": 100,
       "displayIndex": 101,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -164,7 +164,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -191,7 +191,7 @@
       "order": 100,
       "displayIndex": 102,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -261,8 +261,7 @@
     {
       "id": 104,
       "keys": [
-        "Collective Unconscious",
-        "collective unconscious"
+        "Collective Unconscious"
       ],
       "secondary_keys": [],
       "comment": "Collective Unconscious",
@@ -309,8 +308,7 @@
       "uid": 104,
       "name": "Collective Unconscious",
       "key": [
-        "Collective Unconscious",
-        "collective unconscious"
+        "Collective Unconscious"
       ],
       "keysecondary": [],
       "disable": false,
@@ -511,8 +509,7 @@
     {
       "id": 108,
       "keys": [
-        "Persona awakening",
-        "awakening"
+        "Persona awakening"
       ],
       "secondary_keys": [],
       "comment": "Persona awakening",
@@ -559,8 +556,7 @@
       "uid": 108,
       "name": "Persona awakening",
       "key": [
-        "Persona awakening",
-        "awakening"
+        "Persona awakening"
       ],
       "keysecondary": [],
       "disable": false,
@@ -574,8 +570,7 @@
     {
       "id": 109,
       "keys": [
-        "Persona fusion",
-        "fusion"
+        "Persona fusion"
       ],
       "secondary_keys": [],
       "comment": "Persona fusion",
@@ -622,8 +617,7 @@
       "uid": 109,
       "name": "Persona fusion",
       "key": [
-        "Persona fusion",
-        "fusion"
+        "Persona fusion"
       ],
       "keysecondary": [],
       "disable": false,
@@ -889,8 +883,7 @@
     {
       "id": 114,
       "keys": [
-        "Wild Card",
-        "wild card"
+        "Wild Card"
       ],
       "secondary_keys": [],
       "comment": "Wild Card",
@@ -918,7 +911,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -937,15 +930,14 @@
       "uid": 114,
       "name": "Wild Card",
       "key": [
-        "Wild Card",
-        "wild card"
+        "Wild Card"
       ],
       "keysecondary": [],
       "disable": false,
       "order": 100,
       "displayIndex": 114,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -1228,7 +1220,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -1254,7 +1246,7 @@
       "order": 100,
       "displayIndex": 119,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -1290,7 +1282,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -1317,15 +1309,14 @@
       "order": 100,
       "displayIndex": 120,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
     {
       "id": 121,
       "keys": [
-        "Shadow negotiation",
-        "Negotiation"
+        "Shadow negotiation"
       ],
       "secondary_keys": [],
       "comment": "Shadow negotiation",
@@ -1372,8 +1363,7 @@
       "uid": 121,
       "name": "Shadow negotiation",
       "key": [
-        "Shadow negotiation",
-        "Negotiation"
+        "Shadow negotiation"
       ],
       "keysecondary": [],
       "disable": false,
@@ -1448,8 +1438,7 @@
     {
       "id": 123,
       "keys": [
-        "Fool Arcana",
-        "The Fool"
+        "Fool Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Fool Arcana",
@@ -1496,8 +1485,7 @@
       "uid": 123,
       "name": "The Fool Arcana",
       "key": [
-        "Fool Arcana",
-        "The Fool"
+        "Fool Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -1511,8 +1499,7 @@
     {
       "id": 124,
       "keys": [
-        "Magician Arcana",
-        "The Magician"
+        "Magician Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Magician Arcana",
@@ -1559,8 +1546,7 @@
       "uid": 124,
       "name": "The Magician Arcana",
       "key": [
-        "Magician Arcana",
-        "The Magician"
+        "Magician Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -1574,8 +1560,7 @@
     {
       "id": 125,
       "keys": [
-        "Priestess Arcana",
-        "The Priestess"
+        "Priestess Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Priestess Arcana",
@@ -1622,8 +1607,7 @@
       "uid": 125,
       "name": "The Priestess Arcana",
       "key": [
-        "Priestess Arcana",
-        "The Priestess"
+        "Priestess Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -1637,8 +1621,7 @@
     {
       "id": 126,
       "keys": [
-        "Empress Arcana",
-        "The Empress"
+        "Empress Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Empress Arcana",
@@ -1685,8 +1668,7 @@
       "uid": 126,
       "name": "The Empress Arcana",
       "key": [
-        "Empress Arcana",
-        "The Empress"
+        "Empress Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -1700,8 +1682,7 @@
     {
       "id": 127,
       "keys": [
-        "Emperor Arcana",
-        "The Emperor"
+        "Emperor Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Emperor Arcana",
@@ -1748,8 +1729,7 @@
       "uid": 127,
       "name": "The Emperor Arcana",
       "key": [
-        "Emperor Arcana",
-        "The Emperor"
+        "Emperor Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -1763,8 +1743,7 @@
     {
       "id": 128,
       "keys": [
-        "Hierophant Arcana",
-        "The Hierophant"
+        "Hierophant Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Hierophant Arcana",
@@ -1811,8 +1790,7 @@
       "uid": 128,
       "name": "The Hierophant Arcana",
       "key": [
-        "Hierophant Arcana",
-        "The Hierophant"
+        "Hierophant Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -1826,8 +1804,7 @@
     {
       "id": 129,
       "keys": [
-        "Lovers Arcana",
-        "The Lovers"
+        "Lovers Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Lovers Arcana",
@@ -1874,8 +1851,7 @@
       "uid": 129,
       "name": "The Lovers Arcana",
       "key": [
-        "Lovers Arcana",
-        "The Lovers"
+        "Lovers Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -1889,8 +1865,7 @@
     {
       "id": 130,
       "keys": [
-        "Chariot Arcana",
-        "The Chariot"
+        "Chariot Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Chariot Arcana",
@@ -1937,8 +1912,7 @@
       "uid": 130,
       "name": "The Chariot Arcana",
       "key": [
-        "Chariot Arcana",
-        "The Chariot"
+        "Chariot Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -1952,8 +1926,7 @@
     {
       "id": 131,
       "keys": [
-        "Justice Arcana",
-        "The Justice"
+        "Justice Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Justice Arcana",
@@ -2000,8 +1973,7 @@
       "uid": 131,
       "name": "The Justice Arcana",
       "key": [
-        "Justice Arcana",
-        "The Justice"
+        "Justice Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2015,8 +1987,7 @@
     {
       "id": 132,
       "keys": [
-        "Hermit Arcana",
-        "The Hermit"
+        "Hermit Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Hermit Arcana",
@@ -2063,8 +2034,7 @@
       "uid": 132,
       "name": "The Hermit Arcana",
       "key": [
-        "Hermit Arcana",
-        "The Hermit"
+        "Hermit Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2078,8 +2048,7 @@
     {
       "id": 133,
       "keys": [
-        "Fortune Arcana",
-        "The Fortune"
+        "Fortune Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Fortune Arcana",
@@ -2126,8 +2095,7 @@
       "uid": 133,
       "name": "The Fortune Arcana",
       "key": [
-        "Fortune Arcana",
-        "The Fortune"
+        "Fortune Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2141,8 +2109,7 @@
     {
       "id": 134,
       "keys": [
-        "Strength Arcana",
-        "The Strength"
+        "Strength Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Strength Arcana",
@@ -2189,8 +2156,7 @@
       "uid": 134,
       "name": "The Strength Arcana",
       "key": [
-        "Strength Arcana",
-        "The Strength"
+        "Strength Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2267,8 +2233,7 @@
     {
       "id": 136,
       "keys": [
-        "Death Arcana",
-        "The Death"
+        "Death Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Death Arcana",
@@ -2315,8 +2280,7 @@
       "uid": 136,
       "name": "The Death Arcana",
       "key": [
-        "Death Arcana",
-        "The Death"
+        "Death Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2330,8 +2294,7 @@
     {
       "id": 137,
       "keys": [
-        "Temperance Arcana",
-        "The Temperance"
+        "Temperance Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Temperance Arcana",
@@ -2378,8 +2341,7 @@
       "uid": 137,
       "name": "The Temperance Arcana",
       "key": [
-        "Temperance Arcana",
-        "The Temperance"
+        "Temperance Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2393,8 +2355,7 @@
     {
       "id": 138,
       "keys": [
-        "Devil Arcana",
-        "The Devil"
+        "Devil Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Devil Arcana",
@@ -2441,8 +2402,7 @@
       "uid": 138,
       "name": "The Devil Arcana",
       "key": [
-        "Devil Arcana",
-        "The Devil"
+        "Devil Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2456,8 +2416,7 @@
     {
       "id": 139,
       "keys": [
-        "Tower Arcana",
-        "The Tower"
+        "Tower Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Tower Arcana",
@@ -2504,8 +2463,7 @@
       "uid": 139,
       "name": "The Tower Arcana",
       "key": [
-        "Tower Arcana",
-        "The Tower"
+        "Tower Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2519,8 +2477,7 @@
     {
       "id": 140,
       "keys": [
-        "Star Arcana",
-        "The Star"
+        "Star Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Star Arcana",
@@ -2567,8 +2524,7 @@
       "uid": 140,
       "name": "The Star Arcana",
       "key": [
-        "Star Arcana",
-        "The Star"
+        "Star Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2582,8 +2538,7 @@
     {
       "id": 141,
       "keys": [
-        "Moon Arcana",
-        "The Moon"
+        "Moon Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Moon Arcana",
@@ -2630,8 +2585,7 @@
       "uid": 141,
       "name": "The Moon Arcana",
       "key": [
-        "Moon Arcana",
-        "The Moon"
+        "Moon Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2645,8 +2599,7 @@
     {
       "id": 142,
       "keys": [
-        "Sun Arcana",
-        "The Sun"
+        "Sun Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Sun Arcana",
@@ -2693,8 +2646,7 @@
       "uid": 142,
       "name": "The Sun Arcana",
       "key": [
-        "Sun Arcana",
-        "The Sun"
+        "Sun Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2708,8 +2660,7 @@
     {
       "id": 143,
       "keys": [
-        "Judgement Arcana",
-        "The Judgement"
+        "Judgement Arcana"
       ],
       "secondary_keys": [],
       "comment": "The Judgement Arcana",
@@ -2756,8 +2707,7 @@
       "uid": 143,
       "name": "The Judgement Arcana",
       "key": [
-        "Judgement Arcana",
-        "The Judgement"
+        "Judgement Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -2771,8 +2721,7 @@
     {
       "id": 144,
       "keys": [
-        "World Arcana",
-        "The World"
+        "World Arcana"
       ],
       "secondary_keys": [],
       "comment": "The World Arcana",
@@ -2819,8 +2768,7 @@
       "uid": 144,
       "name": "The World Arcana",
       "key": [
-        "World Arcana",
-        "The World"
+        "World Arcana"
       ],
       "keysecondary": [],
       "disable": false,
@@ -3304,7 +3252,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -3331,7 +3279,7 @@
       "order": 100,
       "displayIndex": 152,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -3368,7 +3316,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -3396,7 +3344,7 @@
       "order": 100,
       "displayIndex": 153,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -4033,7 +3981,6 @@
     {
       "id": 164,
       "keys": [
-        "Fog",
         "Inaba fog"
       ],
       "secondary_keys": [],
@@ -4081,7 +4028,6 @@
       "uid": 164,
       "name": "Fog",
       "key": [
-        "Fog",
         "Inaba fog"
       ],
       "keysecondary": [],
@@ -4964,8 +4910,8 @@
     {
       "id": 179,
       "keys": [
-        "Heaven",
-        "Nanako dungeon"
+        "Nanako dungeon",
+        "Heaven dungeon"
       ],
       "secondary_keys": [],
       "comment": "Heaven",
@@ -5012,8 +4958,8 @@
       "uid": 179,
       "name": "Heaven",
       "key": [
-        "Heaven",
-        "Nanako dungeon"
+        "Nanako dungeon",
+        "Heaven dungeon"
       ],
       "keysecondary": [],
       "disable": false,
@@ -6175,7 +6121,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -6203,7 +6149,7 @@
       "order": 100,
       "displayIndex": 198,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -6303,7 +6249,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -6331,7 +6277,7 @@
       "order": 100,
       "displayIndex": 200,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -6368,7 +6314,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -6396,7 +6342,7 @@
       "order": 100,
       "displayIndex": 201,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -6433,7 +6379,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -6461,7 +6407,7 @@
       "order": 100,
       "displayIndex": 202,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -6498,7 +6444,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -6526,7 +6472,7 @@
       "order": 100,
       "displayIndex": 203,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -6563,7 +6509,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -6591,7 +6537,7 @@
       "order": 100,
       "displayIndex": 204,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -6628,7 +6574,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -6656,7 +6602,7 @@
       "order": 100,
       "displayIndex": 205,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -6693,7 +6639,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -6721,7 +6667,7 @@
       "order": 100,
       "displayIndex": 206,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -6758,7 +6704,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -6786,7 +6732,7 @@
       "order": 100,
       "displayIndex": 207,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -7045,13 +6991,11 @@
     {
       "id": 212,
       "keys": [
-        "Caroline",
-        "Justine",
-        "Caroline and Justine"
+        "Caroline"
       ],
       "secondary_keys": [],
-      "comment": "Caroline and Justine",
-      "content": "[ Caroline and Justine: the twin wardens of Joker prison-shaped Velvet Room, Caroline is harsh and explosive while Justine is cooler and precise, but both are halves of Lavenza, Their demands, fusion trials, and contradictions reveal a broken guidance system struggling to serve a guest while trapped inside Yaldabaoth false order ]",
+      "comment": "Caroline",
+      "content": "[ Caroline: one of the twin wardens of Joker's prison-shaped Velvet Room, a small girl in a dark blue warden uniform and cap, platinum hair in twin buns, golden eyes, an eyepatch, and a baton she slams against the cell bars, Harsh, loud, and quick to threaten the Inmate, she enforces fusion trials and demands with explosive impatience, She is one half of Lavenza, split by Yaldabaoth's interference, and her hostility masks a fractured duty to guide the trickster guest ]",
       "constant": false,
       "selective": false,
       "insertion_order": 100,
@@ -7092,11 +7036,9 @@
         "ignore_budget": false
       },
       "uid": 212,
-      "name": "Caroline and Justine",
+      "name": "Caroline",
       "key": [
-        "Caroline",
-        "Justine",
-        "Caroline and Justine"
+        "Caroline"
       ],
       "keysecondary": [],
       "disable": false,
@@ -7452,7 +7394,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -7479,7 +7421,7 @@
       "order": 100,
       "displayIndex": 218,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -7515,7 +7457,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -7542,7 +7484,7 @@
       "order": 100,
       "displayIndex": 219,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -8681,9 +8623,7 @@
     {
       "id": 238,
       "keys": [
-        "Third semester",
-        "final semester",
-        "winter semester"
+        "Third semester"
       ],
       "secondary_keys": [],
       "comment": "Third semester",
@@ -8730,9 +8670,7 @@
       "uid": 238,
       "name": "Third semester",
       "key": [
-        "Third semester",
-        "final semester",
-        "winter semester"
+        "Third semester"
       ],
       "keysecondary": [],
       "disable": false,
@@ -8874,8 +8812,7 @@
     {
       "id": 241,
       "keys": [
-        "Cognitive psience",
-        "cognitive science"
+        "Cognitive psience"
       ],
       "secondary_keys": [],
       "comment": "Cognitive psience",
@@ -8922,8 +8859,7 @@
       "uid": 241,
       "name": "Cognitive psience",
       "key": [
-        "Cognitive psience",
-        "cognitive science"
+        "Cognitive psience"
       ],
       "keysecondary": [],
       "disable": false,
@@ -9246,8 +9182,7 @@
     {
       "id": 247,
       "keys": [
-        "Justice Confidant",
-        "Justice Arcana"
+        "Justice Confidant"
       ],
       "secondary_keys": [],
       "comment": "Justice Confidant",
@@ -9294,8 +9229,7 @@
       "uid": 247,
       "name": "Justice Confidant",
       "key": [
-        "Justice Confidant",
-        "Justice Arcana"
+        "Justice Confidant"
       ],
       "keysecondary": [],
       "disable": false,
@@ -10881,7 +10815,7 @@
         "scan_depth": null,
         "match_whole_words": true,
         "use_group_scoring": false,
-        "case_sensitive": false,
+        "case_sensitive": true,
         "automation_id": "",
         "role": 0,
         "vectorized": false,
@@ -10908,7 +10842,7 @@
       "order": 100,
       "displayIndex": 273,
       "insertion_position": 0,
-      "caseSensitive": false,
+      "caseSensitive": true,
       "matchWholeWords": true,
       "selectiveLogic": 0
     },
@@ -11284,6 +11218,67 @@
         "ignore_budget": false
       },
       "name": "Kotone Shiomi",
+      "caseSensitive": false,
+      "matchWholeWords": true,
+      "selectiveLogic": 0
+    },
+    {
+      "id": 280,
+      "keys": [
+        "Justine"
+      ],
+      "secondary_keys": [],
+      "comment": "Justine",
+      "content": "[ Justine: one of the twin wardens of Joker's prison-shaped Velvet Room, a small girl in a dark blue warden uniform and cap, platinum hair in a single long braid, golden eyes, an eyepatch, and a clipboard for recording the Inmate's progress, Cool, precise, and formally polite, she oversees fusion trials with detached curiosity, She is one half of Lavenza, split by Yaldabaoth's interference, and her composure hides a broken guidance system struggling to serve its guest ]",
+      "constant": false,
+      "selective": false,
+      "insertion_order": 280,
+      "enabled": true,
+      "position": "before_char",
+      "use_regex": false,
+      "extensions": {
+        "position": 0,
+        "exclude_recursion": true,
+        "display_index": 280,
+        "probability": 100,
+        "useProbability": true,
+        "depth": 4,
+        "selectiveLogic": 0,
+        "outlet_name": "",
+        "group": "",
+        "group_override": false,
+        "group_weight": 100,
+        "prevent_recursion": true,
+        "delay_until_recursion": false,
+        "scan_depth": null,
+        "match_whole_words": true,
+        "use_group_scoring": false,
+        "case_sensitive": false,
+        "automation_id": "",
+        "role": 0,
+        "vectorized": false,
+        "sticky": 0,
+        "cooldown": 0,
+        "delay": 0,
+        "match_persona_description": false,
+        "match_character_description": false,
+        "match_character_personality": false,
+        "match_character_depth_prompt": false,
+        "match_scenario": false,
+        "match_creator_notes": false,
+        "triggers": [],
+        "ignore_budget": false
+      },
+      "uid": 280,
+      "name": "Justine",
+      "key": [
+        "Justine"
+      ],
+      "keysecondary": [],
+      "disable": false,
+      "order": 280,
+      "displayIndex": 280,
+      "insertion_position": 0,
       "caseSensitive": false,
       "matchWholeWords": true,
       "selectiveLogic": 0
