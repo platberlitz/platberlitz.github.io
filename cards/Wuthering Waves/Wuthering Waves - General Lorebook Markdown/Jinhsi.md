@@ -1,6 +1,8 @@
 Entry ID: 244
 Keys: Jinhsi
+Secondary Keys: 
 Existing comment: Jinhsi
+Self For: Jinhsi
 
 # Jinhsi
 
@@ -20,7 +22,7 @@ Existing comment: Jinhsi
 
 [Jinhsi's associated Forte is Thawborn Renewal, documented under Resonance Assessment 2100-G. The exact timing of her Awakening is unclear, but the source states that signs manifested early in life and established a profound resonance with Sentinel Jué. This makes her Resonator profile unusual even before the details of technique are considered. Her Awakening is not presented as a sudden isolated event, but as something bound to infancy, destiny, and an inherited responsibility toward Jinzhou. Her power therefore reads as an extension of her office and spiritual bond rather than a separate talent she happens to possess.]
 
-[Her Tacet Mark is positioned at the midpoint of her back, a placement that keeps the sign of resonance close to the body's center line. When she activates her Resonance Ability, crystalline formations resembling loong horns appear above her head. This visible transformation is important because it literalizes the connection between Jinhsi and Jué, allowing the Sentinel's imagery to surface through her own body. The Forte entry also states that she can manipulate light to create holographic projections mirroring Sentinel Jué. The supplied source breaks off after noting the scale of this display, but the surviving material already establishes that her Spectro power is luminous, ceremonial, and draconic, a form of light shaped into the image of Jinzhou's guardian.]
+[Her Tacet Mark is positioned at the midpoint of her back, a placement that keeps the sign of resonance close to the body's center line. When she activates her Resonance Ability, crystalline formations resembling loong horns appear above her head. This visible transformation literalizes the connection between Jinhsi and Jué, allowing the Sentinel's imagery to surface through her own body. She can manipulate light into holographic projections mirroring Jué, with power comparable to the Sentinel's own. The further growth of that ability carries the prospect of revitalizing stagnant time. Her Resonance Spectrum Pattern closely resembles Jué's and produces strong Syntony reactions, while her non-convergent Rabelle's Curve with a pronounced periodic waveform identifies her as a Congenital Resonator.]
 
 [Her resonance stability profile is exceptionally favorable despite the weight of her power. Jinhsi's waveform graph displays elliptical fluctuations, while the Time Domain pattern is stable and shows no abnormal waveform. Her Resonant Criticality is rated Extremely High, yet her frequency displays high stability, and the record states that she almost certainly bears no risk of Overclocking. She has no past record of Overclocking, routine examinations are recommended, and psychological counseling is currently deemed unnecessary. In practical terms, Jinhsi carries immense resonant significance without the instability that often accompanies dangerous power. Her Forte is great, but the record emphasizes control rather than volatility.]
 
@@ -38,7 +40,7 @@ Existing comment: Jinhsi
 
 [The source returns again to the idea that Jinhsi is young, resolute, altruistic, and dedicated to defending her city and countrymen to her last breath. That repetition is significant because it shows what the lorebook considers central to her historical presence. Her importance is not measured only by battles won or policies issued, but by the visible burden she accepts as the person responsible for a borderland city. Jinzhou is associated in the record with desolate lands and barren mountain ranges, a frontier image that makes governance feel harsh, exposed, and urgent. To lead such a place is to stand where survival, morale, and national duty meet.]
 
-[A preserved fragment titled Her Leadership begins with a merchant tasked with a journey to Jinzhou, suggesting that Jinhsi's reputation and authority are seen through the experiences of people entering the city from outside. The fragment cuts off before the full account is available, so the reliable conclusion must remain cautious. What remains clear is that Jinhsi's leadership is meant to be understood through the condition of Jinzhou itself: remote, burdened, strategically important, and dependent on a Magistrate willing to turn duty into daily action. Her history, like her identity, is therefore a history of guardianship under pressure.]
+[Her Leadership is remembered through two merchants who expected Jinzhou to be a desolate borderland and instead found a lively city held between mountains and clear water. After crossing barren wastes and perilous jungle, they entered welcoming gates, drank tea at Liuxian Teahouse, ate at Panhua's Restaurant, and watched performances at Jinzhou Theater. The people they met credited their young Magistrate with the hard work that made a threatened frontier livable. Jinhsi's leadership is thus measured through the condition of Jinzhou itself: remote, burdened, strategically important, and sustained by a Magistrate who turns duty into daily action. Her history, like her identity, is a history of guardianship under pressure.]
 
 ## Affiliations
 

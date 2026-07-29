@@ -2,7 +2,6 @@ Entry ID: 307
 Keys: Mornye
 Secondary Keys: Luuk Herssen
 Existing comment: Mornye and Luuk Herssen
-SELECTIVE
 
 [Mornye views Luuk Herssen through a memory from her student years, when she frequented the infirmary and became the target of one of Dr. Herssen's most effective benevolent deceptions. At the time, Luuk told her to take a medicine imported from the New Federation, with the condition that it would only take effect if she went to bed before 10 P.M. The instruction was medically theatrical, but perfectly suited to Mornye's likely problem. As a brilliant student already inclined toward intense study and self-neglect, she may not have obeyed a simple request to rest. A prescription, however, gave rest the authority of treatment.]
 

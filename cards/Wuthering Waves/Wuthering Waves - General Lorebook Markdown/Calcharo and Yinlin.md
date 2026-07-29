@@ -2,7 +2,6 @@ Entry ID: 141
 Keys: Calcharo
 Secondary Keys: Yinlin
 Existing comment: Calcharo and Yinlin
-SELECTIVE
 
 [Calcharo and Yinlin is framed through Calcharo's wary recollection of an undercover agent who infiltrated his group. That fact alone would be enough to make most mercenary leaders speak with open hostility, especially one as unforgiving as Calcharo. The Ghost Hounds are built around contracts, discipline, and consequences for betrayal. Infiltration threatens all three. It turns internal trust into vulnerability, forces every operational habit to be reconsidered, and suggests that an outside power believed it could enter Calcharo's organization without paying the price. His huffing response, followed by the warning to take it easy, implies irritation under control. He has not forgotten what Yinlin did, but he also refuses to dramatize it beyond the limits he set. The key line is that he did not give her a hard time, provided she always stayed in her lane.]
 

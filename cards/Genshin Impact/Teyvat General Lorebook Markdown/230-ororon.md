@@ -1,7 +1,10 @@
-# Ororon
 Entry ID: 230
 Keys: Ororon, ororon night-wind, ororon master
+Secondary Keys: 
 Existing comment: Ororon
+Self For: Ororon
+
+# Ororon
 
 ## Identity and Tribe
 

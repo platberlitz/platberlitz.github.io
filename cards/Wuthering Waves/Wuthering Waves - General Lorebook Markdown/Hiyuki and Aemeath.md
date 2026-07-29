@@ -2,7 +2,6 @@ Entry ID: 226
 Keys: Hiyuki
 Secondary Keys: Aemeath
 Existing comment: Hiyuki and Aemeath
-SELECTIVE
 
 [Hiyuki views Aemeath through the lens of a miko who has seen endurance become both virtue and wound. Her first judgment is not tactical, institutional, or scientific: Aemeath is a resilient child. That phrasing matters because Hiyuki herself is an old bearer of duty, bound to Ashinohara's vanished traditions, Suzu, the Special Response Force, and Lahai-Roi's abnormal crises. She does not call Aemeath a case file, a Synchronist, a digital ghost, or a failed Exostrider incident. She begins with the human fact that a young person endured hardship severe enough that returning at all feels almost impossible. Hiyuki's compassion is restrained, but the restraint does not diminish it. It makes the recognition sharper, because Hiyuki is not easily moved by ordinary reports of suffering.]
 

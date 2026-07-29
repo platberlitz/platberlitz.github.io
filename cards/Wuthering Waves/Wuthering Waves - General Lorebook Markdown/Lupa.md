@@ -1,6 +1,8 @@
 Entry ID: 258
 Keys: Lupa, Howling Flame, Star Gladiator, House Silva
+Secondary Keys: 
 Existing comment: Lupa
+Self For: Lupa
 
 # Lupa
 

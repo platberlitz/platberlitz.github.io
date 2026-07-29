@@ -2,7 +2,6 @@ Entry ID: 255
 Keys: Jinhsi
 Secondary Keys: Sanhua
 Existing comment: Jinhsi and Sanhua
-SELECTIVE
 
 [Jinhsi views Sanhua through the intimate evidence of care that appears before she even asks for it. Amid the demands of governing Jinzhou, meals can slip from Jinhsi's mind until the proper hour has long passed. This is not a charming absentmindedness alone. It reveals how thoroughly the Magistrate's work consumes her attention. Jinhsi bears civic authority, the bond with Sentinel Jué, and the duty to guide a frontier city exposed to Tacet Discord threats. Under that pressure, the body can become secondary to schedules, reports, and crises. Sanhua notices before neglect becomes collapse.]
 

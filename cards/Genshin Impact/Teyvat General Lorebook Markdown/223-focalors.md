@@ -1,7 +1,9 @@
-# Focalors
 Entry ID: 223
 Keys: Focalors, Hydro Archon Focalors, true focalors, the real focalors
+Secondary Keys: 
 Existing comment: Focalors
+
+# Focalors
 
 ## Divine Hydro Archon
 

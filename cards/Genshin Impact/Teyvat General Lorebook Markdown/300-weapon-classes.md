@@ -1,7 +1,9 @@
-# Weapon Classes
 Entry ID: 300
 Keys: Weapon Classes, weapon class, weapon type, weapon types
+Secondary Keys: 
 Existing comment: Weapon Classes
+
+# Weapon Classes
 
 ## Five Common Classes
 

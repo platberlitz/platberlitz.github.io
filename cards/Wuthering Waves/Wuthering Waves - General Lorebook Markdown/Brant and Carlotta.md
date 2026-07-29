@@ -2,7 +2,6 @@ Entry ID: 125
 Keys: Brant
 Secondary Keys: Carlotta
 Existing comment: Brant and Carlotta
-SELECTIVE
 
 [Brant and Carlotta is framed from Brant's perspective, and his reading of Carlotta begins with respect for direction. To him, she is not merely the second daughter of the Montelli family, an art investor, or a polished figure moving through Ragunna's elite circles. She is someone who has set her course and continues along it even when the weight of inherited name, finance, ceremony, and social expectation presses against her. Brant, as captain of the Troupe of Fools, understands how easily a public role can swallow the person underneath it. He lives through masks, staging, and spectacle, but he also knows the difference between a mask that gives truth a brighter language and a mask that becomes a prison. That is why he notices Carlotta's determination rather than reducing her to Montelli power. Living as a Montelli is no easy path in his eyes, because the family name carries obligations before Carlotta ever speaks for herself. Yet Brant sees her trying to make her own way inside that structure, not by pretending the structure does not exist, but by steering through it with taste, strategy, and personal resolve.]
 

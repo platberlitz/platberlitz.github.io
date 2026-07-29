@@ -1,7 +1,9 @@
-# Eleven Fatui Harbingers
 Entry ID: 113
 Keys: Fatui Harbingers, Eleven Harbingers, Harbingers, Fatui Harbinger
+Secondary Keys: 
 Existing comment: Eleven Fatui Harbingers
+
+# Eleven Fatui Harbingers
 
 ## Rank and Authority
 [The Eleven Fatui Harbingers are the highest officers of the Fatui and the most visible instruments of the Tsaritsa's will outside Snezhnaya. They stand above diplomats, agents, soldiers, and ordinary commanders, each controlling resources, personnel, intelligence, or special projects on a scale far beyond normal military rank. Their titles are drawn from a theatrical tradition, but their power is practical and political. A Harbinger can negotiate with governments, command field forces, sponsor research, run an orphanage network, or take direct action against an Archon.]

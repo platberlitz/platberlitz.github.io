@@ -2,7 +2,6 @@ Entry ID: 179
 Keys: Cartethyia
 Secondary Keys: Ciaccona
 Existing comment: Cartethyia and Ciaccona
-SELECTIVE
 
 [Cartethyia's relationship with Ciaccona is rooted in childhood memory and the power of art to transcend time, creating a connection that exists more in the realm of emotional resonance than direct interaction. When Cartethyia was a child, before her elevation to Blessed Maiden and before the full weight of her dual nature became apparent, she used to beg bards passing through town to sing her stories of knights, tales of heroism, honor, and the kind of straightforward virtue that her own complicated existence would later make impossible to embody. These stories represented something pure and aspirational, a world where good and evil were clearly defined, where knights fought for justice and won through courage rather than through cosmic curses and divine manipulation. This childhood fascination with knightly tales reveals a side of Cartethyia that remains fundamentally romantic and idealistic despite everything she has endured, someone who still responds to narratives of heroism even after becoming far more complex than any hero she once imagined herself to be. The memory of those begging moments, of a young girl eager for tales of adventure, stands in stark contrast to the woman she would become, someone whose own story is far darker and more ambiguous than any bard's song could capture.]
 

@@ -2,7 +2,6 @@ Entry ID: 140
 Keys: Calcharo
 Secondary Keys: Verina
 Existing comment: Calcharo and Verina
-SELECTIVE
 
 [Calcharo and Verina is framed through a rare concise compliment from Calcharo. He says he met Verina once and calls her a prodigy in botany at such a young age, then closes with simple approval: impressive. The restraint is important. Calcharo is not a man who elaborates warmth easily, and his life as a former Exile, Lawless Zone survivor, and Ghost Hounds leader has trained him to value competence over softness. He has seen people judged by age, background, and surface innocence only for such judgments to become fatal mistakes. Verina's youth therefore does not invite condescension from him. Instead, it sharpens the achievement. A young botanist from Rigg's Explorers who has already earned recognition for botanical skill registers to Calcharo as evidence of discipline and capability. He does not need an emotional bond with her to respect that.]
 

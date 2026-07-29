@@ -2,7 +2,6 @@ Entry ID: 230
 Keys: Hiyuki
 Secondary Keys: Lynae
 Existing comment: Hiyuki and Lynae
-SELECTIVE
 
 [Hiyuki views Lynae with a gentleness that is sharpened by knowledge. Lynae appears as a bright spirit at Startorch Academy, a Spectro student whose Radiant Spectrum imagery, bold style, fast movement, and desire for a trouble-free campus life all point toward youth reaching for light. Hiyuki does not dismiss that brightness as naivety. She sees it as something chosen, perhaps even fought for. She is aware of certain secrets Lynae carries, and that awareness prevents her from treating the girl's cheer or mischief as shallow. Behind the student identity stands a former mercenary from the Lawless Zone, a stolen name, and the shadow of a Fractsidus operative whose cover became Lynae's escape route.]
 

@@ -1,6 +1,7 @@
 Entry ID: 53
 Keys: Special Response Force
-Existing comment:
+Secondary Keys: 
+Existing comment: Special Response Force
 
 ## Mission and Scope
 
@@ -8,7 +9,7 @@ Existing comment:
 
 ## Hiyuki's Singular Role
 
-[The most remarkable aspect of the Special Response Force is that Hiyuki is described as its last and only member. This extraordinary situation means that the entire operational capacity of the organization rests on a single individual, a five-star Glacio sword wielder whose Miko of Flaming Sakura heritage provides her with spiritual resources beyond mere combat ability. The fact that the Force has been reduced to a single operative suggests either that the organization suffered catastrophic losses, that its funding or political support has collapsed, or that the nature of its mission has become so specialized that only Hiyuki possesses the necessary combination of abilities to fulfill it. Her dual role as miko and Force operative creates a unique intersection of spiritual duty and tactical responsibility.]
+[The most remarkable aspect of the Special Response Force is that Hiyuki is described as its last and only member. This extraordinary situation means that the entire operational capacity of the organization rests on a single individual, a Glacio Resonator who fights with a sword and whose Miko of Flaming Sakura heritage provides her with spiritual resources beyond mere combat ability. The fact that the Force has been reduced to a single operative suggests either that the organization suffered catastrophic losses, that its funding or political support has collapsed, or that the nature of its mission has become so specialized that only Hiyuki possesses the necessary combination of abilities to fulfill it. Her dual role as miko and Force operative creates a unique intersection of spiritual duty and tactical responsibility.]
 
 ## Operational Challenges
 

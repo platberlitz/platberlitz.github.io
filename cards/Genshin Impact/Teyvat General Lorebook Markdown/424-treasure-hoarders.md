@@ -1,7 +1,9 @@
-# Treasure Hoarders
 Entry ID: 424
 Keys: Treasure Hoarders, Treasure Hoarder, Treasure Hoarder camp, hoarder camp
+Secondary Keys: 
 Existing comment: Treasure Hoarders
+
+# Treasure Hoarders
 
 ## Origin And Organization
 

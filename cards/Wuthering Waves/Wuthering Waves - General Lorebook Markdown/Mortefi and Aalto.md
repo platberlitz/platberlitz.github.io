@@ -2,7 +2,6 @@ Entry ID: 317
 Keys: Mortefi
 Secondary Keys: Aalto
 Existing comment: Mortefi and Aalto
-SELECTIVE
 
 [Mortefi and Aalto: Aalto views Mortefi: Aalto's interest in Mortefi begins with professional curiosity rather than personal warmth. To Aalto, Mortefi is the red-haired international research fellow from Huaxu Academy, a New Federation prodigy who somehow left aristocratic comfort behind and became a specialist in Tacetite Weaponry inside Jinzhou. That background makes Mortefi easy to recognize and difficult to categorize. He is not merely a client-facing scholar, not merely a noble, and not merely another temperamental genius. Aalto hears that Mortefi has a way of handling difficult clients, and that specific rumor matters to him because Aalto's own life as an information broker depends on reading people, pricing secrets, avoiding traps, and turning tense conversations into survivable exchanges.]
 

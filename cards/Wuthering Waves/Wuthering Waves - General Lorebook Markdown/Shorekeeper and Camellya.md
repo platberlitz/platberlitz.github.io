@@ -2,7 +2,6 @@ Entry ID: 352
 Keys: Shorekeeper
 Secondary Keys: Camellya
 Existing comment: Shorekeeper and Camellya
-SELECTIVE
 
 [Shorekeeper and Camellya: Camellya views Shorekeeper: Camellya's view of Shorekeeper is irreverent, affectionate in its own restless way, and filtered through years of Black Shores experience. She sees Shorekeeper as serious, rule-following, and effectively the organization's leader now. From Camellya, this description carries a teasing edge. Camellya is a Bloom Bearer who treats obligations lightly and follows excitement, battle, and promising seeds wherever they lead. Shorekeeper's composed adherence to rules therefore appears almost amusing to her, a contrast to her own refusal to be fully contained by institutional discipline.]
 

@@ -1,7 +1,9 @@
-# Tatarasuna
 Entry ID: 340
 Keys: Tatarasuna, Mikage Furnace, tatarasuna forge
+Secondary Keys: 
 Existing comment: Tatarasuna
+
+# Tatarasuna
 
 ## The Forge of Inazuma
 

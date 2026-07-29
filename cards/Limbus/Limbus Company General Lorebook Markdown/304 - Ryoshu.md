@@ -1,6 +1,7 @@
 Entry ID: 304
 Keys: Ryōshū, Ryoshū, Ryoshu, Sinner #4
 Existing comment: Ryōshū
+Self For: Ryōshū
 
 # Ryōshū
 

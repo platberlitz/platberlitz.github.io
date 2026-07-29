@@ -2,7 +2,6 @@ Entry ID: 354
 Keys: Shorekeeper
 Secondary Keys: Encore
 Existing comment: Shorekeeper and Encore
-SELECTIVE
 
 [Shorekeeper and Encore: Shorekeeper views Encore: Shorekeeper sees Encore through imagination, radiance, and the peculiar seriousness of childish stories. Encore's world is a canvas for boundless invention: warrior, knight, little adventurer, or any other role that lets her triumph over evil and reach a happy ending. Shorekeeper does not dismiss this as childish noise. As the Guardian of the Black Shores, she lives among prediction, sacrifice, secret systems, and the heavy mathematics of the Lament. Encore's storytelling matters because it carries a kind of emotional resistance those systems cannot manufacture.]
 

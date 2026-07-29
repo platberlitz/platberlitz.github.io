@@ -1,6 +1,7 @@
 Entry ID: 34
 Keys: Septimont
-Existing comment:
+Secondary Keys: 
+Existing comment: Septimont
 
 ## Overview
 
@@ -16,4 +17,4 @@ Existing comment:
 
 ## Key Figures
 
-[Augusta, the Ephor of Septimont, stands as one of the city's most prominent figures. Described as the undying sun eternally ablaze and a banner under which defeat does not exist, she comes, she sees, she conquers, wielding her Electro broadblade with time-defying precision. Avidius serves within Septimont's power structure in a significant capacity, and Iuno, a versatile healer and sub-DPS Resonator, is anchored to the city's traditions, with her Full Moon Domain providing healing, stamina restoration, and damage amplification to allies. These figures collectively represent Septimont's blend of martial supremacy, spiritual depth, and civic leadership that makes the city-state a dominant force in Rinascitan affairs.]
+[Augusta, the Ephor of Septimont, stands as one of the city's most prominent figures. Described as the undying sun eternally ablaze and a banner under which defeat does not exist, she comes, she sees, she conquers, wielding her Electro broadblade with time-defying precision. Avidius serves within Septimont's power structure in a significant capacity, and Iuno, a versatile Resonator equally capable of mending wounds and striking down foes, is anchored to the city's traditions, with her Full Moon Domain restoring the vigor of her allies, closing their wounds, and lending greater force to their blows. These figures collectively represent Septimont's blend of martial supremacy, spiritual depth, and civic leadership that makes the city-state a dominant force in Rinascitan affairs.]

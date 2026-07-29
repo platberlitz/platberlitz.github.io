@@ -2,7 +2,6 @@ Entry ID: 241
 Keys: Iuno
 Secondary Keys: Carlotta
 Existing comment: Iuno and Carlotta
-SELECTIVE
 
 [Iuno views Carlotta with amused surrender to Montelli cunning. She says Carlotta and her family always manage to bring something fresh to Septimont and Ragunna, even to themselves, and before anyone notices those novelties spark whole new trends. This is Iuno speaking as a priestess who understands patterns but also as a young woman who enjoys being caught by them. Carlotta's world is Ragunna's elite commerce, art investment, family influence, and taste-making power. Iuno reads that world not as dry economics, but as a social current that changes what people desire before they can explain why.]
 

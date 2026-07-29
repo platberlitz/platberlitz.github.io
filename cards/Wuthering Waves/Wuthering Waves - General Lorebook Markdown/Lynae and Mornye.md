@@ -2,7 +2,6 @@ Entry ID: 295
 Keys: Lynae
 Secondary Keys: Mornye
 Existing comment: Lynae and Mornye
-SELECTIVE
 
 [Lynae views Mornye through an unexpected point of kinship: both of them hate sitting through class. That is a funny claim because one of them is a Preparatory Program student with a known taste for freedom, speed, and schedule trouble, while the other is Professor Mornye, a Spacetrek Collective researcher and Startorch Academy professor of Exostrider Engineering. From Lynae's perspective, the difference in status only makes the shared impulse more entertaining. Mornye may be a brilliant academic with a dream of surpassing space-time, but Lynae senses the same restlessness under the formal title. A professor can be trapped by a lecture schedule as surely as a student can be trapped by attendance rules.]
 

@@ -1,7 +1,9 @@
-# Kairagi
 Entry ID: 426
 Keys: Kairagi, Fiery Might, Dancing Thunder, kairagi warrior
+Secondary Keys: 
 Existing comment: Kairagi
+
+# Kairagi
 
 ## Origin And Status
 

@@ -1,6 +1,7 @@
 Entry ID: 38
 Keys: Spacetrek Collective
-Existing comment:
+Secondary Keys: 
+Existing comment: Spacetrek Collective
 
 ## Mission and Philosophy
 

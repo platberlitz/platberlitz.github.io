@@ -2,7 +2,6 @@ Entry ID: 151
 Keys: Camellya
 Secondary Keys: Encore
 Existing comment: Camellya and Encore
-SELECTIVE
 
 [Camellya and Encore is framed by Camellya's predatory but playful view of potential. She identifies Encore first as the girl who loves stories, which shows that Camellya notices the bright imaginative surface before turning it into a future combat expectation. Encore belongs to the Black Shores' lively human side: energetic, affectionate, adventurous, story-loving, and often framed by her Wooly plush companions. To most observers, those qualities invite protectiveness or amusement. Camellya's response is different. She hopes Encore will mature into a strong opponent someday, because then they will have so much fun together. The wording is cheerful, but the underlying logic is Camellya's familiar Bloom Bearer instinct. She looks at people as seeds, possibilities, and future tests. Encore's present charm is not dismissed, but it is not the final point. The interesting question for Camellya is what strength might grow out of that imagination.]
 

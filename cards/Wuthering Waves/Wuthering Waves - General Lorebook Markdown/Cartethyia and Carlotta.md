@@ -2,7 +2,6 @@ Entry ID: 178
 Keys: Cartethyia
 Secondary Keys: Carlotta
 Existing comment: Cartethyia and Carlotta
-SELECTIVE
 
 [Cartethyia's relationship with Carlotta Montelli is characterized by genuine admiration and a surprising sense of kinship between two women from very different worlds who nonetheless share a commitment to Ragunna's future. As the daughter of the Montelli family, one of Ragunna's most prominent and influential houses, Carlotta has brought fresh ideas to the city, challenging traditional ways of thinking and pushing for innovation in areas where stagnation has been the norm. Cartethyia recognizes the importance of this contribution, understanding that if Rinascita's island were to remain isolated from outside influence, the air would grow stifling both literally and metaphorically. The people of Ragunna need new ships to expand their reach, new horizons to explore beyond the familiar waters they have sailed for generations, and new discoveries to challenge their assumptions about what is possible. Carlotta represents exactly this spirit of expansion and renewal, using her position within the Montelli family to advocate for change rather than simply maintaining the status quo that her noble birth would allow her to comfortably preserve. Cartethyia's appreciation for this quality reveals her own desire for Ragunna's growth and development, her understanding that the island's future depends not on clinging to ancient traditions but on adapting to new circumstances while preserving what is genuinely valuable from the past.]
 

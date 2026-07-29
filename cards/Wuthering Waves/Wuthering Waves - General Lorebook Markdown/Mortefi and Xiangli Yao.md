@@ -2,7 +2,6 @@ Entry ID: 322
 Keys: Mortefi
 Secondary Keys: Xiangli Yao
 Existing comment: Mortefi and Xiangli Yao
-SELECTIVE
 
 [Mortefi and Xiangli Yao: Mortefi views Xiangli Yao: Mortefi's first instinct toward Xiangli Yao is rivalry sharpened by admiration. He names Xiangli Yao almost like an obstacle, the genius whose existence demands an answer: one day Mortefi will outdo him and create even better inventions. This is not simple hostility. Mortefi's pride needs worthy opposition, and Xiangli Yao provides it. Both are young, extraordinary figures at Huaxu Academy, both tied to advanced technical work, and both carry Resonator identities that intertwine body, power, and research. Mortefi's Fusion temperament and Tacetite Weaponry focus make him combustible and exacting; Xiangli Yao's Matter Weaver profile and Automata Mechanics expertise make him calm, interdisciplinary, and difficult to surpass.]
 

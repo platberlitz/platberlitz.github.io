@@ -2,7 +2,6 @@ Entry ID: 291
 Keys: Lynae
 Secondary Keys: Chisa
 Existing comment: Lynae and Chisa
-SELECTIVE
 
 [Lynae views Chisa through the lens of someone who has learned to judge danger quickly, and the first impression matters because it shows how easily her instincts can be overturned by real connection. Chisa's quiet intensity initially reads to Lynae as a warning sign, the kind of controlled silence that makes a former Lawless Zone mercenary think she should keep Rover at a safe distance and avoid making herself too visible. Lynae is used to reading rooms, faces, and exits; her survival before Startorch Academy depended on exactly that. Yet Chisa confounds the expected pattern. Instead of becoming another person Lynae has to evade, Chisa becomes someone she clicks with almost instantly, turning suspicion into interest before Lynae can settle behind her usual jokes and speed.]
 

@@ -1,7 +1,9 @@
-# Specters
 Entry ID: 407
 Keys: elemental specter, elemental specters, floating elemental monster
+Secondary Keys: 
 Existing comment: Specters
+
+# Specters
 
 ## Origin And Nature
 

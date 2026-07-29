@@ -2,7 +2,6 @@ Entry ID: 333
 Keys: Phrolova
 Secondary Keys: Scar
 Existing comment: Phrolova and Scar
-SELECTIVE
 
 [Phrolova and Scar: Phrolova views Scar: Phrolova's view of Scar is defined by distaste for a kind of madness she considers inelegant. Both are connected to Fractsidus, and both stand outside ordinary moral comfort, but she does not confuse shared factional space with affinity. To Phrolova, Scar is the kind of madman who refuses the rules of performance. He does not merely break enemy structures; he threatens the structure of any plan around him. That is what she finds intolerable. Her own horror is composed, musical, and deliberate, rooted in frequency tuning, timing, and the conductor's ability to decide when each note should enter. Scar's chaos has a different texture.]
 

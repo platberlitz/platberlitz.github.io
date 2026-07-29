@@ -1,7 +1,9 @@
-# Eremite Equipment
 Entry ID: 321
 Keys: Eremite Equipment, Eremite weapons, desert mercenary gear, eremite gear, desert warrior gear
+Secondary Keys: 
 Existing comment: Eremite Equipment
+
+# Eremite Equipment
 
 ## Desert Mercenary Kit
 

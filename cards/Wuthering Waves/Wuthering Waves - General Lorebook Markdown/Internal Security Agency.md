@@ -1,6 +1,7 @@
 Entry ID: 44
 Keys: Internal Security Agency
-Existing comment:
+Secondary Keys: 
+Existing comment: Internal Security Agency
 
 ## Operational Mandate
 
@@ -8,7 +9,7 @@ Existing comment:
 
 ## Leadership and Qiuyuan
 
-[Qiuyuan, a five-star Aero sword wielder, leads a significant portion of the Agency's operational work. His hybrid role as both sub-DPS combatant and support specialist reflects the Agency's own hybrid nature, functioning as both a fighting force and an intelligence apparatus. Qiuyuan's management of his unique Swordster's Soliloquy resource and his ability to enter the Inkplash of Mind stance suggest specialized combat training that goes beyond standard Agency preparation, indicating he may have brought exceptional personal skill to his leadership position. His enhancement of team Echo Skill damage through Bamboo's Shade and his ability to grant allies Crit Damage bonuses suggest a commanding style that elevates those under his direction rather than merely directing them.]
+[Qiuyuan, an Aero Resonator who fights with a sword, leads a significant portion of the Agency's operational work. His hybrid role as both a capable combatant and a specialist who steadies and strengthens his comrades reflects the Agency's own hybrid nature, functioning as both a fighting force and an intelligence apparatus. His mastery of the discipline known as the Swordster's Soliloquy and his ability to enter the meditative Inkplash of Mind stance suggest specialized combat training that goes beyond standard Agency preparation, indicating he may have brought exceptional personal skill to his leadership position. Under the technique called Bamboo's Shade, the Echoes summoned by his allies strike with greater ferocity, and those who fight beside him find their most decisive blows landing with uncommon lethality, a commanding style that elevates those under his direction rather than merely directing them.]
 
 ## Regional Security Landscape
 

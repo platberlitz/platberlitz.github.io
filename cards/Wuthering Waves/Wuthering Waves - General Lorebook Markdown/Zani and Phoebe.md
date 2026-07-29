@@ -2,7 +2,6 @@ Entry ID: 379
 Keys: Zani
 Secondary Keys: Phoebe
 Existing comment: Zani and Phoebe
-SELECTIVE
 
 # Zani and Phoebe
 

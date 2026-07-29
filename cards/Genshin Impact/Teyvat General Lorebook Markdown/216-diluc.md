@@ -1,7 +1,10 @@
-# Diluc
 Entry ID: 216
 Keys: Diluc, Diluc Ragnvindr, Darknight Hero, diluc the darknight
+Secondary Keys: 
 Existing comment: Diluc
+Self For: Diluc, Jean & Diluc & Lisa
+
+# Diluc
 
 ## Master of Dawn Winery
 

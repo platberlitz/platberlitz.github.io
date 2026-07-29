@@ -2,7 +2,6 @@ Entry ID: 308
 Keys: Mornye
 Secondary Keys: Lynae
 Existing comment: Mornye and Lynae
-SELECTIVE
 
 [Mornye views Lynae with envy that is almost comically plain for someone usually so quiet and reserved. She wishes to be like Lynae, having the freedom to do what she wants and to act without constraint. The constraint she names most directly is the class schedule, which reveals the relationship's humor and its deeper sympathy at once. Mornye is a professor of Exostrider Engineering, a Spacetrek Collective researcher, and a former Startorch student whose life is organized around responsibility, research, and teaching. Lynae is a student who drives fast, paints boldly, slips around schedules, and treats rules as obstacles to be dodged when possible.]
 

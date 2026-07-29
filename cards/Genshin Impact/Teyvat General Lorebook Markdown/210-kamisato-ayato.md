@@ -1,7 +1,10 @@
-# Kamisato Ayato
 Entry ID: 210
 Keys: Ayato, Kamisato Ayato, Yashiro Commissioner, lord ayato, commissioner ayato
+Secondary Keys: 
 Existing comment: Kamisato Ayato
+Self For: Ayato
+
+# Kamisato Ayato
 
 ## Head of the Kamisato Clan
 

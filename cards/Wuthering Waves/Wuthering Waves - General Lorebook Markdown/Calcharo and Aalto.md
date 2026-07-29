@@ -2,7 +2,6 @@ Entry ID: 137
 Keys: Calcharo
 Secondary Keys: Aalto
 Existing comment: Calcharo and Aalto
-SELECTIVE
 
 [Calcharo and Aalto contains mutual remarks, but Calcharo's perspective remains dominant because he is the primary key. His comment on Aalto is short, practical, and almost comically transactional: if someone needs to reach Aalto, Calcharo can provide the contact, and using his name earns a twenty percent discount. That compact endorsement says a great deal about how Calcharo evaluates people. As leader of the Ghost Hounds, he does not waste praise on charm for its own sake. He comes from the Lawless Zone, survived exile, and built an international mercenary group on fair price, hard contracts, and punishment for betrayal. In that world, a contact matters only if the contact delivers value without creating uncontrolled liability. By offering Aalto's contact so directly, Calcharo signals that the information broker has passed a practical test. Aalto may smile, vanish into mist, and turn conversation into leverage, but Calcharo evidently considers him useful enough to recommend. The discount line also shows a dry awareness of Aalto's market habits, treating the broker's services as a known economy rather than an unknowable trick.]
 

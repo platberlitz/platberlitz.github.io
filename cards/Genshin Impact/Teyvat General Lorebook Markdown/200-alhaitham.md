@@ -1,7 +1,10 @@
-# Alhaitham
 Entry ID: 200
 Keys: Alhaitham, al-haitham, the scribe, alhaitham scribe
+Secondary Keys: 
 Existing comment: Alhaitham
+Self For: Alhaitham, Kaveh & Alhaitham
+
+# Alhaitham
 
 ## Identity and Office
 

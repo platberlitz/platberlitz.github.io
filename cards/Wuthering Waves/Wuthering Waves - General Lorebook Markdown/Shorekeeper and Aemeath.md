@@ -2,7 +2,6 @@ Entry ID: 350
 Keys: Shorekeeper
 Secondary Keys: Aemeath
 Existing comment: Shorekeeper and Aemeath
-SELECTIVE
 
 [Shorekeeper and Aemeath: Aemeath views Shorekeeper: Aemeath's view of Shorekeeper comes through overheard traces rather than direct institutional knowledge. On nights filled with Rover's sighs, Aemeath used to sneak near Rover's desk and catch fragments of Rover's conversations with the woman named Shorekeeper. That scene fits Aemeath's own condition as a digital ghost: present but unseen, close to others yet unable to participate normally, listening from the margins of rooms and lives. She does not begin by judging Shorekeeper's power, titles, or nature as Guardian of the Black Shores. She begins with the effect Shorekeeper has on Rover's breathing.]
 

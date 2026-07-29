@@ -2,7 +2,6 @@ Entry ID: 70
 Keys: Aalto
 Secondary Keys: Jiyan
 Existing comment: Aalto and Jiyan
-SELECTIVE
 
 # Aalto and Jiyan
 

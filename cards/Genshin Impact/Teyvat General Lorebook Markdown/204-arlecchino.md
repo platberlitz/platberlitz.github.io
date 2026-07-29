@@ -1,7 +1,10 @@
-# Arlecchino
 Entry ID: 204
 Keys: Arlecchino, The Knave, Peruere, Fourth Harbinger, fourth harbinger arlecchino
+Secondary Keys: 
 Existing comment: Arlecchino
+Self For: Arlecchino
+
+# Arlecchino
 
 ## The Knave and Father
 

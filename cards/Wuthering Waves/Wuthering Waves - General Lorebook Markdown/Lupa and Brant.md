@@ -2,7 +2,6 @@ Entry ID: 266
 Keys: Lupa
 Secondary Keys: Brant
 Existing comment: Lupa and Brant
-SELECTIVE
 
 [Lupa's connection to Brant, the exuberant captain of the Blue Furies, emerges through shared gladiatorial culture and an appreciation for the kind of performative joy that both of them bring to their respective domains. Many Gladiators of the Blue Furies originate from the Troupe of Fools, a theatrical and seafaring collective that treats life as an ongoing performance, a philosophy that aligns surprisingly well with Septimont's own arena culture, where combat is never purely brutal but always carries elements of spectacle, narrative, and emotional catharsis. Lupa recalls a specific encounter at Cliffside Harbor, where she witnessed Brant leap off the deck of his ship purely to embrace his crew, an impulsive gesture of affection that spoke volumes about the kind of leader he is: one who leads not through intimidation but through genuine, unrestrained love for his people. After their reunion, the group chattered together for a time and then suddenly broke into song, a spontaneous musical eruption that encapsulates the Troupe of Fools' irreverent, joyful approach to existence.]
 

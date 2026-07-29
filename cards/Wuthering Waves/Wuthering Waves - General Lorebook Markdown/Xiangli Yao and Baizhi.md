@@ -2,7 +2,6 @@ Entry ID: 364
 Keys: Xiangli Yao
 Secondary Keys: Baizhi
 Existing comment: Xiangli Yao and Baizhi
-SELECTIVE
 
 # Xiangli Yao and Baizhi
 

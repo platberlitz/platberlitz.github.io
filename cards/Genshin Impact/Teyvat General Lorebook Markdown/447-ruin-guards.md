@@ -1,7 +1,9 @@
-# Ruin Guards
 Entry ID: 447
 Keys: Ruin Guards, Ruin Guard, ruin guard enemy
+Secondary Keys: 
 Existing comment: Ruin Guards
+
+# Ruin Guards
 
 ## The Walking Fortress
 

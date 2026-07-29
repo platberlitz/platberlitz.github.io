@@ -1,12 +1,13 @@
-Entry ID: 14
+Entry ID: 397
 Keys: Whisperin
+Secondary Keys: 
 Existing comment: Whisperin
 
 # Whisperin
 
 ## Definition
 
-[Whisperin-type Tacet Discords imitate human forms, voices, or behavior. The source entry is concise, but it gives a clear boundary: their mimicry covers person-like shapes and social conduct rather than animals, plants, or objects. A Whisperin is therefore best understood through the unnerving closeness of its imitation. It is not human, yet it may borrow the outline, sound, posture, or behavioral cues by which people recognize one another. The danger begins in that false familiarity.]
+[Whisperin-type Tacet Discords imitate human forms, voices, or behavior. Their mimicry covers person-like shapes and social conduct rather than animals, plants, or objects. A Whisperin is therefore best understood through the unnerving closeness of its imitation. It is not human, yet it may borrow the outline, sound, posture, or behavioral cues by which people recognize one another. The danger begins in that false familiarity.]
 
 ## Humanlike Mimicry
 
@@ -14,8 +15,8 @@ Existing comment: Whisperin
 
 ## Voice and Behavior
 
-[The source specifically includes voices and behavior, which is important for scenes and dossiers. A Whisperin may be disturbing because it does not only look personlike. It may produce sounds that suggest speech, repeat social actions, or imitate the surface rhythm of human interaction. Since Tacet Discords consume frequencies and possess Reverberation Bodies, this behavior should be written as frequency-born imitation rather than empathy, culture, or ordinary learning unless another source says otherwise. The entity echoes humanity without becoming human.]
+[A Whisperin may be disturbing because it does not only look personlike. It may produce sounds that suggest speech, repeat social actions, or imitate the surface rhythm of human interaction. Since Tacet Discords consume frequencies and possess Reverberation Bodies, this behavior is frequency-born imitation rather than empathy, culture, or ordinary learning. The entity echoes humanity without becoming human.]
 
-## Dossier Use
+## Boundary Confusion
 
-[A source-aligned Whisperin dossier should emphasize boundary confusion. The class belongs to Tacet Discords, has a Reverberation Body, and participates in post-Lament chaotic frequency ecology, but its outward reference point is human. This makes it valuable for horror, investigation, and combat scenes where recognition itself is unreliable. It should not be merged into animal, plant, mineral, or object mimicry. Its role is to show how the Lament's aftermath can produce entities that distort the most intimate category survivors know: the presence of another person.]
+[The Whisperin class embodies boundary confusion. It belongs to Tacet Discords, has a Reverberation Body, and participates in post-Lament chaotic frequency ecology, but its outward reference point is human. Encounters with Whisperin entities make recognition itself unreliable. They are distinct from animal, plant, mineral, or object mimicry. They show how the Lament's aftermath can produce entities that distort the most intimate category survivors know: the presence of another person.]

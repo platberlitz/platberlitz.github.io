@@ -2,7 +2,6 @@ Entry ID: 296
 Keys: Lynae
 Secondary Keys: Sigrika
 Existing comment: Lynae and Sigrika
-SELECTIVE
 
 [Lynae views Sigrika first through gratitude. When Lynae arrived at Startorch Academy, Sigrika helped her get a handle on student life, which means Sigrika served as a guide into the ordinary routines Lynae was trying so hard to claim. That help is more important than it sounds. Lynae did not come to the Academy as a normal student with a clean background; she came under a stolen name, fleeing the Lawless Zone and hiding inside the identity of a Fractsidus operative. Student life was not simply unfamiliar. It was a fragile shelter. Sigrika's seriousness and competence helped Lynae learn how to inhabit that shelter without immediately exposing herself through ignorance or chaos.]
 

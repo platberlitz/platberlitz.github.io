@@ -1,7 +1,9 @@
-# Electro
 Entry ID: 147
 Keys: electro element, electro energy, electro vision, electro power
+Secondary Keys: 
 Existing comment: Electro
+
+# Electro
 
 ## Elemental Identity
 

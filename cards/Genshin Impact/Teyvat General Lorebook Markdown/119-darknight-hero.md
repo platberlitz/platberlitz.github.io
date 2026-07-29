@@ -1,7 +1,9 @@
-# Darknight Hero
 Entry ID: 119
 Keys: Darknight Hero, darknight, red-clad vigilante, mondstadt vigilante
+Secondary Keys: 
 Existing comment: Darknight Hero
+
+# Darknight Hero
 
 ## The Vigilante of Mondstadt
 

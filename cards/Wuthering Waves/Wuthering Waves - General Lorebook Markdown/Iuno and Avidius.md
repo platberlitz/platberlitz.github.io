@@ -2,7 +2,6 @@ Entry ID: 240
 Keys: Iuno
 Secondary Keys: Avidius
 Existing comment: Iuno and Avidius
-SELECTIVE
 
 [Iuno views Avidius as a voice that fate tried to grind down, but never quite erased. Her summary is brief and brutal: he roared at fate with everything he had, and that roar was swiftly reduced to whimpers, then silence, but everyone heard it. The phrasing is characteristic of Iuno's relationship to prophecy. She does not pretend that defiance always wins. She does not decorate Avidius's end with easy triumph. Instead, she preserves the sound of resistance as the meaningful fact. In Septimont, where the Tetragon Temple interprets destiny and the arena turns struggle into civic spectacle, a roar against fate is both personal rebellion and public contradiction.]
 

@@ -1,6 +1,8 @@
 Entry ID: 118
 Keys: Brant, Tern Brant, Flamebound Compass
+Secondary Keys: 
 Existing comment: Brant
+Self For: Brant
 
 # Brant
 
@@ -36,7 +38,7 @@ Existing comment: Brant
 
 [Brant's available history begins with his established position as captain of the Troupe of Fools and repeats the central biographical tension that defines him: he appears carefree, easygoing, charming, and unbound by convention, yet beneath that persona is a genuine heart deeply devoted to family and companions. The repetition matters because it shows which facts the record considers essential. Brant is not merely a talented actor who happens to lead a troupe, and he is not merely a fighter who happens to enjoy theatrics. His life history, as preserved, is organized around the union of performance and protection. He became, or is at least remembered as, the person responsible for keeping the troupe free, safe, and emotionally whole.]
 
-[A fragment titled An Improvised Afternoon at the Tavern begins with a crack of thunder shattering a bartender's rhythm while the bartender shakes a cocktail. The surviving line cuts off soon after, leaving the episode incomplete, but even this fragment fits Brant's broader pattern. Taverns, storms, improvisation, rhythm, and performance all belong naturally to his atmosphere. The scene suggests a world where ordinary conviviality can be interrupted by weather, danger, or sudden drama, and where someone like Brant would be expected to respond not with rigidity but with improvisational command. Because the record breaks mid phrase, the exact event cannot be reconstructed, but its placement in his history reinforces how his life is remembered through moments where spectacle and crisis meet.]
+[An Improvised Afternoon at the Tavern captures Brant at his most characteristic. A downpour had emptied a tavern of cheer when he entered with rain in his hair, bought the bartender's attention with a handful of Shell Credits, and turned a wanted poster for the Immortal Returned into a tale for the room. He made patrons into helmsmen, sailors, and dancers, transforming the soaked refuge into a stage through sheer charm. The performance ended when bounty hunters burst in with an order to seize him. Brant answered with a mocking bow, threw a mask alight with violet flame into the air, and disappeared in the confusion. When the tavern settled, its patrons found ribbons, balloons, sea gifts, and tickets to a Troupe of Fools performance.]
 
 [The sea storm account associated with his Forte also carries historical weight, even though it is filed under power rather than biography. It captures Brant during a decisive trial for a newer troupe member, when fear inside the cabin gives way to the sight of the captain atop the mast. Such stories become the internal mythology of a crew. They explain why people follow him, why his flamboyance is trusted rather than dismissed, and why his easy manner does not undermine his authority. Brant's history is therefore not a straight chronology of offices held and battles won. It is a collection of witnessed moments in which he proves that his performance identity can survive contact with real danger.]
 

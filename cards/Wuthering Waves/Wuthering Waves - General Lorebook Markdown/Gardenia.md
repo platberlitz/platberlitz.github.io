@@ -1,14 +1,15 @@
 Entry ID: 83
 Keys: Gardenia
-Existing comment:
+Secondary Keys: 
+Existing comment: Gardenia
 
 ## Companion of Cantarella
 
-[Gardenia is one of two known companions of Cantarella, the enigmatic Havoc Rectifier user whose presence in the world of Wuthering Waves is defined by mystery, loyalty, and an apparent connection to forces that operate beneath the surface of everyday awareness. Gardenia's relationship to Cantarella is not merely that of a casual acquaintance or convenient ally; the bonds between them suggest something deeper, a shared history, a common purpose, or perhaps a mutual dependency forged through experiences that outsiders can only partially perceive. As a companion to one of the more inscrutable figures in the known world, Gardenia occupies a position that is simultaneously intimate and obscured, close enough to witness Cantarella's true nature, yet distant enough from the public eye that her own identity remains largely undefined by external observers.]
+[Gardenia is one of two known companions of Cantarella, the enigmatic Havoc Rectifier user whose presence in the world is defined by mystery, loyalty, and an apparent connection to forces that operate beneath the surface of everyday awareness. Gardenia's relationship to Cantarella is not merely that of a casual acquaintance or convenient ally; the bonds between them suggest something deeper, a shared history, a common purpose, or perhaps a mutual dependency forged through experiences that outsiders can only partially perceive. As a companion to one of the more inscrutable figures in the known world, Gardenia occupies a position that is simultaneously intimate and obscured, close enough to witness Cantarella's true nature, yet distant enough from the public eye that her own identity remains largely undefined by external observers.]
 
 ## The Fisalia Connection
 
-[Gardenia's background connects her to the Fisalia family, a name that carries weight within the social and political structures of the regions she inhabits. The Fisalia family's history is intertwined with the Sea of Dreams, a metaphysical or geographical location whose significance extends beyond mere cartography into the realm of Resonance, memory, and the liminal spaces between waking consciousness and deeper states of awareness. The Sea of Dreams functions in the world's lore as a place where boundaries dissolve, where the distinction between what is real and what is imagined becomes uncertain, and where those who can navigate its waters gain access to knowledge and experiences unavailable to those confined to the ordinary world. Gardenia's connection to this family and this place suggests that she possesses an understanding of liminal spaces and altered states that complements Cantarella's own mysterious capabilities.]
+[Gardenia's background connects her to the Fisalia family, a name of weight in the social and political life of her homeland. The family's history is intertwined with the Sea of Dreams, a place bound to Resonance, memory, and the threshold between waking thought and deeper awareness. There, boundaries dissolve and the distinction between the real and imagined becomes uncertain. Those able to navigate its waters may gain knowledge and experiences denied to those confined to ordinary perception. Gardenia's tie to the family and sea suggests an understanding of liminal states that complements Cantarella's own gifts.]
 
 ## The Sea of Dreams
 

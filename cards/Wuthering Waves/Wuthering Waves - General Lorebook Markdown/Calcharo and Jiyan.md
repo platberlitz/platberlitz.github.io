@@ -2,7 +2,6 @@ Entry ID: 138
 Keys: Calcharo
 Secondary Keys: Jiyan
 Existing comment: Calcharo and Jiyan
-SELECTIVE
 
 [Calcharo and Jiyan is framed through Calcharo's guarded respect for another commander. He calls Jiyan a capable leader, which is high praise from someone who built the Ghost Hounds out of exile, violence, and hard discipline. Calcharo does not flatter military authority merely because it wears a formal uniform. His own path came through the New Federation's Lawless Zone and mercenary command, outside ordinary state structures and away from the clean legitimacy attached to a general's coat. For him to acknowledge Jiyan's capability means he has measured the Jinzhou general by results, judgment, and usefulness rather than by rank. Jiyan's position as General of the Jinzhou Garrison makes him a protector of Huanglong's frontier, responsible for military decisions where hesitation can cost lives. Calcharo recognizes that kind of burden even if his own command philosophy is colder, more transactional, and less publicly honorable.]
 

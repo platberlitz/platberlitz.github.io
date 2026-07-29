@@ -2,7 +2,6 @@ Entry ID: 252
 Keys: Jinhsi
 Secondary Keys: Changli
 Existing comment: Jinhsi and Changli
-SELECTIVE
 
 [Jinhsi views Changli as her esteemed teacher, and that word sets the relationship's direction. Changli is more than Jinzhou's Counselor, more than a former Secretary-General from Mingting, and more than a Fusion Resonator with a warm smile and a strategic mind. To Jinhsi, she is the person who has taught her much over the years, shaping the young Magistrate's ability to think, rule, listen, and endure. Jinhsi's own life has been defined by public responsibility from birth: Sentinel Jué's appointed Resonator, the young guardian of Jinzhou, and the civic figure expected to lead a frontier city toward tomorrow. Changli's teaching gives that responsibility practical form.]
 

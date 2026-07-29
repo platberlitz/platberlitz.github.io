@@ -1,7 +1,9 @@
-# Abyss Heralds
 Entry ID: 415
 Keys: Abyss Heralds, Abyss Herald, Wicked Torrents, abyss herald boss
+Secondary Keys: 
 Existing comment: Abyss Heralds
+
+# Abyss Heralds
 
 ## Origin And Rank
 

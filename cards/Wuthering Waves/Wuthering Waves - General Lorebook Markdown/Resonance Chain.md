@@ -1,6 +1,7 @@
 Entry ID: 18
 Keys: Resonance Chain, Resonance Link
-Existing comment:
+Secondary Keys: 
+Existing comment: Resonance Chain
 
 ## Fundamental Bond
 

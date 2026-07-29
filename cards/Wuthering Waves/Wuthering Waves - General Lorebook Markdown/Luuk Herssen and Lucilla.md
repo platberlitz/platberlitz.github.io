@@ -1,7 +1,7 @@
 Entry ID: 278
 Keys: Luuk Herssen (primary), Lucilla (secondary)
+Secondary Keys: Lucilla
 Existing comment: Luuk Herssen and Lucilla
-Selective: true
 
 # Luuk Herssen and Lucilla
 

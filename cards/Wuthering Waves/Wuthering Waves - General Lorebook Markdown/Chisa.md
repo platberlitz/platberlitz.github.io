@@ -1,6 +1,7 @@
 Entry ID: 79
 Keys: Chisa
-Existing comment:
+Secondary Keys: 
+Existing comment: Chisa
 
 ## The Ashinohara Student
 
@@ -8,8 +9,8 @@ Existing comment:
 
 ## Perception Beyond the Ordinary
 
-[What sets Chisa apart is her unique ability to perceive the underlying structures of reality itself. When she narrows her eyes, the world around her reveals its hidden architecture, the invisible threads that connect cause to effect, life to death, one moment to the next. She can single out "the very thread that tugs at life itself," a level of perceptual acuity that goes far beyond ordinary combat awareness or even standard Resonance sensitivity. This ability to see the fundamental framework of existence has profound implications both in and out of combat. As a Havoc Broadblade wielder, she brings this structural vision to bear on the battlefield, identifying vulnerabilities in her opponents that others cannot perceive and striking with precision guided by an understanding of how systems, biological, mechanical, or metaphysical, can be disrupted at their most critical junctures.]
+[Chisa can perceive the underlying structures of reality itself. When she narrows her eyes, the world reveals hidden architecture, invisible threads connecting cause to effect, life to death, and one moment to the next. She can single out "the very thread that tugs at life itself," a faculty beyond ordinary awareness and even standard Resonance sensitivity. With her Havoc Broadblade, she identifies vulnerabilities unseen by others and strikes at the critical junctures of living, mechanical, and metaphysical systems.]
 
 ## Hidden Depths and Structural Vision
 
-[Chisa's connection to the Thread of Severed Fate echo set suggests that her structural vision is not merely a passive ability but an active engagement with the concept of fate itself. Her combat mechanics revolve around inflicting Havoc Bane and Negative Statuses, abilities that reflect a fighting philosophy centered on identifying and severing the connections that sustain her opponents. Her signature weapon, Kumokiri (literally "cloud cutter"), reinforces this thematic throughline, she is one who cuts through obscuration to find the essential truth of a thing, then cuts the thing itself. At Startorch Academy, where students from across the known world converge to study Resonance and its applications, Chisa remains an enigma to her peers, the quiet student whose eyes occasionally shimmer with knowledge that no curriculum could teach and no examination could measure.]
+[Chisa's affinity for what some call the thread of severed fate suggests that her structural vision is not merely a passive ability but an active engagement with the concept of fate itself. In battle she afflicts her opponents with a creeping Havoc corruption and a cascade of debilitating conditions, techniques that reflect a fighting philosophy centered on identifying and severing the connections that sustain her opponents. Her signature weapon, Kumokiri (literally "cloud cutter"), reinforces this thematic throughline, she is one who cuts through obscuration to find the essential truth of a thing, then cuts the thing itself. At Startorch Academy, where students from across the known world converge to study Resonance and its applications, Chisa remains an enigma to her peers, the quiet student whose eyes occasionally shimmer with knowledge that no curriculum could teach and no examination could measure.]

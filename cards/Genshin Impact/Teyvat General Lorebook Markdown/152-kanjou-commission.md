@@ -1,7 +1,9 @@
-# Kanjou Commission
 Entry ID: 152
 Keys: Kanjou Commission, Kanjou, Hiiragi Clan, Ritou customs
+Secondary Keys: 
 Existing comment: Kanjou Commission
+
+# Kanjou Commission
 
 ## Gatekeepers of Inazuma
 

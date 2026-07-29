@@ -2,7 +2,6 @@ Entry ID: 269
 Keys: Lupa
 Secondary Keys: Mya
 Existing comment: Lupa and Mya
-SELECTIVE
 
 [Lupa's relationship with Mya is among the most psychologically complex of her interpersonal connections, rooted in a profound encounter with what it means to be left behind and the guilt that success can carry when others fall away. Lupa first encountered Mya through footage of the contender's fights, and what struck her immediately was Mya's raw, unfiltered determination, a quality that mirrors Lupa's own approach to combat but appears in Mya with an intensity that speaks to someone fighting not from a position of strength but from a desperate need to prove her place. At the time Lupa watched this footage, her own team was experiencing serious internal problems: her teammates were accusing her of not understanding what it felt like to be left behind, of being the one who struggles while others excel, of carrying the weight of inadequacy while watching peers surge ahead. These accusations, which normally Lupa would brush off as the inevitable friction of team dynamics, began to take root in her mind, and the sounds of sorrow that her teammates expressed grew louder and began to weigh on her in ways she had not anticipated.]
 

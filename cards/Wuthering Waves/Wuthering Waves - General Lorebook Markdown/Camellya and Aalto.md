@@ -2,7 +2,6 @@ Entry ID: 149
 Keys: Camellya
 Secondary Keys: Aalto
 Existing comment: Camellya and Aalto
-SELECTIVE
 
 [Camellya and Aalto is shaped by Camellya's appetite for stimulation, and her judgment of Aalto begins with a challenge he nearly meets but ultimately cannot satisfy. She calls him a master at mind games and admits that it is hard to get under his skin. From Camellya, that is real recognition. She delights in pressure, provocation, and the discovery of promising seeds who might bloom into interesting opponents. Aalto's evasive charm, information-broker habits, Aero mist, and Black Shores consultant work make him difficult prey in a psychological sense. He survives through misdirection, timing, social reading, and the ability to vanish before a situation closes around him. Camellya notices that slipperiness. She enjoys the difficulty of irritating or cracking him because it gives her a contest outside straightforward combat, a game of nerves rather than blades.]
 

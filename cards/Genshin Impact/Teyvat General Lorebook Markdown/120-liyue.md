@@ -1,7 +1,9 @@
-# Liyue
 Entry ID: 120
 Keys: Liyue, Liyue Harbor, liyue nation, nation of geo, harbor city liyue
+Secondary Keys: 
 Existing comment: Liyue
+
+# Liyue
 
 ## Land of Contracts and Stone
 [Liyue is the Geo nation of Teyvat, long associated with contracts, commerce, mountains, adepti, and the rule of Rex Lapis. Its landscape ranges from the busy docks of Liyue Harbor to stone forests, terraced villages, mines, ruins, mountain passes, and adeptal retreats. The nation's culture is shaped by a long memory of divine protection and human enterprise. Contracts are more than business tools in Liyue; they are a moral, legal, and cultural principle tied to Morax, the Geo Archon who guided the nation for thousands of years.]

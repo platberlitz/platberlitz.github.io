@@ -1,7 +1,9 @@
-# Consecrated Beasts
 Entry ID: 430
 Keys: Consecrated Beasts, Consecrated Beast, consecrated scorpion, consecrated vulture
+Secondary Keys: 
 Existing comment: Consecrated Beasts
+
+# Consecrated Beasts
 
 ## Origin And Transformation
 

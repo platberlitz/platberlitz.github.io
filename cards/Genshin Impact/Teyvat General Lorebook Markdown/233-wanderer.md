@@ -1,7 +1,10 @@
-# Wanderer
 Entry ID: 233
 Keys: the wanderer, Scaramouche, Kunikuzushi, Balladeer, shouki no kami, balladeer scaramouche
+Secondary Keys: 
 Existing comment: Wanderer
+Self For: Wanderer
+
+# Wanderer
 
 ## Origin and Names
 

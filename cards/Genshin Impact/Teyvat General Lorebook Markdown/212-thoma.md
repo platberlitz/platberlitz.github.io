@@ -1,7 +1,9 @@
-# Thoma
 Entry ID: 212
 Keys: Thoma, Kamisato housekeeper, thoma housekeeper, thoma fixer
+Secondary Keys: 
 Existing comment: Thoma
+
+# Thoma
 
 ## Kamisato Housekeeper
 

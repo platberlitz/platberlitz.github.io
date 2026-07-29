@@ -1,7 +1,9 @@
-# Nobushi
 Entry ID: 425
 Keys: Nobushi, ronin, Jintouban, Hitsukeban, Kikouban, inazuma ronin
+Secondary Keys: 
 Existing comment: Nobushi
+
+# Nobushi
 
 ## Origin And Identity
 

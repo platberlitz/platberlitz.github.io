@@ -1,6 +1,7 @@
 Entry ID: 25
 Keys: Black Shores
-Existing comment:
+Secondary Keys: 
+Existing comment: Black Shores
 
 ## Overview
 
@@ -20,4 +21,4 @@ Existing comment:
 
 ## Relationship to the Wider World
 
-[The Black Shores exists in a complex relationship with the nations and organizations of Solaris-3. It is neither allied with nor opposed to any single power, instead operating according to its own inscrutable agenda. The organization's secrecy and the otherworldly nature of its location make it difficult for outsiders to understand its true motives. For the Rover, however, the Black Shores represents a place of profound personal significance, a location tied to lost memories and the deeper mysteries of identity and purpose that drive the protagonist's journey across the world.]
+[The Black Shores exists in a complex relationship with the nations and organizations of Solaris-3. It is neither allied with nor opposed to any single power, instead operating according to its own inscrutable agenda. The organization's secrecy and the otherworldly nature of its location make it difficult for outsiders to understand its true motives. For the Rover, however, the Black Shores represents a place of profound personal significance, a location tied to lost memories and the deeper mysteries of identity and purpose that drive the Rover's journey across the world.]

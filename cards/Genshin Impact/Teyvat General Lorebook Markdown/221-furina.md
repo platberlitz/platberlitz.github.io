@@ -1,7 +1,10 @@
-# Furina
 Entry ID: 221
 Keys: Furina, Furina de Fontaine, lady furina, the hydro archon, furina archon
+Secondary Keys: 
 Existing comment: Furina
+Self For: Furina & Neuvillette
+
+# Furina
 
 ## Public Hydro Archon Persona
 

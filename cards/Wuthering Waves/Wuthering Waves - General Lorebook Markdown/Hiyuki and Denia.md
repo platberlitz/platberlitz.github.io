@@ -2,7 +2,6 @@ Entry ID: 228
 Keys: Hiyuki
 Secondary Keys: Denia
 Existing comment: Hiyuki and Denia
-SELECTIVE
 
 [Hiyuki views Denia through guilt before she allows herself any comfort. Denia represents the civilian cost of the Fractsidus's plots, someone pulled into an eschatological design she did not choose and harmed by forces that treat ordinary lives as material for catastrophe. Hiyuki's first instinct is to measure her own failure against that suffering. She believes she failed Denia in a way, because if she had seen through the Fractsidus plot more quickly, Denia might not have endured what she did. That confession fits Hiyuki's severe ethics. As a miko and Special Response Force operative, she does not place responsibility only on villains after harm is done. She asks whether her own delay left space for the harm to happen.]
 

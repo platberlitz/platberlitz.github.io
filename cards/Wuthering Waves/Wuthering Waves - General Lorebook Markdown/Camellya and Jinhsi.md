@@ -2,7 +2,6 @@ Entry ID: 153
 Keys: Camellya
 Secondary Keys: Jinhsi
 Existing comment: Camellya and Jinhsi
-SELECTIVE
 
 [Camellya and Jinhsi is framed by Camellya's impatience with self-sacrificial duty. She looks at Jinhsi, the Loong Maiden of Jinzhou, and immediately compares her to Shorekeeper because both appear devoted to obligations that consume the self. Jinhsi is Magistrate, Sentinel Jue's appointed Resonator, and a young ruler whose Spectro power, civic office, and draconic symbolism all bind her to Jinzhou's survival. To many, that devotion is noble and reassuring. To Camellya, it is bewildering. She sees the burden more than the honor, the self-denial more than the glory. Her comment about all the self-sacrifice is not respectful praise in the conventional sense. It carries exasperation from someone who refuses shackles, dislikes responsibility, and pursues amusement, battle, and fate on her own terms.]
 

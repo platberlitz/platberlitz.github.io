@@ -1,7 +1,9 @@
-# Pyro
 Entry ID: 150
 Keys: pyro element, pyro energy, pyro vision, pyro power
+Secondary Keys: 
 Existing comment: Pyro
+
+# Pyro
 
 ## Elemental Identity
 

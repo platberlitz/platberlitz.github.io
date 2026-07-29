@@ -2,7 +2,6 @@ Entry ID: 69
 Keys: Aalto
 Secondary Keys: Encore
 Existing comment: Aalto and Encore
-SELECTIVE
 
 # Aalto and Encore
 
@@ -12,4 +11,4 @@ SELECTIVE
 
 [From Aalto's perspective, this makes Encore both unpredictable and invaluable. He may be the one with the polished smile, the mist-shrouded exits, and the reputation for selling any secret at the right price, but Encore has a social magic that bypasses suspicion. Her Wooly companions, storytelling habits, and boundless enthusiasm turn unfamiliar places into playgrounds, and playgrounds are full of overheard details, small rumors, and emotional truths adults often miss. Aalto is too experienced to dismiss that simply because it looks childish. If anything, he knows how rare it is for someone to gather trust without needing to bargain for it.]
 
-[The relationship should not be flattened into Aalto as minder and Encore as mascot. Aalto's viewpoint shows genuine surprise at her capability, not just indulgent amusement. Encore widens his methods by proving that information can come from joy as surely as from negotiation. He remains the dominant lens here, observing how her energy reshapes missions and social terrain, but his observation carries warmth. In Encore, Aalto sees a partner whose stories can open doors his secrets cannot, and whose friendships sometimes lead the famous broker to the very intel he would otherwise have had to buy, steal, or coax from someone far less cheerful.]
+[Aalto is not merely a minder to Encore, and she is no mascot to him. His viewpoint shows genuine surprise at her capability, not just indulgent amusement. Encore widens his methods by proving that information can come from joy as surely as from negotiation. He observes how her energy reshapes missions and social terrain, and his observation carries warmth. In Encore, Aalto sees a partner whose stories can open doors his secrets cannot, and whose friendships sometimes lead the famous broker to the very intel he would otherwise have had to buy, steal, or coax from someone far less cheerful.]

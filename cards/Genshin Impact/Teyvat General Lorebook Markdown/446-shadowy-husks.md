@@ -1,7 +1,9 @@
-# Shadowy Husks
 Entry ID: 446
 Keys: Shadowy Husks, Shadowy Husk, husk soldiers
+Secondary Keys: 
 Existing comment: Shadowy Husks
+
+# Shadowy Husks
 
 ## Hollowed Soldiers of Khaenri'ah
 

@@ -2,7 +2,6 @@ Entry ID: 292
 Keys: Lynae
 Secondary Keys: Fractsidus
 Existing comment: Lynae and Fractsidus
-SELECTIVE
 
 [Lynae views Fractsidus with blunt rejection, and that bluntness should not be softened into abstract political disagreement. To her, Fractsidus is an organization full of crazies, a harsh judgment she immediately refuses to walk back because lived danger has given her no reason to be polite. Her connection to Fractsidus is not ideological sympathy or former loyalty. It comes through the stolen identity that allowed her to escape the Lawless Zone and enter Startorch Academy. The real Lynae was a Fractsidus operative attending the Academy as a spy, and the current Lynae took that name to get out of one violent world by hiding inside the cover built by another.]
 

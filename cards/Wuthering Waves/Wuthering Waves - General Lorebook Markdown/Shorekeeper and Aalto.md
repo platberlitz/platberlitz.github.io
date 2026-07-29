@@ -2,7 +2,6 @@ Entry ID: 349
 Keys: Shorekeeper
 Secondary Keys: Aalto
 Existing comment: Shorekeeper and Aalto
-SELECTIVE
 
 [Shorekeeper and Aalto: Shorekeeper views Aalto: Shorekeeper's view of Aalto is institutional, precise, and quietly appreciative. She understands that a mature organization cannot survive on prediction systems, hidden islands, and solemn guardians alone. It also requires a personable and skilled negotiator, someone able to forge connections with many kinds of people without making the Black Shores seem unreachable. In Shorekeeper's assessment, that person is Aalto. His smile, ease of speech, and information-broker instincts fill a human gap in an organization devoted to immense abstractions such as the Lament, resonance data, and the survival of Solaris-3.]
 

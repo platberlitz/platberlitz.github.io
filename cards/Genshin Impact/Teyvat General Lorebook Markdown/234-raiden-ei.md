@@ -1,7 +1,9 @@
-# Raiden Ei
 Entry ID: 234
 Keys: Raiden Ei, Beelzebul, Raiden Shogun, electro archon, the shogun, raiden
+Secondary Keys: 
 Existing comment: Raiden Ei
+
+# Raiden Ei
 
 ## Identity and Divine Role
 

@@ -1,7 +1,9 @@
-# Knights of Favonius
 Entry ID: 117
 Keys: Knights of Favonius, Favonius Knights, favonius, favonius order
+Secondary Keys: 
 Existing comment: Knights of Favonius
+
+# Knights of Favonius
 
 ## Guardians of Mondstadt
 

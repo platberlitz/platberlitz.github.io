@@ -1,7 +1,9 @@
-# Bows
 Entry ID: 304
 Keys: bow users, bow user, ranged weapon
+Secondary Keys: 
 Existing comment: Bows
+
+# Bows
 
 ## Distance and Precision
 

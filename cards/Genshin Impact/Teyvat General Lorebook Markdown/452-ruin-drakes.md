@@ -1,7 +1,9 @@
-# Ruin Drakes
 Entry ID: 452
 Keys: Ruin Drakes, Ruin Drake, ruin drake enemy
+Secondary Keys: 
 Existing comment: Ruin Drakes
+
+# Ruin Drakes
 
 ## Adaptive Machines of Sumeru
 

@@ -1,7 +1,9 @@
-# Dendro
 Entry ID: 148
 Keys: dendro element, dendro energy, dendro vision, dendro power
+Secondary Keys: 
 Existing comment: Dendro
+
+# Dendro
 
 ## Elemental Identity
 

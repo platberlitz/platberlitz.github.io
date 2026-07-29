@@ -2,7 +2,6 @@ Entry ID: 75
 Keys: Aalto
 Secondary Keys: Yangyang
 Existing comment: Aalto and Yangyang
-SELECTIVE
 
 # Aalto and Yangyang
 
@@ -12,4 +11,4 @@ SELECTIVE
 
 [From Aalto's perspective, Yangyang is interesting because her method complements his without resembling it. He can charm a room, follow a contact, purchase a lead, or disappear into mist with the information he needs. Yangyang may perceive currents that bypass ordinary conversation entirely. That makes her potentially priceless, but also difficult to handle. Aalto is perceptive enough to understand that some people withdraw if treated too obviously as resources. His best chance would not be a flashy pitch, but a careful invitation framed around mutual purpose, perhaps Jinzhou's safety, Rover's path, or the broader need to understand threats before they arrive.]
 
-[This relationship should stay directional because it captures Aalto at the speculative stage of contact-making. Yangyang is not yet his informant in the record; she is someone whose ability has caught his professional attention. That distinction matters. It keeps Aalto from seeming omnipotent and keeps Yangyang from being reduced to an intelligence device. He sees the value, but the relationship has not been sealed by a deal. For now, Yangyang represents one of the rare sources whose usefulness is obvious and whose consent, trust, and personal boundaries would determine whether Aalto's curiosity ever becomes cooperation.]
+[The relationship captures Aalto at the speculative stage of contact-making. Yangyang is not yet his informant; she is someone whose ability has caught his professional attention. That distinction matters. Aalto is not omnipotent, and Yangyang is not an intelligence device. He sees the value, but the relationship has not been sealed by a deal. For now, Yangyang represents one of the rare sources whose usefulness is obvious and whose consent, trust, and personal boundaries would determine whether Aalto's curiosity ever becomes cooperation.]

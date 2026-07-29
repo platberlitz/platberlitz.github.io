@@ -1,7 +1,9 @@
-# Visions
 Entry ID: 104
 Keys: Visions, vision bearer, vision wielder, vision holder, elemental vision
+Secondary Keys: 
 Existing comment: Visions
+
+# Visions
 
 ## Core Definition
 

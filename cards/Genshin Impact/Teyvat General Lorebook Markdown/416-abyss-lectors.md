@@ -1,7 +1,9 @@
-# Abyss Lectors
 Entry ID: 416
 Keys: Abyss Lectors, Abyss Lector, Violet Lightning, Fathomless Flames
+Secondary Keys: 
 Existing comment: Abyss Lectors
+
+# Abyss Lectors
 
 ## Origin And Function
 

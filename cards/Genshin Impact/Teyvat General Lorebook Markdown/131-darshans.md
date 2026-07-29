@@ -1,7 +1,9 @@
-# Darshans
 Entry ID: 131
 Keys: Darshans, Haravatat, Kshahrewar, Amurta, Spantamad, Rtawahist, Vahumana, darshan school
+Secondary Keys: 
 Existing comment: Darshans
+
+# Darshans
 
 ## Six Schools of the Akademiya
 

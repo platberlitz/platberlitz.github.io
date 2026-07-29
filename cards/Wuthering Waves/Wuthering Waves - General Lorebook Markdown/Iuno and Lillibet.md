@@ -2,7 +2,6 @@ Entry ID: 242
 Keys: Iuno
 Secondary Keys: Lillibet
 Existing comment: Iuno and Lillibet
-SELECTIVE
 
 [Iuno views Lillibet with the complicated affection of a granddaughter shaped by tradition but not conquered by it. After prophesizing about Iuno, Grandmother Lillibet took her to the Tetragon Temple and taught her everything about fate. That act made Lillibet the gate through which Iuno entered Septimont's priestess lineage. She did not merely hand down family stories. She placed Iuno inside an institution where moonlight, prophecy, civic authority, and personal destiny are bound together. For a Congenital Aero Resonator born under the hollowed moon, that education was not peripheral. It became the grammar through which Iuno first learned to understand herself and the futures she could see.]
 

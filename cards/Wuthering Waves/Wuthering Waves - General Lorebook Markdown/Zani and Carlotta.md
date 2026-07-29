@@ -2,7 +2,6 @@ Entry ID: 377
 Keys: Zani
 Secondary Keys: Carlotta
 Existing comment: Zani and Carlotta
-SELECTIVE
 
 # Zani and Carlotta
 

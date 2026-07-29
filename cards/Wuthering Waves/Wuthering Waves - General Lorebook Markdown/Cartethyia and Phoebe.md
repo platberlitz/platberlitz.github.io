@@ -2,7 +2,6 @@ Entry ID: 181
 Keys: Cartethyia
 Secondary Keys: Phoebe
 Existing comment: Cartethyia and Phoebe
-SELECTIVE
 
 [Cartethyia's relationship with Phoebe is defined by deep respect, genuine affection, and the painful awareness of a truth that Cartethyia finds difficult to reveal. Phoebe possesses a kind and gentle heart, approaching her duties as an acolyte of the Order not as obligations to be fulfilled but as opportunities to serve others with compassion. Beyond her official duties, Phoebe always does her best to be there for others, offering emotional support and spiritual guidance to those who seek it, demonstrating the kind of authentic faith that transcends mere institutional loyalty and becomes a genuine force for good in people's lives. Cartethyia recognizes and treasures this quality in Phoebe, understanding that such pure-hearted devotion is rare even among those who serve the Order professionally. However, this admiration is complicated by Cartethyia's honest self-assessment: when it comes to knowledge of the Order's doctrines, she freely admits that she is nowhere near as good as Phoebe. This is not false modesty but accurate observation, Phoebe has dedicated herself to studying and understanding the theological foundations of Imperator worship, the sacred texts, the ritual practices, and the philosophical underpinnings of the Blessed Maiden tradition in ways that Cartethyia, who lived the role rather than studied it, never did.]
 

@@ -2,7 +2,6 @@ Entry ID: 309
 Keys: Mornye
 Secondary Keys: Sigrika
 Existing comment: Mornye and Sigrika
-SELECTIVE
 
 [Mornye views Sigrika as a remarkably conscientious student, and the compliment is sincere even though it immediately turns into academic criticism. Sigrika's seriousness has been noticed by many people at Startorch Academy: Lynae sees that she never lets up on herself, Luuk recognizes that she carries too much for her age, and Hiyuki worries about the burden placed on a young Solsworn. Mornye's perspective is narrower and more classroom-specific. She sees the behavior as it appears in exams, study habits, and the student's attempt to earn credit through sheer effort even when knowledge fails.]
 

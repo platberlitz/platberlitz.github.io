@@ -1,7 +1,10 @@
-# Tartaglia
 Entry ID: 239
 Keys: Tartaglia, Childe, Ajax, Eleventh Harbinger, fatui harbinger childe, childe harbinger
+Secondary Keys: 
 Existing comment: Tartaglia
+Self For: Tartaglia
+
+# Tartaglia
 
 ## Identity and Fatui Rank
 

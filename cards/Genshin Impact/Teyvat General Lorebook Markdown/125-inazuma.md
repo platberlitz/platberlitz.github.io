@@ -1,7 +1,9 @@
-# Inazuma
 Entry ID: 125
 Keys: Inazuma, Narukami, inazuma nation, electro nation, inazuma shogunate, nation of eternity
+Secondary Keys: 
 Existing comment: Inazuma
+
+# Inazuma
 
 ## Nation of Thunder and Eternity
 

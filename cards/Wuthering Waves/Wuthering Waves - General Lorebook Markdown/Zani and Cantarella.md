@@ -2,7 +2,6 @@ Entry ID: 376
 Keys: Zani
 Secondary Keys: Cantarella
 Existing comment: Zani and Cantarella
-SELECTIVE
 
 # Zani and Cantarella
 

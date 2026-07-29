@@ -1,7 +1,9 @@
-# Samachurls
 Entry ID: 402
 Keys: Samachurls, samachurl, Hilichurl shamans, hilichurl shaman
+Secondary Keys: 
 Existing comment: Samachurls
+
+# Samachurls
 
 ## Origin And Role
 

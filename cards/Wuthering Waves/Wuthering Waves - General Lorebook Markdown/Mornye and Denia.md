@@ -2,7 +2,6 @@ Entry ID: 306
 Keys: Mornye
 Secondary Keys: Denia
 Existing comment: Mornye and Denia
-SELECTIVE
 
 [Mornye views Denia with a dry, observational humor that turns a minor classroom pattern into a small portrait of academic reality at Startorch Academy. She tells Rover that Denia can be seen at every public lecture, nodding along as if she understands every word. The image is vivid: Denia present, apparently attentive, performing the posture of comprehension with enough conviction that a speaker might believe the lecture is landing perfectly. Mornye, as a professor and researcher, notices the details because noticing is part of who she is. She maps behavior almost as naturally as she maps larger intellectual problems.]
 

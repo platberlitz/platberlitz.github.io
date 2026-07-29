@@ -2,7 +2,6 @@ Entry ID: 126
 Keys: Brant
 Secondary Keys: Cartethyia
 Existing comment: Brant and Cartethyia
-SELECTIVE
 
 [Brant and Cartethyia is directionally shaped by Brant's refusal to accept legend as a substitute for personhood. He looks at Cartethyia and sees how completely public language has overtaken her private self: saint, sinner, Blessed Maiden, Fleurdelys, Queen of Gale and Tide, Feathered Tempest, weapon, vessel, miracle, curse. Rinascita has many names for her, and each name comes with a ready-made story, but Brant's question is simpler and more unsettling: who is she really? As the captain of the Troupe of Fools, he understands performance more intimately than most. He knows that a title can reveal power, but it can also flatten a living heart into a symbol that others can praise, fear, or use. Cartethyia's sacred and catastrophic history makes that danger extreme. She is tied to the Order of the Deep, Imperator, Leviathan, the Dark Tide, and the impossible contradiction of protection and destruction held in one body. Brant does not deny any of that. What he resists is the way those grand meanings leave no room for ordinary signs of self: how she treats friends, how she faces foes, what she dreams about, what desire remains when no one is reciting doctrine around her.]
 

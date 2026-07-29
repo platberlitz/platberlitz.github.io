@@ -1,6 +1,7 @@
 Entry ID: 152
 Keys: Kanji Tatsumi, Kanji
 Existing comment: Kanji Tatsumi
+Self For: Kanji Tatsumi
 
 # Kanji Tatsumi
 

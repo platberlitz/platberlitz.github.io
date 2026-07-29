@@ -2,7 +2,6 @@ Entry ID: 355
 Keys: Shorekeeper
 Secondary Keys: Tethys System
 Existing comment: Shorekeeper and Tethys System
-SELECTIVE
 
 [Shorekeeper and Tethys System: Shorekeeper views Tethys System: Shorekeeper's relationship with the Tethys System is one of purpose, dependence, and cost. Tethys is the Black Shores' predictive and analytical platform for monitoring Lament threats, drawing together resonance readings, Tacet Discord activity, environmental frequency changes, and historical catastrophe data into guidance for action. For Shorekeeper, this system is not a distant tool. It is bound to the center of her existence. She can guide Tethys and act through its analysis, but that same massive computation wears against the Remnant Energy crystals that compose her body.]
 

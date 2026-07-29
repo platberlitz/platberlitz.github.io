@@ -1,6 +1,7 @@
 Entry ID: 51
 Keys: Tetragon Temple
-Existing comment:
+Secondary Keys: 
+Existing comment: Tetragon Temple
 
 ## Governance and Spiritual Authority
 
@@ -12,4 +13,4 @@ Existing comment:
 
 ## Iuno, the Defiant Priestess
 
-[Iuno serves as a priestess of the Tetragon Temple, embodying its values while simultaneously challenging the destinies that prophecy might seek to impose. Her introduction describes her as favored by fate under one name and swept away by it in another, yet never once defeated nor ever yielded. She is the defiant Priestess, one who walks the intricate web of destiny and becomes the only answer, suggesting that her relationship with the Temple's prophetic traditions is one of active negotiation rather than passive acceptance. As a five-star Aero Gauntlet wielder who alternates between melee moon ring and ranged moon bow combat states, her fighting style reflects the Temple's own duality, grounded in established practice yet reaching toward something beyond it. Her presence within the Temple hierarchy demonstrates that prophetic institutions can contain and even be strengthened by those who question rather than merely obey.]
+[Iuno serves as a priestess of the Tetragon Temple, embodying its values while simultaneously challenging the destinies that prophecy might seek to impose. Her introduction describes her as favored by fate under one name and swept away by it in another, yet never once defeated nor ever yielded. She is the defiant Priestess, one who walks the intricate web of destiny and becomes the only answer, suggesting that her relationship with the Temple's prophetic traditions is one of active negotiation rather than passive acceptance. An Aero Resonator who fights with gauntlets, she shifts fluidly between a close-range moon ring and a ranged moon bow, and her fighting style reflects the Temple's own duality, grounded in established practice yet reaching toward something beyond it. Her presence within the Temple hierarchy demonstrates that prophetic institutions can contain and even be strengthened by those who question rather than merely obey.]

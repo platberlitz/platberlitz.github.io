@@ -1,7 +1,9 @@
-# Fatui Cicin Mages
 Entry ID: 433
 Keys: Cicin Mages, Cicin Mage, Electro Cicin Mage, Cryo Cicin Mage, electro cicin, cryo cicin
+Secondary Keys: 
 Existing comment: Fatui Cicin Mages
+
+# Fatui Cicin Mages
 
 ## Origin And Role
 

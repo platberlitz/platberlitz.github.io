@@ -1,7 +1,9 @@
-# Ruin Sentinels
 Entry ID: 450
 Keys: Ruin Sentinels, Ruin Sentinel, ruin sentinel enemy
+Secondary Keys: 
 Existing comment: Ruin Sentinels
+
+# Ruin Sentinels
 
 ## The Coordinated Swarm
 

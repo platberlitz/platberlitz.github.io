@@ -2,7 +2,6 @@ Entry ID: 253
 Keys: Jinhsi
 Secondary Keys: Jiyan
 Existing comment: Jinhsi and Jiyan
-SELECTIVE
 
 [Jinhsi views Jiyan through trust strong enough to become civic faith. The nursery rhyme she recalls, Qingloong rise, monsters gone, is known by every child in Jinzhou. That detail matters because Jiyan's protection is not only a military fact in her mind. It has entered the city's shared language, the simple phrases children learn before they can understand the full terror of Tacet Discords or the labor required to keep them beyond the borders. As Magistrate, Jinhsi must think in reports, deployments, resources, and public morale. As a citizen of Jinzhou, she also understands the comfort of a name that lets children imagine monsters being driven away.]
 

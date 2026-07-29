@@ -1,6 +1,7 @@
 Entry ID: 95
-Keys: Scar [case_sensitive]
-Existing comment:
+Keys: Scar [case_sensitive], Scar
+Secondary Keys: 
+Existing comment: Scar
 
 ## The Madman of the Fractsidus
 

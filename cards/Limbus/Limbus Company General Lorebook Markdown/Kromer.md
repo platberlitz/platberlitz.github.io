@@ -1,6 +1,7 @@
 Entry ID: 411
 Keys: Kromer, One Who Grips, Franz Kromer
 Existing comment: Kromer
+Self For: Kromer
 
 # Kromer
 

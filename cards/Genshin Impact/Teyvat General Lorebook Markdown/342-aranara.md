@@ -1,7 +1,9 @@
-# Aranara
 Entry ID: 342
 Keys: Aranara, the aranara, Rana, Nara
+Secondary Keys: 
 Existing comment: Aranara
+
+# Aranara
 
 ## Small Guardians of the Forest
 

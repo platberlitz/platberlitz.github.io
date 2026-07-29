@@ -2,7 +2,6 @@ Entry ID: 128
 Keys: Brant
 Secondary Keys: Roccia
 Existing comment: Brant and Roccia
-SELECTIVE
 
 [Brant and Roccia is written from Brant's perspective, and his view of Roccia begins with trust. He calls her the Troupe of Fools' First Mate, a title that matters because Brant's own captaincy is not a decorative metaphor. The troupe may be performers, fools, singers, and improvisers, but under the color and laughter is a chosen family that needs structure, safety, and someone capable of holding the deck steady when Brant's theatrical fire draws every eye. Roccia occupies that trusted second position. Brant's warning not to be fooled by her age reveals how strongly he rejects surface-level judgment of her. To outsiders, her youth might invite underestimation, but Brant sees competence tested through daily work: performance advice, stage design, operational steadiness, and the ability to read the troupe's needs in practical terms. His praise is casual in tone, yet the substance is serious. He directs Rover to Roccia for performance advice because he considers her judgment reliable enough to guide someone entering the troupe's artistic world.]
 

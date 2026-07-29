@@ -1,6 +1,7 @@
 Entry ID: 206
 Keys: Goro Akechi, Akechi, Crow
 Existing comment: Goro Akechi
+Self For: Goro Akechi
 
 # Goro Akechi
 

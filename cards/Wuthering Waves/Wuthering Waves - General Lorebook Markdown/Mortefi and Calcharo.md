@@ -2,7 +2,6 @@ Entry ID: 319
 Keys: Mortefi
 Secondary Keys: Calcharo
 Existing comment: Mortefi and Calcharo
-SELECTIVE
 
 [Mortefi and Calcharo: Calcharo views Mortefi: Calcharo's opinion of Mortefi begins in open dislike. To him, Mortefi appears pretentious, arrogant, and self-absorbed, the living image of the snooty New Federation noble class that Calcharo has every reason to distrust. Calcharo's own history came through exile, the Lawless Zone, and mercenary survival, so Mortefi's refinement does not read as harmless elegance. It reads as privilege hardened into personality. The lab coat, cultured tastes, educated speech, and pride of an international research fellow all evoke the social world Calcharo survived outside of, a world that could afford polish because others endured the broken ground beneath it.]
 

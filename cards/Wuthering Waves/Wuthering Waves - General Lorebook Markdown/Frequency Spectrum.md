@@ -1,6 +1,7 @@
-Entry ID: 13
+Entry ID: 384
 Keys: Frequency Spectrum
-Existing comment:
+Secondary Keys: 
+Existing comment: Frequency Spectrum
 
 ## Defining the Spectrum
 
@@ -12,12 +13,12 @@ Existing comment:
 
 ## Detection and Analysis
 
-[Frequency Spectra can be detected, recorded, and analyzed by resonant technology and by other Resonators with sufficiently acute Resonance Perception. Devices such as Resonance Beacons and Resonance Nexuses are calibrated to recognize the Frequency Spectra of authorized Resonators, enabling personalized access to fast travel, recovery, and information retrieval functions. In military and research contexts, Frequency Spectrum analysis is used to identify unknown Resonators, track their movements, and assess their power levels. This capability has significant implications for security, as it allows organizations to distinguish allies from potential threats based on their resonant signature alone.]
+[Frequency Spectra can be detected, recorded, and studied by resonant instruments and by Resonators with acute Resonance Perception. Resonance Beacons and Nexuses may be calibrated to recognize authorized spectra, allowing passage and care to be provided safely. Military and research institutions use spectral analysis to identify unknown Resonators, follow their movements, and judge the scale of their resonance. This makes a spectrum both a safeguard and a matter of grave personal security.]
 
 ## Role in Echo Absorption
 
-[The Frequency Spectrum also plays a critical role in the process of Echo absorption. When a Tacet Discord is defeated, the residual frequency left behind carries the spectral signature of the vanquished creature. A Resonator can only absorb and integrate an Echo if their own Frequency Spectrum is compatible with the Echo's residual frequencies, a constraint that explains why not all Resonators can use all Echoes equally well. The Echo system in Wuthering Waves reflects this principle, as Resonators must carefully select Echoes whose spectral properties complement their own, maximizing synergy and avoiding dissonance that could reduce effectiveness or even cause harm.]
+[The Frequency Spectrum also plays a critical role in the process of Echo absorption. When a Tacet Discord is defeated, the residual frequency left behind carries the spectral signature of the vanquished creature. A Resonator can only absorb and integrate an Echo if their own Frequency Spectrum is compatible with the Echo's residual frequencies, a constraint that explains why not all Resonators can use all Echoes equally well. The practice of Echo attunement reflects this principle, as Resonators must carefully select Echoes whose spectral properties complement their own, maximizing harmony and avoiding dissonance that could reduce effectiveness or even cause harm.]
 
 ## Spectrum Evolution
 
-[A Resonator's Frequency Spectrum is not entirely static. Over time, through combat experience, exposure to new frequencies, and the absorption of Echoes, a Resonator's spectrum can shift and expand, incorporating new harmonics and broadening their resonant range. This evolution is one reason why veteran Resonators tend to be more versatile and powerful than newcomers. It also underscores the importance of the Data Bank system, which tracks a Resonator's accumulated spectral data and enables them to raise the probability of obtaining rare and powerful Echoes as their spectrum matures and their resonance deepens.]
+[A Resonator's Frequency Spectrum is not entirely static. Through hardship, exposure to unfamiliar frequencies, and the absorption of Echoes, it can shift and expand, gaining new harmonics and a broader resonant range. Experienced Resonators are often more versatile for this reason. Spectral archives preserve these changes and help guide safe attunement to rare and powerful Echoes.]

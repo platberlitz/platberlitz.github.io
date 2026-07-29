@@ -1,6 +1,8 @@
 Entry ID: 78
 Keys: Carlotta
-Existing comment:
+Secondary Keys: 
+Existing comment: Carlotta
+Self For: Carlotta
 
 ## The Montelli Legacy
 

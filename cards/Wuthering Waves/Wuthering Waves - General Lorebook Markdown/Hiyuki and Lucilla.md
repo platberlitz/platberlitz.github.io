@@ -2,7 +2,6 @@ Entry ID: 229
 Keys: Hiyuki
 Secondary Keys: Lucilla
 Existing comment: Hiyuki and Lucilla
-SELECTIVE
 
 [Hiyuki's view of Lucilla is built on gratitude she does not loudly display. Lucilla insists their partnership is only contractual, a practical arrangement between adults within Lahai-Roi's institutional world. Hiyuki accepts the wording, but she is not fooled by it. She knows that without Lucilla's discreet arrangements, she would have no place in the Spacetrek Collective. For a figure like Hiyuki, who belongs to Ashinohara's vanished sacred tradition, the Special Response Force, Startorch Academy, and classified Spacetrek structures all at once, having a place is not a minor convenience. It is the difference between being useful as a controlled participant and being left outside systems that still need her knowledge, power, and presence.]
 

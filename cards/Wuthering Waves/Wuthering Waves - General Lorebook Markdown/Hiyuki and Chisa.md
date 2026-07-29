@@ -2,7 +2,6 @@ Entry ID: 227
 Keys: Hiyuki
 Secondary Keys: Chisa
 Existing comment: Hiyuki and Chisa
-SELECTIVE
 
 [Hiyuki's view of Chisa begins with shared origin and deliberate distance. Chisa is also from Ashinohara, a fact that should make her familiar, perhaps even comforting, to a woman who carries the memory of a vanished homeland through Lahai-Roi. Instead, Hiyuki has made a point to avoid meeting her. This avoidance is not simple rudeness or disdain. For Hiyuki, Ashinohara is not a nostalgic label but a site of disappearance, sacred office, entrusted wishes, and truths too bitter to state plainly. To encounter another Ashinoharan student at Startorch Academy would not be an ordinary social meeting. It would bring the vanished land into the present in a form Hiyuki cannot safely treat as casual.]
 

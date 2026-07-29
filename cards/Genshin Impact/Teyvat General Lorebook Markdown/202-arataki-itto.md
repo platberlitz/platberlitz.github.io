@@ -1,7 +1,10 @@
-# Arataki Itto
 Entry ID: 202
 Keys: Arataki Itto, Itto, The One and Oni, Arataki Gang, arataki, one and oni, itto gang
+Secondary Keys: 
 Existing comment: Arataki Itto
+Self For: Arataki Itto, Kuki Shinobu & Arataki Itto
+
+# Arataki Itto
 
 ## Oni of Hanamizaka
 

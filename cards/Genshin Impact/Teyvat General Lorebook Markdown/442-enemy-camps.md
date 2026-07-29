@@ -1,7 +1,9 @@
-# Enemy Camps
 Entry ID: 442
 Keys: Enemy Camps, monster camp, bandit camp, military camp, enemy camp, hostile camp, monster den
+Secondary Keys: 
 Existing comment: Enemy Camps
+
+# Enemy Camps
 
 ## Origin And Purpose
 

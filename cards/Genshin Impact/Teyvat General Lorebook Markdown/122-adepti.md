@@ -1,7 +1,9 @@
-# Adepti
 Entry ID: 122
 Keys: Adepti, illuminated beasts, adeptus, illuminated beast, liyue adepti
+Secondary Keys: 
 Existing comment: Adepti
+
+# Adepti
 
 ## Illuminated Guardians of Liyue
 

@@ -1,10 +1,11 @@
 Entry ID: 0
 Keys: Solaris-3, Planet Solaris-3, Solaris planet
-Existing comment:
+Secondary Keys: 
+Existing comment: Solaris-3
 
 ## Overview
 
-[Solaris-3, frequently abbreviated as SOL3 in both military and civilian parlance, is the primary setting of Wuthering Waves and the world upon which all known events of the game take place. It is a planet orbiting the star Solaris, from which it derives its designation as the third body in the Solisylum stellar system. The planet is home to a rich tapestry of civilizations, ecosystems, and cultures that have developed over untold ages, only to be irrevocably reshaped by the catastrophic event known as the Lament.]
+[Solaris-3, frequently abbreviated as SOL3 in both military and civilian parlance, is the world itself, the stage upon which all known history has unfolded. It is a planet orbiting the star Solaris, from which it derives its designation as the third body in the Solisylum stellar system. The planet is home to a rich tapestry of civilizations, ecosystems, and cultures that have developed over untold ages, only to be irrevocably reshaped by the catastrophic event known as the Lament.]
 
 ## Geography and Regions
 
@@ -20,4 +21,4 @@ Existing comment:
 
 ## The World After the Lament
 
-[Solaris-3 in the present era is a world defined by recovery and resilience. The Lament shattered the planet's former stability, unleashing Void Storms that distort reality itself and spawning the Tacet Discords that now roam the land. Entire regions remain contaminated by residual Voidmatter or locked in perpetual Lament Residue Zones where Tacet Discords affected by Irideglow contamination grow increasingly dangerous. The concept of SOL3 Phase Ascension, a system by which the ambient danger level and reward potential of the world fluctuates, reflects the precarious balance that civilization maintains against encroaching chaos. Yet Solaris-3 endures. Its Resonators push back the boundaries of the unknown, its cities rebuild and expand, and its people look to the stars of the Solisylum with a mixture of trepidation and hope, determined to reclaim their world from the shadow cast by the Lament.]
+[Solaris-3 in the present era is a world defined by recovery and resilience. The Lament shattered the planet's former stability, unleashing Void Storms that distort reality itself and spawning the Tacet Discords that now roam the land. Entire regions remain contaminated by residual Voidmatter or locked in perpetual Lament Residue Zones where Tacet Discords affected by Irideglow contamination grow increasingly dangerous. Scholars speak of SOL3 Phase Ascension, the observed cycle by which the ambient danger of the world rises and falls in measured phases, as a reflection of the precarious balance that civilization maintains against encroaching chaos. Yet Solaris-3 endures. Its Resonators push back the boundaries of the unknown, its cities rebuild and expand, and its people look to the stars of the Solisylum with a mixture of trepidation and hope, determined to reclaim their world from the shadow cast by the Lament.]

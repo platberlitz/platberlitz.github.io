@@ -2,7 +2,6 @@ Entry ID: 363
 Keys: Xiangli Yao
 Secondary Keys: Aalto
 Existing comment: Xiangli Yao and Aalto
-SELECTIVE
 
 # Xiangli Yao and Aalto
 

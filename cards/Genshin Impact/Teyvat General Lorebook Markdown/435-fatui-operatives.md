@@ -1,7 +1,9 @@
-# Fatui Operatives
 Entry ID: 435
 Keys: Fatui Operatives, Frost Operative, Wind Operative, fatui operative
+Secondary Keys: 
 Existing comment: Fatui Operatives
+
+# Fatui Operatives
 
 ## Origin And Role
 

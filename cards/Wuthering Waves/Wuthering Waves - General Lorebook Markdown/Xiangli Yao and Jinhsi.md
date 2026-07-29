@@ -2,7 +2,6 @@ Entry ID: 365
 Keys: Xiangli Yao
 Secondary Keys: Jinhsi
 Existing comment: Xiangli Yao and Jinhsi
-SELECTIVE
 
 # Xiangli Yao and Jinhsi
 

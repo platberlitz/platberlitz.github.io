@@ -1,7 +1,9 @@
-# Gnoses
 Entry ID: 106
 Keys: Gnoses, Gnosis, gnosis slab
+Secondary Keys: 
 Existing comment: Gnoses
+
+# Gnoses
 
 ## Core Definition
 

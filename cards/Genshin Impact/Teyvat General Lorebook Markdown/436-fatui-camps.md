@@ -1,7 +1,9 @@
-# Fatui Camps
 Entry ID: 436
 Keys: Fatui Camps, Fatui outposts, Fatui diplomats, Northland Bank, fatui camp, northland bank fatui
+Secondary Keys: 
 Existing comment: Fatui Camps
+
+# Fatui Camps
 
 ## Origin And Purpose
 

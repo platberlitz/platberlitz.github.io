@@ -1,6 +1,7 @@
 Entry ID: 11
 Keys: Tacet Core
-Existing comment:
+Secondary Keys: 
+Existing comment: Tacet Core
 
 ## Definition
 
@@ -16,4 +17,4 @@ Existing comment:
 
 ## Research Significance
 
-[The study of Tacet Cores is a major research priority for organizations like the Black Shores and the Huaxu Academy. Examining intact or partially intact Cores provides insight into the origins of Tacet Discords, the nature of Lament corruption, and the fundamental mechanics of resonance. Some researchers theorize that Tacet Cores and Resonator Fortes share a common vibrational origin, suggesting that the boundary between Resonator and Tacet Discord is less absolute than most people believe.]
+[The study of Tacet Cores is a major research priority for organizations like the Black Shores and the Huaxu Academy. Examining intact or partially intact Cores provides insight into the origins of Tacet Discords, the nature of Lament corruption, and the fundamental workings of resonance. Some researchers theorize that Tacet Cores and Resonator Fortes share a common vibrational origin, suggesting that the boundary between Resonator and Tacet Discord is less absolute than most people believe.]

@@ -1,7 +1,9 @@
-# Rifthounds
 Entry ID: 413
 Keys: Rifthounds, Rifthound, Wolflord, corrosion wolves, rifthound whelp, golden wolflord
+Secondary Keys: 
 Existing comment: Rifthounds
+
+# Rifthounds
 
 ## Origin And Abyssal Nature
 

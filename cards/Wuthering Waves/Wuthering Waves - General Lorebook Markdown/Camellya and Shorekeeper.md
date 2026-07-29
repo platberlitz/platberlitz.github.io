@@ -2,7 +2,6 @@ Entry ID: 154
 Keys: Camellya
 Secondary Keys: Shorekeeper
 Existing comment: Camellya and Shorekeeper
-SELECTIVE
 
 [Camellya and Shorekeeper is framed through Camellya's mixture of teasing irreverence, reluctant respect, and long familiarity. She sees Shorekeeper as always serious, always following rules, and now effectively the de facto leader within the Black Shores. From Camellya's point of view, that seriousness is almost comic because it sits opposite her own refusal of responsibility. Camellya treats her role as Bloom Bearer as an obligation at most, a useful channel for combat, amusement, and the pursuit of promising seeds. Shorekeeper, by contrast, accepts name, function, and duty until they become nearly inseparable. She is Guardian of Secrets, Second Instance, guide of the Tethys System, and a being whose crystalline Remnant Energy body is worn down by the computation required to process Lament data. To Camellya, that level of rule-bound devotion is difficult to understand, but impossible to dismiss.]
 

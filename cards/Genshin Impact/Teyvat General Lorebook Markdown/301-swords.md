@@ -1,7 +1,9 @@
-# Swords
 Entry ID: 301
 Keys: sword users, sword user, sword wielder, one-handed sword
+Secondary Keys: 
 Existing comment: Swords
+
+# Swords
 
 ## Versatile Sidearms
 

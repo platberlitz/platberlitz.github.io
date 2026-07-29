@@ -1,6 +1,7 @@
 Entry ID: 8
 Keys: Resonance Spectrum Pattern
-Existing comment:
+Secondary Keys: 
+Existing comment: Resonance Spectrum Pattern
 
 ## Definition
 

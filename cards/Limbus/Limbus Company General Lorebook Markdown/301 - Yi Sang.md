@@ -1,6 +1,7 @@
 Entry ID: 301
 Keys: Yi Sang, Sinner #1, Ha Yung, saingeom
 Existing comment: Yi Sang
+Self For: Yi Sang
 
 # Yi Sang
 

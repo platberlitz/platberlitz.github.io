@@ -1,6 +1,7 @@
 Entry ID: 5
 Keys: Forte
-Existing comment:
+Secondary Keys: 
+Existing comment: Forte
 
 ## Definition and Nature
 
@@ -8,12 +9,12 @@ Existing comment:
 
 ## Expressions of Forte
 
-[Fortes manifest in dramatically varied forms. The most common expression is elemental power, aligned with one of the six known elemental frequencies: Glacio (ice), Fusion (fire), Electro (lightning), Aero (wind), Spectro (light), and Havoc (darkness). Characters such as Encore channel Fusion frequencies through their Forte, conjuring flames and summoning companion constructs. Others express Forte through bodily transformation, as seen in Resonators whose Awakening reshapes their physical form. Some Fortes are more abstract, governing concepts like sound manipulation, spatial distortion, time perception, or even the frequencies of life and death itself. Phrolova's Forte, for instance, allows her to attune the frequencies of being and conduct symphonies of souls, acting as a baton-wielding conductor of existence.]
+[Fortes manifest in dramatically varied forms. The most common expression is elemental power, aligned with one of six known frequencies: Glacio, Fusion, Electro, Aero, Spectro, and Havoc. Encore channels Fusion through her Forte, conjuring flame and companion constructs. Others undergo bodily transformation upon Awakening. Some Fortes govern sound, space, time, or the frequencies of life and death. Phrolova, for instance, attunes the frequencies of being and conducts symphonies of souls.]
 
 ## Forte and Combat
 
-[In combat, a Resonator's Forte governs their Resonance Skills, Resonance Liberation, and the unique Forte Circuit mechanics that define their fighting style. The Forte determines not only what elemental damage a Resonator deals but also the rhythm and structure of their combat rotations. Each Forte generates and consumes resources particular to its wielder: some build energy through basic attacks, others through dodging or parrying, and still others through coordinated team actions. The Forte is the engine that drives a Resonator's entire combat identity, from their Normal Attack chains to their ultimate Resonance Liberation.]
+[In battle, a Resonator's Forte governs the techniques and culminating manifestations of their Resonance. It determines both the elemental force they wield and the rhythm of their actions. Each Forte gathers and expends strength according to its bearer: through steady strikes, evasion, parries, or coordinated action with comrades. From a simple sword stroke to the full release of Resonance, the Forte gives form to a Resonator's art.]
 
-## Forte Gauge and Control
+## Forte Control
 
-[Resonators maintain awareness of their Forte through what is commonly referred to as a Forte Gauge, an internal sense of their frequency output and energy reserves. Mastery over one's Forte is a lifelong pursuit. Young or untrained Resonators may struggle to regulate their output, leading to unstable manifestations or, in extreme cases, Overclocking. The Rabelle's Curve examination framework helps assess how well a Resonator controls their Forte relative to expected norms.]
+[Resonators develop an internal sense of their frequency output and reserves. Mastery of a Forte is lifelong. Young or untrained Resonators may struggle to regulate their output, causing unstable manifestations or, in extreme cases, Overclocking. Rabelle's Curve provides a clinical framework for assessing a Resonator's control against expected norms.]

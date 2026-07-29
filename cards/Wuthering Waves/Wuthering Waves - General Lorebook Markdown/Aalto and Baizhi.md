@@ -2,7 +2,6 @@ Entry ID: 65
 Keys: Aalto
 Secondary Keys: Baizhi
 Existing comment: Aalto and Baizhi
-SELECTIVE
 
 # Aalto and Baizhi
 
@@ -12,4 +11,4 @@ SELECTIVE
 
 [The presence of Baizhi's pale companion also makes her world feel different from Aalto's network of contacts. Where Aalto gathers whispers, locations, names, and leverage, Baizhi studies phenomena close at hand, with a companion that seems almost like a living extension of her research practice. Aalto's mist and persona are tools of movement and concealment; Baizhi's laboratory habits are tools of patience and exposure. He might tease that she is bad for business, but the joke works because he knows she is good at what she does. Her refusal to outsource judgment is precisely what makes her difficult to sell to.]
 
-[This relationship should stay directional because its strongest lore value lies in Aalto's commercial and social reading of Baizhi. He does not need a dramatic rivalry with her, nor a close partnership invented beyond the record. He sees a researcher whose intellectual self-sufficiency makes his usual pitch ineffective. That recognition clarifies both characters: Aalto is not a careless hustler who pushes every lead, and Baizhi is not merely cold or unreachable. To him, she is the rare person whose best information comes from her own disciplined method, leaving the famous broker with little to offer except respect, amusement, and the wisdom to save his salesmanship for someone more susceptible to it.]
+[In the end, Aalto's reading of Baizhi is commercial and social rather than personal. There is no dramatic rivalry between them and no close partnership. He sees a researcher whose intellectual self-sufficiency makes his usual pitch ineffective. That recognition clarifies both characters: Aalto is not a careless hustler who pushes every lead, and Baizhi is not merely cold or unreachable. To him, she is the rare person whose best information comes from her own disciplined method, leaving the famous broker with little to offer except respect, amusement, and the wisdom to save his salesmanship for someone more susceptible to it.]

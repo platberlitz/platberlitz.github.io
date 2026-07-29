@@ -2,7 +2,6 @@ Entry ID: 332
 Keys: Phrolova
 Secondary Keys: Cristoforo
 Existing comment: Phrolova and Cristoforo
-SELECTIVE
 
 [Phrolova and Cristoforo: Phrolova views Cristoforo: Phrolova regards Cristoforo's pursuit of true free will as intriguing because it touches the same fault line that runs through her own existence. Cristoforo asks whether mankind can awaken a will capable of confronting the truths of the world rather than merely obeying fate, prophecy, resonance patterns, or institutional scripts. Phrolova, as a former Fractsidus Overseer and a Resonator whose music can tune the frequencies of beings, understands the temptation of that question. She has seen how easily people become notes inside larger arrangements. She has also built her life around the possibility that melodies can be changed, even when life and death seem to have fixed the score.]
 

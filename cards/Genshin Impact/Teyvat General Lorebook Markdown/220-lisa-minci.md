@@ -1,7 +1,10 @@
-# Lisa Minci
 Entry ID: 220
 Keys: Lisa, Lisa Minci, witch of purple rose, library witch, lisa the librarian
+Secondary Keys: 
 Existing comment: Lisa Minci
+Self For: Jean & Diluc & Lisa, Lisa
+
+# Lisa Minci
 
 ## Librarian of the Knights
 

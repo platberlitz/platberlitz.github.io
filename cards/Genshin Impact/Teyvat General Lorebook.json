@@ -3820,7 +3820,23 @@
       "disable": false,
       "order": 100,
       "displayIndex": 200,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Alhaitham",
+          "Kaveh & Alhaitham"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Alhaitham",
+          "Kaveh & Alhaitham"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 201,
@@ -3886,7 +3902,23 @@
       "disable": false,
       "order": 100,
       "displayIndex": 201,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Kaveh",
+          "Kaveh & Alhaitham"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Kaveh",
+          "Kaveh & Alhaitham"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 202,
@@ -3956,7 +3988,23 @@
       "disable": false,
       "order": 100,
       "displayIndex": 202,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Arataki Itto",
+          "Kuki Shinobu & Arataki Itto"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Arataki Itto",
+          "Kuki Shinobu & Arataki Itto"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 203,
@@ -4020,7 +4068,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 203,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Kuki Shinobu & Arataki Itto"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Kuki Shinobu & Arataki Itto"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 204,
@@ -4086,7 +4148,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 204,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Arlecchino"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Arlecchino"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 205,
@@ -4464,7 +4540,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 210,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Ayato"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Ayato"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 211,
@@ -4664,7 +4754,23 @@
       "disable": false,
       "order": 100,
       "displayIndex": 213,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Cyno",
+          "Tighnari & Cyno"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Cyno",
+          "Tighnari & Cyno"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 214,
@@ -4728,7 +4834,23 @@
       "disable": false,
       "order": 100,
       "displayIndex": 214,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Tighnari",
+          "Tighnari & Cyno"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Tighnari",
+          "Tighnari & Cyno"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 215,
@@ -4854,7 +4976,23 @@
       "disable": false,
       "order": 100,
       "displayIndex": 216,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Diluc",
+          "Jean & Diluc & Lisa"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Diluc",
+          "Jean & Diluc & Lisa"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 217,
@@ -4984,7 +5122,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 218,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Kaeya"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Kaeya"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 219,
@@ -5050,7 +5202,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 219,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Jean & Diluc & Lisa"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Jean & Diluc & Lisa"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 220,
@@ -5116,7 +5282,23 @@
       "disable": false,
       "order": 100,
       "displayIndex": 220,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Jean & Diluc & Lisa",
+          "Lisa"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Jean & Diluc & Lisa",
+          "Lisa"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 221,
@@ -5182,7 +5364,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 221,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Furina & Neuvillette"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Furina & Neuvillette"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 222,
@@ -5254,7 +5450,23 @@
       "disable": false,
       "order": 100,
       "displayIndex": 222,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Furina & Neuvillette",
+          "Neuvillette"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Furina & Neuvillette",
+          "Neuvillette"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 223,
@@ -5382,7 +5594,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 224,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Wriothesley"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Wriothesley"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 225,
@@ -5510,7 +5736,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 226,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Navia"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Navia"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 227,
@@ -5702,7 +5942,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 229,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Ifa"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Ifa"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 230,
@@ -5764,7 +6018,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 230,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Ororon"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Ororon"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 231,
@@ -5832,7 +6100,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 231,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Il Dottore"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Il Dottore"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 232,
@@ -5964,7 +6246,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 233,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Wanderer"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Wanderer"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 234,
@@ -6164,7 +6460,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 236,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Mika"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Mika"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 237,
@@ -6360,7 +6670,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 239,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Tartaglia"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Tartaglia"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 240,
@@ -6560,7 +6884,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 247,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Zhongli"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Zhongli"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 248,
@@ -6752,7 +7090,21 @@
       "disable": false,
       "order": 100,
       "displayIndex": 250,
-      "insertion_position": 0
+      "insertion_position": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Venti"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Venti"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 251,

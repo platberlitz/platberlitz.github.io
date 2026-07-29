@@ -1,7 +1,10 @@
-# Wriothesley
 Entry ID: 224
 Keys: Wriothesley, Duke of Meropide, lord wriothesley, duke wriothesley
+Secondary Keys: 
 Existing comment: Wriothesley
+Self For: Wriothesley
+
+# Wriothesley
 
 ## Identity and Authority
 

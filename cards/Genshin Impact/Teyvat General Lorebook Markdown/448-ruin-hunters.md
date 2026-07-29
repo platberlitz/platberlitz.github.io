@@ -1,7 +1,9 @@
-# Ruin Hunters
 Entry ID: 448
 Keys: Ruin Hunters, Ruin Hunter, ruin hunter enemy
+Secondary Keys: 
 Existing comment: Ruin Hunters
+
+# Ruin Hunters
 
 ## The Pursuit Machine
 

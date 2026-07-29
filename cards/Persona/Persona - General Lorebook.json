@@ -3281,7 +3281,21 @@
       "insertion_position": 0,
       "caseSensitive": true,
       "matchWholeWords": true,
-      "selectiveLogic": 0
+      "selectiveLogic": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Kanji Tatsumi"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Kanji Tatsumi"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 153,
@@ -3474,7 +3488,21 @@
       "insertion_position": 0,
       "caseSensitive": false,
       "matchWholeWords": true,
-      "selectiveLogic": 0
+      "selectiveLogic": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Naoto Shirogane"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Naoto Shirogane"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 156,
@@ -4350,7 +4378,21 @@
       "insertion_position": 0,
       "caseSensitive": false,
       "matchWholeWords": true,
-      "selectiveLogic": 0
+      "selectiveLogic": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Tohru Adachi"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Tohru Adachi"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 170,
@@ -6669,7 +6711,21 @@
       "insertion_position": 0,
       "caseSensitive": true,
       "matchWholeWords": true,
-      "selectiveLogic": 0
+      "selectiveLogic": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Goro Akechi"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Goro Akechi"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 207,
@@ -6799,7 +6855,21 @@
       "insertion_position": 0,
       "caseSensitive": false,
       "matchWholeWords": true,
-      "selectiveLogic": 0
+      "selectiveLogic": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Takuto Maruki"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Takuto Maruki"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 209,
@@ -10407,7 +10477,21 @@
       "insertion_position": 0,
       "caseSensitive": false,
       "matchWholeWords": true,
-      "selectiveLogic": 0
+      "selectiveLogic": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Yukari Takeba"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Yukari Takeba"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 267,
@@ -10596,7 +10680,21 @@
       "insertion_position": 0,
       "caseSensitive": false,
       "matchWholeWords": true,
-      "selectiveLogic": 0
+      "selectiveLogic": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Akihiko Sanada"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Akihiko Sanada"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 270,
@@ -10907,7 +11005,21 @@
       "insertion_position": 0,
       "caseSensitive": false,
       "matchWholeWords": true,
-      "selectiveLogic": 0
+      "selectiveLogic": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Shinjiro Aragaki"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Shinjiro Aragaki"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 275,
@@ -11220,7 +11332,21 @@
       "name": "Kotone Shiomi",
       "caseSensitive": false,
       "matchWholeWords": true,
-      "selectiveLogic": 0
+      "selectiveLogic": 0,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Kotone Shiomi"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Kotone Shiomi"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 280,

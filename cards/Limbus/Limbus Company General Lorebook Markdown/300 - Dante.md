@@ -1,6 +1,7 @@
 Entry ID: 300
 Keys: Dante, Sinner #10, Executive Manager
 Existing comment: Dante
+Self For: Dante
 
 # Dante
 

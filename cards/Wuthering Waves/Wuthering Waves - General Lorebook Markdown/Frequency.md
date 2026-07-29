@@ -1,6 +1,7 @@
 Entry ID: 15
 Keys: Frequency, Frequencies
-Existing comment:
+Secondary Keys: 
+Existing comment: Frequency
 
 ## Fundamental Nature
 
@@ -12,11 +13,11 @@ Existing comment:
 
 ## Residual Frequencies and Echoes
 
-[One of the most significant properties of frequencies is their persistence. When a creature such as a Tacet Discord is defeated, the frequencies that animated its existence do not simply vanish but linger in the environment as residual energy. Under the right conditions, these residual frequencies can crystallize into Echoes, fragments of the defeated creature's essence that can be absorbed by Resonators and incorporated into their own power set. This process is central to the Echo system in Wuthering Waves, as it allows Resonators to continuously expand their abilities by collecting and integrating new frequencies. The Data Bank system tracks the accumulation of these frequencies, with higher Data Bank levels increasing the probability of obtaining rare and powerful Echoes from defeated enemies.]
+[One of the most significant properties of frequencies is their persistence. When a creature such as a Tacet Discord is defeated, the frequencies that animated it linger as residual energy. Under the right conditions, they crystallize into Echoes, fragments of the creature's essence that Resonators may absorb and attune to their own resonance. This practice allows them to incorporate unfamiliar frequencies and broaden their means of survival. Resonance archives preserve spectral records that aid the careful attunement of rare and powerful Echoes.]
 
 ## Environmental Interaction
 
-[Frequencies also interact with the physical environment in complex and sometimes unpredictable ways. Environmental hazards such as Toxic Spores, Vine Traps, and Corroders all emit disruptive frequencies that can interfere with a Resonator's perception and abilities. Conversely, resonant technology such as Resonance Beacons, Resonance Nexuses, and Sensors are designed to harmonize with environmental frequencies, enabling fast travel, area mapping, and the detection of hidden objects and enemies. Puzzles throughout Solaris-3, such as Capture Frequency Signal, Transmit Frequency Signal, and Sound Emulators, require Resonators to decode and manipulate specific frequency patterns, demonstrating that mastery of frequencies extends beyond combat into the realm of problem-solving and exploration.]
+[Frequencies interact with the physical environment in complex and unpredictable ways. Toxic Spores, Vine Traps, and Corroders emit disruptive frequencies that can cloud a Resonator's senses. Conversely, Resonance Beacons, Resonance Nexuses, and sensors harmonize with their surroundings to support transit, surveying, and the detection of concealed dangers. Signal arrays, relays, and sound emulators require a Resonator to decode and shape precise frequency patterns, extending resonant practice beyond battle into travel, craft, and investigation.]
 
 ## Theoretical Implications
 

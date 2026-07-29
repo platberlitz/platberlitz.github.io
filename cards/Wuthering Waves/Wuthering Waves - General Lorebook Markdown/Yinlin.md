@@ -1,6 +1,8 @@
 Entry ID: 99
 Keys: Yinlin
-Existing comment:
+Secondary Keys: 
+Existing comment: Yinlin
+Self For: Yinlin
 
 ## The Undercover Agent
 
@@ -12,4 +14,4 @@ Existing comment:
 
 ## Intelligence and Covert Operations
 
-[The intelligence work that Yinlin performs on behalf of Huanglong involves the systematic collection, analysis, and application of information for strategic advantage. In a world where Resonance capabilities vary dramatically between individuals and where organizations like the Fractsidus operate through networks of infiltration and destabilization, the ability to know what one's enemies are planning, where their resources are located, and how their networks function is at least as valuable as raw combat power. Yinlin's long-range damage dealing capabilities and her precise aiming mechanics reflect the intelligence professional's approach to engagement: identify the target from a distance, assess the situation comprehensively, and strike with precision at the moment when maximum effect can be achieved with minimum exposure. Her puppet management gameplay, the strategic deployment of Zapstring as both sensor and weapon, mirrors the tradecraft of intelligence work itself, where assets must be positioned carefully, maintained consistently, and deployed judiciously to achieve objectives without compromising the broader operational picture.]
+[The intelligence work that Yinlin performs on behalf of Huanglong involves the systematic collection, analysis, and application of information for strategic advantage. In a world where Resonance capabilities vary dramatically between individuals and where organizations like the Fractsidus operate through networks of infiltration and destabilization, the ability to know what one's enemies are planning, where their resources are located, and how their networks function is at least as valuable as raw combat power. Yinlin's preference for striking from long range with exacting precision reflects the intelligence professional's approach to engagement: identify the target from a distance, assess the situation comprehensively, and strike at the moment when maximum effect can be achieved with minimum exposure. Her masterful control of Zapstring, the strategic deployment of the puppet as both sensor and weapon, mirrors the tradecraft of intelligence work itself, where assets must be positioned carefully, maintained consistently, and deployed judiciously to achieve objectives without compromising the broader operational picture.]

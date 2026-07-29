@@ -2,7 +2,6 @@ Entry ID: 378
 Keys: Zani
 Secondary Keys: Ciaccona
 Existing comment: Zani and Ciaccona
-SELECTIVE
 
 # Zani and Ciaccona
 

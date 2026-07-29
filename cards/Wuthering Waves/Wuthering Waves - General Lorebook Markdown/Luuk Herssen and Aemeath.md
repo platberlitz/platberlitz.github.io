@@ -1,7 +1,7 @@
 Entry ID: 277
 Keys: Luuk Herssen (primary), Aemeath (secondary)
+Secondary Keys: Aemeath
 Existing comment: Luuk Herssen and Aemeath
-Selective: true
 
 # Luuk Herssen and Aemeath
 

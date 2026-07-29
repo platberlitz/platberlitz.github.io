@@ -1,7 +1,9 @@
-# Seirai Island
 Entry ID: 326
 Keys: Seirai Island, Amakumo Peak, Asase Shrine, seirai, amakumo
+Secondary Keys: 
 Existing comment: Seirai Island
+
+# Seirai Island
 
 ## Storm-Struck Island
 

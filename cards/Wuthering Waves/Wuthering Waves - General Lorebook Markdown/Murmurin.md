@@ -1,12 +1,13 @@
-Entry ID: 15
+Entry ID: 385
 Keys: Murmurin
+Secondary Keys: 
 Existing comment: Murmurin
 
 # Murmurin
 
 ## Definition
 
-[Murmurin-type Tacet Discords belong to the humanlike side of Tacet Discord classification. The source entry states that their forms and behavior echo human traces through chaotic frequency imitation. That phrasing should guide the dossier: Murmurin entities are not defined as ordinary people, social groups, or biological descendants. They are Tacet Discords whose Reverberation Bodies and conduct point back toward human traces, as if fragments of human presence have been caught and repeated by unstable post-Lament frequency.]
+[Murmurin-type Tacet Discords belong to the humanlike side of Tacet Discord classification. Their forms and behavior echo human traces through chaotic frequency imitation. Murmurin entities are not ordinary people, social groups, or biological descendants. They are Tacet Discords whose Reverberation Bodies and conduct point back toward human traces, as if fragments of human presence have been caught and repeated by unstable post-Lament frequency.]
 
 ## Human Traces
 
@@ -14,8 +15,8 @@ Existing comment: Murmurin
 
 ## Relationship to Whisperin
 
-[Murmurin and Whisperin both sit near the humanlike side of the classification system, but the source entries describe them with different emphasis. Whisperin imitate human forms, voices, or behavior, with person-like shapes and social conduct standing out clearly. Murmurin are described through human traces and chaotic frequency imitation. The safest source-aligned approach is to keep Murmurin as a related but distinct humanlike type, one whose lore value lies in residual humanity, echo, and incomplete recognition rather than in a fully mapped biological or social category.]
+[Murmurin and Whisperin both sit near the humanlike side of the classification system, but they differ in emphasis. Whisperin imitate human forms, voices, or behavior, with person-like shapes and social conduct standing out clearly. Murmurin are known through human traces and chaotic frequency imitation. Murmurin thus remain a related but distinct humanlike type, defined by residual humanity, echo, and incomplete recognition rather than by any fully mapped biological or social category.]
 
-## Dossier Use
+## Encounters
 
-[A Murmurin dossier should preserve uncertainty while remaining precise. It can describe humanlike forms and behavior, but it should not invent unsupported motives, factions, or histories. The entity belongs to Tacet Discord classification and should remain tied to chaotic frequency, Reverberation Bodies, and the aftermath of the Lament. Its strongest narrative use is the impression that something human has been echoed without consent or wholeness. Survivors might recognize a gesture or outline, but the source-aligned truth is that a Tacet Discord is repeating human traces through frequency.]
+[Much about Murmurin remains uncertain. They present humanlike forms and behavior, yet no recorded motive, faction, or history explains them. They belong to Tacet Discord classification, tied to chaotic frequency, Reverberation Bodies, and the aftermath of the Lament. What lingers after an encounter is the impression that something human has been echoed without consent or wholeness. Survivors might recognize a gesture or an outline, but what stands before them is a Tacet Discord repeating human traces through frequency.]

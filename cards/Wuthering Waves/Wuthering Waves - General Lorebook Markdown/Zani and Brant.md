@@ -2,7 +2,6 @@ Entry ID: 375
 Keys: Zani
 Secondary Keys: Brant
 Existing comment: Zani and Brant
-SELECTIVE
 
 # Zani and Brant
 

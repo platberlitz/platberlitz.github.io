@@ -2,7 +2,6 @@ Entry ID: 334
 Keys: Phrolova
 Secondary Keys: Schwarzloch
 Existing comment: Phrolova and Schwarzloch
-SELECTIVE
 
 [Phrolova and Schwarzloch: Phrolova views Schwarzloch: Phrolova's view of Schwarzloch is cooler and more accepting than her view of Scar because Schwarzloch's danger has structure. She calls him a singular existence, a living purpose, and a point of reference, all phrases that suggest she recognizes in him a coherent design rather than mere force. As the Grand Architect associated with logistics, infiltration, and construction-based operations, Schwarzloch represents the infrastructure beneath catastrophe. He is not the uncontrolled madman interrupting a performance. He is the one who builds the stage, arranges the hidden passages, and ensures that the machinery of conspiracy can keep moving beneath the visible drama.]
 

@@ -1,7 +1,9 @@
-# Whopperflowers
 Entry ID: 408
 Keys: Whopperflowers, whopperflower, Cryo Whopperflower, Pyro Whopperflower, Electro Whopperflower
+Secondary Keys: 
 Existing comment: Whopperflowers
+
+# Whopperflowers
 
 ## Origin And Mimicry
 

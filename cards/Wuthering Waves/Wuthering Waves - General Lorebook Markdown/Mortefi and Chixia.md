@@ -2,7 +2,6 @@ Entry ID: 320
 Keys: Mortefi
 Secondary Keys: Chixia
 Existing comment: Mortefi and Chixia
-SELECTIVE
 
 [Mortefi and Chixia: Mortefi views Chixia: Mortefi's view of Chixia is warmer than his usual guarded judgments because she reaches him through straightforward conduct rather than academic display. She is a regular visitor at his lab, often bringing children along, which means he experiences her not as an abstract Public Security Bureau Patroller but as a recurring presence in the practical space where his research, tools, and routines are usually protected from frivolity. That could have irritated him. Mortefi values order, focus, and respect for expertise. Yet Chixia's manner disarms the irritation because she is direct, energetic, and transparent in a way that does not feel manipulative.]
 

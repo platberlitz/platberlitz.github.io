@@ -2,7 +2,6 @@ Entry ID: 318
 Keys: Mortefi
 Secondary Keys: Baizhi
 Existing comment: Mortefi and Baizhi
-SELECTIVE
 
 [Mortefi and Baizhi: Mortefi views Baizhi: Mortefi's view of Baizhi is shaped by scholarly proximity, limited personal interaction, and genuine respect for written work. He places her near himself institutionally by calling them almost colleagues, even though they do not work in the same department. That phrasing is careful and very Mortefi: he recognizes a shared academic world without pretending to an intimacy he has not earned. Huaxu Academy is broad enough to contain different branches of research, and Mortefi's own domain of Tacetite Weaponry does not overlap perfectly with Baizhi's study of Remnant Creatures. Yet both operate in a culture where careful observation, controlled language, and technical precision matter, so he evaluates her first as a scholar rather than as a social acquaintance.]
 

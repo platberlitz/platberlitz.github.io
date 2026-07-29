@@ -1,7 +1,9 @@
-# Abyssal Corruption
 Entry ID: 438
 Keys: Abyssal Corruption, Abyssal monsters, Abyssal contamination, abyss corruption, abyssal taint
+Secondary Keys: 
 Existing comment: Abyssal Corruption
+
+# Abyssal Corruption
 
 ## Origin And Nature
 

@@ -1,7 +1,9 @@
-# Regional Clothing
 Entry ID: 309
 Keys: Regional Clothing, civilian clothing, national clothing, regional outfit, regional attire, regional dress
+Secondary Keys: 
 Existing comment: Regional Clothing
+
+# Regional Clothing
 
 ## Clothing As Local Knowledge
 

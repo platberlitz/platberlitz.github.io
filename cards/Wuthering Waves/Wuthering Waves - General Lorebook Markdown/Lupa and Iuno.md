@@ -2,7 +2,6 @@ Entry ID: 268
 Keys: Lupa
 Secondary Keys: Iuno
 Existing comment: Lupa and Iuno
-SELECTIVE
 
 [Lupa's regard for Iuno, one of the Priestesses of Septimont's Temple, is rooted in a shared appreciation for boldness and an unconventional approach to life within the rigid structures of Septimont's hierarchical society. Lupa admits that she rarely visits the Temple to pray for revelations, which places her somewhat outside the religious establishment that Iuno represents, but this distance does not prevent her from forming a strong, positive opinion of the priestess. What draws Lupa to Iuno is precisely the quality that many of Septimont's nobles find intolerable: her unconventional ways. Iuno operates outside the staid, decorous expectations placed upon Temple Priestesses, embracing a spontaneity and irreverence that resonates powerfully with Lupa's own untamed spirit. Many of the city's aristocrats cannot stand Iuno's refusal to conform to their expectations of how a Priestess should behave, but Lupa finds her boldness genuinely entertaining and, one suspects, deeply validating, it confirms that the rigid social hierarchies of Septimont do not have to be prisons, and that even within formal institutions like the Temple, individual personality and fire can still thrive.]
 

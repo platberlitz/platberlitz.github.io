@@ -5724,7 +5724,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Dante"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Dante"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 301,
@@ -5793,7 +5807,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Yi Sang"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Yi Sang"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 302,
@@ -5858,7 +5886,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Faust"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Faust"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 303,
@@ -5923,7 +5965,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Don Quixote"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Don Quixote"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 304,
@@ -5992,7 +6048,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Ryōshū"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Ryōshū"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 305,
@@ -6057,7 +6127,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Meursault"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Meursault"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 306,
@@ -6126,7 +6210,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Hong Lu"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Hong Lu"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 307,
@@ -6191,7 +6289,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Heathcliff"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Heathcliff"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 308,
@@ -6256,7 +6368,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Ishmael"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Ishmael"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 309,
@@ -6325,7 +6451,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Rodion Romanovich"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Rodion Romanovich"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 310,
@@ -6392,7 +6532,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Emil Sinclair"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Emil Sinclair"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 311,
@@ -6459,7 +6613,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Outis"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Outis"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 312,
@@ -6528,7 +6696,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Gregor"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Gregor"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 400,
@@ -6863,7 +7045,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Hohenheim"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Hohenheim"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 405,
@@ -7062,7 +7258,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Dongrang"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Dongrang"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 408,
@@ -7326,7 +7536,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Kromer"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Kromer"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 412,
@@ -8317,7 +8541,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Hindley Earnshaw"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Hindley Earnshaw"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 427,
@@ -8514,7 +8752,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Linton Edgar"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Linton Edgar"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 430,
@@ -8914,7 +9166,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Don Quixote (Father)"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Don Quixote (Father)"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 436,
@@ -9113,7 +9379,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Dulcinea"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Dulcinea"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 439,
@@ -9182,7 +9462,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Nicolina"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Nicolina"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 440,
@@ -9846,7 +10140,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Kong Qiu"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Kong Qiu"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 450,
@@ -10372,7 +10680,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Lei Heng"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Lei Heng"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 458,
@@ -11428,7 +11750,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Rien"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Rien"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 474,
@@ -11499,7 +11835,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Matthias"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Matthias"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 475,
@@ -11633,7 +11983,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Saude"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Saude"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 477,
@@ -14917,7 +15281,21 @@
       "scanDepth": null,
       "depth": 4,
       "excludeRecursion": true,
-      "preventRecursion": true
+      "preventRecursion": true,
+      "characterFilter": {
+        "isExclude": true,
+        "names": [
+          "Valencina"
+        ],
+        "tags": []
+      },
+      "character_filter": {
+        "isExclude": true,
+        "names": [
+          "Valencina"
+        ],
+        "tags": []
+      }
     },
     {
       "id": 527,

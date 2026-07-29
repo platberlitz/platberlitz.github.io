@@ -1,6 +1,8 @@
 Entry ID: 342
 Keys: Shorekeeper
+Secondary Keys: 
 Existing comment: Shorekeeper
+Self For: Shorekeeper
 
 # Shorekeeper
 
@@ -32,7 +34,7 @@ Existing comment: Shorekeeper
 
 [Shorekeeper's history begins less as biography than as activation myth. The record of her Forte describes the Second Instance as the successful realization of a theory: Remnant Energy attracted by a Blazar module anchor, condensed into material form, and furnished with cognition through informational data. That account makes her birth inseparable from experimentation, crisis preparation, and the Black Shores' long struggle to understand the Lament. A separate history entry presents her as the Shorekeeper of the Black Shores, a mysterious divine being who emerges in response to Rover's summon. This emergence is not treated as an ordinary public appearance. She is said to appear during times of crisis to aid the true leader of the Black Shores, which places her history on a rhythm of dormancy, summons, emergency, and guardianship.]
 
-[The most poetic surviving fragment is titled The Shorekeeper's Birth: after the drumbeat, we call the heart dancing in the darkness the moon, and this moon is largely formed by Rover. The line is cryptic, but it frames Shorekeeper's origin through sound, darkness, a heart, and moonlight rather than through laboratory language alone. Read beside the technical record, it suggests that her creation or emergence required both engineered Remnant Energy and an initiating presence strong enough to shape the entity that would become Shorekeeper. Her story therefore has two registers. One is clinical, concerned with modules, condensed energy, redacted researchers, cognitive loading, and stability results. The other is mythic, concerned with summons, darkness, the moon, and a guardian appearing when the Black Shores faces crisis. Together they define a being whose past cannot be reduced to either machine creation or divine apparition.]
+[The account titled The Shorekeeper's Birth is the most poetic of her records: after the drumbeat, we call the heart dancing in the darkness the moon, and this moon is largely formed by Rover. The line is cryptic, but it frames Shorekeeper's origin through sound, darkness, a heart, and moonlight rather than through laboratory language alone. Read beside the technical record, it suggests that her creation or emergence required both engineered Remnant Energy and an initiating presence strong enough to shape the entity that would become Shorekeeper. Her story therefore has two registers. One is clinical, concerned with modules, condensed energy, redacted researchers, cognitive loading, and stability results. The other is mythic, concerned with summons, darkness, the moon, and a guardian appearing when the Black Shores faces crisis. Together they define a being whose past cannot be reduced to either machine creation or divine apparition.]
 
 ## Affiliations
 

@@ -1,7 +1,9 @@
-# Claymores
 Entry ID: 302
 Keys: claymore users, claymore user, greatsword user, two-handed sword
+Secondary Keys: 
 Existing comment: Claymores
+
+# Claymores
 
 ## Heavy Blades
 

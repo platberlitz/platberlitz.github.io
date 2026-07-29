@@ -1,7 +1,9 @@
-# Adventurers Guild
 Entry ID: 306
 Keys: Adventurers Guild, Adventurers' Guild, Katheryne, adventurer guild
+Secondary Keys: 
 Existing comment: Adventurers Guild
+
+# Adventurers Guild
 
 ## Public Role
 

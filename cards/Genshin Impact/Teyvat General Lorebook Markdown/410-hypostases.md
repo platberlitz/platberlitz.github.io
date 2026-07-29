@@ -1,7 +1,9 @@
-# Hypostases
 Entry ID: 410
 Keys: Hypostases, hypostasis, elemental cube, geo hypostasis, cryo hypostasis, electro hypostasis, anemo hypostasis
+Secondary Keys: 
 Existing comment: Hypostases
+
+# Hypostases
 
 ## Origin And Form
 

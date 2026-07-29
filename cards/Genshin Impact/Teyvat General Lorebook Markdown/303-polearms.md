@@ -1,7 +1,9 @@
-# Polearms
 Entry ID: 303
 Keys: polearm users, polearm user, spear user, lance user
+Secondary Keys: 
 Existing comment: Polearms
+
+# Polearms
 
 ## Reach and Discipline
 

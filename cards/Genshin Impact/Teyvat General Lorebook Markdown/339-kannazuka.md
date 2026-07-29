@@ -1,7 +1,9 @@
-# Kannazuka
 Entry ID: 339
 Keys: Kannazuka, kannazuka island
+Secondary Keys: 
 Existing comment: Kannazuka
+
+# Kannazuka
 
 ## Industrial Island of Inazuma
 

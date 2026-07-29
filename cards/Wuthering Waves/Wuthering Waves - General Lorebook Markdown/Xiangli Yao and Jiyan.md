@@ -2,7 +2,6 @@ Entry ID: 366
 Keys: Xiangli Yao
 Secondary Keys: Jiyan
 Existing comment: Xiangli Yao and Jiyan
-SELECTIVE
 
 # Xiangli Yao and Jiyan
 

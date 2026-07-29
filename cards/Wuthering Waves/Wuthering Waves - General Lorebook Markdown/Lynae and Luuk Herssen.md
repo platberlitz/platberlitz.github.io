@@ -2,7 +2,6 @@ Entry ID: 294
 Keys: Lynae
 Secondary Keys: Luuk Herssen
 Existing comment: Lynae and Luuk Herssen
-SELECTIVE
 
 [Lynae views Luuk Herssen with the wary humor of someone who knows exactly how dangerous it can be to be seen too clearly. Her first meeting with Dr. Herssen happens at the infirmary, a place that should be safe by definition, but Lynae's reaction is not simple comfort. She gets the strange feeling that he can see right through her. For most students, that might mean an unusually perceptive doctor noticing exhaustion, stress, or a concealed injury. For Lynae, it carries much higher stakes. Her entire Startorch Academy life rests on a stolen identity, a name taken from a Fractsidus operative so she could escape the Lawless Zone and live as a student.]
 

@@ -1,6 +1,7 @@
 Entry ID: 20
-Keys: Sentinels [case_sensitive], The Sentinels
-Existing comment:
+Keys: Sentinels [case_sensitive], The Sentinels, Sentinels
+Secondary Keys: 
+Existing comment: Sentinels
 
 ## Overview
 

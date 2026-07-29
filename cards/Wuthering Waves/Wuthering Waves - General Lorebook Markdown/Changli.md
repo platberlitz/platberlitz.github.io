@@ -1,6 +1,8 @@
 Entry ID: 183
 Keys: Changli
+Secondary Keys: 
 Existing comment: Changli
+Self For: Changli
 
 # Changli
 
@@ -18,7 +20,7 @@ Existing comment: Changli
 
 ## Forte
 
-[Changli's associated Forte is Eternal Blaze, documented under Resonance Assessment 2326-G. The precise timing of her Awakening is uncertain, but the available record states that she showed early signs of fire manipulation during childhood and often struggled to control those manifestations. That uncertainty is important because it makes her power feel less like a single clean event and more like a condition that developed under pressure. As she matured into adulthood, the frequency and stability of her fire manifestations improved notably. Her present command of Fusion power is therefore the result of growth, discipline, and adaptation, not simple natural ease.]
+[Changli's associated Forte is Eternal Blaze, documented under Resonance Assessment 2326-G. The precise timing of her Awakening is uncertain and what triggered it has never been established, but Resonance Assessment 2326-G states that she showed early signs of fire manipulation during childhood and often struggled to control those manifestations. That uncertainty is important because it makes her power feel less like a single clean event and more like a condition that developed under pressure. As she matured into adulthood, the frequency and stability of her fire manifestations improved notably. Her present command of Fusion power is therefore the result of growth, discipline, and adaptation, not simple natural ease.]
 
 [Her Forte profile is also inseparable from the medical and resonance stability record. Changli's waveform graph shows elliptical fluctuations, and the Time Domain pattern is stable with no abnormal waveform. Her Resonant Criticality is rated High, yet her frequency displays high stability and her current risk of Overclocking is minimal. This combination marks her as powerful without being volatile in ordinary conditions. She has a known history of Overclocking, but the maximum recorded Overclocking rating is Negligible. According to her own report, the childhood incident resulted from prolonged exposure to a hazardous environment. In practical terms, Changli carries the scars of an early resonance crisis, but her adult profile indicates control, steadiness, and an unusually disciplined relationship with a dangerous power.]
 
@@ -32,11 +34,15 @@ Existing comment: Changli
 
 ## History
 
-[Changli's recorded history begins with hardship before office. The source identifies her childhood as unforgiving and links her early Awakening to difficulty controlling fire, as well as to an Overclocking incident caused by prolonged exposure to a hazardous environment. Those early facts explain much about her adult bearing. She did not become stable because life was gentle to her. She became stable because instability once threatened her directly, and she had to survive long enough to master what might otherwise have consumed her. The feather-like burns on her left arm preserve that past as a visible memory.]
+[Changli's recorded history begins with hardship before office. Her childhood was unforgiving, and her early Awakening brought difficulty controlling fire, as well as an Overclocking incident caused by prolonged exposure to a hazardous environment. Those early facts explain much about her adult bearing. She did not become stable because life was gentle to her. She became stable because instability once threatened her directly, and she had to survive long enough to master what might otherwise have consumed her. The feather-like burns on her left arm preserve that past as a visible memory.]
 
 [In public service, Changli rose to become Secretary-General of the Central Secretariat in Mingting, the capital of Huanglong. That title places her inside the machinery of central administration before her present work in Jinzhou. Moving from Mingting to Jinzhou did not reduce her importance. It placed her in a different kind of political landscape, where frontier pressure, civic governance, and the authority of the Magistrate converge. She now serves as Counselor to Jinhsi at Jinzhou City Hall, a position that makes her one of the most trusted and consequential minds in the city's government even when she avoids overt publicity.]
 
-[The history facet called Beneath the Whispers emphasizes how rarely visitors to City Hall see the legendary Counselor. Changli has never been a conventional public figure, yet she is known throughout Jinzhou because of her proximity to the Magistrate and the trust placed in her. This creates a paradox at the center of her reputation: everyone knows of her, but few seem to know her plainly. The absence of direct visibility produces restless rumors, and those rumors strengthen her mystique rather than undermining it. The available record also begins to introduce another account named Master and Minister, but that portion is preserved only as an incomplete fragment, so the reliable dossier must rest on the clearer facts of her childhood, her capital office, her arrival in Jinzhou, and her elusive role within City Hall.]
+[The history facet called Beneath the Whispers emphasizes how rarely visitors to City Hall see the legendary Counselor. Changli has never been a conventional public figure, yet she is known throughout Jinzhou because of her proximity to the Magistrate and the trust placed in her. This creates a paradox at the center of her reputation: everyone knows of her, but few seem to know her plainly. The absence of direct visibility produces restless rumors, and those rumors strengthen her mystique rather than undermining it. What Beneath the Whispers carries is talk rather than testimony, and it should be weighed as the city's talk about her, not as an account of what she has actually done.]
+
+[Master and Minister gives the beginning of her bond with Jinhsi in full. Before she ever became a tutor, Changli met Jinhsi at City Hall while the child was struggling with a legal maxim she could not yet unravel. When Jinhsi said that she wished to bring Jinzhou peace and prosperity, Changli promised to aid her in fulfilling that wish. She kept it. After Jinhsi took the office of Magistrate, Changli remained at her side as counselor, answering her questions and offering advice as the years and the duties grew heavier.]
+
+[Earlier in her life Changli became a direct disciple of Master Xuanmiao, and from him she inherited his Weiqi record and his journal. That inheritance sits behind the patience and positional thinking she brings to governance, where a single early placement can decide a matter many moves later.]
 
 ## Affiliations
 

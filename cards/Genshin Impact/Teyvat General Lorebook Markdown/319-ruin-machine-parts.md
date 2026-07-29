@@ -1,7 +1,9 @@
-# Ruin Machine Parts
 Entry ID: 319
 Keys: Ruin Machine Parts, Ruin machine core, chaos device, Khaenriahn machine, ancient machine parts, khaenriah machine
+Secondary Keys: 
 Existing comment: Ruin Machine Parts
+
+# Ruin Machine Parts
 
 ## Ancient Mechanisms
 

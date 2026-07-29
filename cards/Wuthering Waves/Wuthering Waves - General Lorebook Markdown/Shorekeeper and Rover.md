@@ -2,7 +2,6 @@ Entry ID: 353
 Keys: Shorekeeper
 Secondary Keys: Rover
 Existing comment: Shorekeeper and Rover
-SELECTIVE
 
 [Shorekeeper and Rover: Shorekeeper views Rover: Shorekeeper's view of Rover is shaped by deep observation of desire, contradiction, and chosen freedom. She notes that Rover's words may not always align with her actions, yet Rover remains fiercely loyal to her desires. This is not a simple criticism. Shorekeeper is a being made for purpose, guidance, and crisis response, so she is especially aware of the distance between stated intention and lived motion. In Rover, she sees inconsistency, but also a stronger coherence underneath it: Rover may change direction, speak lightly, or seem carefree, yet she follows what she truly wants with remarkable fidelity.]
 

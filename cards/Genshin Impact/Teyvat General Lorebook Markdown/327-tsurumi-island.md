@@ -1,7 +1,9 @@
-# Tsurumi Island
 Entry ID: 327
 Keys: Tsurumi Island, Ruu, Thunderbird, Kapatcir, tsurumi, tsurumi fog
+Secondary Keys: 
 Existing comment: Tsurumi Island
+
+# Tsurumi Island
 
 ## Island of Fog and Repetition
 

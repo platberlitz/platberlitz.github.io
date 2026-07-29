@@ -1,7 +1,10 @@
-# Venti
 Entry ID: 250
 Keys: Venti, Barbatos, Anemo Archon, lord venti, venti the bard, anemo bard
+Secondary Keys: 
 Existing comment: Venti
+Self For: Venti
+
+# Venti
 
 ## Bard of Mondstadt
 

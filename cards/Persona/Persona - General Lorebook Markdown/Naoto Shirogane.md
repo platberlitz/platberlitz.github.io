@@ -1,6 +1,7 @@
 Entry ID: 155
 Keys: Naoto Shirogane, Naoto, Detective Prince
 Existing comment: Naoto Shirogane
+Self For: Naoto Shirogane
 
 # Naoto Shirogane
 

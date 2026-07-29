@@ -1,18 +1,19 @@
-Entry ID: 33
+Entry ID: 386
 Keys: Resonance Beacon
-Existing comment:
+Secondary Keys: 
+Existing comment: Resonance Beacon
 
 ## Overview
 
-[Resonance Beacons are specialized devices placed across the world of Solaris-3, serving as critical infrastructure for navigation, communication, and survival in the dangerous post-Lament landscape. These beacons function as fast-travel anchors that Resonators and explorers can activate and return to, dramatically reducing the time and risk associated with traversing the vast and hostile territories between settlements. In a world where Tacet Discords roam freely and environmental hazards make travel perilous, Resonance Beacons represent one of the most important technological achievements in the effort to maintain connections between the scattered civilizations of Solaris-3.]
+[Resonance Beacons are specialized devices placed across Solaris-3 for navigation, communication, and survival in the post-Lament wilderness. Once attuned to a traveler's frequency, a beacon becomes an anchor to which that traveler may return by resonance, reducing the time and danger of crossing hostile country between settlements. Where Tacet Discords roam and environmental hazards make the roads perilous, the beacons preserve connections among scattered communities.]
 
 ## Function and Activation
 
-[When a Resonance Beacon is activated, it becomes registered in the Map system, allowing the user to open the Map interface and fast travel back to any previously activated beacon at will. In most regions, activation requires the explorer to physically reach the beacon and interact with it manually. However, in more dangerous regions like Lahai-Roi, specialized variants of the Resonance Beacon have been developed that activate automatically when an explorer rides through their range on an Expedition Motorbike. This modification reflects the practical adaptations necessary for different environments, where even a brief stop to manually activate a beacon could expose the explorer to lethal environmental hazards or creature attacks.]
+[When attuned, a Resonance Beacon records a traveler's frequency and becomes part of that person's network of anchors. In most regions, one must reach the beacon and establish the attunement directly. In hazardous parts of Lahai-Roi, specialized beacons attune automatically when a traveler passes within range aboard an Expedition Motorbike. Such adaptations spare travelers from stopping in country where exposure to the elements or hostile creatures may prove fatal.]
 
 ## Connection to Resonance Nexus
 
-[Resonance Beacons work in conjunction with another device called the Resonance Nexus, which serves as a healing station for injured or downed Resonators. After activating a Resonance Beacon and traveling to a location, explorers are directed to head to a Resonance Nexus to heal any injuries sustained during travel or combat. This paired system ensures that fast-travel infrastructure provides not only mobility but also sustainability, allowing Resonators to continue their missions even after encountering significant threats. The Beacon and Nexus system represents a holistic approach to the challenges of post-Lament exploration.]
+[Resonance Beacons work with Resonance Nexuses, stations that tend injured Resonators. Those arriving after hard travel or battle commonly seek the nearest Nexus for care. Together, these devices support both passage and recovery, sustaining the people who cross the dangerous reaches of the post-Lament world.]
 
 ## Distribution Across Solaris-3
 
@@ -20,4 +21,4 @@ Existing comment:
 
 ## Technological Significance
 
-[The technology behind Resonance Beacons suggests a sophisticated understanding of Resonance principles and spatial manipulation. The ability to instantaneously transport a Resonator from one beacon to another implies manipulation of space-time or the frequencies that underlie all Resonance phenomena. This technology may be connected to the same principles that allow Resonators to absorb Echoes and channel their power. The beacons also hint at the existence of a pre-Lament or early post-Lament civilization that possessed advanced knowledge of these principles and established the beacon network as a lifeline for the scattered remnants of humanity. Their continued operation and maintenance represent an ongoing commitment to survival and connectivity in a fractured world.]
+[Resonance Beacons reveal a sophisticated command of Resonance and spatial manipulation. Passage between anchors may depend upon the same underlying frequencies that allow a Resonator to absorb Echoes and channel power. The network may descend from a pre-Lament or early post-Lament civilization that understood these principles and established the beacons as a lifeline for scattered humanity. Their continued maintenance is an enduring commitment to survival and connection in a fractured world.]

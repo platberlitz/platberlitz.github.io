@@ -1,6 +1,7 @@
 Entry ID: 274
 Keys: Shinjiro Aragaki, Shinjiro
 Existing comment: Shinjiro Aragaki
+Self For: Shinjiro Aragaki
 
 # Shinjiro Aragaki
 

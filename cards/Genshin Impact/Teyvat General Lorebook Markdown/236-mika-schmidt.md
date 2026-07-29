@@ -1,7 +1,10 @@
-# Mika Schmidt
 Entry ID: 236
 Keys: Mika, Mika Schmidt, surveyor mika
+Secondary Keys: 
 Existing comment: Mika Schmidt
+Self For: Mika
+
+# Mika Schmidt
 
 ## Identity and Knightly Role
 

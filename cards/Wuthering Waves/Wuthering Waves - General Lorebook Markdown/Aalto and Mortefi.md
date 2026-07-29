@@ -2,7 +2,6 @@ Entry ID: 71
 Keys: Aalto
 Secondary Keys: Mortefi
 Existing comment: Aalto and Mortefi
-SELECTIVE
 
 # Aalto and Mortefi
 

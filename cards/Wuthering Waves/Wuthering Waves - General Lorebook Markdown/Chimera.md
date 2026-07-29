@@ -1,6 +1,7 @@
 Entry ID: 57
 Keys: Chimera
-Existing comment:
+Secondary Keys: 
+Existing comment: Chimera
 
 ## Tacet Discord Force
 
@@ -8,7 +9,7 @@ Existing comment:
 
 ## Galbrena's Connection
 
-[Galbrena's relationship with Chimera defines her combat identity and personal history. As a Fusion main DPS who fights alongside her pet Chimera, a creature inspired by Greek mythology, she channels the entity's power through her signature pistols Lux and Umbra, which amplify her offensive capabilities. Her Demon Hypostasis state, where her attacks become enhanced and devastating, may draw directly on Chimera's frequency consumption, transforming consumed resonance into raw destructive power. The Chimera accompanying her in battle suggests either a tamed fragment of the original entity, a familiar spawned from it, or a manifestation of its power shaped by Galbrena's will. The controlled chaos that defines her fighting style, fierce yet elegant, reflects the duality of her relationship with a creature that is both companion and source of power.]
+[Galbrena's relationship with Chimera defines her history and manner of battle. A Fusion Resonator, she enters the fray beside the Chimera and channels its power through her pistols, Lux and Umbra. In her Demon Hypostasis, she appears to turn consumed frequencies into fierce destructive force. The creature at her side may be a tamed fragment of the original entity, a familiar born from it, or a manifestation shaped by Galbrena's will. Her controlled chaos, fierce yet elegant, reflects a bond with a being that is both companion and source of power.]
 
 ## Ecological Significance
 

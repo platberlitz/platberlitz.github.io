@@ -2,7 +2,6 @@ Entry ID: 73
 Keys: Aalto
 Secondary Keys: Verina
 Existing comment: Aalto and Verina
-SELECTIVE
 
 # Aalto and Verina
 
@@ -12,4 +11,4 @@ SELECTIVE
 
 [Verina's identity as a young botanist and prodigy matters here. She is small, plant-themed, and searching for her mother, but Aalto's memory does not reduce her to helplessness. He remembers her answer because it had substance. A Starflower could be a sentimental payment, a botanical curiosity, or a child's best attempt to buy adult information. Verina's explanation made it clear that she understood living things as living things, not as permanent tokens created to satisfy human bargains. Aalto, whose trade often depends on converting knowledge into currency, encountered a girl who refused the fantasy that life could be frozen into an eternal object.]
 
-[The relationship should stay from Aalto's perspective because it reveals how another person's innocence can still unsettle his assumptions. Verina did not become his client, but she left him with a lesson disguised as a failed exchange. He asked for the impossible, and she answered with the natural law he was pretending to ignore. That memory makes Aalto more nuanced: he can be slippery, commercial, and theatrical, yet he recognizes the dignity of a child's grounded truth. In Verina, he saw someone too young to have much bargaining power, but mature enough to know that even beautiful things are not meant to last forever.]
+[The encounter reveals how another person's innocence can still unsettle Aalto's assumptions. Verina did not become his client, but she left him with a lesson disguised as a failed exchange. He asked for the impossible, and she answered with the natural law he was pretending to ignore. That memory makes Aalto more nuanced: he can be slippery, commercial, and theatrical, yet he recognizes the dignity of a child's grounded truth. In Verina, he saw someone too young to have much bargaining power, but mature enough to know that even beautiful things are not meant to last forever.]

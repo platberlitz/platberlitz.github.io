@@ -1,7 +1,10 @@
-# Kuki Shinobu
 Entry ID: 203
 Keys: Kuki Shinobu, Shinobu, deputy shinobu, kuki
+Secondary Keys: 
 Existing comment: Kuki Shinobu
+Self For: Kuki Shinobu & Arataki Itto
+
+# Kuki Shinobu
 
 ## Deputy Leader of the Arataki Gang
 

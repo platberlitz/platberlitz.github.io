@@ -2,7 +2,6 @@ Entry ID: 351
 Keys: Shorekeeper
 Secondary Keys: Black Shores
 Existing comment: Shorekeeper and Black Shores
-SELECTIVE
 
 [Shorekeeper and Black Shores: Shorekeeper views Black Shores: Shorekeeper's relationship with the Black Shores is not ordinary affiliation. It is the condition of her existence, the place where her purpose, body, memory, and duty converge. She describes the site atop a massive Tacetite as the ideal singularity spot from which to observe the Lament, a statement that shows how she thinks in terms of vantage, calculation, and cosmic threat. The Black Shores is not merely a headquarters to her. It is an observation point at the edge of catastrophe, chosen because the world needed somewhere that could watch what ordinary nations could not bear alone.]
 

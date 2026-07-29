@@ -1,7 +1,9 @@
-# Tenryou Commission
 Entry ID: 153
 Keys: Tenryou Commission, Tenryou, Kujou Clan
+Secondary Keys: 
 Existing comment: Tenryou Commission
+
+# Tenryou Commission
 
 ## Sword and Shield of the Shogunate
 

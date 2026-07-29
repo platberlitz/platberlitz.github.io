@@ -2,7 +2,6 @@ Entry ID: 331
 Keys: Phrolova
 Secondary Keys: Cartethyia
 Existing comment: Phrolova and Cartethyia
-SELECTIVE
 
 [Phrolova and Cartethyia: Phrolova views Cartethyia: Phrolova's gaze fixes on Cartethyia because Cartethyia embodies a contradiction that Phrolova cannot ignore. Cartethyia is not human in the ordinary sense, having been shaped by forces tied to divinity, curse, Sentinel authority, and Threnodian influence. Yet she possesses a will whole as any mortal's. For Phrolova, whose own Awakening occurred at the time of death and whose Symphony of Beyond manipulates the frequencies of humans, Echoes, and Tacet Discords, this wholeness is not merely admirable. It is evidence of a mystery. Cartethyia should have been a broken vessel, a manufactured saint, or a cosmic wound wearing a girl's face. Instead, she persists as a person.]
 

@@ -1,7 +1,9 @@
-# Nameless Bard
 Entry ID: 251
 Keys: Nameless Bard, Old Mondstadt bard, the nameless bard, ancient bard
+Secondary Keys: 
 Existing comment: Nameless Bard
+
+# Nameless Bard
 
 ## Voice Beneath the Storm
 

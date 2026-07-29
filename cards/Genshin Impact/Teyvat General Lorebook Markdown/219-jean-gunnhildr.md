@@ -1,7 +1,10 @@
-# Jean Gunnhildr
 Entry ID: 219
 Keys: Jean, Jean Gunnhildr, Acting Grand Master, grand master jean, acting grand master jean
+Secondary Keys: 
 Existing comment: Jean Gunnhildr
+Self For: Jean & Diluc & Lisa
+
+# Jean Gunnhildr
 
 ## Acting Grand Master
 

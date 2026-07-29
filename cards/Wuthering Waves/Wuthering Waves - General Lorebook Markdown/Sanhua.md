@@ -1,14 +1,15 @@
 Entry ID: 94
 Keys: Sanhua
-Existing comment:
+Secondary Keys: 
+Existing comment: Sanhua
 
 ## Jinhsi's Silent Bodyguard
 
-[Sanhua serves as the personal bodyguard of Jinhsi, the newly introduced Spectro DPS character whose signature ability, "Illuminous Epiphany", delivers devastating burst damage scaled through accumulated Incandescent Stacks. As Jinhsi's protector, Sanhua occupies a role that is simultaneously humble and essential: she is the shield that allows the sword to strike, the foundation upon which offensive capability depends for its survival. Her defining characteristic is her silence, an intentional choice that communicates volumes about both her personality and her relationship to Jinhsi. In a world where communication is often weaponized and where speech can be a liability as much as an asset, Sanhua's commitment to silence marks her as someone who has decided that action, presence, and unwavering attention are more reliable forms of devotion than words could ever be.]
+[Sanhua serves as the personal bodyguard of Jinhsi, the Magistrate of Jinzhou and a Spectro Resonator of extraordinary power, whose signature art, the Illuminous Epiphany, gathers incandescent light into a single devastating radiance. As Jinhsi's protector, Sanhua occupies a role that is simultaneously humble and essential: she is the shield that allows the sword to strike, the foundation upon which offensive capability depends for its survival. Her defining characteristic is her silence, an intentional choice that communicates volumes about both her personality and her relationship to Jinhsi. In a world where communication is often weaponized and where speech can be a liability as much as an asset, Sanhua's commitment to silence marks her as someone who has decided that action, presence, and unwavering attention are more reliable forms of devotion than words could ever be.]
 
 ## Glacio Sword and Ice Constructs
 
-[In combat, Sanhua is a Glacio-element Sword wielder whose gameplay revolves around creating and detonating ice constructs to deal damage. This ability to manifest solid structures from elemental ice, then shatter them in controlled detonations, reflects a fighting philosophy that values the creation of temporary order followed by its deliberate destruction for tactical advantage. It is a paradoxical approach that mirrors her role as a bodyguard: she creates structures of safety, then destroys them when the moment comes to transition from defense to offense. Her ice constructs are not merely offensive tools; they represent her capacity to shape the battlefield, to impose geometric order on chaotic environments, and to create the conditions under which her principal, Jinhsi, can operate with maximum effectiveness and minimum risk.]
+[In combat, Sanhua is a Glacio-element Sword wielder whose ice-construct swordsmanship revolves around raising frozen structures upon the battlefield and shattering them at the precise moment of her choosing. This ability to manifest solid structures from elemental ice, then break them for tactical effect, reflects a fighting philosophy that values the creation of temporary order followed by its deliberate destruction for tactical advantage. It is a paradoxical approach that mirrors her role as a bodyguard: she creates structures of safety, then destroys them when the moment comes to transition from defense to offense. Her ice constructs are not merely offensive tools; they represent her capacity to shape the battlefield, to impose geometric order on chaotic environments, and to create the conditions under which her principal, Jinhsi, can operate with maximum effectiveness and minimum risk.]
 
 ## Devotion Beyond Words
 

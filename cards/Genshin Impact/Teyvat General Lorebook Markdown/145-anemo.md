@@ -1,7 +1,9 @@
-# Anemo
 Entry ID: 145
 Keys: anemo element, anemo energy, anemo vision, anemo power
+Secondary Keys: 
 Existing comment: Anemo
+
+# Anemo
 
 ## Elemental Identity
 

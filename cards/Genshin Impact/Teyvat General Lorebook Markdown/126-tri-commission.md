@@ -1,7 +1,9 @@
-# Tri-Commission
 Entry ID: 126
 Keys: Tri-Commission, three commissions, tri commission
+Secondary Keys: 
 Existing comment: Tri-Commission
+
+# Tri-Commission
 
 ## Government Under the Shogunate
 

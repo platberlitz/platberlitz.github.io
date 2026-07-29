@@ -1,7 +1,9 @@
-# Fatui Skirmishers
 Entry ID: 431
 Keys: Fatui Skirmishers, Skirmishers, Electrohammer Vanguard, Pyroslinger Bracer, Hydrogunner Legionnaire, Cryogunner Legionnaire, Anemoboxer Vanguard, Geochanter Bracer, fatui skirmisher
+Secondary Keys: 
 Existing comment: Fatui Skirmishers
+
+# Fatui Skirmishers
 
 ## Origin And Military Role
 

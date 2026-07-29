@@ -1,7 +1,9 @@
-# Inazuma Clothing
 Entry ID: 312
 Keys: Inazuma Clothing, kimono, hakama, shrine maiden, samurai armor, inazuma outfit, inazuma fashion, wafuku
+Secondary Keys: 
 Existing comment: Inazuma Clothing
+
+# Inazuma Clothing
 
 ## Island Traditions
 

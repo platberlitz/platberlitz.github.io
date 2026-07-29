@@ -2,7 +2,6 @@ Entry ID: 265
 Keys: Lupa
 Secondary Keys: Augusta
 Existing comment: Lupa and Augusta
-SELECTIVE
 
 [Lupa's relationship with Augusta, the Ephor of Septimont, is defined by a complex blend of professional admiration, philosophical curiosity, and earned respect. As a gladiator who has dedicated her entire life to the arena, Lupa watches recordings of Augusta's past fights not merely as tactical study but as an exercise in understanding the motivations that drive someone of such extraordinary caliber to enter the combat circuit in the first place. She openly wonders whether Augusta stepped into the arena for political reasons, to consolidate power, to demonstrate capability to the populace, or to project the image of an invincible ruler, or whether she did it simply to prove something to herself. This question haunts Lupa because it speaks to the fundamental purpose of combat in Septimont's culture: is fighting a means to an end, or is it an end in itself? Augusta's rise to the position of Ephor, the supreme civic and military authority in Septimont, was meteoric and decisive, and Lupa acknowledges without reservation that whatever Augusta's original motivation, the result has been genuinely good for the city.]
 

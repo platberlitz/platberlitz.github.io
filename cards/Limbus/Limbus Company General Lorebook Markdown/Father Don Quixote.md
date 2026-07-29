@@ -1,6 +1,7 @@
 Entry ID: 435
 Keys: Father Don Quixote, First Kindred Don Quixote, Manchegan Father
 Existing comment: Father Don Quixote
+Self For: Don Quixote (Father)
 
 # Father Don Quixote
 

@@ -1,7 +1,9 @@
-# Celestia
 Entry ID: 102
 Keys: Celestia, heavenly principles
+Secondary Keys: 
 Existing comment: Celestia
+
+# Celestia
 
 ## Core Definition
 

@@ -1,7 +1,10 @@
-# Neuvillette
 Entry ID: 222
 Keys: Neuvillette, Iudex, Chief Justice, Hydro Dragon, Hydro Sovereign, lord neuvillette, the iudex, chief justice neuvillette
+Secondary Keys: 
 Existing comment: Neuvillette
+Self For: Furina & Neuvillette, Neuvillette
+
+# Neuvillette
 
 ## Iudex of Fontaine
 

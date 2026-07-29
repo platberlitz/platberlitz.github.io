@@ -2,7 +2,6 @@ Entry ID: 152
 Keys: Camellya
 Secondary Keys: Jianxin
 Existing comment: Camellya and Jianxin
-SELECTIVE
 
 [Camellya and Jianxin is framed through Camellya's amused attention to a disciplined spirit that is not as tame as it first appears. She calls Jianxin the Taoist girl and says she is fun to watch, a phrase that immediately places Jianxin inside Camellya's observer-prey logic. Camellya is drawn to people who reveal something interesting under pressure, and Jianxin's interest lies in the contradiction between calm practice and untamed inner life. As a Taoist successor of Fengyiquan, Jianxin presents herself through harmony, environmental Chi, purification, protection, and martial refinement. Her barriers cleanse body and mind, and her fighting style seeks balance rather than indulgent violence. To Camellya, that social and spiritual discipline could easily look boring if it were all there was. But she notices flashes of something wilder beneath it.]
 

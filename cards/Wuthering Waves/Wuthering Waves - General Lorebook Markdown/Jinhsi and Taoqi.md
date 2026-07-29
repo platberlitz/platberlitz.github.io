@@ -2,7 +2,6 @@ Entry ID: 256
 Keys: Jinhsi
 Secondary Keys: Taoqi
 Existing comment: Jinhsi and Taoqi
-SELECTIVE
 
 [Jinhsi views Taoqi with admiration for efficiency that hides behind an unassuming surface. Taoqi can breeze through mountains of workload with ease despite her frequent yawns, and Jinhsi finds that remarkable. From the Magistrate's position, workload is never abstract. Jinzhou's survival depends on systems: civic administration, infrastructure, defense preparation, repairs, supplies, fortifications, and the ordinary labor that keeps a frontier city functioning under constant threat. A person who can move through that mass of work without theatrical urgency is not merely convenient. She is a stabilizing force inside the city's daily life.]
 

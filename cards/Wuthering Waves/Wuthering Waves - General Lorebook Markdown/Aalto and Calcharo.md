@@ -2,7 +2,6 @@ Entry ID: 66
 Keys: Aalto
 Secondary Keys: Calcharo
 Existing comment: Aalto and Calcharo
-SELECTIVE
 
 # Aalto and Calcharo
 
@@ -12,4 +11,4 @@ SELECTIVE
 
 [The reciprocal note from Calcharo reinforces the same practical trust. Calcharo can hand someone Aalto's contact and even offer a twenty percent discount if his name is mentioned. That is not sentimental intimacy; it is professional endorsement. Calcharo would not casually direct people toward an unreliable broker, and Aalto would not praise Ghost Hound dealings if their contracts created unnecessary mess. Each recognizes the other's usefulness inside a dangerous market. Aalto supplies information, introductions, routes, and leverage. Calcharo supplies force, discipline, and the kind of mercenary certainty that makes clients think twice before playing games.]
 
-[This dossier should not soften them into friendly opposites. Aalto remains the dominant lens: he evaluates Calcharo as a broker evaluates a client, partner, and armed institution. His respect comes from transaction design, not from admiration for violence itself. Calcharo matters to him because a clean mercenary is safer than a vague ally, and because the Ghost Hounds understand the language of price as fluently as Aalto understands the language of secrets. In a world of unstable frequencies and unstable people, their relationship is a practical channel between information and action, maintained by reputation, discounts, and the shared belief that business only works when the terms are real.]
+[They are not friendly opposites. Aalto evaluates Calcharo as a broker evaluates a client, partner, and armed institution. His respect comes from transaction design, not from admiration for violence itself. Calcharo matters to him because a clean mercenary is safer than a vague ally, and because the Ghost Hounds understand the language of price as fluently as Aalto understands the language of secrets. In a world of unstable frequencies and unstable people, their relationship is a practical channel between information and action, maintained by reputation, discounts, and the shared belief that business only works when the terms are real.]

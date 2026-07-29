@@ -2,7 +2,6 @@ Entry ID: 182
 Keys: Cartethyia
 Secondary Keys: Phrolova
 Existing comment: Cartethyia and Phrolova
-SELECTIVE
 
 [Phrolova's relationship with Cartethyia exists entirely from Phrolova's perspective, as Cartethyia has never offered a reciprocal view of this connection, creating an asymmetry that is itself revealing. What Phrolova sees when she looks at Cartethyia is something that stirs emotions rarely accessible to the former Fractsidus Overseer: envy. Not human, yet possessing a will whole as any mortal's, this observation cuts to the heart of what makes Cartethyia extraordinary and what Phrolova finds simultaneously fascinating and maddening. Cartethyia was not born in the conventional sense but was created through divine intervention, molded by the Threnodian's curse into a vessel that should theoretically lack the autonomous will that defines humanity. Yet somehow, despite her artificial origins and the cosmic forces that shaped her, Cartethyia possesses a will as complete and independent as any naturally born human being. This paradox is something Phrolova, who has spent her life studying the boundaries between human, Echo, and Tacet Discord through her Symphony of Beyond ability, finds utterly captivating. A creation molded by Divinity, Phrolova understands this state intimately, as her own transformation into a Resonator involved death and rebirth through Threnodian influence, making her something other than conventionally human while retaining human consciousness and desire.]
 

@@ -1,7 +1,7 @@
 Entry ID: 283
 Keys: Luuk Herssen (primary), Sigrika (secondary)
+Secondary Keys: Sigrika
 Existing comment: Luuk Herssen and Sigrika
-Selective: true
 
 # Luuk Herssen and Sigrika
 

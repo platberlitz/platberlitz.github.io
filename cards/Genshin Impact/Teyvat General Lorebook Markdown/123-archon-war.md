@@ -1,7 +1,9 @@
-# Archon War
 Entry ID: 123
 Keys: Archon War, archon wars, war of the archons, the archon war
+Secondary Keys: 
 Existing comment: Archon War
+
+# Archon War
 
 ## Era Before the Seven
 [The Archon War was the violent age before the current order of the Seven nations and their ruling Archons. It was not a single battlefield or one brief campaign, but a long era of conflict among gods, monsters, peoples, and regional powers across Teyvat. The outcome created the system in which seven gods became Archons, each associated with an element and a nation. Much of present-day history, geography, and political order still carries scars from that time.]

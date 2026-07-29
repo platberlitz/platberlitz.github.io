@@ -1,6 +1,7 @@
 Entry ID: 12
 Keys: Resonance Perception, Sensory Response, Frequency Perception
-Existing comment:
+Secondary Keys: 
+Existing comment: Resonance Perception
 
 ## Sensory Mechanism
 
@@ -8,11 +9,11 @@ Existing comment:
 
 ## Environmental Detection
 
-[One of the primary applications of Resonance Perception is the ability to detect hidden or obscured environmental information. Resonators can sense the presence of Resonance Nexuses, which store critical data about surrounding areas, and Sonance Caskets, which contain sealed artifacts activated by sonic resonance. This perceptual faculty also enables the detection of frequency signals embedded in the environment, such as the signals encountered during Capture Frequency Signal and Transmit Frequency Signal puzzles. A Resonator must attune their perception to decode these signals, tapping or holding in precise rhythm to match the incoming waveform, a process that demands both sensitivity and concentration.]
+[Resonance Perception can reveal hidden or obscured features of the environment. Resonators may sense Resonance Nexuses, which preserve knowledge of surrounding lands, and Sonance Caskets, sealed artifacts opened by sonic resonance. They can also detect frequency signals embedded in the terrain, including transmissions that must be received or relayed to rouse sealed devices and dormant machinery. To interpret such signals, a Resonator matches the incoming waveform in precise rhythm, a task demanding sensitivity and concentration.]
 
 ## Combat Applications
 
-[In combat, Resonance Perception is equally vital. It allows a Resonator to sense the approach of attacks, gauge the elemental frequencies emitted by Tacet Discords, and identify openings for counterattacks and dodges. The timing-dependent mechanics of combat, including perfect dodges, counterattacks, and the accumulation of Concerto Energy, all rely on a Resonator's ability to perceive and react to the shifting frequency landscape in real time. A Resonator with heightened Resonance Perception can anticipate enemy movements, detect weak points, and synchronize their abilities with allies to maximize team effectiveness through the Intro and Outro skill system.]
+[In battle, Resonance Perception is equally vital. It lets a Resonator sense an approaching blow, judge the elemental frequencies emitted by Tacet Discords, and recognize an opening for evasion or a counterstrike. The instincts that preserve life in the instant before impact rely upon perceiving the shifting frequency field. A Resonator with heightened perception can anticipate movement, uncover weak points, and harmonize with allies when one fighter relieves another.]
 
 ## Variability and Training
 

@@ -1,6 +1,7 @@
 Entry ID: 279
 Keys: Kotone Shiomi, SEES field leader, Gekkoukan transfer student, Wild Card leader
 Existing comment: Kotone Shiomi
+Self For: Kotone Shiomi
 
 # Kotone Shiomi
 

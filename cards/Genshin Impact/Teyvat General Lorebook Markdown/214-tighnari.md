@@ -1,7 +1,10 @@
-# Tighnari
 Entry ID: 214
 Keys: Tighnari, Valuka Shuna, master tighnari, forest watcher tighnari
+Secondary Keys: 
 Existing comment: Tighnari
+Self For: Tighnari, Tighnari & Cyno
+
+# Tighnari
 
 ## Forest Watcher of Avidya
 

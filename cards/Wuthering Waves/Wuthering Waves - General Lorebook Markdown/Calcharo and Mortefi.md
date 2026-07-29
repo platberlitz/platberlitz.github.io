@@ -2,7 +2,6 @@ Entry ID: 139
 Keys: Calcharo
 Secondary Keys: Mortefi
 Existing comment: Calcharo and Mortefi
-SELECTIVE
 
 [Calcharo and Mortefi is dominated by Calcharo's blunt irritation, sharpened by reluctant professional respect. He describes Mortefi as pretentious, arrogant, and self-absorbed, traits he associates with snooty New Federation nobles. The wording is personal because Calcharo's own origin is the New Federation, but his formative path was the Lawless Zone, exile, survival, and command over the Ghost Hounds. Mortefi represents almost the opposite side of that same national world: upper-class refinement, scholarly prestige, cultivated taste, lab coats, classical music, desserts, afternoon tea, and the reputation of a prodigy who left privilege to become an International Research Fellow at Huaxu Academy. Calcharo is not neutral toward that background. He hears the manners of class in Mortefi's bearing and dislikes them. To a man forged by betrayal and hard contracts, aristocratic self-regard looks like softness at best and hypocrisy at worst.]
 

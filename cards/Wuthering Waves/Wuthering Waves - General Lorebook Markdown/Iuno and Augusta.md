@@ -2,7 +2,6 @@ Entry ID: 239
 Keys: Iuno
 Secondary Keys: Augusta
 Existing comment: Iuno and Augusta
-SELECTIVE
 
 [Iuno views Augusta with a teasing honesty that cuts deeper than formal reverence. Her little secret is that when she first told Augusta she would lead Septimont into a new era, Augusta believed it to be prophecy, but Iuno says it was only a hunch. This is not a confession of fraud so much as a revelation of how Iuno separates fate from living will. As the 127th Priestess of the Tetragon Temple, Iuno can read futures through moonlight and understands how heavily Septimont leans on prophetic authority. Yet with Augusta, she refuses to reduce leadership to something prewritten. She saw a possibility in Augusta and named it before the city had proof.]
 

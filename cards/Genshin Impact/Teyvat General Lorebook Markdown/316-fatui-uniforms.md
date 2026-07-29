@@ -1,7 +1,9 @@
-# Fatui Uniforms
 Entry ID: 316
 Keys: Fatui Uniforms, Fatui clothing, Fatui insignia, Fatui mask, fatui uniform, fatui suit, fatui outfit
+Secondary Keys: 
 Existing comment: Fatui Uniforms
+
+# Fatui Uniforms
 
 ## Imperial Presentation
 

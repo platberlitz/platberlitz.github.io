@@ -1,7 +1,10 @@
-# Cyno
 Entry ID: 213
 Keys: Cyno, General Mahamatra, Hermanubis, general cyno, cyno general, mahamatra cyno
+Secondary Keys: 
 Existing comment: Cyno
+Self For: Cyno, Tighnari & Cyno
+
+# Cyno
 
 ## General Mahamatra
 

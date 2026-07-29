@@ -1,7 +1,9 @@
-# Adventurer Gear
 Entry ID: 307
 Keys: Adventurer Gear, travel gear, field gear, camping gear, adventurer outfit, adventurer equipment, explorer gear
+Secondary Keys: 
 Existing comment: Adventurer Gear
+
+# Adventurer Gear
 
 ## Basic Loadout
 

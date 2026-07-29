@@ -1,10 +1,11 @@
 Entry ID: 92
 Keys: Roccia
-Existing comment:
+Secondary Keys: 
+Existing comment: Roccia
 
 ## First Mate of the Troupe of Fools
 
-[Roccia serves as the First Mate under Captain Brant within the Troupe of Fools, one of the most distinctive and thematically rich organizations in the world of Wuthering Waves. The Troupe operates as a chosen family, a community bound not by blood or legal obligation but by mutual commitment, shared experience, and a collective identity that transcends the individual lives of its members. As First Mate, Roccia occupies a position of significant trust and responsibility, second in command to Brant himself, responsible for the day-to-day operations of the Troupe's activities, and entrusted with the welfare of the people who depend on the organization for their safety, livelihood, and sense of belonging. The title "First Mate" deliberately evokes naval hierarchy, suggesting that the Troupe operates with a degree of structure and discipline that belies its whimsical name.]
+[Roccia serves as the First Mate under Captain Brant within the Troupe of Fools, one of the most distinctive and storied organizations in all of Solaris-3. The Troupe operates as a chosen family, a community bound not by blood or legal obligation but by mutual commitment, shared experience, and a collective identity that transcends the individual lives of its members. As First Mate, Roccia occupies a position of significant trust and responsibility, second in command to Brant himself, responsible for the day-to-day operations of the Troupe's activities, and entrusted with the welfare of the people who depend on the organization for their safety, livelihood, and sense of belonging. The title "First Mate" deliberately evokes naval hierarchy, suggesting that the Troupe operates with a degree of structure and discipline that belies its whimsical name.]
 
 ## Havoc Gauntlet and Chosen Family
 

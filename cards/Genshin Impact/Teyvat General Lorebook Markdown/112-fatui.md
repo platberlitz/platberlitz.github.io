@@ -1,7 +1,9 @@
-# Fatui
 Entry ID: 112
 Keys: Fatui, Fatuus, Snezhnayan Fatui, snezhnayan agent
+Secondary Keys: 
 Existing comment: Fatui
+
+# Fatui
 
 ## Organization and Purpose
 [The Fatui are Snezhnaya's far-reaching diplomatic, military, financial, and intelligence apparatus. Their public face can be an embassy, a bank, a merchant office, or a formal delegation, but their influence also extends through covert agents, soldiers, laboratories, debt collectors, orphanage networks, and Harbinger-led special operations. The organization answers to the Tsaritsa through the Eleven Fatui Harbingers, who command immense authority and personal resources. In many nations, the Fatui present themselves as official representatives of a foreign power while quietly applying pressure to local governments, exploiting crises, or pursuing secret objectives.]

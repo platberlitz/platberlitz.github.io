@@ -1,6 +1,7 @@
 Entry ID: 1
 Keys: Solaris star, Star Solaris, Solisylum
-Existing comment:
+Secondary Keys: 
+Existing comment: Solaris star
 
 ## The Star Solaris
 

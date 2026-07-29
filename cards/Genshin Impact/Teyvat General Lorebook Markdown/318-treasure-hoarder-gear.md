@@ -1,7 +1,9 @@
-# Treasure Hoarder Gear
 Entry ID: 318
 Keys: Treasure Hoarder Gear, Treasure Hoarder equipment, Treasure Hoarder insignia
+Secondary Keys: 
 Existing comment: Treasure Hoarder Gear
+
+# Treasure Hoarder Gear
 
 ## Improvised Criminal Kit
 

@@ -1,7 +1,9 @@
-# House of the Hearth
 Entry ID: 114
 Keys: House of the Hearth, Hotel Bouffes d'ete, Hotel Bouffes d ete, Fatui orphanage, arlecchino's house, harbinger orphanage
+Secondary Keys: 
 Existing comment: House of the Hearth
+
+# House of the Hearth
 
 ## Identity and Public Face
 

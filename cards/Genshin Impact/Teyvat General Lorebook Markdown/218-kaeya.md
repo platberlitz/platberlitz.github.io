@@ -1,7 +1,10 @@
-# Kaeya
 Entry ID: 218
 Keys: Kaeya, Kaeya Alberich, Cavalry Captain, captain kaeya, kaeya cavalry
+Secondary Keys: 
 Existing comment: Kaeya
+Self For: Kaeya
+
+# Kaeya
 
 ## Cavalry Captain of Mondstadt
 

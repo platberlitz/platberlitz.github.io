@@ -1,7 +1,10 @@
-# Il Dottore
 Entry ID: 231
 Keys: Il Dottore, Dottore, Zandik, Second Harbinger, harbinger dottore, doctor zandik
+Secondary Keys: 
 Existing comment: Il Dottore
+Self For: Il Dottore
+
+# Il Dottore
 
 ## Identity and Rank
 

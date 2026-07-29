@@ -1,7 +1,9 @@
-# Delusions
 Entry ID: 105
 Keys: Delusions, Delusion, delusion user, delusion wielder
+Secondary Keys: 
 Existing comment: Delusions
+
+# Delusions
 
 ## Core Definition
 

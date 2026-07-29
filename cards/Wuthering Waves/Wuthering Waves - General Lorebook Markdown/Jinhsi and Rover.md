@@ -2,7 +2,6 @@ Entry ID: 254
 Keys: Jinhsi
 Secondary Keys: Rover
 Existing comment: Jinhsi and Rover
-SELECTIVE
 
 [Jinhsi views Rover as someone who shares the inner shape of resolve. Her words do not begin with Rover's mystery, lost memories, shifting elemental expression, or the strange way their arrival catalyzes events across Solaris-3. Instead, Jinhsi says she can feel in her heart that both of them have something they will fiercely defend, a cause worth fighting for. This is a deeply personal recognition from a Magistrate whose life has been defined by public duty. Jinhsi does not need Rover's full past to sense the direction of their will. She recognizes a fellow defender before she can fully explain what history made them so.]
 

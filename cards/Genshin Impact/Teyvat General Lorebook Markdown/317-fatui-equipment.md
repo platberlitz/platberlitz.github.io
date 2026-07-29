@@ -1,7 +1,9 @@
-# Fatui Equipment
 Entry ID: 317
 Keys: Fatui Equipment, Fatui gear, Fatui elemental gear, fatui weapon, fatui tools
+Secondary Keys: 
 Existing comment: Fatui Equipment
+
+# Fatui Equipment
 
 ## Military Engineering
 

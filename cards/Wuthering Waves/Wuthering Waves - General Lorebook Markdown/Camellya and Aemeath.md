@@ -2,7 +2,6 @@ Entry ID: 150
 Keys: Camellya
 Secondary Keys: Aemeath
 Existing comment: Camellya and Aemeath
-SELECTIVE
 
 [Camellya and Aemeath preserves the source's directional framing as Aemeath viewing Camellya, even though the primary key remains Camellya. Aemeath's memory of Camellya is surprisingly bright: they used to chase Exoswarm across the frostlands together, and Camellya was also very good at gaming. That recollection places Camellya in a context softer and more communal than her usual profile as Sanguine Blossom, a Havoc Sword user, an unstable Bloom Bearer, and a combat tester who pursues promising seeds for amusement. Through Aemeath's eyes, Camellya becomes a companion in motion, someone linked to cold landscapes, shared pursuit, and the strange fun of hazardous activity turned almost playful by youth, courage, or familiarity. The Roya Frostlands and Startorch Academy world around Aemeath gives this memory an extra charge, because Aemeath's present existence as a digital ghost makes ordinary recollections precious.]
 

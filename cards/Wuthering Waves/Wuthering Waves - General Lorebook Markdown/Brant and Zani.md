@@ -2,7 +2,6 @@ Entry ID: 129
 Keys: Brant
 Secondary Keys: Zani
 Existing comment: Brant and Zani
-SELECTIVE
 
 [Brant and Zani contains mutual remarks in the source, but the dossier keeps Brant's view dominant because Brant is the primary key and the first named perspective. He looks at Zani and immediately notices authenticity beneath the roles she has carried. Many people wear masks to fit in, and Brant, of all people, does not say that as a simple criticism. He is an actor, captain, and performer who knows masks can be useful, beautiful, and even truthful when chosen freely. What impresses him about Zani is that she does not seem trapped by the masks expected of her. She is a Mutant Spectro Resonator, a reliable Averardo Bank employee, a Montelli-affiliated professional, a woman marked by horns, tail, discipline, punctuality, and the nocturnal force of the Blazing Nightwalker. Any one of those identities could become a cage. Brant instead sees someone who has passed through past roles and arrived in the present with self-possession intact. Whatever her history, whatever parts she has played, she is here now and true to herself.]
 
