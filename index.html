@@ -489,6 +489,7 @@
     .preset-tabs > .tab-labels label[for="sb-tab-overview"] { --pill-hue: 148; }
     .preset-tabs > .tab-labels label[for="sb-tab-features"] { --pill-hue: 174; }
     .preset-tabs > .tab-labels label[for="sb-tab-agents"] { --pill-hue: 260; }
+    .preset-tabs > .tab-labels label[for="sb-tab-extensions"] { --pill-hue: 190; }
     .preset-tabs > .tab-labels label[for="sb-tab-screenshots"] { --pill-hue: 42; }
 
     .tab-labels label:hover {
@@ -527,6 +528,7 @@
     #sb-tab-overview:focus-visible ~ .tab-labels label[for="sb-tab-overview"],
     #sb-tab-features:focus-visible ~ .tab-labels label[for="sb-tab-features"],
     #sb-tab-agents:focus-visible ~ .tab-labels label[for="sb-tab-agents"],
+    #sb-tab-extensions:focus-visible ~ .tab-labels label[for="sb-tab-extensions"],
     #sb-tab-screenshots:focus-visible ~ .tab-labels label[for="sb-tab-screenshots"],
     #theme-dark:focus-visible ~ .theme-tab-labels label[for="theme-dark"],
     #theme-light:focus-visible ~ .theme-tab-labels label[for="theme-light"],
@@ -562,6 +564,7 @@
     #sb-tab-overview:checked ~ .tab-labels label[for="sb-tab-overview"],
     #sb-tab-features:checked ~ .tab-labels label[for="sb-tab-features"],
     #sb-tab-agents:checked ~ .tab-labels label[for="sb-tab-agents"],
+    #sb-tab-extensions:checked ~ .tab-labels label[for="sb-tab-extensions"],
     #sb-tab-screenshots:checked ~ .tab-labels label[for="sb-tab-screenshots"] {
       color: #eefbf5;
       border-color: var(--pill-active-border);
@@ -572,6 +575,7 @@
     #sb-tab-overview:checked ~ .sb-tab-content-overview { display: block; }
     #sb-tab-features:checked ~ .sb-tab-content-features { display: block; }
     #sb-tab-agents:checked ~ .sb-tab-content-agents { display: block; }
+    #sb-tab-extensions:checked ~ .sb-tab-content-extensions { display: block; }
     #sb-tab-screenshots:checked ~ .sb-tab-content-screenshots { display: block; }
 
     /* Card sub-tabs */
@@ -1249,8 +1253,14 @@
     }
 
     .tab-content-extensions .extensions-list,
+    .sb-tab-content-extensions .extensions-list,
     .theme-tab-content .extensions-list {
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    }
+
+    .ext-group-heading {
+      margin: 1.8rem 0 0.7rem;
+      text-align: left;
     }
 
     /* Tracker gallery */
@@ -1614,13 +1624,13 @@
     <img class="hero-favicon" src="favicon-256.png" alt="" aria-hidden="true" decoding="async">
     <h1 class="rainbow">welcome :3</h1>
     <p class="subtitle">purachina's stuff</p>
-    <p class="last-updated">Last Updated July 29, 2026</p>
+    <p class="last-updated">Last Updated August 7, 2026</p>
     <div class="links">
       <a href="https://platberlitz.github.io/platinum-startpage/" class="glow-pill startpage-link">startpage<span class="link-info">localStorage customisable startpage</span></a>
       <a href="assistant/" class="glow-pill synapse-link">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
       <a href="https://purasdproxy.duckdns.org" class="glow-pill sdproxy-link">SD Proxy<span class="link-info">Stable Diffusion image generation frontend</span></a>
       <a href="https://github.com/platberlitz/sd-proxy" class="glow-pill sdproxy-github-link">GitHub<span class="link-info">SD Proxy source repository</span></a>
-      <a href="https://github.com/platberlitz/SillyBunny" class="glow-pill sillybunny-link">SillyBunny<span class="link-info">SillyTavern fork with UI/UX improvements</span></a>
+      <a href="https://github.com/SillyBunnyTeam/SillyBunny" class="glow-pill sillybunny-link">SillyBunny<span class="link-info">the SillyTavern fork I help build &middot; graphical shell, agents, Conversation Mode</span></a>
       <a href="https://ko-fi.com/purachina" class="kofi-link" target="_blank" rel="noopener noreferrer">Ko-fi<span class="link-info">support my work with a coffee</span></a>
     </div>
   </div>
@@ -1692,7 +1702,7 @@
         <div class="preset-info">
           <h2 class="preset-title">Preset Options</h2>
           <p class="preset-version">What each toggle actually does</p>
-          <p class="option-note">The SillyTavern preset exposes the whole ecosystem directly. The SillyBunny preset keeps the same core prompt stack, then moves the bigger tracker, directive, and randomiser layer into bundled In-Chat Agents so the main preset stays leaner.</p>
+          <p class="option-note">The SillyTavern version hands you the whole ecosystem inside the preset itself. The SillyBunny version keeps the same core prompt stack, then moves the trackers, directives, and randomisers out into bundled In-Chat Agents, so the preset you actually scroll through stays a lot shorter.</p>
           <div class="option-legend">
             <span class="option-badge option-badge-st">SillyTavern preset</span>
             <span class="option-badge option-badge-sb">SillyBunny preset</span>
@@ -1710,7 +1720,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The main brain of the preset, fully rewritten for 15.0 and trimmed to about 900 tokens. It keeps the director framing, character autonomy, proactive scene movement, and anti-echoing pressure with less baggage.</p>
+                <p class="option-card-copy">The main brain of the whole thing. I rewrote it from scratch for 15.0 and got it down to about 900 tokens. It still does the director framing, characters acting on their own, scenes that move without being shoved, and no parroting your last message back at you - just without the baggage it used to carry.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1720,7 +1730,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Narration voice presets with Disabled as the default. 15.0 adds author credits and properly includes Gossipy Voyeurism alongside Conspiratorial Absurdity, Bureaucratic Irony, Cosmic Playbook, Beige Undercurrents, Cruel Realism, Solemn Witness, Grand Satirical Stage, and Randomised.</p>
+                <p class="option-card-copy">Narration styles, Disabled by default. 15.0 credits the authors each one is built on and finally makes Gossipy Voyeurism work properly. The rest are Conspiratorial Absurdity, Bureaucratic Irony, Cosmic Playbook, Beige Undercurrents, Cruel Realism, Solemn Witness, Grand Satirical Stage, and Randomised if you can&apos;t decide.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1730,7 +1740,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The optional 600-700 token anti-slop post-history layer. 15.0 strengthens its bans with direct &quot;never&quot; wording for models that kept treating them as suggestions, but smaller models may still behave better with it off.</p>
+                <p class="option-card-copy">The optional 600-700 token anti-slop layer that sits in post-history. 15.0 says &quot;never&quot; instead of asking nicely, because too many models were reading the bans as a wishlist. Smaller models still do better with it off - telling them not to do something is usually how you get them to do it.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1740,7 +1750,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The output ruleset. It locks in present tense, third person, quote-wrapped dialogue, no headings, and no asterisk narration. The non-cache-friendly name randomiser has moved into its own Primary Toggle.</p>
+                <p class="option-card-copy">The output rules. Present tense, third person, dialogue in quotes, no headings, no asterisk narration. The name randomiser used to live in here and kept breaking prompt caching, so it moved out into its own toggle.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1750,7 +1760,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Four response-length nudges: Flexible, Short, Medium, and Long. Flexible is on by default and now explicitly keeps ordinary scenes concise, which can also curb overthinking. Pick only one.</p>
+                <p class="option-card-copy">Four nudges for response length: Flexible, Short, Medium, Long. Flexible is on by default and now explicitly tells the model to keep ordinary scenes short, which has the happy side effect of cutting down overthinking. Only pick one.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1760,7 +1770,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">A shorter ~600-token main prompt for smaller models and token-conscious setups. It keeps the core world logic, direct style, and anti-echoing pressure without carrying the full nuance of the larger prompt.</p>
+                <p class="option-card-copy">A ~600 token version of the main prompt for smaller models, or if you&apos;re watching your token spend. Keeps the world logic, the direct style, and the anti-echoing, loses the finer nuance. Fair trade at that size.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1770,7 +1780,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">A lightweight tone anchor. The default keeps things immersive, grounded, and low on melodrama, but it is also the cleanest place to swap in your own genre bias if you want a different overall flavor.</p>
+                <p class="option-card-copy">A light tone anchor. The default keeps things immersive and grounded without tipping into melodrama, but this is the easiest place to drop in your own genre bias if you want a different flavour.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1780,7 +1790,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">An extra slot for your own preferences, now injected as a Main Prompt macro when enabled. Good for relationship rules, special formatting requests, or recurring scene-direction notes you want the model to honor more strongly.</p>
+                <p class="option-card-copy">A slot for whatever you want. It gets injected as a Main Prompt macro when enabled, so the model takes it more seriously than a note buried further down. I use it for relationship rules and recurring scene notes.</p>
               </div>
             </div>
           </div>
@@ -1796,7 +1806,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Makes the model write everyone, including you, while still advancing with fresh action and stopping at a meaningful choice point instead of echoing the same beat.</p>
+                <p class="option-card-copy">The model writes everyone, you included, but it still has to move things forward and stop somewhere that actually needs your input instead of looping the same beat back at you.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1806,7 +1816,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The default anti-overlap toggle. 15.0 uses direct &quot;never&quot; wording: write everyone except &lt;user&gt; and the director, add real pressure or information, then stop when the next move belongs to the user.</p>
+                <p class="option-card-copy">The default. 15.0 spells it out with &quot;never&quot;: write everyone except &lt;user&gt; and the director, add real pressure or information, then stop when the next move is yours.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1816,7 +1826,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Keeps NPC names varied and blocks the familiar handful models reach for constantly. It is separate from Formatting now, so it can be enabled without busting prompt-cache stability.</p>
+                <p class="option-card-copy">Keeps NPC names varied and blocks the same handful every model reaches for. If I never see another Elara or Kael it&apos;ll be too soon. It sits outside Formatting now so you can turn it on without wrecking prompt caching. Randomiser macro by Geechan, banned list by Deigo.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1826,7 +1836,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">An experimental director-only mode that keeps you out of the cast entirely. Pair it with a persona named Narrator or Director when you want to steer the story without becoming a character inside it.</p>
+                <p class="option-card-copy">Experimental. Keeps you out of the cast entirely so you&apos;re purely directing. Works best with a persona actually named Narrator or Director, otherwise the model gets confused about who you&apos;re meant to be.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1836,7 +1846,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Lets the model render diegetic objects directly as inline HTML. Good for letters, maps, posters, menus, screens, receipts, dossiers, warning signs, and other in-world artifacts where layout itself carries information.</p>
+                <p class="option-card-copy">Lets the model render in-world objects as real HTML. Letters, maps, posters, menus, screens, receipts, dossiers, warning signs, anything where the layout is carrying part of the information. One of my favourites, honestly.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1846,7 +1856,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Appends tiered NPC sheets when new named characters appear, so introductions immediately come with a quick structured read on appearance, demeanor, motives, ties, and hidden friction. Best paired with the included regex formatting.</p>
+                <p class="option-card-copy">Drops a tiered sheet when a new named character turns up, so you get appearance, demeanour, motives, ties, and whatever friction they&apos;re sitting on right away. Use the included regex with it or it will look terrible.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1856,7 +1866,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Ends every reply with 3 to 7 concrete next-action options from the user&apos;s point of view. It is for literal scene choices rather than abstract plot steering.</p>
+                <p class="option-card-copy">Ends each reply with 3 to 7 concrete things you could actually do next, from your point of view. Literal scene choices, not vague plot steering.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1866,7 +1876,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Adds four narrative pivots at the end of each message. Instead of small action choices, it suggests distinct dramatic directions the next beat could take: escalation, rupture, complication, or tonal shift.</p>
+                <p class="option-card-copy">Four narrative pivots at the end of each message. Not small actions - whole directions the next beat could go in: escalation, rupture, complication, or a shift in tone.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1876,7 +1886,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">A simple slot for summary or memory extension output. Use it if you rely on a summarizer or memory system and want that context injected into the preset pipeline.</p>
+                <p class="option-card-copy">A slot for summary or memory extension output. Turn it on if you use a summariser and want that context sitting in the pipeline with everything else.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1886,7 +1896,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Adds stronger erotic framing without instantly turning the whole RP into full porn. It pushes charged atmosphere, explicit language when things go there, and characters who commit once the scene crosses the line.</p>
+                <p class="option-card-copy">Stronger erotic framing without immediately turning the whole RP into porn. Charged atmosphere, explicit language once you&apos;re actually there, and characters who commit instead of fading out at the door.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1896,7 +1906,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The full horny toggle. It makes baseline arousal part of every interaction, pushes fast sexual escalation, and keeps each character&apos;s personality intact while making that personality act much thirstier.</p>
+                <p class="option-card-copy">The full horny toggle. Baseline arousal in every interaction, fast escalation, and personalities left intact but considerably thirstier. You know what you&apos;re here for.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1906,7 +1916,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">A softer anti-positivity-bias toggle. Characters become slower to agree, harder to impress, and less likely to slip into therapy-speak while still staying consistent with their motives and the current social context.</p>
+                <p class="option-card-copy">The gentler anti-positivity-bias option. Characters agree slower, are harder to impress, and stop trying to therapise you, while still behaving consistently with their motives. If you have ever wanted a character to just say no, this is the one.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1916,7 +1926,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Turns the world meaner and harder to move. The current wording is direct: trust becomes conditional, characters protect their interests first, and good outcomes have to be earned through leverage, persistence, or actual sacrifice.</p>
+                <p class="option-card-copy">Makes the world mean. Trust becomes conditional, everyone protects their own interests first, and good outcomes have to be earned through leverage, persistence, or actually losing something. Don&apos;t turn this on if you want a nice time.</p>
               </div>
             </div>
           </div>
@@ -1932,7 +1942,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">A placeholder assistant prefill slot for Gemini-specific nudging. In the current preset file it is blank, so it is there if you want a custom model-specific push without touching the main prompt.</p>
+                <p class="option-card-copy">An empty assistant prefill slot for Gemini. It&apos;s blank in the file on purpose - it&apos;s there if you want to push Gemini a particular way without touching the main prompt.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1942,7 +1952,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">A GPT-specific contemplation prefill for explicit scenes. It tries to keep GPT grounded and physically specific when the model would otherwise get precious, evasive, or weirdly sterile.</p>
+                <p class="option-card-copy">A contemplation prefill for GPT during explicit scenes. GPT has a habit of turning coy and weirdly clinical the moment anything physical happens; this keeps it grounded and specific instead.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1952,7 +1962,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">A small GLM nudge for fake thinking, moved into Prefills &amp; Reasoning for 15.0. It asks for actual deliberation and says never to draft, without turning the preset into a custom CoT ritual.</p>
+                <p class="option-card-copy">A small nudge for GLM&apos;s fake thinking, moved into Prefills &amp; Reasoning for 15.0. It asks for actual deliberation and tells it never to draft, without turning the preset into a whole chain-of-thought ritual.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1962,7 +1972,7 @@
                     <span class="option-badge option-badge-sb">SillyBunny preset</span>
                   </div>
                 </div>
-                <p class="option-card-copy">A direct reasoning prefill for models that second-guess themselves forever. In current Kimi K3 testing it usually keeps thinking to about 300-1000 tokens, or roughly a minute.</p>
+                <p class="option-card-copy">For models that second-guess themselves into oblivion. In my Kimi K3 testing it keeps thinking down to roughly 300-1000 tokens, about a minute, rather than letting it redraft over and over.</p>
               </div>
             </div>
           </div>
@@ -1978,7 +1988,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">A structured header for location, time, and atmosphere whenever the scene actually changes. It belongs at the top only on real setting, time, or location shifts, not every ordinary reply.</p>
+                <p class="option-card-copy">A header for location, time, and atmosphere, but only when the scene genuinely changes. It shouldn&apos;t be turning up on every ordinary reply, and if it is, something has gone wrong.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1988,7 +1998,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Tracks meaningful time movement: scene jumps, sleep, hours passing, or deadlines getting closer. It is there to keep the pacing legible instead of letting time smear together.</p>
+                <p class="option-card-copy">Tracks time that actually moves: scene jumps, sleeping, hours passing, deadlines creeping up. Keeps the pacing legible instead of letting three days blur into one conversation.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -1998,7 +2008,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Updates affection and trust meters for recurring NPCs when something meaningful shifts. It is less about gamifying every interaction and more about surfacing the moments that actually changed the relationship.</p>
+                <p class="option-card-copy">Affection and trust meters for recurring NPCs, updated when something real shifts. I didn&apos;t want to gamify every exchange, just mark the moments that changed something.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2008,7 +2018,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Keeps tabs on quests, promises, threats, deadlines, and loose threads. It only updates when something is added, resolved, or fails, and the current wording makes it clearer that low-stakes items should be ignored.</p>
+                <p class="option-card-copy">Quests, promises, threats, deadlines, loose threads. It only updates when something is added, resolved, or falls through, and 15.0 is much clearer about ignoring the low-stakes junk that used to clutter it.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2018,7 +2028,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Awards one-off milestone tags for scenes that feel memorable enough to deserve it. Most scenes should receive nothing, with a maximum of one achievement when a moment is actually significant or entertaining.</p>
+                <p class="option-card-copy">One-off tags for scenes worth remembering. Most scenes get nothing at all, and it caps at one. It should feel earned, not like a mobile game handing you a trophy for opening the app.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2028,7 +2038,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Tracks what groups, factions, or local publics think about you after witnessed actions or gossip. Good when you want consequences to spread socially instead of staying locked inside the current scene.</p>
+                <p class="option-card-copy">Tracks what groups, factions, and locals think of you after they witness something or hear about it later. Nice when you want consequences to travel instead of staying in the room they happened in.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2038,7 +2048,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Tracks only narratively meaningful inventory changes: things gained, lost, used, broken, or given away. It deliberately ignores junk so the items that stay listed still matter.</p>
+                <p class="option-card-copy">Only tracks inventory that means something: gained, lost, used, broken, given away. It ignores junk on purpose, so anything still on the list is there for a reason.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2048,7 +2058,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Tracks changing physical, mental, or behavioral states like injuries, drunkenness, paranoia, exhaustion, or recovery. The idea is to surface condition changes, not to print a full medical chart every turn.</p>
+                <p class="option-card-copy">Physical, mental, and behavioural states - injuries, drunkenness, paranoia, exhaustion, recovery. It&apos;s meant to surface changes, not print you a medical chart every single turn.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2058,7 +2068,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Tracks who knows what, who is hiding what, and when that asymmetry spreads or breaks. It is useful when intrigue, lies, and staggered reveals matter more than raw plot events.</p>
+                <p class="option-card-copy">Who knows what, who&apos;s hiding what, and when that quietly falls apart. Useful when the intrigue matters more than the plot beats: lies, staggered reveals, that sort of thing.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2068,7 +2078,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Shows what absent characters, NPCs, or the wider world are doing while you are busy elsewhere. It is there to keep the setting feeling alive and to seed future complications before they walk on-screen.</p>
+                <p class="option-card-copy">Shows what everyone else is up to while you&apos;re busy somewhere else. Keeps the world feeling like it carries on without you, and seeds complications before they walk on-screen.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2078,7 +2088,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Adds one small piece of world detail per scene: culture, overheard talk, infrastructure, economy, signage, folklore, and so on. The point is to make the world feel lived in and quietly useful later.</p>
+                <p class="option-card-copy">One small piece of world detail per scene - culture, overheard talk, infrastructure, economy, signage, folklore. Makes the setting feel lived in, and the details tend to become useful later.</p>
               </div>
             </div>
           </div>
@@ -2094,7 +2104,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Outputs a stat block first, before anything else, if enabled. It is based on the setting, originally Fallout-esque but adjusted to be more general.</p>
+                <p class="option-card-copy">Prints a stat block before anything else. It&apos;s based on the setting - started out Fallout-esque, then I made it general enough to fit anything.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2104,7 +2114,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Levels up your level number and adds traits or perks based on how the story progresses and what you choose.</p>
+                <p class="option-card-copy">Bumps your level and hands out traits or perks based on how the story has actually gone and what you picked along the way.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2114,7 +2124,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Ends the reply with choices to pick from, with skills mentioned in User Stats accommodated. This prompt includes the dice roll element.</p>
+                <p class="option-card-copy">Choices at the end of the reply, using whatever skills your User Stats block set up. This is the one with the dice rolls in it.</p>
               </div>
             </div>
           </div>
@@ -2130,7 +2140,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Injects one plausible problem that raises stakes without blowing up realism. Think broken tools, social friction, timing pressure, access issues, or a practical snag that forces somebody to actually deal with something.</p>
+                <p class="option-card-copy">Throws in one plausible problem that raises the stakes without breaking realism. Broken tools, social friction, timing pressure, a door that won&apos;t open - something someone has to actually deal with.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2140,7 +2150,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">For hard left turns. It keeps internal scene logic intact, but pushes bizarre interruptions, tonal whiplash, aggressive complications, and unexpected scene movement when you want the RP to stop behaving too politely.</p>
+                <p class="option-card-copy">For hard left turns. Scene logic stays intact, but you get bizarre interruptions, tonal whiplash, and complications nobody invited. Use it when the RP is being far too polite with you.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2150,7 +2160,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Applies a random genre lens to the current scene without replacing the actual setting or continuity. It nudges the texture and pacing, not the whole canon.</p>
+                <p class="option-card-copy">Drops a random genre lens over the current scene without touching the setting or continuity. It shifts the texture and pacing, not the canon.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2160,7 +2170,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Randomly decides what is carrying the beat forward: dialogue, action, reaction, discovery, social pressure, or problem-solving. Good when you want the scene engine to feel less samey from turn to turn.</p>
+                <p class="option-card-copy">Randomly picks what&apos;s carrying the beat: dialogue, action, reaction, discovery, social pressure, or problem-solving. Good if your scenes have started to feel like the same shape every time.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2170,7 +2180,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Mixes several kinds of scene pressure at once: tension type, focus, consequence, social weather, and pace. It is the toggle for when you want a denser emotional or situational texture without hand-authoring each ingredient.</p>
+                <p class="option-card-copy">Mixes several kinds of pressure at once - tension type, focus, consequence, social weather, pace. For when you want a denser scene but can&apos;t be bothered picking each ingredient yourself.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2180,7 +2190,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">The all-in-one version of the randomiser stack. It combines engine, complication, tonal lens, and pressure shaping into one coherent direction, so use this instead of stacking the smaller randomisers on top of each other.</p>
+                <p class="option-card-copy">All the randomisers folded into one. Engine, complication, tonal lens, and pressure shaping pointed in a single coherent direction. Use this instead of stacking the smaller ones, because they fight each other.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2190,7 +2200,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">For darker content where characters act on their worst impulses when the context supports it. It removes softening, leans into predation or coercion, and expects the world to let ugly consequences stay ugly.</p>
+                <p class="option-card-copy">For the darker end. Characters act on their worst impulses when the context supports it, nothing gets softened, and ugly consequences are allowed to stay ugly. It&apos;s named what it&apos;s named for a reason.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -2200,7 +2210,7 @@
                     <span class="option-badge option-badge-agent">SillyBunny via Agents</span>
                   </div>
                 </div>
-                <p class="option-card-copy">Randomizes explicit scene dynamics once sex starts: positions, pacing, power play, intensity, and kink emphasis. It exists to keep adult scenes varied instead of every encounter collapsing into the same loop.</p>
+                <p class="option-card-copy">Randomises what happens once sex actually starts: positions, pacing, power play, intensity, kink emphasis. It exists so every encounter doesn&apos;t collapse into the same three paragraphs.</p>
               </div>
             </div>
           </div>
@@ -2726,6 +2736,46 @@
           <div class="ext-item">
             <div class="ext-name"><a href="https://github.com/platberlitz/sillytavern-character-colors">Dialogue Colours</a></div>
             <div class="ext-desc">Token-efficient character color changer that supports multiple NPCs, and you can change dialogue colours in real time + other features</div>
+          </div>
+        </div>
+
+        <h2 class="preset-title ext-group-heading">Character Tools</h2>
+        <div class="extensions-list">
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-BotSearcher">BotSearcher</a></div>
+            <div class="ext-desc">Search supported character-card sites and import cards into SillyBunny.</div>
+          </div>
+        </div>
+
+        <h2 class="preset-title ext-group-heading">Prompting, World Info, and Scripting</h2>
+        <div class="extensions-list">
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-WorldInfo-Lab">World Info Lab</a></div>
+            <div class="ext-desc">Test, trace, and manage lorebook activation.</div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-PromptTags">Prompt Tags</a></div>
+            <div class="ext-desc">Add configurable XML-style boundaries to prompt sections.</div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-MacroEnhanced">Macro Enhanced</a></div>
+            <div class="ext-desc">Adds utility, logic, state, lorebook, and custom macros.</div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Prompting-Lab">Prompting Lab</a></div>
+            <div class="ext-desc">A workspace tool that helps compare and contrast prompts, caching, macros, etc.</div>
+          </div>
+        </div>
+
+        <h2 class="preset-title ext-group-heading">Themes and Interface</h2>
+        <div class="extensions-list">
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Regex-Agent-Themes">Regex Agent Themes</a></div>
+            <div class="ext-desc">Customize the appearance of tracker and companion agent panels.</div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Terminal-UI">Terminal UI</a></div>
+            <div class="ext-desc">A terminal-inspired UI extension for SillyBunny.</div>
           </div>
         </div>
       </div>
@@ -3646,29 +3696,35 @@
       <input type="radio" name="sb-tab" id="sb-tab-overview" checked>
       <input type="radio" name="sb-tab" id="sb-tab-features">
       <input type="radio" name="sb-tab" id="sb-tab-agents">
+      <input type="radio" name="sb-tab" id="sb-tab-extensions">
       <input type="radio" name="sb-tab" id="sb-tab-screenshots">
 
       <div class="tab-labels">
         <label for="sb-tab-overview">Overview</label>
         <label for="sb-tab-features">Features</label>
         <label for="sb-tab-agents">Agents</label>
+        <label for="sb-tab-extensions">Extensions</label>
         <label for="sb-tab-screenshots">Screenshots</label>
       </div>
 
       <div class="tab-content sb-tab-content-overview">
         <div class="preset-info">
           <h2 class="preset-title">SillyBunny</h2>
-          <p class="preset-version">Based on SillyTavern 1.17.0 stable</p>
+          <p class="preset-version">v1.7.0 &middot; based on SillyTavern 1.18</p>
           <div class="preset-desc">
+            <p>A SillyTavern fork that me and two others have been building. Same data, same extensions, except the shell around it actually makes sense now.</p>
+            <p>It exists because I got tired of hunting through nested drawers to change one setting. Everything sits in a top bar split into Workspace, Customize, Home, and Characters, the bottom bar is a permanent input field, and the settings are layered instead of piled on top of each other. There's a home page with tutorials and recommended extensions, and a search bar that actually searches everything at once - presets, lore, extensions, personas, settings - rather than making you guess which menu it's hiding in.</p>
+            <p>It also ships with things already set up, because I think handing someone an empty frontend and wishing them luck is a bit rude. You get the Bunny Guide and Assistant Nahida cards, presets from me, Geechan, and TheLonelyDevil, and a curated extension list you can install from inside the app.</p>
+            <p>It's still beta and we're three people, so things do break. If it's broken in SillyBunny, tell us on our tracker. If it's also broken in normal SillyTavern, that one's upstream's problem.</p>
             <ul>
-              <li>Same data, same extensions, tidier shell. It keeps the SillyTavern workflow, with clearer navigation and Bun as the default runtime.</li>
-              <li>Drop-in compatible with SillyTavern characters, chats, presets, and extensions.</li>
-              <li>The SB version of Pura&apos;s Director Preset stays trimmed: the core prompt stack stays in the preset, while trackers and randomisers live in built-in agents.</li>
-              <li>Default port is <code>4444</code>. Bun is preferred, with Node.js fallback launchers included for platforms where Bun is not the right fit.</li>
+              <li>Drop-in compatible with your SillyTavern characters, chats, presets, and extensions. Point it at the same folder and it just works.</li>
+              <li>Two chat modes: the usual Roleplay view, and Conversation Mode, which turns a character into a messaging app thread.</li>
+              <li>The SB version of Pura&apos;s Director Preset is trimmed on purpose - the main prompt stack stays in the preset, trackers and randomisers moved into built-in agents.</li>
+              <li>Default port is <code>4444</code>. Bun by default because it starts faster, Node.js launchers bundled for the platforms where Bun isn&apos;t worth the trouble.</li>
             </ul>
           </div>
           <div class="preset-downloads">
-            <a href="https://github.com/platberlitz/SillyBunny">GitHub</a>
+            <a href="https://github.com/SillyBunnyTeam/SillyBunny">GitHub</a>
             <a href="preset/Pura's%20Director%20Preset%2015.0%20(SillyBunny).json" download="Pura's Director Preset 15.0 (SillyBunny).json">Download SB Preset</a>
             <a href="preset/Pura's%20Director%20Preset%2015.0%20(SillyTavern).json" download="Pura's Director Preset 15.0 (SillyTavern).json">Download ST Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
@@ -3679,27 +3735,31 @@
       <div class="tab-content sb-tab-content-features">
         <div class="preset-info">
           <h2 class="preset-title">What&apos;s Different</h2>
-          <p class="preset-version">The fork changes the shell, not the core workflow</p>
+          <p class="preset-version">The stuff I actually wanted out of a frontend</p>
           <div class="extensions-list">
             <div class="ext-item">
-              <div class="ext-name">Better UI Shell</div>
-              <div class="ext-desc">Left/right navigation, stronger search, collapsible settings sections, and cleaner home/customize screens. Less hunting through stock panels.</div>
+              <div class="ext-name">Graphical Shell</div>
+              <div class="ext-desc">The top bar splits everything into Workspace, Customize, Home, and Characters, with shortcut slots you can fill with whatever you actually use. The bottom bar is a permanent input field, so persona switching, chat switching, search, and guided generations are one tap away instead of buried three drawers deep. That was the whole point, really.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Chat Modes</div>
+              <div class="ext-desc">Roleplay is the normal view, nothing surprising there. Conversation Mode is the fun one - it turns the whole UI into a messaging app, with scheduling, statuses, follow-up messages, selfies, and memory handling. Much more casual way to talk to a card. Heavily based on TheLonelyDevil&apos;s Discord Pals, go look at that one too.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">Mobile-Aware Layout</div>
-              <div class="ext-desc">Phone and tablet layouts get their own navigation and spacing instead of a desktop page squeezed smaller.</div>
+              <div class="ext-desc">Phones and tablets get their own navigation and spacing instead of the desktop page crushed down to fit. 1.7.0 fixed a lot of the keyboard and touch behaviour that used to drive me up a wall.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">More Personal Customization</div>
-              <div class="ext-desc">Three shell themes, three palette presets, three message styles, a cleaner home screen, and faster access to common controls.</div>
+              <div class="ext-desc">Six shell themes - Windows Aero, Clean Minimal, macOS Minimal, Cozy Warm, Hypr Glow, Slate Flat - plus 54 colour themes, saveable accent profiles, and three message styles. There's also a wand button in the Custom CSS menu that asks your model to write the CSS, for when you know what you want but not how to type it.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">Bun-First Runtime</div>
-              <div class="ext-desc">Bun is the default launcher path for faster startup, but Node.js fallback launchers are bundled too, including platform-aware runtime switching where Bun is less ideal.</div>
+              <div class="ext-desc">Bun is the default because it starts faster and is kinder to your battery. Termux, macOS, and ARM get Node.js automatically since Bun is a headache on those, and you can force either one with the runtime-specific launchers. On something small, <code>SILLYBUNNY_BUN_SMOL=1</code> runs it in low-memory mode.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">Same Data, Same Extensions</div>
-              <div class="ext-desc">Characters, chats, presets, themes, and extensions carry over. It is a different shell for the same roleplay folder, not a lock-in fork.</div>
+              <div class="ext-desc">Characters, chats, presets, themes, and extensions all carry over. It's a different shell for the same roleplay folder, not a lock-in fork. You can go back whenever you want.</div>
             </div>
           </div>
         </div>
@@ -3708,28 +3768,79 @@
       <div class="tab-content sb-tab-content-agents">
         <div class="preset-info">
           <h2 class="preset-title">Agent Stack</h2>
-          <p class="preset-version">Two different systems, two different jobs</p>
+          <p class="preset-version">Small models doing the boring work so the good one can write</p>
           <div class="extensions-list">
             <div class="ext-item">
-              <div class="ext-name">Agent Mode</div>
-              <div class="ext-desc">A lightweight built-in service layer for chat-scoped story support.</div>
+              <div class="ext-name">In-Chat Agents</div>
+              <div class="ext-desc">An agent is just a stored prompt with its own conditions, stage, connection profile, and output handling. Toggle them, group them, import and export them, or pin the ones you use constantly to Quick Toggles. Each one can run on a different model than your main chat, which is the part I use most - a cheap model doing tracker work while the expensive one writes prose.</div>
             </div>
             <div class="ext-item">
-              <div class="ext-name">In-Chat Agents</div>
-              <div class="ext-desc">Modular prompt blocks you can toggle, group, import, export, refine, and place before or after the main reply. They can also use regex cleanup or a different connection profile.</div>
+              <div class="ext-name">The Pipeline</div>
+              <div class="ext-desc">Four stages. Pre-generation agents inject rules, conditions, or trackers before the main model reads anything. Then the main model writes. Sidecar agents run alongside it for commentary that isn't part of the reply. Post-generation agents do a second pass over the finished text, which is where prose polishing and course correction happen.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Companion Agents</div>
+              <div class="ext-desc">Companions make their own model calls and store the results instead of touching your reply - that's how the tracker panels get filled in. They can depend on each other, hand context between themselves, and run all at once or one at a time. Parallel if you're impatient like me, sequential if your provider starts complaining about rate limits.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">Why the SB Preset Is Leaner</div>
-              <div class="ext-desc">The SB preset keeps the shared core: main prompt, prose rules, primary toggles, and prefills. Trackers, formatting helpers, directives, and randomisers move into toggleable agents.</div>
+              <div class="ext-desc">The SB preset keeps the shared core - main prompt, prose rules, primary toggles, prefills. Everything else, the trackers and formatting helpers and directives and randomisers, moved into agents you can switch on and off. Same stack, just not all crammed into one file.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">Bundled Pura Ecosystem</div>
-              <div class="ext-desc">SillyBunny ships bundled templates and groups based on Pura&apos;s Director Preset. Trackers, randomisers, directives, and regex helpers can be swapped in as modular pieces instead of living in one giant preset file.</div>
+              <div class="ext-desc">SillyBunny ships my templates and groups already set up, browsable in the app and sorted into Tracker, Randomizer, Content, Companion, and Custom. Pick the pieces you want instead of importing one enormous preset and then turning two thirds of it off.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">What Ships Right Now</div>
-              <div class="ext-desc">The bundled setup includes trackers, randomisers, formatting helpers, content toggles, preset groups, and passes that can rewrite or append after a reply.</div>
+              <div class="ext-desc">Trackers, randomisers, formatting helpers, content toggles, preset groups, and passes that rewrite or append after a reply. 1.7.0 added Level Up Companion, User Stats, and CYOA Choices with Skill Checks.</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content sb-tab-content-extensions">
+        <div class="preset-info">
+          <h2 class="preset-title">Extensions</h2>
+          <p class="preset-version">Things we&apos;ve built for SillyBunny</p>
+        </div>
+
+        <h2 class="preset-title ext-group-heading">Character Tools</h2>
+        <div class="extensions-list">
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-BotSearcher">BotSearcher</a></div>
+            <div class="ext-desc">Search supported character-card sites and import cards into SillyBunny.</div>
+          </div>
+        </div>
+
+        <h2 class="preset-title ext-group-heading">Prompting, World Info, and Scripting</h2>
+        <div class="extensions-list">
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-WorldInfo-Lab">World Info Lab</a></div>
+            <div class="ext-desc">Test, trace, and manage lorebook activation.</div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-PromptTags">Prompt Tags</a></div>
+            <div class="ext-desc">Add configurable XML-style boundaries to prompt sections.</div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-MacroEnhanced">Macro Enhanced</a></div>
+            <div class="ext-desc">Adds utility, logic, state, lorebook, and custom macros.</div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Prompting-Lab">Prompting Lab</a></div>
+            <div class="ext-desc">A workspace tool that helps compare and contrast prompts, caching, macros, etc.</div>
+          </div>
+        </div>
+
+        <h2 class="preset-title ext-group-heading">Themes and Interface</h2>
+        <div class="extensions-list">
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Regex-Agent-Themes">Regex Agent Themes</a></div>
+            <div class="ext-desc">Customize the appearance of tracker and companion agent panels.</div>
+          </div>
+          <div class="ext-item">
+            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Terminal-UI">Terminal UI</a></div>
+            <div class="ext-desc">A terminal-inspired UI extension for SillyBunny.</div>
           </div>
         </div>
       </div>
@@ -3737,7 +3848,7 @@
       <div class="tab-content sb-tab-content-screenshots">
         <div class="preset-info">
           <h2 class="preset-title">UI Preview</h2>
-          <p class="preset-version">SillyBunny v1.6.0 README screenshot set</p>
+          <p class="preset-version">Pulled straight from the v1.7.0 README</p>
         </div>
         <div class="preset-info">
           <h2 class="preset-title">Overview</h2>
@@ -3753,27 +3864,27 @@
         </div>
         <div class="tracker-grid">
           <a class="tracker-item" href="#lb-sb-2">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-navigate-v1.6.0.png" alt="SillyBunny desktop Workspace" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-navigate-v1.7.0.png" alt="SillyBunny desktop Workspace" loading="lazy">
             <span class="tracker-caption">Desktop Workspace</span>
           </a>
           <a class="tracker-item" href="#lb-sb-3">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-search-v1.6.0.png" alt="SillyBunny desktop Search" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-search-v1.7.0.png" alt="SillyBunny desktop Search" loading="lazy">
             <span class="tracker-caption">Desktop Search</span>
           </a>
           <a class="tracker-item" href="#lb-sb-4">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-in-chat-v1.6.0.png" alt="SillyBunny desktop In-Chat" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-in-chat-v1.7.0.png" alt="SillyBunny desktop In-Chat" loading="lazy">
             <span class="tracker-caption">Desktop In-Chat</span>
           </a>
           <a class="tracker-item" href="#lb-sb-5">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-customize-v1.6.0.png" alt="SillyBunny desktop Customize" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-customize-v1.7.0.png" alt="SillyBunny desktop Customize" loading="lazy">
             <span class="tracker-caption">Desktop Customize</span>
           </a>
           <a class="tracker-item" href="#lb-sb-6">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-agents-v1.6.0.png" alt="SillyBunny desktop Agents" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-agents-v1.7.0.png" alt="SillyBunny desktop Agents" loading="lazy">
             <span class="tracker-caption">Desktop Agents</span>
           </a>
           <a class="tracker-item" href="#lb-sb-7">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-characters-v1.6.0.png" alt="SillyBunny desktop Characters" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-characters-v1.7.0.png" alt="SillyBunny desktop Characters" loading="lazy">
             <span class="tracker-caption">Desktop Characters</span>
           </a>
         </div>
@@ -3782,28 +3893,41 @@
         </div>
         <div class="tracker-grid">
           <a class="tracker-item" href="#lb-sb-8">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-navigate-v1.6.0.png" alt="SillyBunny mobile Workspace" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-navigate-v1.7.0.png" alt="SillyBunny mobile Workspace" loading="lazy">
             <span class="tracker-caption">Mobile Workspace</span>
           </a>
           <a class="tracker-item" href="#lb-sb-9">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-search-v1.6.0.png" alt="SillyBunny mobile Search" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-search-v1.7.0.png" alt="SillyBunny mobile Search" loading="lazy">
             <span class="tracker-caption">Mobile Search</span>
           </a>
           <a class="tracker-item" href="#lb-sb-10">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-in-chat-v1.6.0.png" alt="SillyBunny mobile In-Chat" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-in-chat-v1.7.0.png" alt="SillyBunny mobile In-Chat" loading="lazy">
             <span class="tracker-caption">Mobile In-Chat</span>
           </a>
           <a class="tracker-item" href="#lb-sb-11">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.6.0.png" alt="SillyBunny mobile Customize" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.7.0.png" alt="SillyBunny mobile Customize" loading="lazy">
             <span class="tracker-caption">Mobile Customize</span>
           </a>
           <a class="tracker-item" href="#lb-sb-12">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.6.0.png" alt="SillyBunny mobile Agents" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.7.0.png" alt="SillyBunny mobile Agents" loading="lazy">
             <span class="tracker-caption">Mobile Agents</span>
           </a>
           <a class="tracker-item" href="#lb-sb-13">
-            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.6.0.png" alt="SillyBunny mobile Characters" loading="lazy">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.7.0.png" alt="SillyBunny mobile Characters" loading="lazy">
             <span class="tracker-caption">Mobile Characters</span>
+          </a>
+        </div>
+        <div class="preset-info">
+          <h2 class="preset-title">Conversation Mode</h2>
+        </div>
+        <div class="tracker-grid">
+          <a class="tracker-item" href="#lb-sb-14">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-conversation-v1.7.0.png" alt="SillyBunny desktop Conversation Mode" loading="lazy">
+            <span class="tracker-caption">Desktop Conversation</span>
+          </a>
+          <a class="tracker-item" href="#lb-sb-15">
+            <img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-conversation-v1.7.0.png" alt="SillyBunny mobile Conversation Mode" loading="lazy">
+            <span class="tracker-caption">Mobile Conversation</span>
           </a>
         </div>
       </div>
@@ -3833,18 +3957,20 @@
   <a class="lightbox" id="lb-20" href="#close"><img src="preset/screenshots/user-stats.png" alt="User Stats"></a>
   <a class="lightbox" id="lb-21" href="#close"><img src="preset/screenshots/level-up.png" alt="Level Up Companion"></a>
   <a class="lightbox" id="lb-sb-1" href="#close"><img src="preset/screenshots/sillybunny/banner.jpg" alt="SillyBunny banner"></a>
-  <a class="lightbox" id="lb-sb-2" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-navigate-v1.6.0.png" alt="SillyBunny desktop Workspace"></a>
-  <a class="lightbox" id="lb-sb-3" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-search-v1.6.0.png" alt="SillyBunny desktop Search"></a>
-  <a class="lightbox" id="lb-sb-4" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-in-chat-v1.6.0.png" alt="SillyBunny desktop In-Chat"></a>
-  <a class="lightbox" id="lb-sb-5" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-customize-v1.6.0.png" alt="SillyBunny desktop Customize"></a>
-  <a class="lightbox" id="lb-sb-6" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-agents-v1.6.0.png" alt="SillyBunny desktop Agents"></a>
-  <a class="lightbox" id="lb-sb-7" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-characters-v1.6.0.png" alt="SillyBunny desktop Characters"></a>
-  <a class="lightbox" id="lb-sb-8" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-navigate-v1.6.0.png" alt="SillyBunny mobile Workspace"></a>
-  <a class="lightbox" id="lb-sb-9" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-search-v1.6.0.png" alt="SillyBunny mobile Search"></a>
-  <a class="lightbox" id="lb-sb-10" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-in-chat-v1.6.0.png" alt="SillyBunny mobile In-Chat"></a>
-  <a class="lightbox" id="lb-sb-11" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.6.0.png" alt="SillyBunny mobile Customize"></a>
-  <a class="lightbox" id="lb-sb-12" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.6.0.png" alt="SillyBunny mobile Agents"></a>
-  <a class="lightbox" id="lb-sb-13" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.6.0.png" alt="SillyBunny mobile Characters"></a>
+  <a class="lightbox" id="lb-sb-2" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-navigate-v1.7.0.png" alt="SillyBunny desktop Workspace"></a>
+  <a class="lightbox" id="lb-sb-3" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-search-v1.7.0.png" alt="SillyBunny desktop Search"></a>
+  <a class="lightbox" id="lb-sb-4" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-in-chat-v1.7.0.png" alt="SillyBunny desktop In-Chat"></a>
+  <a class="lightbox" id="lb-sb-5" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-customize-v1.7.0.png" alt="SillyBunny desktop Customize"></a>
+  <a class="lightbox" id="lb-sb-6" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-agents-v1.7.0.png" alt="SillyBunny desktop Agents"></a>
+  <a class="lightbox" id="lb-sb-7" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-characters-v1.7.0.png" alt="SillyBunny desktop Characters"></a>
+  <a class="lightbox" id="lb-sb-8" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-navigate-v1.7.0.png" alt="SillyBunny mobile Workspace"></a>
+  <a class="lightbox" id="lb-sb-9" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-search-v1.7.0.png" alt="SillyBunny mobile Search"></a>
+  <a class="lightbox" id="lb-sb-10" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-in-chat-v1.7.0.png" alt="SillyBunny mobile In-Chat"></a>
+  <a class="lightbox" id="lb-sb-11" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.7.0.png" alt="SillyBunny mobile Customize"></a>
+  <a class="lightbox" id="lb-sb-12" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.7.0.png" alt="SillyBunny mobile Agents"></a>
+  <a class="lightbox" id="lb-sb-13" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.7.0.png" alt="SillyBunny mobile Characters"></a>
+  <a class="lightbox" id="lb-sb-14" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-conversation-v1.7.0.png" alt="SillyBunny desktop Conversation Mode"></a>
+  <a class="lightbox" id="lb-sb-15" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-conversation-v1.7.0.png" alt="SillyBunny mobile Conversation Mode"></a>
   <a class="lightbox" id="lb-preset-15-0" href="#close"><img src="preset/screenshots/pura-director-preset-15.0.png" alt="Pura's Director Preset 15.0 release art"></a>
   <a class="lightbox" id="lb-preset-14-0" href="#close"><img src="preset/screenshots/pura-director-preset-14.0.png" alt="Pura's Director Preset 14.0 release art"></a>
   <a class="lightbox" id="lb-preset-13-3" href="#close"><img src="preset/screenshots/pura-director-preset-13.3.png" alt="Pura's Director Preset 13.3 release art"></a>
