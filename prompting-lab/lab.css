@@ -97,25 +97,6 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--bright); margin: 0 0 0.3
 
 .section { padding: 0.5rem 0 2rem; }
 
-/* Flat at rest, glow only on hover - the root site's Flat Card Rule. */
-.verdict {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(240px, 0.75fr);
-  gap: 0.9rem;
-  margin: 1.5rem 0 1.75rem;
-}
-
-.verdict > div {
-  background: rgba(15, 16, 26, 0.82);
-  border: 1px solid var(--line-soft);
-  border-radius: 14px;
-  padding: 1rem 1.2rem;
-}
-
-.note-list { margin: 0; padding-left: 1.1rem; color: var(--text); }
-.note-list li { margin-top: 0.3rem; }
-.note-list li::marker { color: #6b8d7c; }
-
 .transcript { display: flex; flex-direction: column; gap: 0.85rem; padding-bottom: 2.5rem; }
 
 .message {
@@ -176,7 +157,6 @@ details:not([style]) > div { padding: 0 0.95rem 0.95rem; color: var(--muted); fo
 }
 
 @media (max-width: 720px) {
-  .verdict { grid-template-columns: 1fr; }
   .nav { display: none; }
   .message.user, .message.assistant { margin-left: 0; margin-right: 0; }
   .message-body { padding: 0.8rem 1rem; }
