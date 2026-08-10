@@ -147,19 +147,6 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--bright); margin: 0 0 0.3
 .message-body p:last-child { margin-bottom: 0; }
 .message-body font { font-weight: 500; }
 
-.tracker {
-  display: inline-block;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.72rem;
-  line-height: 1.55;
-  background: #0d1119;
-  color: #9fc4dd;
-  border: 1px solid #29384c;
-  border-radius: 8px;
-  padding: 0.35rem 0.55rem;
-  margin: 0.25em 0;
-}
-
 .meta-row { display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: flex-end; }
 
 .meta-chip {
@@ -169,15 +156,17 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--bright); margin: 0 0 0.3
   background: #12151f;
 }
 
-details {
+/* Only the metadata block. Tracker <details> come from the preset's own regex
+   set and carry their own inline styling - leave those alone. */
+details:not([style]) {
   margin-top: 1.25rem;
   border: 1px solid var(--line-soft);
   border-radius: 14px;
   background: rgba(15, 16, 26, 0.82);
 }
 
-summary { cursor: pointer; padding: 0.7rem 0.95rem; font-weight: 600; color: var(--bright); font-size: 0.85rem; }
-details > div { padding: 0 0.95rem 0.95rem; color: var(--muted); font-size: 0.82rem; }
+details:not([style]) > summary { cursor: pointer; padding: 0.7rem 0.95rem; font-weight: 600; color: var(--bright); font-size: 0.85rem; }
+details:not([style]) > div { padding: 0 0.95rem 0.95rem; color: var(--muted); font-size: 0.82rem; }
 
 .footer {
   border-top: 1px solid var(--line);

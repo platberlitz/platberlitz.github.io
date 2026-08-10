@@ -1262,6 +1262,27 @@
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
     }
 
+    .sample-item {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .sample-item .ext-name { color: #d8eee2; }
+    .sample-item:hover .ext-name { color: #c0e8d0; }
+
+    .sample-cue {
+      margin-top: 0.5rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #8fb8df;
+      transition: color 0.25s;
+    }
+
+    .sample-item:hover .sample-cue { color: #cae6ff; }
+
     .ext-group-heading {
       margin: 1.8rem 0 0.7rem;
       text-align: left;
@@ -2776,75 +2797,87 @@
       <div class="tab-content tab-content-samples">
         <div class="preset-info">
           <div class="preset-desc">
-            <p>Same preset, same card, same opening scene, twelve different models. I run these whenever I change something big in the main prompt, because a diff tells me what I wrote and not what it actually does to the prose.</p>
-            <p>These aren&apos;t benchmarks. One run each, they&apos;re stochastic, and a rerun could easily look different. I left the failures in, since the point is seeing where a model shrugs the prompt off rather than collecting nice paragraphs. The card is Kaveh &amp; Alhaitham and Kris is my persona, so the cat ears are a me problem, not a model problem.</p>
-            <p>Most of them run Don&rsquo;t Write for User. The last one is deliberately Write for User, because co-writing is a different job and I&apos;d rather show it than have you assume.</p>
+            <p>Same preset, same card, same opening scene, just twelve different models. I do this whenever I change something big in the main prompt, because a diff only tells me what I typed. It doesn&apos;t tell me whether the writing got any better.</p>
+            <p>These aren&apos;t benchmarks or anything. It&apos;s one run each, they&apos;re random, and if I ran them again they&apos;d probably come out different. I left the bad bits in on purpose, because the whole point is finding where a model just ignores the prompt, and you can&apos;t see that if I only keep the pretty paragraphs. The card is Kaveh &amp; Alhaitham and Kris is my persona, so the cat ears are a me thing. Not a model thing.</p>
+            <p>Most of them run Don&rsquo;t Write for User. The last one&apos;s Write for User on purpose, since co-writing is a completely different job and I&apos;d rather just show it than have you take my word for it.</p>
           </div>
 
           <div class="extensions-list">
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/opus-5.html">Opus 5</a> <span class="option-badge option-badge-sb">Strong pass</span></div>
+            <a class="ext-item sample-item" href="prompting-lab/opus-5.html">
+              <div class="ext-name">Opus 5 <span class="option-badge option-badge-sb">Strong pass</span></div>
               <div class="ext-desc">Properly lively fiction and it never answers for me. Best voice differentiation here. It does invent shared history with some enthusiasm.</div>
-            </div>
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/kimi-k3-dont-write.html">Kimi K3</a> <span class="option-badge option-badge-sb">Strong pass</span></div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+            <a class="ext-item sample-item" href="prompting-lab/kimi-k3-dont-write.html">
+              <div class="ext-name">Kimi K3 <span class="option-badge option-badge-sb">Strong pass</span></div>
               <div class="ext-desc">Cleanest of the lot. Leaves my turn alone, and callbacks come back later as leverage instead of decoration.</div>
-            </div>
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/fable-5.html">Fable 5</a> <span class="option-badge option-badge-sb">Strong pass</span></div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+            <a class="ext-item sample-item" href="prompting-lab/fable-5.html">
+              <div class="ext-name">Fable 5 <span class="option-badge option-badge-sb">Strong pass</span></div>
               <div class="ext-desc">Best one for agency. Hands me the decision without the NPCs going limp, and heat and timing actually change how people behave.</div>
-            </div>
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/deepseek-v4-flash.html">DeepSeek V4 Flash</a> <span class="option-badge option-badge-sb">Strong pass</span></div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+            <a class="ext-item sample-item" href="prompting-lab/deepseek-v4-flash.html">
+              <div class="ext-name">DeepSeek V4 Flash <span class="option-badge option-badge-sb">Strong pass</span></div>
               <div class="ext-desc">Knows when to leave a hook alone. Small scene, small consequence, and my suggestion genuinely shifts the argument.</div>
-            </div>
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/gpt-5-6-sol-medium.html">GPT-5.6 Sol &middot; Medium</a> <span class="option-badge option-badge-sb">Strong pass</span></div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+            <a class="ext-item sample-item" href="prompting-lab/gpt-5-6-sol-medium.html">
+              <div class="ext-name">GPT-5.6 Sol &middot; Medium <span class="option-badge option-badge-sb">Strong pass</span></div>
               <div class="ext-desc">Sol always wants something to happen. 15.1 doesn&apos;t stop that, it just points it somewhere sensible instead of at a conspiracy.</div>
-            </div>
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/opus-4-6.html">Opus 4.6</a> <span class="option-badge">Pass</span></div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+            <a class="ext-item sample-item" href="prompting-lab/opus-4-6.html">
+              <div class="ext-name">Opus 4.6 <span class="option-badge">Pass</span></div>
               <div class="ext-desc">Very good at who-knows-what and at people contradicting how they&apos;d describe themselves. Explains the implication slightly too often.</div>
-            </div>
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/muse-spark-1-2.html">Muse Spark 1.2</a> <span class="option-badge">Pass</span></div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+            <a class="ext-item sample-item" href="prompting-lab/muse-spark-1-2.html">
+              <div class="ext-name">Muse Spark 1.2 <span class="option-badge">Pass</span></div>
               <div class="ext-desc">Big improvement for a small model. No more cat traits wandering off onto Kaveh, though it&apos;s still confident about things it only inferred.</div>
-            </div>
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/glm-5-2.html">GLM 5.2</a> <span class="option-badge">Pass with caveats</span></div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+            <a class="ext-item sample-item" href="prompting-lab/glm-5-2.html">
+              <div class="ext-name">GLM 5.2 <span class="option-badge">Pass with caveats</span></div>
               <div class="ext-desc">Behaviour improved, the tics didn&apos;t. Still the most stubborn model I own for echoing and mouth-cycling, and I&apos;ve written &apos;never&apos; at it in four places.</div>
-            </div>
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/gemma-4-31b.html">Gemma 4 31B</a> <span class="option-badge">Pass with caveats</span></div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+            <a class="ext-item sample-item" href="prompting-lab/gemma-4-31b.html">
+              <div class="ext-name">Gemma 4 31B <span class="option-badge">Pass with caveats</span></div>
               <div class="ext-desc">Lively, and keeps the stakes small, which is more than I expected at 31B. It just explains everyone to death.</div>
-            </div>
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/gemini-3-6-flash.html">Gemini 3.6 Flash</a> <span class="option-badge">Pass with caveats</span></div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+            <a class="ext-item sample-item" href="prompting-lab/gemini-3-6-flash.html">
+              <div class="ext-name">Gemini 3.6 Flash <span class="option-badge">Pass with caveats</span></div>
               <div class="ext-desc">Great dialogue, then it picks me up and moves me through the market without asking. The one clear Don&rsquo;t Write for User failure in the set.</div>
-            </div>
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/mistral-medium-3-1.html">Mistral Medium 3.1</a> <span class="option-badge option-badge-agent">Mixed</span></div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+            <a class="ext-item sample-item" href="prompting-lab/mistral-medium-3-1.html">
+              <div class="ext-name">Mistral Medium 3.1 <span class="option-badge option-badge-agent">Mixed</span></div>
               <div class="ext-desc">Much better than the last time I tested it, and still forgets boundaries it stated two paragraphs ago.</div>
-            </div>
-            <div class="ext-item">
-              <div class="ext-name"><a href="prompting-lab/kimi-k3-write-for-user.html">Kimi K3</a> <span class="option-badge option-badge-sb">Strong pass</span> <span class="option-badge option-badge-st">Write for User</span></div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+            <a class="ext-item sample-item" href="prompting-lab/kimi-k3-write-for-user.html">
+              <div class="ext-name">Kimi K3 <span class="option-badge option-badge-sb">Strong pass</span> <span class="option-badge option-badge-st">Write for User</span></div>
               <div class="ext-desc">The co-writing run. It writes Kris with a voice that&apos;s recognisably his and gives him his own ideas, without hijacking the direction I picked.</div>
-            </div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
           </div>
 
           <h2 class="preset-title ext-group-heading">What this is, and what it isn&apos;t</h2>
           <div class="extensions-list">
             <div class="ext-item">
               <div class="ext-name">What I&apos;m actually looking at</div>
-              <div class="ext-desc">Who did and said what, whether I keep my agency, whether the stakes stay the size of the scene, whether the environment does anything, whether dialogue gets processed or parroted, and whether characters keep their psychological barriers up.</div>
+              <div class="ext-desc">Who did and said what, whether I still get to make my own decisions, whether the stakes stay the size of the scene, whether the heat and the weather actually do anything, whether dialogue gets answered or just repeated back, and whether people keep their guard up instead of explaining their whole inner life to a stranger.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">Why there&apos;s no score</div>
-              <div class="ext-desc">Averaging one stochastic run into a number would look authoritative and mean nothing. The whole transcript is on the page instead, so you can read it and disagree with me.</div>
+              <div class="ext-desc">Averaging one random run into a number would look official and mean absolutely nothing. So the whole transcript is just sitting there instead. Read it and tell me I&apos;m wrong.</div>
             </div>
             <div class="ext-item">
               <div class="ext-name">Failures stay in</div>
-              <div class="ext-desc">Logic slips, over-explaining, prose tics, strange inference. If I cut those out these pages would just be an advert.</div>
+              <div class="ext-desc">Logic slips, over-explaining, prose tics, weird inferences. If I cut all that out these pages would just be an advert, and I&apos;d rather they were useful.</div>
             </div>
           </div>
         </div>
