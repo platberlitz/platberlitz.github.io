@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a1a">
 <title>Synapse</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,6 +206,32 @@ body {
 }
 .tag-picker-item:hover { transform: scale(1.2); }
 .tag-picker-item.active { border-color: var(--text-primary); }
+
+/* Project picker reuses .tag-picker's positioning/chrome but lists names, not swatches. */
+.project-picker {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  min-width: 160px;
+  max-width: 240px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.project-picker-item {
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85em;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.project-picker-item:hover { background: var(--hover); }
+.project-picker-item.active { background: var(--hover); font-weight: 600; }
 
 .conv-list {
   flex: 1;
@@ -933,6 +960,7 @@ body {
   .msg-wrapper .msg-actions { display: flex; }
   .code-block-wrapper .code-copy-btn { opacity: 1; }
   .code-block-wrapper .code-download-btn { opacity: 1; }
+  .code-block-wrapper .code-preview-btn { opacity: 1; }
   .conv-item .conv-delete { display: block; }
 }
 
@@ -966,6 +994,9 @@ body {
   .swipe-controls button { padding: 8px 14px; min-height: 36px; }
   .regen-btn { padding: 10px 16px; min-height: 36px; }
   .code-copy-btn { padding: 8px 12px; font-size: 0.8em; min-height: 36px; }
+  /* Touch padding widens these buttons, so re-space them to stop the row overlapping. */
+  .code-download-btn { padding: 8px 10px; font-size: 0.8em; min-height: 36px; right: 78px; }
+  .code-preview-btn { padding: 8px 10px; font-size: 0.8em; min-height: 36px; right: 122px; }
   .conv-item .conv-delete { padding: 8px; min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center; }
   .conv-pin, .conv-item .conv-delete { min-width: 44px; min-height: 44px; }
   .input-row textarea, .modal input, .modal textarea, .modal select, .sidebar-search input, .chat-search-bar input, .msg-edit-textarea { font-size: 16px; }
@@ -1063,6 +1094,42 @@ body {
   font-size: 0.8em;
   margin-left: auto;
 }
+.setting-hint {
+  color: var(--text-secondary);
+  font-size: 0.8em;
+  line-height: 1.4;
+  margin: -4px 0 10px;
+}
+
+/* Read-only shared-conversation view (?share=...). The hidden controls are also inert
+   thanks to the readOnlyShare guard in saveConversations — this is presentation only. */
+body.share-view .sidebar,
+body.share-view .sidebar-overlay,
+body.share-view .toolbar-toggle,
+body.share-view .toolbar-right,
+body.share-view .input-area,
+body.share-view .scroll-fab,
+body.share-view .select-toolbar,
+body.share-view .msg-actions,
+body.share-view .regen-btn,
+body.share-view .swipe-controls,
+body.share-view .branch-controls,
+body.share-view .msg-meta { display: none !important; }
+body.share-view .main { margin-left: 0; }
+.share-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 0.8em;
+  color: var(--text-secondary);
+  background: var(--sidebar-bg);
+  border-top: 1px solid var(--card-border);
+  z-index: 50;
+}
+.share-banner a { color: var(--accent); }
 .settings-note {
   color: var(--text-secondary);
   font-size: 0.8em;
@@ -1306,6 +1373,36 @@ pre.has-line-numbers { counter-reset: code-line; }
 .code-block-wrapper:hover .code-download-btn { opacity: 1; }
 .code-download-btn:hover { background: var(--overlay-25); color: var(--text-primary); }
 
+.code-preview-btn {
+  position: absolute;
+  top: 6px;
+  right: 88px;
+  padding: 3px 8px;
+  font-size: 0.75em;
+  font-family: inherit;
+  background: var(--overlay-15);
+  border: none;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+}
+.code-block-wrapper:hover .code-preview-btn { opacity: 1; }
+.code-preview-btn:hover { background: var(--overlay-25); color: var(--text-primary); }
+.artifact-frame {
+  display: block;
+  width: 100%;
+  height: 420px;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  /* Explicit white: artifacts assume a page background and vanish on dark themes. */
+  background: #fff;
+  resize: vertical;
+  overflow: auto;
+}
+
 /* Mermaid container */
 .mermaid-container { margin: 6px 0; overflow-x: auto; }
 .mermaid-container svg { max-width: 100%; }
@@ -1318,6 +1415,11 @@ pre.has-line-numbers { counter-reset: code-line; }
 
 /* Date group headers */
 .conv-group-header { font-size: 0.7em; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 12px 4px; }
+.conv-group-header.project-header { display: flex; align-items: center; gap: 6px; }
+.conv-group-header.project-header > span { flex: 1; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conv-group-header.project-header > span:hover { color: var(--text-primary); }
+.project-add-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.3em; line-height: 1; padding: 0 4px; border-radius: 4px; }
+.project-add-btn:hover { background: var(--hover); color: var(--text-primary); }
 
 /* Drag-drop reorder */
 .conv-item.dragging { opacity: 0.4; }
@@ -1570,6 +1672,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
           <button onclick="exportMarkdown();closeToolbarMenu()">&#128221; Export as Markdown</button>
           <button onclick="exportAllConversations();closeToolbarMenu()">&#8659; Export all chats</button>
           <button onclick="document.getElementById('importInput').click();closeToolbarMenu()">&#8613; Import chat</button>
+          <button onclick="shareConversation();closeToolbarMenu()">&#128279; Share chat (link)</button>
+          <button onclick="unshareConversation();closeToolbarMenu()">&#128683; Unshare chat</button>
+          <button onclick="openProjectsModal();closeToolbarMenu()">&#128193; Projects</button>
           <button onclick="openFileSearch();closeToolbarMenu()">&#128270; Search files</button>
           <button onclick="openSummaryModal();closeToolbarMenu()">&#128220; Conversation summary</button>
           <button onclick="openStatusPanel();closeToolbarMenu()">&#9888; Status / diagnostics</button>
@@ -1701,12 +1806,34 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       </label>
       <label>Temperature</label>
       <input type="number" id="setTemperature" step="0.1" min="0" max="2" placeholder="e.g. 0.7 (leave empty for default)">
+      <div class="setting-hint">Not sent to Claude Opus 5 / Sonnet 5 / Opus 4.7+ &mdash; those models reject it.</div>
+      <label>Max response tokens</label>
+      <input type="number" id="setMaxTokens" step="256" min="256" placeholder="8192">
+      <div class="modal-section">Anthropic Options</div>
+      <label class="toggle-row">
+        <input type="checkbox" id="setPromptCache" checked> Prompt caching
+        <span class="toggle-hint">Cuts repeat cost ~90%</span>
+      </label>
+      <div class="setting-hint">Caches the system prompt between turns. Needs roughly 1,000+ tokens of system prompt before it engages &mdash; shorter prompts silently won't cache.</div>
+      <label class="toggle-row">
+        <input type="checkbox" id="setThinking"> Extended thinking
+      </label>
+      <label>Thinking effort</label>
+      <select id="setThinkingEffort">
+        <option value="">Default</option>
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+        <option value="xhigh">Extra high</option>
+        <option value="max">Max</option>
+      </select>
       <label>Extra Parameters (JSON)</label>
       <textarea id="setExtraParams" placeholder='{"temperature": 0.7, "max_tokens": 4096}'></textarea>
       <label>Exclude Parameters (comma-separated)</label>
       <input type="text" id="setExcludeParams" placeholder="e.g. stream,model">
       <label>Assistant Prefill</label>
       <input type="text" id="setPrefill" placeholder="e.g. Sure! Here's">
+      <div class="setting-hint">Not supported by Claude Opus 5 / Sonnet 5 / Opus 4.6+ &mdash; leave empty on those models.</div>
     </div>
 
     <div class="settings-tab-content" id="settingsTab-prompts">
@@ -1959,6 +2086,36 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   </div>
 </div>
 
+<!-- Projects Modal -->
+<div class="modal-overlay" id="projectsModal" aria-hidden="true">
+  <div class="modal" aria-labelledby="projectsTitle">
+    <h2 id="projectsTitle">Projects</h2>
+    <div class="setting-hint">A project groups chats and gives them all the same instructions and files.</div>
+    <div class="model-selector-row">
+      <select id="projSelect" onchange="selectProjectInModal(this.value)" aria-label="Select project"></select>
+      <button class="btn" onclick="newProjectFromModal()">New</button>
+      <button class="btn" onclick="deleteProject(document.getElementById('projSelect').value)">Delete</button>
+    </div>
+    <div id="projEmptyState" class="setting-hint" style="display:none">No projects yet. Create one, then move chats into it with the folder button in the sidebar.</div>
+    <div id="projEditorBody">
+      <label>Name</label>
+      <input type="text" id="projName" placeholder="Project name">
+      <label>Project instructions</label>
+      <textarea id="projInstructions" rows="6" placeholder="Applied to every chat in this project."></textarea>
+      <label>Project files</label>
+      <div id="projDocList" class="prompt-entry-list"></div>
+      <input type="file" id="projFileInput" multiple style="display:none" onchange="addProjectFiles(event)">
+      <button class="btn" onclick="document.getElementById('projFileInput').click()">Add files</button>
+      <div class="setting-hint" id="projChatCount"></div>
+      <div class="setting-hint">Project files are sent with every message in this project, so they count toward the token cost of each request.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('projectsModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProjectFromModal()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Update Instructions Modal -->
 <div class="modal-overlay" id="updateInstructionsModal" aria-hidden="true">
   <div class="modal update-instructions-modal" aria-labelledby="updateInstructionsTitle">
@@ -2028,7 +2185,11 @@ function isLightColor(color) {
 // State
 // ============================================
 let conversations = [];
+let projects = [];
 let activeConvId = null;
+// True when the page is showing someone else's shared conversation via ?share=.
+// Load and save of local data are both suppressed in that mode — see saveConversations.
+let readOnlyShare = false;
 let messages = [];
 let abortController = null;
 let streaming = false;
@@ -2049,7 +2210,7 @@ let localUpdateState = { status: 'idle', message: 'Not checked', details: '' };
 
 const APP_VERSION = {
   name: 'Synapse',
-  buildDate: '2026-05-20',
+  buildDate: '2026-08-11',
   updateUrl: 'https://platberlitz.github.io/assistant/version.json'
 };
 
@@ -2057,6 +2218,7 @@ const SYNC_GIST_API_URL = 'https://api.github.com/gists';
 const SYNC_KDF_ITERATIONS = 120000;
 const SYNC_SETTINGS_KEYS = [
   'llmModel', 'llmApiFormat', 'llmStreaming', 'llmEnterSend', 'llmTemperature',
+  'llmMaxTokens', 'llmPromptCache', 'llmThinking', 'llmThinkingEffort',
   'llmExtraParams', 'llmExcludeParams', 'llmPrefill', 'llmPersona',
   'llmEnableStMacros', 'llmRpUserName', 'llmInputCost', 'llmOutputCost',
   'llmWebSearch', 'llmForceSearch', 'llmMemoryEnabled', 'llmHoldScreenshot',
@@ -2243,13 +2405,20 @@ function summarizeMessageForDebug(message, includeText) {
 
 function summarizeLlmPayloadForDebug(payload, includeText = isDebugTextIncluded()) {
   const summary = {};
-  ['model', 'stream', 'temperature', 'max_tokens', 'tool_choice'].forEach(key => {
+  ['model', 'stream', 'temperature', 'max_tokens', 'tool_choice', 'thinking', 'output_config'].forEach(key => {
     if (payload && key in payload) summary[key] = payload[key];
   });
   if (payload?.system) {
+    // system is a plain string on OpenAI-compatible calls and a content-block array
+    // when Anthropic prompt caching is on — flatten so the debug view stays readable.
+    const cached = Array.isArray(payload.system) && payload.system.some(b => b && b.cache_control);
+    const systemText = Array.isArray(payload.system)
+      ? payload.system.map(b => (typeof b === 'string' ? b : b?.text || '')).join('\n\n')
+      : String(payload.system);
     summary.system = {
-      chars: String(payload.system).length,
-      text: includeText ? payload.system : shortenForDebug(payload.system)
+      chars: systemText.length,
+      cached,
+      text: includeText ? systemText : shortenForDebug(systemText)
     };
   }
   if (Array.isArray(payload?.messages)) {
@@ -3359,7 +3528,10 @@ function buildSnippet(text, idx, windowSize = 90) {
 }
 
 function searchLocalDocs(query, conv) {
-  const docs = (conv && conv.docs) || [];
+  // Project files come first so both callers (the file-search popup and /files) see
+  // them without either needing to know projects exist.
+  const projectDocs = (getProject(conv && conv.projectId) || {}).docs || [];
+  const docs = projectDocs.concat((conv && conv.docs) || []);
   if (!query || !docs.length) return [];
   const q = query.toLowerCase();
   const terms = q.split(/\s+/).filter(Boolean);
@@ -3762,6 +3934,15 @@ function setAssistantLlmMetadata(assistantMsg, swipeIdx, model, format) {
 // ============================================
 // Anthropic Message Conversion
 // ============================================
+
+// Claude models that reject temperature / top_p / top_k with a 400.
+const NO_SAMPLING_PARAMS_RE = /opus-5|sonnet-5|opus-4-[78]|fable-5|mythos-5/i;
+
+function resolveMaxTokens() {
+  const n = parseInt(localStorage.getItem('llmMaxTokens'), 10);
+  return Number.isFinite(n) && n > 0 ? n : 8192;
+}
+
 function prepareAnthropicMessages(apiMessages) {
   let systemText = '';
   const msgs = [];
@@ -3827,6 +4008,11 @@ function prepareAnthropicMessages(apiMessages) {
 // Initialization
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
+  // Share view is decided first: it changes whether local data is touched at all.
+  const shareId = new URLSearchParams(location.search).get('share');
+  readOnlyShare = !!shareId;
+  if (readOnlyShare) document.body.classList.add('share-view');
+
   // Migration: strip endpoint suffix from proxy URL
   const storedUrl = localStorage.getItem('llmProxyUrl');
   if (storedUrl) {
@@ -3836,15 +4022,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Migration/default: keep CORS proxy enabled unless explicitly replaced.
   localStorage.setItem('llmCorsProxy', getCorsProxyUrl());
 
-  await openDB();
-  try {
-    const deleted = await cacheCleanupExpired();
-    if (deleted > 0) console.log('Cleaned up ' + deleted + ' expired cache entries');
-  } catch (e) {
-    console.warn('Cache cleanup failed:', e);
+  // Service worker: installability + offline. The protocol guard matters because
+  // synapse.html is shipped as a standalone single file and gets opened over file://,
+  // where registration throws.
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
-  migrateToPromptEntries();
-  await loadConversations();
+
+  // Skipped entirely in share view. Opening the DB and leaving `conversations` empty is
+  // what makes an accidental save destructive, so don't open it at all.
+  if (!readOnlyShare) {
+    await openDB();
+    try {
+      const deleted = await cacheCleanupExpired();
+      if (deleted > 0) console.log('Cleaned up ' + deleted + ' expired cache entries');
+    } catch (e) {
+      console.warn('Cache cleanup failed:', e);
+    }
+    migrateToPromptEntries();
+    await loadProjects();
+    await loadConversations();
+  }
   loadTheme();
   loadCustomFont(localStorage.getItem('assistantFont') || '');
   loadCachedModels('setup');
@@ -3855,6 +4053,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Save on page unload — sync fallback since IDB is async
   window.addEventListener('beforeunload', () => {
+    // Second wipe vector: the localStorage fallback below writes `conversations`
+    // directly, bypassing the guard inside saveConversations.
+    if (readOnlyShare) return;
     clearTimeout(_saveDebounceTimer);
     saveConversations();
     // Only write to localStorage as fallback if IndexedDB is not available
@@ -3866,8 +4067,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Show setup modal if no API key
-  if (!localStorage.getItem('llmProxyUrl') || !localStorage.getItem('llmApiKey')) {
+  // Show setup modal if no API key. A visitor reading a shared link has no reason to
+  // be asked for one.
+  if (!readOnlyShare && (!localStorage.getItem('llmProxyUrl') || !localStorage.getItem('llmApiKey'))) {
     openModal('setupModal', '#setupProxy');
   }
 
@@ -4121,6 +4323,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('keydown', onKey);
     document.body.appendChild(overlay);
   });
+
+  // Last: the rest of init (theme, fonts, mermaid, KaTeX, lightbox and key handlers)
+  // is wanted in share view too, so this runs after it rather than returning early.
+  if (readOnlyShare) await initShareView(shareId);
 });
 
 // ============================================
@@ -4484,10 +4690,53 @@ async function renderMermaidBlocks(container) {
 }
 
 // ============================================
+// Artifact Preview
+// ============================================
+const ARTIFACT_LANGS = ['html', 'svg', 'xml'];
+
+function addArtifactPreview(container) {
+  container.querySelectorAll('pre code').forEach(code => {
+    const wrapper = code.parentElement && code.parentElement.parentElement;
+    if (!wrapper || !wrapper.classList.contains('code-block-wrapper')) return;
+    if (wrapper.querySelector('.code-preview-btn')) return;
+    const cls = Array.from(code.classList).find(c => c.startsWith('language-'));
+    const lang = cls ? cls.replace('language-', '').toLowerCase() : '';
+    if (!ARTIFACT_LANGS.includes(lang)) return;
+    if (!code.textContent.includes('<')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'code-preview-btn';
+    btn.textContent = 'Preview';
+    btn.title = 'Render this markup in a sandbox';
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const existing = wrapper.querySelector('iframe.artifact-frame');
+      if (existing) {
+        existing.remove();
+        btn.textContent = 'Preview';
+        return;
+      }
+      const frame = document.createElement('iframe');
+      frame.className = 'artifact-frame';
+      // allow-scripts ONLY. Adding allow-same-origin alongside it would put the frame
+      // on this page's origin and hand model-generated script the stored API key.
+      frame.setAttribute('sandbox', 'allow-scripts');
+      frame.setAttribute('referrerpolicy', 'no-referrer');
+      frame.setAttribute('title', 'Artifact preview');
+      frame.srcdoc = code.textContent;
+      wrapper.appendChild(frame);
+      btn.textContent = 'Hide';
+    };
+    wrapper.appendChild(btn);
+  });
+}
+
+// ============================================
 // Post-Render Pipeline
 // ============================================
 function postRenderProcessing(bubble) {
   addCodeCopyButtons(bubble);
+  addArtifactPreview(bubble);
   highlightCodeBlocks(bubble);
   // Line-number DOM rewriting can be fragile on some mobile WebKit builds.
   // Keep desktop behavior, skip on small screens for more robust code rendering.
@@ -4519,6 +4768,56 @@ function getMsgText(msg) {
     }).filter(Boolean).join(' ');
   }
   return '';
+}
+
+// ============================================
+// Read Aloud
+// ============================================
+
+// Reuses the markdown renderer instead of writing a second stripper: rendering to HTML
+// and taking textContent drops the asterisks, backticks and link syntax that would
+// otherwise be read out literally. Fenced code is dropped — reading it aloud is noise.
+function toSpeechText(text) {
+  const holder = document.createElement('div');
+  holder.innerHTML = renderMarkdown(text || '');
+  holder.querySelectorAll('pre').forEach(el => el.remove());
+  return holder.textContent.replace(/\s+/g, ' ').trim();
+}
+
+function speakMessage(msg, btn) {
+  const synth = window.speechSynthesis;
+  if (!synth) {
+    showToast('Read aloud is not supported in this browser.', 'error');
+    return;
+  }
+  const stopping = btn.dataset.speaking === 'true';
+  // Always stop whatever is playing first, then clear every live button's state. This
+  // self-heals across re-renders: stale buttons are gone from the DOM, so the query
+  // only ever finds current ones.
+  // ponytail: speech orphaned by a re-render keeps playing until the next click or the
+  // end of the utterance. Hook renderMessages if that ever actually bites.
+  synth.cancel();
+  document.querySelectorAll('.msg-action-btn[data-speaking="true"]').forEach(b => {
+    b.dataset.speaking = 'false';
+    b.textContent = 'Speak';
+  });
+  if (stopping) return;
+
+  const text = toSpeechText(stripThinkTags(getMsgText(msg)).content);
+  if (!text) {
+    showToast('Nothing to read in this message.');
+    return;
+  }
+  const utterance = new SpeechSynthesisUtterance(text);
+  const reset = () => {
+    btn.dataset.speaking = 'false';
+    btn.textContent = 'Speak';
+  };
+  utterance.onend = reset;
+  utterance.onerror = reset;
+  btn.dataset.speaking = 'true';
+  btn.textContent = 'Stop';
+  synth.speak(utterance);
 }
 
 function formatTokenCount(tokens) {
@@ -4626,6 +4925,14 @@ function updateTokenInfo() {
   messages.forEach(m => { total += estimateTokens(getMsgText(m)); });
   if (total > 0 || messages.length > 0) {
     parts.push('Conv: ~' + (total > 999 ? (total / 1000).toFixed(1) + 'k' : total) + ' tokens');
+  }
+
+  // Project instructions and files are re-sent on every request, so surface them —
+  // otherwise the cost is completely invisible in this bar.
+  const activeProject = getProject((getActiveConv() || {}).projectId);
+  if (activeProject) {
+    const projTokens = estimateTokens((activeProject.instructions || '') + '\n' + projectDocsSystemText(activeProject));
+    if (projTokens > 0) parts.push('Proj: ~' + formatTokenCount(projTokens) + ' tokens/msg');
   }
 
   const inputCost = parseFloat(localStorage.getItem('llmInputCost') || '0');
@@ -4931,6 +5238,10 @@ function restoreCachedResponse(entry, assistantMsg, swipeIdx, bubbleEl) {
 function genId() { return 'conv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6); }
 
 function saveConversations() {
+  // Hard stop in share view. idbPutAll clears the store before writing, so saving an
+  // empty in-memory `conversations` here would destroy the visitor's own history. The
+  // hidden delete/fork/regenerate handlers still exist in the DOM, so guard centrally.
+  if (readOnlyShare) return;
   try { localStorage.setItem('assistantActiveConvId', activeConvId || ''); } catch(e) {}
   if (!db) return;
   idbPutAll('conversations', conversations)
@@ -5040,8 +5351,11 @@ async function loadConversations() {
 
 function getActiveConv() { return conversations.find(c => c.id === activeConvId); }
 
-function createConversation() {
+function createConversation(projectId) {
   const conv = { id: genId(), title: 'New Chat', messages: [], createdAt: Date.now(), updatedAt: Date.now() };
+  // Only ever set from the per-project "+" in the sidebar; index.html calls this with
+  // no argument, and a click event must not be mistaken for a project id.
+  if (typeof projectId === 'string' && getProject(projectId)) conv.projectId = projectId;
   conversations.unshift(conv);
   activeConvId = conv.id;
   messages = conv.messages;
@@ -5071,6 +5385,11 @@ function deleteConversation(id, e) {
   e.stopPropagation();
   const conv = conversations.find(c => c.id === id);
   if (!conv) return;
+  // Deleting locally does not revoke the published gist. Silently orphaning public data
+  // is worse than an extra prompt.
+  if (conv.shareGistId && !confirm(
+    'This chat has a public share link. Deleting it here does NOT revoke that link — ' +
+    'use "Unshare chat" first.\n\nDelete anyway?')) return;
   const idx = conversations.indexOf(conv);
   conversations.splice(idx, 1);
   if (conversations.length === 0) {
@@ -5111,6 +5430,249 @@ function clearAllConversations() {
   createConversation();
 }
 
+// ============================================
+// Projects
+// ============================================
+// Stored as a single record in the existing `meta` store rather than a new object store
+// (which would force a DB version bump for ~20 records) or localStorage (project files
+// are unbounded text — the same reason conversations moved to IndexedDB).
+
+const PROJECT_DOC_CHAR_LIMIT = 20000;
+let _projectEditId = null;
+
+async function loadProjects() {
+  try {
+    const record = await idbGet('meta', 'projects');
+    projects = (record && record.value) || [];
+  } catch (e) {
+    console.error('IDB projects load error:', e);
+    projects = [];
+  }
+}
+
+function saveProjects() {
+  if (!db) return;
+  idbPut('meta', { key: 'projects', value: projects })
+    .catch(e => console.error('IDB projects save error:', e));
+}
+
+function getProject(id) {
+  return id ? (projects.find(p => p.id === id) || null) : null;
+}
+
+function createProject(name) {
+  const proj = {
+    id: 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+    name: (name || 'New project').trim() || 'New project',
+    instructions: '',
+    docs: [],
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+  projects.unshift(proj);
+  saveProjects();
+  renderSidebar();
+  return proj;
+}
+
+function deleteProject(id) {
+  const proj = getProject(id);
+  if (!proj) return;
+  if (!confirm('Delete project "' + proj.name + '"? Its chats are kept and become unfiled.')) return;
+  // Detach, never cascade — deleting a folder must not delete the conversations in it.
+  conversations.forEach(c => { if (c.projectId === id) delete c.projectId; });
+  projects = projects.filter(p => p.id !== id);
+  _projectEditId = projects.length ? projects[0].id : null;
+  saveProjects();
+  saveConversations();
+  renderSidebar();
+  renderProjectEditor();
+  showToast('Project deleted. Its chats are now unfiled.', 'success');
+}
+
+function assignConversationToProject(conv, projectId) {
+  if (projectId) conv.projectId = projectId;
+  else delete conv.projectId;
+  conv.updatedAt = Date.now();
+  saveConversations();
+  renderSidebar();
+}
+
+function projectDocsSystemText(project) {
+  const docs = (project && project.docs) || [];
+  if (!docs.length) return '';
+  return 'Project files (reference material):\n\n' + docs
+    .map(d => '--- ' + d.name + ' ---\n' + d.text + '\n--- end ' + d.name + ' ---')
+    .join('\n\n');
+}
+
+function showProjectPicker(conv, anchorEl) {
+  document.querySelectorAll('.tag-picker').forEach(p => p.remove());
+  const picker = document.createElement('div');
+  picker.className = 'tag-picker project-picker';
+  const rect = anchorEl.getBoundingClientRect();
+  picker.style.top = rect.bottom + 4 + 'px';
+  picker.style.left = Math.max(8, rect.left - 120) + 'px';
+
+  const addItem = (label, active, onClick) => {
+    const btn = document.createElement('button');
+    btn.className = 'project-picker-item' + (active ? ' active' : '');
+    btn.textContent = label;
+    btn.onclick = () => { onClick(); picker.remove(); };
+    picker.appendChild(btn);
+  };
+
+  addItem('No project', !conv.projectId, () => assignConversationToProject(conv, null));
+  projects.forEach(p => {
+    addItem(p.name, conv.projectId === p.id, () => assignConversationToProject(conv, p.id));
+  });
+  addItem('+ New project…', false, () => {
+    const name = prompt('Project name:');
+    if (name === null) return;
+    const proj = createProject(name);
+    assignConversationToProject(conv, proj.id);
+  });
+
+  document.body.appendChild(picker);
+  const closePicker = (e) => {
+    if (!picker.contains(e.target) && e.target !== anchorEl) {
+      picker.remove();
+      document.removeEventListener('click', closePicker);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', closePicker), 0);
+}
+
+// --- Projects modal ---
+
+function openProjectsModal(projectId) {
+  _projectEditId = projectId || (projects.length ? projects[0].id : null);
+  renderProjectEditor();
+  openModal('projectsModal');
+}
+
+function selectProjectInModal(id) {
+  _projectEditId = id || null;
+  renderProjectEditor();
+}
+
+function renderProjectEditor() {
+  const select = document.getElementById('projSelect');
+  const body = document.getElementById('projEditorBody');
+  const empty = document.getElementById('projEmptyState');
+  if (!select || !body) return;
+
+  select.innerHTML = '';
+  projects.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    if (p.id === _projectEditId) opt.selected = true;
+    select.appendChild(opt);
+  });
+
+  const proj = getProject(_projectEditId);
+  body.style.display = proj ? '' : 'none';
+  if (empty) empty.style.display = proj ? 'none' : '';
+  if (!proj) return;
+
+  document.getElementById('projName').value = proj.name;
+  document.getElementById('projInstructions').value = proj.instructions || '';
+
+  const count = conversations.filter(c => c.projectId === proj.id).length;
+  document.getElementById('projChatCount').textContent =
+    count === 1 ? '1 chat in this project' : count + ' chats in this project';
+
+  const list = document.getElementById('projDocList');
+  list.innerHTML = '';
+  if (!proj.docs.length) {
+    const none = document.createElement('div');
+    none.className = 'setting-hint';
+    none.textContent = 'No files yet. Files added here are sent with every chat in this project.';
+    list.appendChild(none);
+    return;
+  }
+  proj.docs.forEach(doc => {
+    const row = document.createElement('div');
+    row.className = 'prompt-entry';
+    const label = document.createElement('span');
+    label.style.flex = '1';
+    label.textContent = doc.name + ' (' + formatTokenCount(estimateTokens(doc.text)) + ' tokens)';
+    row.appendChild(label);
+    const del = document.createElement('button');
+    del.textContent = '✕';
+    del.title = 'Remove file';
+    del.setAttribute('aria-label', 'Remove ' + doc.name);
+    del.onclick = () => removeProjectDoc(doc.id);
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+
+function newProjectFromModal() {
+  const name = prompt('Project name:');
+  if (name === null) return;
+  const proj = createProject(name);
+  _projectEditId = proj.id;
+  renderProjectEditor();
+}
+
+function saveProjectFromModal() {
+  const proj = getProject(_projectEditId);
+  if (!proj) { closeModal('projectsModal'); return; }
+  proj.name = document.getElementById('projName').value.trim() || proj.name;
+  proj.instructions = document.getElementById('projInstructions').value;
+  proj.updatedAt = Date.now();
+  saveProjects();
+  renderSidebar();
+  closeModal('projectsModal');
+  showToast('Project saved.', 'success');
+}
+
+function removeProjectDoc(docId) {
+  const proj = getProject(_projectEditId);
+  if (!proj) return;
+  proj.docs = proj.docs.filter(d => d.id !== docId);
+  proj.updatedAt = Date.now();
+  saveProjects();
+  renderProjectEditor();
+}
+
+// Reuses readAttachmentFile so project files get the same PDF/DOCX/RTF/text extraction
+// as chat attachments, instead of duplicating that dispatch. It appends to
+// pendingAttachments, so drain what it added back off the end.
+async function addProjectFiles(event) {
+  const proj = getProject(_projectEditId);
+  if (!proj) return;
+  const files = Array.from(event.target.files || []);
+  let skipped = 0;
+  for (const file of files) {
+    const before = pendingAttachments.length;
+    try {
+      await readAttachmentFile(file);
+    } catch (e) {
+      console.warn('Project file read failed:', file.name, e);
+    }
+    const added = pendingAttachments.splice(before);
+    added.forEach(att => {
+      const text = att.textContent || (att.file && att.file.textContent) || '';
+      if (!text) { skipped++; return; }
+      proj.docs.push({
+        id: 'doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        name: att.name || (att.file && att.file.name) || 'file',
+        text: text.slice(0, PROJECT_DOC_CHAR_LIMIT),
+        createdAt: Date.now()
+      });
+    });
+  }
+  proj.updatedAt = Date.now();
+  saveProjects();
+  renderPreviews();
+  renderProjectEditor();
+  event.target.value = '';
+  if (skipped) showToast(skipped + ' file(s) skipped — no readable text (images can’t be project files).');
+}
+
 function renderSidebar() {
   const list = document.getElementById('convList');
   list.innerHTML = '';
@@ -5118,9 +5680,16 @@ function renderSidebar() {
   // Sort: pinned first (by updatedAt desc), then unpinned by updatedAt desc
   // If any have sortOrder, use that instead
   const hasSortOrder = conversations.some(c => c.sortOrder != null);
+  // Unfiled chats sort last so the existing date groups stay where they are.
+  const projectSortKey = (c) => {
+    const p = getProject(c.projectId);
+    return p ? p.name.toLowerCase() : '￿';
+  };
   const sorted = [...conversations].sort((a, b) => {
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
+    const pa = projectSortKey(a), pb = projectSortKey(b);
+    if (pa !== pb) return pa < pb ? -1 : 1;
     if (hasSortOrder && a.sortOrder != null && b.sortOrder != null) return a.sortOrder - b.sortOrder;
     return (b.updatedAt || 0) - (a.updatedAt || 0);
   });
@@ -5134,6 +5703,8 @@ function renderSidebar() {
 
   function getGroup(c) {
     if (c.pinned) return 'Pinned';
+    const p = getProject(c.projectId);
+    if (p) return '\u{1F4C1} ' + p.name;
     const t = c.updatedAt || c.createdAt || 0;
     if (t >= todayStart) return 'Today';
     if (t >= yesterdayStart) return 'Yesterday';
@@ -5148,8 +5719,26 @@ function renderSidebar() {
     if (group !== lastGroup) {
       const header = document.createElement('div');
       header.className = 'conv-group-header';
-      header.textContent = group;
       header.dataset.group = group;
+      const proj = getProject(c.projectId);
+      if (proj && !c.pinned) {
+        header.classList.add('project-header');
+        header.dataset.projectId = proj.id;
+        const label = document.createElement('span');
+        label.textContent = group;
+        label.title = 'Edit project';
+        label.onclick = () => openProjectsModal(proj.id);
+        header.appendChild(label);
+        const addBtn = document.createElement('button');
+        addBtn.className = 'project-add-btn';
+        addBtn.textContent = '+';
+        addBtn.title = 'New chat in ' + proj.name;
+        addBtn.setAttribute('aria-label', 'New chat in ' + proj.name);
+        addBtn.onclick = (e) => { e.stopPropagation(); createConversation(proj.id); };
+        header.appendChild(addBtn);
+      } else {
+        header.textContent = group;
+      }
       list.appendChild(header);
       lastGroup = group;
     }
@@ -5255,6 +5844,14 @@ function renderSidebar() {
     tagBtn.setAttribute('aria-label', 'Tag conversation');
     tagBtn.onclick = (e) => { e.stopPropagation(); showTagPicker(c, tagBtn); };
     div.appendChild(tagBtn);
+    const projBtn = document.createElement('button');
+    projBtn.className = 'conv-delete';
+    projBtn.innerHTML = '&#128193;';
+    projBtn.title = 'Project';
+    projBtn.style.fontSize = '12px';
+    projBtn.setAttribute('aria-label', 'Move conversation to a project');
+    projBtn.onclick = (e) => { e.stopPropagation(); showProjectPicker(c, projBtn); };
+    div.appendChild(projBtn);
     div.appendChild(del);
     list.appendChild(div);
   });
@@ -5460,6 +6057,10 @@ function openSettings() {
   document.getElementById('setStreaming').checked = localStorage.getItem('llmStreaming') !== 'false';
   document.getElementById('setEnterSend').checked = localStorage.getItem('llmEnterSend') !== 'false';
   document.getElementById('setTemperature').value = localStorage.getItem('llmTemperature') || '';
+  document.getElementById('setMaxTokens').value = localStorage.getItem('llmMaxTokens') || '';
+  document.getElementById('setPromptCache').checked = localStorage.getItem('llmPromptCache') !== 'false';
+  document.getElementById('setThinking').checked = localStorage.getItem('llmThinking') === 'true';
+  document.getElementById('setThinkingEffort').value = localStorage.getItem('llmThinkingEffort') || '';
   document.getElementById('setInputCost').value = localStorage.getItem('llmInputCost') || '';
   document.getElementById('setOutputCost').value = localStorage.getItem('llmOutputCost') || '';
   document.getElementById('setFont').value = localStorage.getItem('assistantFont') || '';
@@ -5560,6 +6161,10 @@ function collectProfileSettingsFromInputs() {
     llmStreaming: document.getElementById('setStreaming').checked ? 'true' : 'false',
     llmEnterSend: document.getElementById('setEnterSend').checked ? 'true' : 'false',
     llmTemperature: document.getElementById('setTemperature').value.trim(),
+    llmMaxTokens: document.getElementById('setMaxTokens').value.trim(),
+    llmPromptCache: document.getElementById('setPromptCache').checked ? 'true' : 'false',
+    llmThinking: document.getElementById('setThinking').checked ? 'true' : 'false',
+    llmThinkingEffort: document.getElementById('setThinkingEffort').value,
     llmExtraParams: document.getElementById('setExtraParams').value.trim(),
     llmExcludeParams: document.getElementById('setExcludeParams').value.trim(),
     llmPrefill: document.getElementById('setPrefill').value,
@@ -5584,6 +6189,10 @@ function applyProfileToInputs(settings) {
   document.getElementById('setStreaming').checked = settings.llmStreaming !== 'false';
   document.getElementById('setEnterSend').checked = settings.llmEnterSend !== 'false';
   document.getElementById('setTemperature').value = settings.llmTemperature || '';
+  document.getElementById('setMaxTokens').value = settings.llmMaxTokens || '';
+  document.getElementById('setPromptCache').checked = settings.llmPromptCache !== 'false';
+  document.getElementById('setThinking').checked = settings.llmThinking === 'true';
+  document.getElementById('setThinkingEffort').value = settings.llmThinkingEffort || '';
   document.getElementById('setExtraParams').value = settings.llmExtraParams || '';
   document.getElementById('setExcludeParams').value = settings.llmExcludeParams || '';
   document.getElementById('setPrefill').value = settings.llmPrefill || '';
@@ -5714,6 +6323,10 @@ function saveSettings() {
   localStorage.setItem('llmEnterSend', document.getElementById('setEnterSend').checked ? 'true' : 'false');
   const tempVal = document.getElementById('setTemperature').value.trim();
   localStorage.setItem('llmTemperature', tempVal);
+  localStorage.setItem('llmMaxTokens', document.getElementById('setMaxTokens').value.trim());
+  localStorage.setItem('llmPromptCache', document.getElementById('setPromptCache').checked ? 'true' : 'false');
+  localStorage.setItem('llmThinking', document.getElementById('setThinking').checked ? 'true' : 'false');
+  localStorage.setItem('llmThinkingEffort', document.getElementById('setThinkingEffort').value);
   localStorage.setItem('llmInputCost', document.getElementById('setInputCost').value.trim());
   localStorage.setItem('llmOutputCost', document.getElementById('setOutputCost').value.trim());
   localStorage.setItem('llmWebSearch', document.getElementById('setWebSearch').checked ? 'true' : 'false');
@@ -6176,6 +6789,19 @@ async function buildSystemMessages(conv) {
     const content = resolveText(entry.content);
     if (entry.enabled && typeof content === 'string' && content.trim()) msgs.push({ role: 'system', content });
   });
+  // Project instructions and files. Sits after prompt entries (which are the user's
+  // global system prompt and are never overridden) but before the empty fallback below,
+  // so a project with instructions suppresses "You are a helpful assistant."
+  // Macros are applied to instructions only — resolving them inside a source file would
+  // silently rewrite any {{...}} the file happens to contain.
+  const project = getProject(conv && conv.projectId);
+  if (project) {
+    if (project.instructions && project.instructions.trim()) {
+      msgs.push({ role: 'system', content: 'Project instructions (' + project.name + '):\n\n' + resolveText(project.instructions) });
+    }
+    const projectFiles = projectDocsSystemText(project);
+    if (projectFiles) msgs.push({ role: 'system', content: projectFiles });
+  }
   // Fallback if completely empty
   if (msgs.length === 0) {
     msgs.push({ role: 'system', content: 'You are a helpful assistant.' });
@@ -6304,6 +6930,13 @@ function renderMessages() {
     actions.appendChild(copyBtn);
 
     if (msg.role === 'assistant') {
+      const speakBtn = document.createElement('button');
+      speakBtn.className = 'msg-action-btn';
+      speakBtn.textContent = 'Speak';
+      speakBtn.setAttribute('aria-label', 'Read message aloud');
+      speakBtn.onclick = () => speakMessage(msg, speakBtn);
+      actions.appendChild(speakBtn);
+
       const toolData = msg.swipeToolUse && msg.swipeToolUse[msg.swipeIndex];
       const hasSources = toolData && toolData.some(tb =>
         (tb.type === 'url_fetch' && (tb.content || tb.url)) ||
@@ -7203,8 +7836,11 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
     let url, headers, body;
     const useStream = localStorage.getItem('llmStreaming') !== 'false';
 
-    // Assistant prefill
-    const prefill = localStorage.getItem('llmPrefill') || '';
+    // Assistant prefill. A trailing assistant turn is rejected with a 400 by Claude 4.6
+    // and later, so skip it there rather than failing every request; the settings field
+    // carries a matching note.
+    const prefillBlocked = format === 'anthropic' && /opus-5|sonnet-5|opus-4-[678]|sonnet-4-6|fable-5|mythos-5/i.test(model);
+    const prefill = prefillBlocked ? '' : (localStorage.getItem('llmPrefill') || '');
     if (prefill && !prefixText) {
       apiMessages.push({ role: 'assistant', content: prefill });
       fullText = prefill;
@@ -7218,7 +7854,20 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         'anthropic-version': '2023-06-01'
       };
       const prepared = prepareAnthropicMessages(apiMessages);
-      body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 4096, stream: useStream, ...extra };
+      const thinkingOn = localStorage.getItem('llmThinking') === 'true';
+      const thinkingEffort = localStorage.getItem('llmThinkingEffort') || '';
+      body = {
+        model,
+        system: prepared.system,
+        messages: prepared.messages,
+        max_tokens: resolveMaxTokens(),
+        stream: useStream,
+        // Adaptive thinking only. budget_tokens is rejected by Opus 4.7+ / Sonnet 5 /
+        // Fable 5; display defaults to "omitted" there, which renders an empty pane.
+        ...(thinkingOn ? { thinking: { type: 'adaptive', display: 'summarized' } } : {}),
+        ...(thinkingEffort ? { output_config: { effort: thinkingEffort } } : {}),
+        ...extra
+      };
       if (resolveWebSearchEnabled()) {
         body.tools = (body.tools || []).concat([
           { type: 'web_search_20250305', name: 'web_search', max_uses: 20 },
@@ -7228,6 +7877,13 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
           body.tool_choice = { type: 'any' };
           body.system = (body.system || '') + '\n\nIMPORTANT: You MUST call the web_search tool to look up information before answering. Do NOT answer from memory or training data. Always search first, then synthesize your answer from the results.';
         }
+      }
+      // Prompt caching. Must run AFTER the force-search concat above, which appends to
+      // body.system as a string. Breakpoint goes on the system block only: `system`
+      // survives the { ...body } spreads into tool follow-up requests, whereas a
+      // breakpoint on the last message would go stale as soon as `messages` is replaced.
+      if (typeof body.system === 'string' && body.system && localStorage.getItem('llmPromptCache') !== 'false') {
+        body.system = [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }];
       }
     } else {
       url = baseUrl + '/chat/completions';
@@ -7281,6 +7937,12 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
     if (!('temperature' in body)) {
       const temp = parseFloat(localStorage.getItem('llmTemperature'));
       if (!isNaN(temp)) body.temperature = temp;
+    }
+    // Sampling params are rejected with a 400 by current Claude models. This block runs
+    // for both API formats, so without the strip a saved temperature breaks every
+    // request on those models with no hint as to why.
+    if (format === 'anthropic' && NO_SAMPLING_PARAMS_RE.test(model)) {
+      delete body.temperature; delete body.top_p; delete body.top_k;
     }
     exclude.forEach(k => delete body[k]);
     debugLogPayload('API request', body, { url, format, model });
@@ -8054,7 +8716,11 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         if (!fullText && pendingAnthropicToolCalls.length === 0) {
           try {
             const recoveryBody = { ...body, messages: followUpMessages, stream: true };
-            recoveryBody.system = [body.system, TOOL_FINAL_ANSWER_NUDGE].filter(Boolean).join('\n\n');
+            // body.system may be a cache_control block array — append a second block
+            // rather than string-joining it, which would stringify to "[object Object]".
+            recoveryBody.system = Array.isArray(body.system)
+              ? body.system.concat([{ type: 'text', text: TOOL_FINAL_ANSWER_NUDGE }])
+              : [body.system, TOOL_FINAL_ANSWER_NUDGE].filter(Boolean).join('\n\n');
             delete recoveryBody.tools;
             delete recoveryBody.tool_choice;
             exclude.forEach(k => delete recoveryBody[k]);
@@ -8673,6 +9339,8 @@ function exportConversation() {
 function exportAllConversations() {
   const data = {
     conversations: conversations,
+    // Advertised as a full backup, so project instructions and files ride along too.
+    projects: projects,
     exportedAt: new Date().toISOString(),
     settings: {
       model: localStorage.getItem('llmModel') || '',
@@ -8702,6 +9370,16 @@ function importConversation(event) {
       // Handle bulk export format { conversations: [...] }
       if (data.conversations && Array.isArray(data.conversations)) {
         let count = 0;
+        // Restore projects first so imported conversations resolve their projectId.
+        // Existing projects win on id collision — an import shouldn't clobber local edits.
+        if (Array.isArray(data.projects)) {
+          data.projects.forEach(p => {
+            if (p && p.id && !getProject(p.id)) {
+              projects.push({ ...p, docs: Array.isArray(p.docs) ? p.docs : [] });
+            }
+          });
+          saveProjects();
+        }
         data.conversations.forEach(conv => {
           conv.id = conv.id || genId();
           conv.createdAt = conv.createdAt || Date.now();
@@ -9094,10 +9772,12 @@ async function syncBuildGistFiles(passphrase, existingManifest = null) {
   const now = Date.now();
   const settingsPayload = { version: 1, exportedAt: new Date(now).toISOString(), settings: syncCollectSettings() };
   const memoriesPayload = { version: 1, exportedAt: new Date(now).toISOString(), memories: await loadMemories() };
+  const projectsPayload = { version: 1, exportedAt: new Date(now).toISOString(), projects };
   const localConversations = conversations.map(syncNormalizeConversation);
   const files = {
     'settings.json.enc': { content: await syncEncryptPayloadWithKey(settingsPayload, context) },
-    'memories.json.enc': { content: await syncEncryptPayloadWithKey(memoriesPayload, context) }
+    'memories.json.enc': { content: await syncEncryptPayloadWithKey(memoriesPayload, context) },
+    'projects.json.enc': { content: await syncEncryptPayloadWithKey(projectsPayload, context) }
   };
 
   const conversationEntries = [];
@@ -9124,11 +9804,13 @@ async function syncBuildGistFiles(passphrase, existingManifest = null) {
     files: {
       settings: 'settings.json.enc',
       memories: 'memories.json.enc',
+      projects: 'projects.json.enc',
       conversations: conversationEntries
     },
     hashes: {
       settings: await syncSha256Hex(settingsPayload.settings),
-      memories: await syncSha256Hex(memoriesPayload.memories)
+      memories: await syncSha256Hex(memoriesPayload.memories),
+      projects: await syncSha256Hex(projectsPayload.projects)
     }
   };
   files['manifest.json'] = { content: JSON.stringify(manifest, null, 2) };
@@ -9139,6 +9821,7 @@ function syncIsOwnedFileName(name) {
   return name === 'manifest.json'
     || name === 'settings.json.enc'
     || name === 'memories.json.enc'
+    || name === 'projects.json.enc'
     || (name.startsWith('conv_') && name.endsWith('.json.enc'));
 }
 
@@ -9230,6 +9913,19 @@ async function syncMergeConversationLists(localList, remoteList) {
   return { conversations: Array.from(merged.values()), added, updated, tied };
 }
 
+function syncMergeProjectLists(localList, remoteList) {
+  const byId = new Map();
+  (localList || []).forEach(p => { if (p && p.id) byId.set(p.id, p); });
+  (remoteList || []).forEach(p => {
+    if (!p || !p.id) return;
+    const existing = byId.get(p.id);
+    if (!existing || (Number(p.updatedAt) || 0) >= (Number(existing.updatedAt) || 0)) {
+      byId.set(p.id, { ...p, docs: Array.isArray(p.docs) ? p.docs : [] });
+    }
+  });
+  return Array.from(byId.values()).sort((a, b) => (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0));
+}
+
 function syncMergeMemoryLists(localList, remoteList) {
   const localNormalized = normalizeMemoryList(localList || []).memories;
   const remoteNormalized = normalizeMemoryList(remoteList || []).memories;
@@ -9268,6 +9964,19 @@ async function syncPullFromGist() {
     syncApplySettings(settingsPayload.settings || {});
     const mergedMemories = syncMergeMemoryLists(await loadMemories(), memoriesPayload.memories || []);
     await saveMemories(mergedMemories);
+
+    // Guarded on the manifest key so pulling from a gist written by an older client
+    // (which has no projects file) is a no-op rather than an error.
+    if (manifest.files?.projects) {
+      try {
+        const projectsPayload = await syncDecryptPayload(
+          await syncGetGistFileContent(gist, manifest.files.projects, cfg.token), cfg.passphrase, keyCache);
+        projects = syncMergeProjectLists(projects, projectsPayload.projects || []);
+        saveProjects();
+      } catch (e) {
+        console.warn('Project sync pull failed:', e);
+      }
+    }
 
     const merged = await syncMergeConversationLists(conversations, remoteConversations);
     conversations = merged.conversations;
@@ -9457,6 +10166,202 @@ async function syncImportPairingQr(event) {
 // ============================================
 // Export as Markdown
 // ============================================
+// ============================================
+// Share (read-only public link)
+// ============================================
+// One plaintext file in a secret gist. Confidentiality comes from the unguessable gist
+// id, the same way ChatGPT and Claude share links work — the encrypted sync path can't
+// be reused because a reader has no passphrase.
+
+const SHARE_FILE = 'share.json';
+const SHARE_SCHEMA = 'share-v1';
+const SHARE_MAX_BYTES = 5000000;
+
+// Reduce a file part to its name. The dropped fields are the whole point: file.url is a
+// base64 copy of the upload and file.textContent is its full extracted text.
+function shareSafeContent(content) {
+  if (typeof content === 'string') return stripThinkTags(content).content;
+  if (!Array.isArray(content)) return String(content == null ? '' : content);
+  return content.map(part => {
+    if (part.type === 'file') return { type: 'file', file: { name: (part.file && part.file.name) || 'file' } };
+    if (part.type === 'text') return { type: 'text', text: stripThinkTags(part.text || '').content };
+    return part; // image_url parts are already just a data/remote URL the user chose to send
+  });
+}
+
+// ALLOWLIST, never a blacklist — a new private field added to conversations later must
+// not silently start leaking. Anything not named here is not published.
+function buildSharePayload(conv) {
+  return {
+    app: 'Synapse',
+    schema: SHARE_SCHEMA,
+    sharedAt: Date.now(),
+    title: conv.title || 'Shared chat',
+    messages: (conv.messages || [])
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => {
+        const out = { role: m.role, content: shareSafeContent(m.content) };
+        if (m.role === 'assistant') {
+          const images = (m.swipeImages && m.swipeImages[m.swipeIndex || 0]) || m.images || [];
+          if (images.length) { out.swipeImages = [images]; out.swipeIndex = 0; }
+        }
+        return out;
+      })
+  };
+}
+
+function shareLinkFor(gistId) {
+  return location.origin + location.pathname + '?share=' + encodeURIComponent(gistId);
+}
+
+async function copyShareText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    const helper = document.createElement('textarea');
+    helper.value = text;
+    helper.style.position = 'fixed';
+    helper.style.opacity = '0';
+    document.body.appendChild(helper);
+    helper.focus();
+    helper.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+    helper.remove();
+    return ok;
+  }
+}
+
+async function shareConversation() {
+  const conv = getActiveConv();
+  if (!conv || !(conv.messages || []).length) {
+    showToast('Nothing to share in this chat yet.', 'error');
+    return;
+  }
+  const token = localStorage.getItem('assistantSyncGistToken') || '';
+  if (!token) {
+    showToast('Add a GitHub token in Settings → Sync first.', 'error');
+    return;
+  }
+  const payload = buildSharePayload(conv);
+  const json = JSON.stringify(payload);
+  if (json.length > SHARE_MAX_BYTES) {
+    showToast('Too large to share — inline images push this past the Gist size limit.', 'error');
+    return;
+  }
+  if (!conv.shareGistId && !confirm(
+    'Publish this chat to a secret GitHub Gist?\n\n' +
+    'Anyone with the link can read it. Your API key, files, personas, memories and ' +
+    'alternate responses are not included.')) return;
+
+  try {
+    showToast('Publishing…');
+    const files = {};
+    files[SHARE_FILE] = { content: json };
+    const gist = conv.shareGistId
+      ? await fetchGist(SYNC_GIST_API_URL + '/' + encodeURIComponent(conv.shareGistId), {
+          method: 'PATCH', body: JSON.stringify({ files })
+        }, token)
+      : await fetchGist(SYNC_GIST_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ description: 'Synapse shared conversation', public: false, files })
+        }, token);
+    conv.shareGistId = gist.id;
+    saveConversations();
+    const link = shareLinkFor(gist.id);
+    const copied = await copyShareText(link);
+    showToast(copied ? 'Link copied. Anyone with it can read this chat.' : 'Shared: ' + link, 'success');
+  } catch (err) {
+    showToast('Share failed: ' + (err.message || err), 'error');
+  }
+}
+
+async function unshareConversation() {
+  const conv = getActiveConv();
+  if (!conv || !conv.shareGistId) {
+    showToast('This chat isn’t shared.');
+    return;
+  }
+  const token = localStorage.getItem('assistantSyncGistToken') || '';
+  if (!token) {
+    showToast('Add a GitHub token in Settings → Sync first.', 'error');
+    return;
+  }
+  try {
+    await fetchGist(SYNC_GIST_API_URL + '/' + encodeURIComponent(conv.shareGistId), { method: 'DELETE' }, token);
+  } catch (err) {
+    showToast('Unshare failed: ' + (err.message || err), 'error');
+    return;
+  }
+  delete conv.shareGistId;
+  saveConversations();
+  showToast('Link revoked.', 'success');
+}
+
+async function initShareView(gistId) {
+  const area = document.getElementById('messagesArea');
+  const fail = (msg) => {
+    if (area) area.innerHTML = '<div class="chat-placeholder">' + escapeHTML(msg) + '</div>';
+  };
+  try {
+    // ponytail: anonymous GitHub API is 60 req/hr/IP. Switch to the gist raw URL if a
+    // shared link ever gets real traffic.
+    const gist = await fetchGist(SYNC_GIST_API_URL + '/' + encodeURIComponent(gistId), { cache: 'no-store' });
+    const payload = JSON.parse(await syncGetGistFileContent(gist, SHARE_FILE));
+    if (!payload || payload.schema !== SHARE_SCHEMA || !Array.isArray(payload.messages)) {
+      throw new Error('Unrecognised share format');
+    }
+    messages = payload.messages;
+    document.title = (payload.title || 'Shared chat') + ' — Synapse';
+    const titleEl = document.querySelector('.toolbar-title');
+    if (titleEl) titleEl.textContent = payload.title || 'Shared chat';
+
+    const banner = document.createElement('div');
+    banner.className = 'share-banner';
+    banner.innerHTML = 'Read-only shared conversation · <a href="' +
+      escapeHTML(location.origin + location.pathname) + '">Open Synapse</a>';
+    document.body.appendChild(banner);
+
+    renderMessages();
+  } catch (err) {
+    console.warn('Share view failed:', err);
+    fail('This shared conversation is unavailable (it may have been unshared).');
+  }
+}
+
+// Runnable check for the one genuinely dangerous piece of this feature: the strip.
+// Run shareSelfTest() in the console after a build.
+function shareSelfTest() {
+  const conv = {
+    id: 'conv_1', title: 't', projectId: 'proj_1',
+    summary: 'SECRET_SUMMARY', persona: 'SECRET_PERSONA',
+    characterDescription: 'SECRET_CHAR', characterSystemPrompt: 'SECRET_SYSPROMPT',
+    tag: 'SECRET_TAG', shareGistId: 'SECRET_GIST',
+    docs: [{ id: 'd', name: 'n', text: 'SECRET_DOC' }],
+    messages: [
+      { role: 'user', content: [
+        { type: 'text', text: 'hi <think>SECRET_INLINE</think>' },
+        { type: 'file', file: { name: 'a.txt', url: 'data:SECRET_URL', textContent: 'SECRET_FILE' } }
+      ] },
+      { role: 'assistant', content: 'ok', swipes: ['ok', 'SECRET_SWIPE'], swipeIndex: 0,
+        swipeThinking: ['SECRET_THINK'], swipeToolUse: [[{ url: 'SECRET_TOOL' }]],
+        llm: { profileName: 'SECRET_PROFILE', providerName: 'SECRET_PROVIDER' } },
+      { role: 'system', content: 'SECRET_SYSTEM' }
+    ]
+  };
+  const json = JSON.stringify(buildSharePayload(conv));
+  const leaks = ['SECRET_SUMMARY', 'SECRET_PERSONA', 'SECRET_CHAR', 'SECRET_SYSPROMPT', 'SECRET_TAG',
+    'SECRET_GIST', 'SECRET_DOC', 'SECRET_URL', 'SECRET_FILE', 'SECRET_SWIPE', 'SECRET_THINK',
+    'SECRET_TOOL', 'SECRET_PROFILE', 'SECRET_PROVIDER', 'SECRET_SYSTEM', 'SECRET_INLINE', 'proj_1', 'conv_1']
+    .filter(s => json.includes(s));
+  if (leaks.length) throw new Error('share payload leaked: ' + leaks.join(', '));
+  if (!json.includes('a.txt')) throw new Error('share payload lost the file name');
+  if (!json.includes('hi')) throw new Error('share payload lost the message text');
+  console.log('shareSelfTest OK');
+  return true;
+}
+
 function exportMarkdown() {
   const conv = getActiveConv();
   if (!conv || conv.messages.length === 0) { showToast('No messages to export.', 'info'); return; }
@@ -10439,6 +11344,25 @@ function toggleVoice() {
 
 // Window bridge for inline handlers and external hooks
 const __windowBridge = {
+  // Share links (inline onclick in index.html; shareSelfTest is for the console)
+  shareConversation,
+  unshareConversation,
+  buildSharePayload,
+  shareSafeContent,
+  shareLinkFor,
+  initShareView,
+  shareSelfTest,
+  // Projects (inline onclick in index.html)
+  openProjectsModal,
+  selectProjectInModal,
+  newProjectFromModal,
+  saveProjectFromModal,
+  deleteProject,
+  addProjectFiles,
+  removeProjectDoc,
+  showProjectPicker,
+  assignConversationToProject,
+  getProject,
   openModal,
   closeModal,
   closeTopModal,

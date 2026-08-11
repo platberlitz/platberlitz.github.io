@@ -42,6 +42,9 @@ combined_js = '// == dom-utils ==\n' + dom_utils + '\n// == text-utils ==\n' + t
 html = html.replace(script_tag, '<script>\n' + combined_js + '\n</script>')
 
 html = html.replace('<link rel="icon" href="favicon.ico" type="image/x-icon">\n', '')
+# Standalone build has no sibling files, so drop links to them.
+# (The service worker registration in main.js is guarded on location.protocol.)
+html = html.replace('<link rel="manifest" href="./manifest.json">\n', '')
 
 with open('synapse.html', 'w') as f:
     f.write(html)
