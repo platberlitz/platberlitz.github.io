@@ -16,7 +16,10 @@ Run this from the repo root:
 
 ```bash
 cd assistant && python3 << 'PYEOF'
+import base64
+import json
 import re
+from pathlib import Path
 
 with open('index.html', 'r') as f:
     html = f.read()
@@ -28,6 +31,12 @@ with open('js/lib/text-utils.js', 'r') as f:
     text_utils = f.read()
 with open('js/main.js', 'r') as f:
     main_js = f.read()
+
+asset_urls = {}
+for asset in sorted(Path('assets/emotion-sprites').glob('*.webp')):
+    asset_urls[asset.stem] = 'data:image/webp;base64,' + base64.b64encode(asset.read_bytes()).decode('ascii')
+sprite_assets = 'const EMOTION_SPRITE_ASSET_URLS = ' + json.dumps(asset_urls, separators=(',', ':')) + ';'
+main_js = main_js.replace('const EMOTION_SPRITE_ASSET_URLS = {};', sprite_assets)
 
 main_js = re.sub(r"^import\s+\{[^}]+\}\s+from\s+'[^']+';\s*\n", '', main_js, flags=re.MULTILINE)
 main_js = re.sub(r'^export ', '', main_js, flags=re.MULTILINE)
