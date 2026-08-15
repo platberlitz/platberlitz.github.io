@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>purachina's stuff</title>
+  <meta name="description" content="Pura's Director Preset for SillyTavern and SillyBunny, plus my extensions, themes, character cards, and lorebooks. Everything's downloadable from here.">
+  <meta property="og:title" content="purachina's stuff">
+  <meta property="og:description" content="Pura's Director Preset for SillyTavern and SillyBunny, plus my extensions, themes, character cards, and lorebooks. Everything's downloadable from here.">
+  <meta property="og:image" content="https://platberlitz.github.io/favicon-256.png">
+  <meta property="og:url" content="https://platberlitz.github.io/">
+  <meta name="twitter:card" content="summary">
   <link rel="icon" type="image/png" sizes="256x256" href="favicon-256.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="shortcut icon" href="favicon.ico">
@@ -11,7 +17,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;600&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -34,6 +39,38 @@
     :focus-visible {
       outline: 2px solid #8fb8df;
       outline-offset: 4px;
+    }
+
+    main {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Hidden above the viewport until keyboard focus pulls it in. */
+    .skip-link {
+      position: fixed;
+      top: 0.75rem;
+      left: 50%;
+      transform: translate(-50%, calc(-100% - 1.5rem));
+      z-index: 300;
+      padding: 0.5rem 1.1rem;
+      border: 1px solid #8ea99b;
+      border-radius: 999px;
+      background: rgba(8, 18, 12, 0.96);
+      color: #e0f4ea;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: transform 0.2s ease-out;
+    }
+
+    .skip-link:focus-visible {
+      transform: translate(-50%, 0);
+    }
+
+    #presets:focus-visible {
+      outline: none;
     }
 
     .container {
@@ -129,8 +166,6 @@
 
     .links a:focus-visible,
     .preset-downloads a:focus-visible,
-    .inline-link:focus-visible,
-    .link-info-link:focus-visible,
     .tracker-item:focus-visible {
       color: #e0f4ea;
       border-color: #8ea99b;
@@ -277,18 +312,6 @@
       visibility: visible;
     }
 
-    .link-info-link {
-      display: inline-flex;
-      align-items: center;
-      min-height: 44px;
-      font-size: 0.72rem;
-      color: #9dbfad;
-      text-decoration: none;
-      transition: color 0.25s;
-    }
-
-    .link-info-link:hover { color: #b6d8c5; }
-
     /* ── Preset Section ── */
 
     .preset-section {
@@ -312,11 +335,25 @@
       pointer-events: none;
     }
 
-    .platform-labels {
-      width: 100%;
-      max-width: 1120px;
-      padding: 0 clamp(1rem, 3vw, 2rem);
+    .platform-eyebrow {
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #bdd8ca;
+      margin-bottom: 0.6rem;
+    }
+
+    /* The two platform labels are one control, not more nav links,
+       so they share a single pill track like the tab rail. */
+    .tab-labels.platform-labels {
+      gap: 0.3rem;
+      flex-wrap: nowrap;
+      padding: 0.3rem;
       margin-bottom: 0.85rem;
+      border: 1px solid rgba(43, 52, 69, 0.82);
+      border-radius: 999px;
+      background: rgba(12, 15, 24, 0.88);
     }
 
     .platform-labels label {
@@ -691,7 +728,7 @@
     .preset-desc,
     .opinions-intro,
     .option-note {
-      max-width: 72ch;
+      max-width: 62ch;
     }
 
     .preset-title {
@@ -793,7 +830,7 @@
       transition: color 0.25s, border-color 0.25s, background 0.25s, box-shadow 0.25s, transform 0.25s;
     }
 
-    .downloads-primary a .fa-download { font-size: 0.8em; }
+    .downloads-primary a .dl-icon { width: 0.85em; height: 0.85em; flex: 0 0 auto; }
 
     .downloads-primary a.dl-st {
       color: #a8d3ff;
@@ -1052,28 +1089,12 @@
     .ext-name a:hover { color: #c0e8d0; }
 
     .update-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 1rem;
-      height: 1rem;
+      width: 0.78rem;
+      height: 0.78rem;
       margin-left: 0.35rem;
       color: #9fe7bb;
-      font-size: 0.68rem;
-      vertical-align: 0.05em;
+      vertical-align: -0.08em;
       filter: drop-shadow(0 0 8px rgba(84, 217, 172, 0.28));
-    }
-
-    .inline-link {
-      color: #b8d7c6;
-      text-decoration: none;
-      border-bottom: 1px solid #536681;
-      transition: color 0.25s, border-color 0.25s;
-    }
-
-    .inline-link:hover {
-      color: #e0f4ea;
-      border-color: #8ea99b;
     }
 
     .ext-desc {
@@ -1540,11 +1561,6 @@
     @media (max-width: 900px) {
       .preset-section { max-width: 720px; }
 
-      .platform-labels {
-        position: static;
-        background: transparent;
-      }
-
       .preset-tabs,
       #tab-cards:checked ~ .tab-content-cards,
       .theme-tabs {
@@ -1618,20 +1634,20 @@
         transform: none;
         visibility: visible;
         white-space: normal;
-        font-size: 0.62rem;
+        font-size: 0.72rem;
         line-height: 1.2;
         pointer-events: auto;
       }
-      .link-info-link,
       .last-updated { font-size: 0.875rem; }
 
-      .platform-labels {
-        padding: 0 1rem;
+      .tab-labels.platform-labels {
+        width: calc(100% - 2rem);
+        max-width: 360px;
         margin-bottom: 0.65rem;
       }
       .platform-labels label {
         min-width: 0;
-        width: 100%;
+        flex: 1 1 0;
       }
 
       .preset-section { padding: 0 1rem; }
@@ -1699,26 +1715,29 @@
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#presets">Skip to presets</a>
+  <main>
   <div class="container">
     <img class="hero-favicon" src="favicon-256.png" alt="" aria-hidden="true" decoding="async">
     <h1 class="rainbow">welcome :3</h1>
     <p class="subtitle">purachina's stuff</p>
-    <p class="last-updated">Last Updated August 13, 2026</p>
+    <p class="last-updated">Last Updated August 15, 2026</p>
     <div class="links">
       <a href="https://platberlitz.github.io/platinum-startpage/" class="glow-pill startpage-link">startpage<span class="link-info">localStorage customisable startpage</span></a>
       <a href="assistant/" class="glow-pill synapse-link">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
-      <a href="https://purasdproxy.duckdns.org" class="glow-pill sdproxy-link">SD Proxy<span class="link-info">Stable Diffusion image generation frontend</span></a>
-      <a href="https://github.com/platberlitz/sd-proxy" class="glow-pill sdproxy-github-link">GitHub<span class="link-info">SD Proxy source repository</span></a>
-      <a href="https://github.com/SillyBunnyTeam/SillyBunny" class="glow-pill sillybunny-link">SillyBunny<span class="link-info">the SillyTavern fork I help build &middot; graphical shell, agents, Conversation Mode</span></a>
-      <a href="https://botbooru.com/profile/62152" class="glow-pill botbooru-link">Botbooru<span class="link-info">my character cards on Botbooru</span></a>
+      <a target="_blank" rel="noopener" href="https://purasdproxy.duckdns.org" class="glow-pill sdproxy-link">SD Proxy<span class="link-info">Stable Diffusion image generation frontend</span></a>
+      <a target="_blank" rel="noopener" href="https://github.com/platberlitz/sd-proxy" class="glow-pill sdproxy-github-link">GitHub<span class="link-info">SD Proxy source repository</span></a>
+      <a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny" class="glow-pill sillybunny-link">SillyBunny<span class="link-info">the SillyTavern fork I help build &middot; graphical shell, agents, Conversation Mode</span></a>
+      <a target="_blank" rel="noopener" href="https://botbooru.com/profile/62152" class="glow-pill botbooru-link">Botbooru<span class="link-info">my character cards on Botbooru</span></a>
       <a href="https://ko-fi.com/purachina" class="kofi-link" target="_blank" rel="noopener noreferrer">Ko-fi<span class="link-info">support my work with a coffee</span></a>
     </div>
   </div>
 
-  <div class="platform-switcher">
+  <div class="platform-switcher" id="presets" tabindex="-1">
     <input type="radio" name="platform-view" id="platform-view-st" checked>
     <input type="radio" name="platform-view" id="platform-view-sb">
 
+    <p class="platform-eyebrow">Pick your platform</p>
     <div class="tab-labels platform-labels">
       <label for="platform-view-st">SillyTavern</label>
       <label for="platform-view-sb">SillyBunny</label>
@@ -1755,6 +1774,11 @@
         <div class="preset-info">
           <h2 class="preset-title">Pura's Director Preset</h2>
           <p class="preset-version">Latest Version: 15.1</p>
+          <div class="preset-downloads downloads-primary" style="margin-top: 0; margin-bottom: 1.6rem;">
+            <a class="dl-st" href="preset/Pura's%20Director%20Preset%2015.1%20(SillyTavern).json" download="Pura's Director Preset 15.1 (SillyTavern).json"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Download 15.1 (SillyTavern)</a>
+            <a class="dl-sb" href="preset/Pura's%20Director%20Preset%2015.1%20(SillyBunny).json" download="Pura's Director Preset 15.1 (SillyBunny).json"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Download 15.1 (SillyBunny)</a>
+            <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
+          </div>
           <div class="preset-desc">
             <p>This is a universal preset that should work with most LLMs. 15.1 keeps the rewritten main prompt at around 900 tokens depending on tokeniser and spends them better: continuity tracking, an environment that actually affects people, real agency for you, and a dialogue section with some teeth in it. Grounded Prose Rules remains an optional 600-700 token layer, now with firmer wording for models that treat every ban like a suggestion. Tested on just about most LLMs I can get my hands on: Opus, Gemini, GPT, GLM, Kimi K3 and K2.x, Qwen, StepFlash, Mimo, Gemma 4, Muse Spark 1.2, Tencent Hy3, MiniMax M3, and smaller models like Rocinante 12B, Cydonia 24B, WizardLM 8x22B, and Bielik 11B.</p>
             <p>IMPORTANT! If you're using a smaller model, keep Post-History Instructions turned off. It will probably mess it up anyway, it has a lot of *avoid* and *banned* statements that will just make the LLM do it more.</p>
@@ -1771,11 +1795,6 @@
             <a class="preset-release-art" href="#lb-preset-15-1" aria-label="Open Pura's Director Preset 15.1 release art">
               <img src="preset/screenshots/pura-director-preset-15.1.png" alt="Pura's Director Preset 15.1 release art" loading="lazy">
             </a>
-          </div>
-          <div class="preset-downloads downloads-primary">
-            <a class="dl-st" href="preset/Pura's%20Director%20Preset%2015.1%20(SillyTavern).json" download="Pura's Director Preset 15.1 (SillyTavern).json"><i class="fa-solid fa-download" aria-hidden="true"></i>Download 15.1 (SillyTavern)</a>
-            <a class="dl-sb" href="preset/Pura's%20Director%20Preset%2015.1%20(SillyBunny).json" download="Pura's Director Preset 15.1 (SillyBunny).json"><i class="fa-solid fa-download" aria-hidden="true"></i>Download 15.1 (SillyBunny)</a>
-            <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
       </div>
@@ -2446,27 +2465,27 @@
       <div class="tab-content tab-content-trackers">
         <div class="tracker-grid">
           <a class="tracker-item" href="#lb-1">
-            <img src="preset/screenshots/scene-time.png" alt="Scene Tracker" loading="lazy">
+            <img src="preset/screenshots/scene-tracker.png" alt="Scene Tracker" loading="lazy">
             <span class="tracker-caption">Scene Tracker</span>
           </a>
           <a class="tracker-item" href="#lb-2">
-            <img src="preset/screenshots/relationships.png" alt="Time Tracker" loading="lazy">
+            <img src="preset/screenshots/time-tracker.png" alt="Time Tracker" loading="lazy">
             <span class="tracker-caption">Time Tracker</span>
           </a>
           <a class="tracker-item" href="#lb-3">
-            <img src="preset/screenshots/pending-events.png" alt="Parallel Off-Screen Tracker" loading="lazy">
+            <img src="preset/screenshots/parallel-offscreen-tracker.png" alt="Parallel Off-Screen Tracker" loading="lazy">
             <span class="tracker-caption">Parallel Off-Screen Tracker</span>
           </a>
           <a class="tracker-item" href="#lb-4">
-            <img src="preset/screenshots/achievements.png" alt="Relationship Meter" loading="lazy">
+            <img src="preset/screenshots/relationship-meter.png" alt="Relationship Meter" loading="lazy">
             <span class="tracker-caption">Relationship Meter</span>
           </a>
           <a class="tracker-item" href="#lb-5">
-            <img src="preset/screenshots/reputation.png" alt="Secret Tracker" loading="lazy">
+            <img src="preset/screenshots/secret-tracker.png" alt="Secret Tracker" loading="lazy">
             <span class="tracker-caption">Secret Tracker</span>
           </a>
           <a class="tracker-item" href="#lb-6">
-            <img src="preset/screenshots/inventory.png" alt="Pending Events" loading="lazy">
+            <img src="preset/screenshots/pending-events.png" alt="Pending Events" loading="lazy">
             <span class="tracker-caption">Pending Events</span>
           </a>
           <a class="tracker-item" href="#lb-7">
@@ -2474,23 +2493,23 @@
             <span class="tracker-caption">Status &amp; Conditions</span>
           </a>
           <a class="tracker-item" href="#lb-8">
-            <img src="preset/screenshots/secrets.png" alt="Achievement" loading="lazy">
+            <img src="preset/screenshots/achievement.png" alt="Achievement" loading="lazy">
             <span class="tracker-caption">Achievement</span>
           </a>
           <a class="tracker-item" href="#lb-9">
-            <img src="preset/screenshots/parallel-offscreen.png" alt="Inventory" loading="lazy">
+            <img src="preset/screenshots/inventory.png" alt="Inventory" loading="lazy">
             <span class="tracker-caption">Inventory</span>
           </a>
           <a class="tracker-item" href="#lb-10">
-            <img src="preset/screenshots/world-detail.png" alt="Rumors &amp; Reputation" loading="lazy">
+            <img src="preset/screenshots/rumors-reputation.png" alt="Rumors &amp; Reputation" loading="lazy">
             <span class="tracker-caption">Rumors &amp; Reputation</span>
           </a>
           <a class="tracker-item" href="#lb-11">
-            <img src="preset/screenshots/cyoa-choices.png" alt="World Detail" loading="lazy">
+            <img src="preset/screenshots/world-detail.png" alt="World Detail" loading="lazy">
             <span class="tracker-caption">World Detail</span>
           </a>
           <a class="tracker-item" href="#lb-12">
-            <img src="preset/screenshots/choices-basic.png" alt="CYOA Choices" loading="lazy">
+            <img src="preset/screenshots/cyoa-choices.png" alt="CYOA Choices" loading="lazy">
             <span class="tracker-caption">CYOA Choices</span>
           </a>
           <a class="tracker-item" href="#lb-13">
@@ -2927,11 +2946,11 @@
       <div class="tab-content tab-content-extensions">
         <div class="extensions-list">
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/platberlitz/sillytavern-image-gen">Quick Image Gen</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/platberlitz/sillytavern-image-gen">Quick Image Gen</a></div>
             <div class="ext-desc">Generate images with one click + other features</div>
           </div>
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/platberlitz/sillytavern-character-colors">Dialogue Colours</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/platberlitz/sillytavern-character-colors">Dialogue Colours</a></div>
             <div class="ext-desc">Token-efficient character color changer that supports multiple NPCs, and you can change dialogue colours in real time + other features</div>
           </div>
         </div>
@@ -2939,7 +2958,7 @@
         <h2 class="preset-title ext-group-heading">Character Tools</h2>
         <div class="extensions-list">
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-BotSearcher">BotSearcher</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-BotSearcher">BotSearcher</a></div>
             <div class="ext-desc">Search supported character-card sites and import cards into SillyBunny.</div>
           </div>
         </div>
@@ -2947,19 +2966,19 @@
         <h2 class="preset-title ext-group-heading">Prompting, World Info, and Scripting</h2>
         <div class="extensions-list">
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-WorldInfo-Lab">World Info Lab</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-WorldInfo-Lab">World Info Lab</a></div>
             <div class="ext-desc">Test, trace, and manage lorebook activation.</div>
           </div>
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-PromptTags">Prompt Tags</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-PromptTags">Prompt Tags</a></div>
             <div class="ext-desc">Add configurable XML-style boundaries to prompt sections.</div>
           </div>
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-MacroEnhanced">Macro Enhanced</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-MacroEnhanced">Macro Enhanced</a></div>
             <div class="ext-desc">Adds utility, logic, state, lorebook, and custom macros.</div>
           </div>
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Prompting-Lab">Prompting Lab</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-Prompting-Lab">Prompting Lab</a></div>
             <div class="ext-desc">A workspace tool that helps compare and contrast prompts, caching, macros, etc.</div>
           </div>
         </div>
@@ -2967,11 +2986,11 @@
         <h2 class="preset-title ext-group-heading">Themes and Interface</h2>
         <div class="extensions-list">
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Regex-Agent-Themes">Regex Agent Themes</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-Regex-Agent-Themes">Regex Agent Themes</a></div>
             <div class="ext-desc">Customize the appearance of tracker and companion agent panels.</div>
           </div>
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Terminal-UI">Terminal UI</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-Terminal-UI">Terminal UI</a></div>
             <div class="ext-desc">A terminal-inspired UI extension for SillyBunny.</div>
           </div>
         </div>
@@ -3643,107 +3662,107 @@
           <p class="card-section-intro"><strong>26 cards.</strong> The Genshin ones have updated, more comprehensive lorebooks now.</p>
           <div class="cards-grid">
           <a class="card-item" href="cards/Genshin%20Impact/Alhaitham.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Alhaitham.png" alt="Alhaitham" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Alhaitham.webp" alt="Alhaitham" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro">Alhaitham <span class="card-version">v1.2</span></strong><span class="card-copy">If you're finished narrating your crisis, I'd like to return to the part where none of this concerns me.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Arataki%20Itto.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Arataki%20Itto.png" alt="Arataki Itto" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Arataki%20Itto.webp" alt="Arataki Itto" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-geo" src="assets/card-icons/genshin/geo.png" alt="Geo" title="Geo">Arataki Itto <span class="card-version">v1.2</span></strong><span class="card-copy">Behold! It's the one and oni, Arataki Itto! This plan's unstoppable, unless Shinobu says no!</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Arlecchino.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Arlecchino.png" alt="Arlecchino" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Arlecchino.webp" alt="Arlecchino" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-pyro" src="assets/card-icons/genshin/pyro.png" alt="Pyro" title="Pyro">Arlecchino <span class="card-version">v1.2</span></strong><span class="card-copy">Call me Father if you must. Don't mistake a warm hand for a gentle one.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Ayato.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Ayato.png" alt="Ayato" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Ayato.webp" alt="Ayato" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-hydro" src="assets/card-icons/genshin/hydro.png" alt="Hydro" title="Hydro">Ayato <span class="card-version">v1.2</span></strong><span class="card-copy">Please, enjoy the tea. I've already moved the blade where you'll notice it last.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Cyno.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Cyno.png" alt="Cyno" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Cyno.webp" alt="Cyno" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Cyno <span class="card-version">v1.2</span></strong><span class="card-copy">The case is clear. You've broken the law, and my joke's grinding straight to your humerus. ... Get it? Because-</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Diluc.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Diluc.png" alt="Diluc" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Diluc.webp" alt="Diluc" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-pyro" src="assets/card-icons/genshin/pyro.png" alt="Pyro" title="Pyro">Diluc <span class="card-version">v1.2</span></strong><span class="card-copy">Mondstadt needs a hero that's wide awake after the lamps go out.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Furina%20%26%20Neuvillette.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Furina%20%26%20Neuvillette.png" alt="Furina &amp; Neuvillette" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Furina%20%26%20Neuvillette.webp" alt="Furina &amp; Neuvillette" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-hydro" src="assets/card-icons/genshin/hydro.png" alt="Hydro" title="Hydro">Furina &amp; Neuvillette <span class="card-version">v1.2</span></strong><span class="card-copy">Furina's taking her bow; Neuvillette's reading the verdict. Neither's admitting the rain means anything.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Ifa.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Ifa.png" alt="Ifa" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Ifa.webp" alt="Ifa" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo">Ifa <span class="card-version">v1.2</span></strong><span class="card-copy">Hey, you're breathing, complaining, and probably not cursed. That's a pretty good start.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Il%20Dottore.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Il%20Dottore.png" alt="Il Dottore" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Il%20Dottore.webp" alt="Il Dottore" loading="lazy">
             <span class="card-caption"><strong class="card-title">Il Dottore <span class="card-version">v1.3</span></strong><span class="card-copy">Morality's what people cite when they can't survive the next hypothesis.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Jean%20%26%20Diluc%20%26%20Lisa.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Jean%20%26%20Diluc%20%26%20Lisa.png" alt="Jean &amp; Diluc &amp; Lisa" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Jean%20%26%20Diluc%20%26%20Lisa.webp" alt="Jean &amp; Diluc &amp; Lisa" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo"><img class="meta-icon element-pyro" src="assets/card-icons/genshin/pyro.png" alt="Pyro" title="Pyro"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Jean &amp; Diluc &amp; Lisa <span class="card-version">v1.2</span></strong><span class="card-copy">Jean's holding the city upright, Diluc's haunting its edges, and Lisa's smiling like she knows where it cracks.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Kaeya.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Kaeya.png" alt="Kaeya" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Kaeya.webp" alt="Kaeya" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-cryo" src="assets/card-icons/genshin/cryo.png" alt="Cryo" title="Cryo">Kaeya <span class="card-version">v1.2</span></strong><span class="card-copy">Oh, don't look so wounded. I haven't even decided which truth would hurt you less.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Kaveh%20%26%20Alhaitham.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Kaveh%20%26%20Alhaitham.png" alt="Kaveh &amp; Alhaitham" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Kaveh%20%26%20Alhaitham.webp" alt="Kaveh &amp; Alhaitham" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro">Kaveh &amp; Alhaitham <span class="card-version">v1.3</span></strong><span class="card-copy">Kaveh's bleeding for the masterpiece; Alhaitham just wants his rent, peace, and quiet.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Kaveh.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Kaveh.png" alt="Kaveh" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Kaveh.webp" alt="Kaveh" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro">Kaveh <span class="card-version">v1.2</span></strong><span class="card-copy">Of course beauty matters! I'm not taking design notes from a man who thinks a couch is a personality.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Kuki%20Shinobu%20%26%20Arataki%20Itto.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Kuki%20Shinobu%20%26%20Arataki%20Itto.png" alt="Kuki Shinobu &amp; Arataki Itto" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Kuki%20Shinobu%20%26%20Arataki%20Itto.webp" alt="Kuki Shinobu &amp; Arataki Itto" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro"><img class="meta-icon element-geo" src="assets/card-icons/genshin/geo.png" alt="Geo" title="Geo">Kuki Shinobu &amp; Arataki Itto <span class="card-version">v1.2</span></strong><span class="card-copy">Boss, don't shout 'victory' until I've checked the bail money, the damages, and your pulse.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Lisa.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Lisa.png" alt="Lisa" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Lisa.webp" alt="Lisa" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Lisa <span class="card-version">v1.2</span></strong><span class="card-copy">Careful, cutie. If you're late returning that book, I'll make the punishment educational.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Mika.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Mika.png" alt="Mika" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Mika.webp" alt="Mika" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-cryo" src="assets/card-icons/genshin/cryo.png" alt="Cryo" title="Cryo">Mika <span class="card-version">v1.2</span></strong><span class="card-copy">I-I've got the route marked, the supplies counted, and... um, maybe enough courage for both of us?</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Navia.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Navia.png" alt="Navia" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Navia.webp" alt="Navia" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-geo" src="assets/card-icons/genshin/geo.png" alt="Geo" title="Geo">Navia <span class="card-version">v1.2</span></strong><span class="card-copy">Chin up! If sorrow's joining us for tea, it's wearing its best manners and dodging the cannonfire.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Neuvillette.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Neuvillette.png" alt="Neuvillette" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Neuvillette.webp" alt="Neuvillette" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-hydro" src="assets/card-icons/genshin/hydro.png" alt="Hydro" title="Hydro">Neuvillette <span class="card-version">v1.2</span></strong><span class="card-copy">The rain is what we make it. Grief is a sign that we're still here.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Ororon.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Ororon.png" alt="Ororon" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Ororon.webp" alt="Ororon" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Ororon <span class="card-version">v1.2</span></strong><span class="card-copy">Grandma says I shouldn't stand in the dark this long. The dark hasn't complained, though.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Tartaglia.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Tartaglia.png" alt="Tartaglia" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Tartaglia.webp" alt="Tartaglia" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-hydro" src="assets/card-icons/genshin/hydro.png" alt="Hydro" title="Hydro">Tartaglia <span class="card-version">v1.2</span></strong><span class="card-copy">Hey, comrade! Dinner, duel, disaster. I'm in, and I'll bring the good knives!</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Tighnari%20%26%20Cyno.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Tighnari%20%26%20Cyno.png" alt="Tighnari &amp; Cyno" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Tighnari%20%26%20Cyno.webp" alt="Tighnari &amp; Cyno" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro"><img class="meta-icon element-electro" src="assets/card-icons/genshin/electro.png" alt="Electro" title="Electro">Tighnari &amp; Cyno <span class="card-version">v1.2</span></strong><span class="card-copy">Cyno's explaining the pun; Tighnari's already diagnosing everyone within earshot with poor survival instincts.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Tighnari.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Tighnari.png" alt="Tighnari" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Tighnari.webp" alt="Tighnari" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-dendro" src="assets/card-icons/genshin/dendro.png" alt="Dendro" title="Dendro">Tighnari <span class="card-version">v1.2</span></strong><span class="card-copy">Don't eat that. Don't touch that. Haah... how are you still alive?</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Venti.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Venti.png" alt="Venti" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Venti.webp" alt="Venti" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo">Venti <span class="card-version">v1.2</span></strong><span class="card-copy">Another round, another song! Don't ask how old the sorrow is... I'm too sober for that.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Wanderer.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Wanderer.png" alt="Wanderer" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Wanderer.webp" alt="Wanderer" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-anemo" src="assets/card-icons/genshin/anemo.png" alt="Anemo" title="Anemo">Wanderer <span class="card-version">v1.2</span></strong><span class="card-copy">Don't start with fate. I've cut those strings once, and I'll do it again.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Wriothesley.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Wriothesley.png" alt="Wriothesley" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Wriothesley.webp" alt="Wriothesley" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-cryo" src="assets/card-icons/genshin/cryo.png" alt="Cryo" title="Cryo">Wriothesley <span class="card-version">v1.2</span></strong><span class="card-copy">Tea's on. If negotiations fail, we'll proceed to fewer teeth and far more blood.</span></span>
           </a>
           <a class="card-item" href="cards/Genshin%20Impact/Zhongli.png" target="_blank" rel="noopener">
-            <img src="cards/Genshin%20Impact/Zhongli.png" alt="Zhongli" loading="lazy">
+            <img src="cards/thumbs/Genshin%20Impact/Zhongli.webp" alt="Zhongli" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon element-geo" src="assets/card-icons/genshin/geo.png" alt="Geo" title="Geo">Zhongli <span class="card-version">v1.2</span></strong><span class="card-copy">Even in retirement, I honor contracts that remember what history is tempted to forget.</span></span>
           </a>
         </div>
@@ -3753,35 +3772,35 @@
           <p class="card-section-intro"><strong>8 cards.</strong> Includes the expanded 325-entry Project Moon + Limbus Company lorebook, though it's more focused on Limbus Company lore. All of them contain spoilers up to Canto IX, so tread carefully.</p>
           <div class="cards-grid">
           <a class="card-item" href="cards/Limbus/Don%20Quixote.png" target="_blank" rel="noopener">
-            <img src="cards/Limbus/Don%20Quixote.png" alt="Don Quixote" loading="lazy">
+            <img src="cards/thumbs/Limbus/Don%20Quixote.webp" alt="Don Quixote" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/don-quixote.png" alt="Don Quixote icon" title="Don Quixote">Don Quixote <span class="card-version">v1.0</span></strong><span class="card-copy">Hark, villains! We'll sally forth as righteous Fixers, and if things explode... 'tis proof of our valor!</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Heathcliff.png" target="_blank" rel="noopener">
-            <img src="cards/Limbus/Heathcliff.png" alt="Heathcliff" loading="lazy">
+            <img src="cards/thumbs/Limbus/Heathcliff.webp" alt="Heathcliff" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/heathcliff.png" alt="Heathcliff icon" title="Heathcliff">Heathcliff <span class="card-version">v1.0</span></strong><span class="card-copy">Oi, don't say her name like you know a damn thing. We'll have a problem, fast.</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Hong%20Lu.png" target="_blank" rel="noopener">
-            <img src="cards/Limbus/Hong%20Lu.png" alt="Hong Lu" loading="lazy">
+            <img src="cards/thumbs/Limbus/Hong%20Lu.webp" alt="Hong Lu" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/hong-lu.png" alt="Hong Lu icon" title="Hong Lu">Hong Lu <span class="card-version">v1.0</span></strong><span class="card-copy">Uwaah, is this the part where it gets horrible? How interesting~ They'll definitely want to see this...</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Ishmael.png" target="_blank" rel="noopener">
-            <img src="cards/Limbus/Ishmael.png" alt="Ishmael" loading="lazy">
+            <img src="cards/thumbs/Limbus/Ishmael.webp" alt="Ishmael" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/ishmael.png" alt="Ishmael icon" title="Ishmael">Ishmael <span class="card-version">v1.0</span></strong><span class="card-copy">Steady, now. We'll row through hell if we must; don't mistake my patience for forgiveness.</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Lei%20Heng.png" target="_blank" rel="noopener">
-            <img src="cards/Limbus/Lei%20Heng.png" alt="Lei Heng" loading="lazy">
+            <img src="cards/thumbs/Limbus/Lei%20Heng.webp" alt="Lei Heng" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/thumb.png" alt="The Thumb icon" title="The Thumb"><img class="card-title-portrait" src="assets/card-icons/limbus/pinky.png" alt="The Pinky icon" title="The Pinky">Lei Heng <span class="card-version">v1.0</span></strong><span class="card-copy">Order's cheap while somebody's watchin', costs blood the second the watch stops.<br>Art by mikan ckc.</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Rien.png" target="_blank" rel="noopener">
-            <img src="cards/Limbus/Rien.png" alt="Rien" loading="lazy">
+            <img src="cards/thumbs/Limbus/Rien.webp" alt="Rien" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/index.png" alt="The Index icon" title="The Index">Rien <span class="card-version">v1.0</span></strong><span class="card-copy">The waves built those sand castles because the wind pulled them in. They have no reason to feel sad.<br>Art by Daremkara Mame.</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Ry%C5%8Dsh%C5%AB.png" target="_blank" rel="noopener">
-            <img src="cards/Limbus/Ry%C5%8Dsh%C5%AB.png" alt="Ry&#333;sh&#363;" loading="lazy">
+            <img src="cards/thumbs/Limbus/Ry%C5%8Dsh%C5%AB.webp" alt="Ry&#333;sh&#363;" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/ryoshu.png" alt="Ryōshū icon" title="Ryōshū">Ry&#333;sh&#363; <span class="card-version">v1.0</span></strong><span class="card-copy">Tch. If it isn't A.R.T. yet... I'll carve until it is.</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Yi%20Sang.png" target="_blank" rel="noopener">
-            <img src="cards/Limbus/Yi%20Sang.png" alt="Yi Sang" loading="lazy">
+            <img src="cards/thumbs/Limbus/Yi%20Sang.webp" alt="Yi Sang" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/yi-sang.png" alt="Yi Sang icon" title="Yi Sang">Yi Sang <span class="card-version">v1.0</span></strong><span class="card-copy">The window isn't an escape, but my wings soar through to find my Ideal.</span></span>
           </a>
         </div>
@@ -3791,32 +3810,32 @@
           <p class="card-section-intro"><strong>7 cards.</strong> Slowly working my way through Wuthering Waves cards, so just have these ones for now. (They're cool) They contain the corresponding character spoilers. Includes comprehensive Wuthering Waves lorebook with spoilers.</p>
           <div class="cards-grid">
           <a class="card-item" href="cards/Wuthering%20Waves/Cantarella.png" target="_blank" rel="noopener">
-            <img src="cards/Wuthering%20Waves/Cantarella.png" alt="Cantarella" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-havoc" src="assets/card-icons/wuwa/havoc.png" alt="Havoc" title="Havoc">Cantarella <span class="card-version">v1.1 <i class="fa-solid fa-arrows-rotate update-icon" role="img" aria-label="Updated" title="Updated"></i></span></strong><span class="card-copy">Rest, dear. The Sea of Dreams is gentle tonight... provided you don't struggle against the tide.</span></span>
+            <img src="cards/thumbs/Wuthering%20Waves/Cantarella.webp" alt="Cantarella" loading="lazy">
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-havoc" src="assets/card-icons/wuwa/havoc.png" alt="Havoc" title="Havoc">Cantarella <span class="card-version">v1.1 <svg class="update-icon" role="img" aria-label="Updated" viewBox="0 0 24 24" fill="currentColor"><title>Updated</title><path d="M17.65 6.35A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.76-4.24L13 11h7V4l-2.35 2.35z"/></svg></span></strong><span class="card-copy">Rest, dear. The Sea of Dreams is gentle tonight... provided you don't struggle against the tide.</span></span>
           </a>
           <a class="card-item" href="cards/Wuthering%20Waves/Carlotta.png" target="_blank" rel="noopener">
-            <img src="cards/Wuthering%20Waves/Carlotta.png" alt="Carlotta" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-glacio" src="assets/card-icons/wuwa/glacio.png" alt="Glacio" title="Glacio">Carlotta <span class="card-version">v1.1 <i class="fa-solid fa-arrows-rotate update-icon" role="img" aria-label="Updated" title="Updated"></i></span></strong><span class="card-copy">An exquisite piece. I'll add it to my collection once the less tasteful obstacles have been removed.<br>Art by xude.</span></span>
+            <img src="cards/thumbs/Wuthering%20Waves/Carlotta.webp" alt="Carlotta" loading="lazy">
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-glacio" src="assets/card-icons/wuwa/glacio.png" alt="Glacio" title="Glacio">Carlotta <span class="card-version">v1.1 <svg class="update-icon" role="img" aria-label="Updated" viewBox="0 0 24 24" fill="currentColor"><title>Updated</title><path d="M17.65 6.35A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.76-4.24L13 11h7V4l-2.35 2.35z"/></svg></span></strong><span class="card-copy">An exquisite piece. I'll add it to my collection once the less tasteful obstacles have been removed.<br>Art by xude.</span></span>
           </a>
           <a class="card-item" href="cards/Wuthering%20Waves/Cartethyia.png" target="_blank" rel="noopener">
-            <img src="cards/Wuthering%20Waves/Cartethyia.png" alt="Cartethyia" loading="lazy">
+            <img src="cards/thumbs/Wuthering%20Waves/Cartethyia.webp" alt="Cartethyia" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-aero" src="assets/card-icons/wuwa/aero.png" alt="Aero" title="Aero">Cartethyia <span class="card-version">v1.0</span></strong><span class="card-copy">If a legend needs a human mouth, I'll lend it mine.<br>Art by kaekaeki.</span></span>
           </a>
           <a class="card-item" href="cards/Wuthering%20Waves/Denia.png" target="_blank" rel="noopener">
-            <img src="cards/Wuthering%20Waves/Denia.png" alt="Denia" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-fusion" src="assets/card-icons/wuwa/fusion.png" alt="Fusion" title="Fusion">Denia <span class="card-version">v1.1 <i class="fa-solid fa-arrows-rotate update-icon" role="img" aria-label="Updated" title="Updated"></i></span></strong><span class="card-copy">They're only bubbles. If one happens to swallow the void, well... let's call that extra credit.<br>Art by yomogi2612.</span></span>
+            <img src="cards/thumbs/Wuthering%20Waves/Denia.webp" alt="Denia" loading="lazy">
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-fusion" src="assets/card-icons/wuwa/fusion.png" alt="Fusion" title="Fusion">Denia <span class="card-version">v1.1 <svg class="update-icon" role="img" aria-label="Updated" viewBox="0 0 24 24" fill="currentColor"><title>Updated</title><path d="M17.65 6.35A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.76-4.24L13 11h7V4l-2.35 2.35z"/></svg></span></strong><span class="card-copy">They're only bubbles. If one happens to swallow the void, well... let's call that extra credit.<br>Art by yomogi2612.</span></span>
           </a>
           <a class="card-item" href="cards/Wuthering%20Waves/Luuk%20Herssen.png" target="_blank" rel="noopener">
-            <img src="cards/Wuthering%20Waves/Luuk%20Herssen.png" alt="Luuk Herssen" loading="lazy">
+            <img src="cards/thumbs/Wuthering%20Waves/Luuk%20Herssen.webp" alt="Luuk Herssen" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-spectro" src="assets/card-icons/wuwa/spectro.png" alt="Spectro" title="Spectro">Luuk Herssen <span class="card-version">v1.0</span></strong><span class="card-copy">Let's keep this painless: I treat wounds, and I cut lies open before they spread.<br>Official art by Kanoko Lu.</span></span>
           </a>
           <a class="card-item" href="cards/Wuthering%20Waves/Lupa.png" target="_blank" rel="noopener">
-            <img src="cards/Wuthering%20Waves/Lupa.png" alt="Lupa" loading="lazy">
+            <img src="cards/thumbs/Wuthering%20Waves/Lupa.webp" alt="Lupa" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-fusion" src="assets/card-icons/wuwa/fusion.png" alt="Fusion" title="Fusion">Lupa <span class="card-version">v1.0</span></strong><span class="card-copy">Come on, let's have a rematch! If the arena wants a legend, I'll give it one.<br>Official art by sqloveraven.</span></span>
           </a>
           <a class="card-item" href="cards/Wuthering%20Waves/Phrolova.png" target="_blank" rel="noopener">
-            <img src="cards/Wuthering%20Waves/Phrolova.png" alt="Phrolova" loading="lazy">
-            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-havoc" src="assets/card-icons/wuwa/havoc.png" alt="Havoc" title="Havoc">Phrolova <span class="card-version">v1.1 <i class="fa-solid fa-arrows-rotate update-icon" role="img" aria-label="Updated" title="Updated"></i></span></strong><span class="card-copy">Listen closely. Even the dead remember their part when I raise the baton.</span></span>
+            <img src="cards/thumbs/Wuthering%20Waves/Phrolova.webp" alt="Phrolova" loading="lazy">
+            <span class="card-caption"><strong class="card-title"><img class="meta-icon resonance-havoc" src="assets/card-icons/wuwa/havoc.png" alt="Havoc" title="Havoc">Phrolova <span class="card-version">v1.1 <svg class="update-icon" role="img" aria-label="Updated" viewBox="0 0 24 24" fill="currentColor"><title>Updated</title><path d="M17.65 6.35A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.76-4.24L13 11h7V4l-2.35 2.35z"/></svg></span></strong><span class="card-copy">Listen closely. Even the dead remember their part when I raise the baton.</span></span>
           </a>
         </div>
         </div>
@@ -3825,15 +3844,15 @@
           <p class="card-section-intro"><strong>3 cards.</strong> Persona cards with the comprehensive Persona General Lorebook embedded. Contains Persona 3 Portable, Persona 4 Golden, and Persona 5 Royal spoilers.</p>
           <div class="cards-grid">
           <a class="card-item" href="cards/Persona/Takuto%20Maruki.png" target="_blank" rel="noopener">
-            <img src="cards/Persona/Takuto%20Maruki.png" alt="Takuto Maruki" loading="lazy">
+            <img src="cards/thumbs/Persona/Takuto%20Maruki.webp" alt="Takuto Maruki" loading="lazy">
             <span class="card-caption"><strong class="card-title">Takuto Maruki <span class="card-version">v1.0</span></strong><span class="card-copy">Why don't you come with me to Paradise? O-oh, I just realized that sounds like a cult, ahaha...<br>Art by anarogiizu.</span></span>
           </a>
           <a class="card-item" href="cards/Persona/Tohru%20Adachi.png" target="_blank" rel="noopener">
-            <img src="cards/Persona/Tohru%20Adachi.png" alt="Tohru Adachi" loading="lazy">
+            <img src="cards/thumbs/Persona/Tohru%20Adachi.webp" alt="Tohru Adachi" loading="lazy">
             <span class="card-caption"><strong class="card-title">Tohru Adachi <span class="card-version">v1.0</span></strong><span class="card-copy">Geez, relax. I'm just some bored detective stuck in a sleepy town. Nothing's my fault if people make life interesting, right?<br>Art by Feitian Yimian Shen Jiao Wan Sui.</span></span>
           </a>
           <a class="card-item" href="cards/Persona/Kotone%20Shiomi.png" target="_blank" rel="noopener">
-            <img src="cards/Persona/Kotone%20Shiomi.png" alt="Kotone Shiomi" loading="lazy">
+            <img src="cards/thumbs/Persona/Kotone%20Shiomi.webp" alt="Kotone Shiomi" loading="lazy">
             <span class="card-caption"><strong class="card-title">Kotone Shiomi <span class="card-version">v1.0</span></strong><span class="card-copy">Headphones on, emotionally vulnerable people spotted: Yeah, it's Social Link time.</span></span>
           </a>
         </div>
@@ -3843,11 +3862,11 @@
           <p class="card-section-intro"><strong>2 original cards.</strong> Original ones for now. I might place scenario cards in the future, maybe.</p>
           <div class="cards-grid">
           <a class="card-item" href="cards/OC/Garrett%20Winslow.png" target="_blank" rel="noopener">
-            <img src="cards/OC/Garrett%20Winslow.png" alt="Garrett Winslow" loading="lazy">
+            <img src="cards/thumbs/OC/Garrett%20Winslow.webp" alt="Garrett Winslow" loading="lazy">
             <span class="card-caption"><strong>Garrett Winslow <span class="card-version">v1</span></strong><span class="card-copy">It's not procrastination if the team needs me for one more match.</span></span>
           </a>
           <a class="card-item" href="cards/OC/Silas%20Beaumont-Charbonneau.png" target="_blank" rel="noopener">
-            <img src="cards/OC/Silas%20Beaumont-Charbonneau.png" alt="Silas Beaumont-Charbonneau" loading="lazy">
+            <img src="cards/thumbs/OC/Silas%20Beaumont-Charbonneau.webp" alt="Silas Beaumont-Charbonneau" loading="lazy">
             <span class="card-caption"><strong>Silas Beaumont-Charbonneau <span class="card-version">v1.1</span></strong><span class="card-copy">A prime minister can disappear, apparently. Power's worse at learning the trick.</span></span>
           </a>
         </div>
@@ -3925,9 +3944,9 @@
             </ul>
           </div>
           <div class="preset-downloads downloads-primary">
-            <a href="https://github.com/SillyBunnyTeam/SillyBunny">GitHub</a>
-            <a class="dl-sb" href="preset/Pura's%20Director%20Preset%2015.1%20(SillyBunny).json" download="Pura's Director Preset 15.1 (SillyBunny).json"><i class="fa-solid fa-download" aria-hidden="true"></i>Download SB Preset</a>
-            <a class="dl-st" href="preset/Pura's%20Director%20Preset%2015.1%20(SillyTavern).json" download="Pura's Director Preset 15.1 (SillyTavern).json"><i class="fa-solid fa-download" aria-hidden="true"></i>Download ST Preset</a>
+            <a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny">GitHub</a>
+            <a class="dl-sb" href="preset/Pura's%20Director%20Preset%2015.1%20(SillyBunny).json" download="Pura's Director Preset 15.1 (SillyBunny).json"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Download SB Preset</a>
+            <a class="dl-st" href="preset/Pura's%20Director%20Preset%2015.1%20(SillyTavern).json" download="Pura's Director Preset 15.1 (SillyTavern).json"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Download ST Preset</a>
             <a href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set</a>
           </div>
         </div>
@@ -4008,7 +4027,7 @@
         <h2 class="preset-title ext-group-heading">Character Tools</h2>
         <div class="extensions-list">
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-BotSearcher">BotSearcher</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-BotSearcher">BotSearcher</a></div>
             <div class="ext-desc">Search supported character-card sites and import cards into SillyBunny.</div>
           </div>
         </div>
@@ -4016,19 +4035,19 @@
         <h2 class="preset-title ext-group-heading">Prompting, World Info, and Scripting</h2>
         <div class="extensions-list">
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-WorldInfo-Lab">World Info Lab</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-WorldInfo-Lab">World Info Lab</a></div>
             <div class="ext-desc">Test, trace, and manage lorebook activation.</div>
           </div>
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-PromptTags">Prompt Tags</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-PromptTags">Prompt Tags</a></div>
             <div class="ext-desc">Add configurable XML-style boundaries to prompt sections.</div>
           </div>
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-MacroEnhanced">Macro Enhanced</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-MacroEnhanced">Macro Enhanced</a></div>
             <div class="ext-desc">Adds utility, logic, state, lorebook, and custom macros.</div>
           </div>
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Prompting-Lab">Prompting Lab</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-Prompting-Lab">Prompting Lab</a></div>
             <div class="ext-desc">A workspace tool that helps compare and contrast prompts, caching, macros, etc.</div>
           </div>
         </div>
@@ -4036,11 +4055,11 @@
         <h2 class="preset-title ext-group-heading">Themes and Interface</h2>
         <div class="extensions-list">
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Regex-Agent-Themes">Regex Agent Themes</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-Regex-Agent-Themes">Regex Agent Themes</a></div>
             <div class="ext-desc">Customize the appearance of tracker and companion agent panels.</div>
           </div>
           <div class="ext-item">
-            <div class="ext-name"><a href="https://github.com/SillyBunnyTeam/SillyBunny-Terminal-UI">Terminal UI</a></div>
+            <div class="ext-name"><a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny-Terminal-UI">Terminal UI</a></div>
             <div class="ext-desc">A terminal-inspired UI extension for SillyBunny.</div>
           </div>
         </div>
@@ -4135,47 +4154,45 @@
     </div>
   </section>
   </div>
+  </main>
 
-  <a class="lightbox" id="lb-1" href="#close"><img src="preset/screenshots/scene-time.png" alt="Scene Tracker"></a>
-  <a class="lightbox" id="lb-2" href="#close"><img src="preset/screenshots/relationships.png" alt="Time Tracker"></a>
-  <a class="lightbox" id="lb-3" href="#close"><img src="preset/screenshots/pending-events.png" alt="Parallel Off-Screen Tracker"></a>
-  <a class="lightbox" id="lb-4" href="#close"><img src="preset/screenshots/achievements.png" alt="Relationship Meter"></a>
-  <a class="lightbox" id="lb-5" href="#close"><img src="preset/screenshots/reputation.png" alt="Secret Tracker"></a>
-  <a class="lightbox" id="lb-6" href="#close"><img src="preset/screenshots/inventory.png" alt="Pending Events"></a>
-  <a class="lightbox" id="lb-7" href="#close"><img src="preset/screenshots/status-conditions.png" alt="Status &amp; Conditions"></a>
-  <a class="lightbox" id="lb-8" href="#close"><img src="preset/screenshots/secrets.png" alt="Achievement"></a>
-  <a class="lightbox" id="lb-9" href="#close"><img src="preset/screenshots/parallel-offscreen.png" alt="Inventory"></a>
-  <a class="lightbox" id="lb-10" href="#close"><img src="preset/screenshots/world-detail.png" alt="Rumors &amp; Reputation"></a>
-  <a class="lightbox" id="lb-11" href="#close"><img src="preset/screenshots/cyoa-choices.png" alt="World Detail"></a>
-  <a class="lightbox" id="lb-12" href="#close"><img src="preset/screenshots/choices-basic.png" alt="CYOA Choices"></a>
-  <a class="lightbox" id="lb-13" href="#close"><img src="preset/screenshots/npc-profile-major.png" alt="Major NPC Profile"></a>
-  <a class="lightbox" id="lb-14" href="#close"><img src="preset/screenshots/npc-profile-support.png" alt="Support NPC Profile"></a>
-  <a class="lightbox" id="lb-15" href="#close"><img src="preset/screenshots/npc-profile-minor.png" alt="Minor NPC Profile"></a>
-  <a class="lightbox" id="lb-16" href="#close"><img src="preset/screenshots/npc-relationship-change-example.png" alt="Relationship Change Example"></a>
-  <a class="lightbox" id="lb-17" href="#close"><img src="preset/screenshots/npc-quick-reference-busy-scene.png" alt="NPC Quick Reference Example (Busy Scene)"></a>
-  <a class="lightbox" id="lb-18" href="#close"><img src="preset/screenshots/npc-tier-upgrade-example.png" alt="NPC Tier Upgrade Example"></a>
-  <a class="lightbox" id="lb-19" href="#close"><img src="preset/screenshots/choices-skill-check.png" alt="CYOA Skill Checks"></a>
-  <a class="lightbox" id="lb-20" href="#close"><img src="preset/screenshots/user-stats.png" alt="User Stats"></a>
-  <a class="lightbox" id="lb-21" href="#close"><img src="preset/screenshots/level-up.png" alt="Level Up Companion"></a>
-  <a class="lightbox" id="lb-sb-1" href="#close"><img src="preset/screenshots/sillybunny/banner.jpg" alt="SillyBunny banner"></a>
-  <a class="lightbox" id="lb-sb-2" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-navigate-v1.7.0.png" alt="SillyBunny desktop Workspace"></a>
-  <a class="lightbox" id="lb-sb-3" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-search-v1.7.0.png" alt="SillyBunny desktop Search"></a>
-  <a class="lightbox" id="lb-sb-4" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-in-chat-v1.7.0.png" alt="SillyBunny desktop In-Chat"></a>
-  <a class="lightbox" id="lb-sb-5" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-customize-v1.7.0.png" alt="SillyBunny desktop Customize"></a>
-  <a class="lightbox" id="lb-sb-6" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-agents-v1.7.0.png" alt="SillyBunny desktop Agents"></a>
-  <a class="lightbox" id="lb-sb-7" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-characters-v1.7.0.png" alt="SillyBunny desktop Characters"></a>
-  <a class="lightbox" id="lb-sb-8" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-navigate-v1.7.0.png" alt="SillyBunny mobile Workspace"></a>
-  <a class="lightbox" id="lb-sb-9" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-search-v1.7.0.png" alt="SillyBunny mobile Search"></a>
-  <a class="lightbox" id="lb-sb-10" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-in-chat-v1.7.0.png" alt="SillyBunny mobile In-Chat"></a>
-  <a class="lightbox" id="lb-sb-11" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.7.0.png" alt="SillyBunny mobile Customize"></a>
-  <a class="lightbox" id="lb-sb-12" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.7.0.png" alt="SillyBunny mobile Agents"></a>
-  <a class="lightbox" id="lb-sb-13" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.7.0.png" alt="SillyBunny mobile Characters"></a>
-  <a class="lightbox" id="lb-sb-14" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-desktop-conversation-v1.7.0.png" alt="SillyBunny desktop Conversation Mode"></a>
-  <a class="lightbox" id="lb-sb-15" href="#close"><img src="preset/screenshots/sillybunny/sillybunny-ui-mobile-conversation-v1.7.0.png" alt="SillyBunny mobile Conversation Mode"></a>
-  <a class="lightbox" id="lb-preset-15-1" href="#close"><img src="preset/screenshots/pura-director-preset-15.1.png" alt="Pura's Director Preset 15.1 release art"></a>
-  <a class="lightbox" id="lb-preset-14-0" href="#close"><img src="preset/screenshots/pura-director-preset-14.0.png" alt="Pura's Director Preset 14.0 release art"></a>
-  <a class="lightbox" id="lb-preset-13-3" href="#close"><img src="preset/screenshots/pura-director-preset-13.3.png" alt="Pura's Director Preset 13.3 release art"></a>
-  <a class="lightbox" id="lb-preset-13-2" href="#close"><img src="preset/screenshots/pura-director-preset-13.2.jpg" alt="Pura's Director Preset 13.2 release art"></a>
+  <a class="lightbox" id="lb-1" href="#close"><img loading="lazy" src="preset/screenshots/scene-tracker.png" alt="Scene Tracker"></a>
+  <a class="lightbox" id="lb-2" href="#close"><img loading="lazy" src="preset/screenshots/time-tracker.png" alt="Time Tracker"></a>
+  <a class="lightbox" id="lb-3" href="#close"><img loading="lazy" src="preset/screenshots/parallel-offscreen-tracker.png" alt="Parallel Off-Screen Tracker"></a>
+  <a class="lightbox" id="lb-4" href="#close"><img loading="lazy" src="preset/screenshots/relationship-meter.png" alt="Relationship Meter"></a>
+  <a class="lightbox" id="lb-5" href="#close"><img loading="lazy" src="preset/screenshots/secret-tracker.png" alt="Secret Tracker"></a>
+  <a class="lightbox" id="lb-6" href="#close"><img loading="lazy" src="preset/screenshots/pending-events.png" alt="Pending Events"></a>
+  <a class="lightbox" id="lb-7" href="#close"><img loading="lazy" src="preset/screenshots/status-conditions.png" alt="Status &amp; Conditions"></a>
+  <a class="lightbox" id="lb-8" href="#close"><img loading="lazy" src="preset/screenshots/achievement.png" alt="Achievement"></a>
+  <a class="lightbox" id="lb-9" href="#close"><img loading="lazy" src="preset/screenshots/inventory.png" alt="Inventory"></a>
+  <a class="lightbox" id="lb-10" href="#close"><img loading="lazy" src="preset/screenshots/rumors-reputation.png" alt="Rumors &amp; Reputation"></a>
+  <a class="lightbox" id="lb-11" href="#close"><img loading="lazy" src="preset/screenshots/world-detail.png" alt="World Detail"></a>
+  <a class="lightbox" id="lb-12" href="#close"><img loading="lazy" src="preset/screenshots/cyoa-choices.png" alt="CYOA Choices"></a>
+  <a class="lightbox" id="lb-13" href="#close"><img loading="lazy" src="preset/screenshots/npc-profile-major.png" alt="Major NPC Profile"></a>
+  <a class="lightbox" id="lb-14" href="#close"><img loading="lazy" src="preset/screenshots/npc-profile-support.png" alt="Support NPC Profile"></a>
+  <a class="lightbox" id="lb-15" href="#close"><img loading="lazy" src="preset/screenshots/npc-profile-minor.png" alt="Minor NPC Profile"></a>
+  <a class="lightbox" id="lb-16" href="#close"><img loading="lazy" src="preset/screenshots/npc-relationship-change-example.png" alt="Relationship Change Example"></a>
+  <a class="lightbox" id="lb-17" href="#close"><img loading="lazy" src="preset/screenshots/npc-quick-reference-busy-scene.png" alt="NPC Quick Reference Example (Busy Scene)"></a>
+  <a class="lightbox" id="lb-18" href="#close"><img loading="lazy" src="preset/screenshots/npc-tier-upgrade-example.png" alt="NPC Tier Upgrade Example"></a>
+  <a class="lightbox" id="lb-19" href="#close"><img loading="lazy" src="preset/screenshots/choices-skill-check.png" alt="CYOA Skill Checks"></a>
+  <a class="lightbox" id="lb-20" href="#close"><img loading="lazy" src="preset/screenshots/user-stats.png" alt="User Stats"></a>
+  <a class="lightbox" id="lb-21" href="#close"><img loading="lazy" src="preset/screenshots/level-up.png" alt="Level Up Companion"></a>
+  <a class="lightbox" id="lb-sb-1" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/banner.jpg" alt="SillyBunny banner"></a>
+  <a class="lightbox" id="lb-sb-2" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-desktop-navigate-v1.7.0.png" alt="SillyBunny desktop Workspace"></a>
+  <a class="lightbox" id="lb-sb-3" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-desktop-search-v1.7.0.png" alt="SillyBunny desktop Search"></a>
+  <a class="lightbox" id="lb-sb-4" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-desktop-in-chat-v1.7.0.png" alt="SillyBunny desktop In-Chat"></a>
+  <a class="lightbox" id="lb-sb-5" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-desktop-customize-v1.7.0.png" alt="SillyBunny desktop Customize"></a>
+  <a class="lightbox" id="lb-sb-6" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-desktop-agents-v1.7.0.png" alt="SillyBunny desktop Agents"></a>
+  <a class="lightbox" id="lb-sb-7" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-desktop-characters-v1.7.0.png" alt="SillyBunny desktop Characters"></a>
+  <a class="lightbox" id="lb-sb-8" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-mobile-navigate-v1.7.0.png" alt="SillyBunny mobile Workspace"></a>
+  <a class="lightbox" id="lb-sb-9" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-mobile-search-v1.7.0.png" alt="SillyBunny mobile Search"></a>
+  <a class="lightbox" id="lb-sb-10" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-mobile-in-chat-v1.7.0.png" alt="SillyBunny mobile In-Chat"></a>
+  <a class="lightbox" id="lb-sb-11" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-mobile-customize-v1.7.0.png" alt="SillyBunny mobile Customize"></a>
+  <a class="lightbox" id="lb-sb-12" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-mobile-agents-v1.7.0.png" alt="SillyBunny mobile Agents"></a>
+  <a class="lightbox" id="lb-sb-13" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-mobile-characters-v1.7.0.png" alt="SillyBunny mobile Characters"></a>
+  <a class="lightbox" id="lb-sb-14" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-desktop-conversation-v1.7.0.png" alt="SillyBunny desktop Conversation Mode"></a>
+  <a class="lightbox" id="lb-sb-15" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-mobile-conversation-v1.7.0.png" alt="SillyBunny mobile Conversation Mode"></a>
+  <a class="lightbox" id="lb-preset-15-1" href="#close"><img loading="lazy" src="preset/screenshots/pura-director-preset-15.1.png" alt="Pura's Director Preset 15.1 release art"></a>
 
   <script>
     // Tabs are radios, so #model-samples etc. need wiring up by hand.

@@ -169,7 +169,7 @@
       "kind": "custom",
       "refersTo": "screenshot-thumb",
       "description": "Linked gallery image with quiet border, hover glow, and centered caption.",
-      "html": "<a class=\"ds-thumb\" href=\"#\"><img src=\"preset/screenshots/scene-time.png\" alt=\"Scene Tracker\"><span>Scene Tracker</span></a>",
+      "html": "<a class=\"ds-thumb\" href=\"#\"><img src=\"preset/screenshots/scene-tracker.png\" alt=\"Scene Tracker\"><span>Scene Tracker</span></a>",
       "css": ".ds-thumb { display: block; text-decoration: none; font-family: Figtree, sans-serif; } .ds-thumb img { width: 100%; height: auto; object-fit: contain; border-radius: 6px; border: 1px solid #2a3445; display: block; transition: border-color 0.25s, box-shadow 0.25s; } .ds-thumb:hover img { border-color: #4f6380; box-shadow: 0 2px 18px rgba(84, 160, 255, 0.1); } .ds-thumb span { display: block; margin-top: 0.35rem; color: #779687; font-size: 0.75rem; text-align: center; }"
     }
   ],
