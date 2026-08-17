@@ -588,6 +588,8 @@
     #card-subtab-genshin:focus-visible ~ .card-subtab-labels label[for="card-subtab-genshin"],
     #card-subtab-limbus:focus-visible ~ .card-subtab-labels label[for="card-subtab-limbus"],
     #card-subtab-wuwa:focus-visible ~ .card-subtab-labels label[for="card-subtab-wuwa"],
+    #card-subtab-persona:focus-visible ~ .card-subtab-labels label[for="card-subtab-persona"],
+    #card-subtab-danganronpa:focus-visible ~ .card-subtab-labels label[for="card-subtab-danganronpa"],
     #card-subtab-oc:focus-visible ~ .card-subtab-labels label[for="card-subtab-oc"],
     #card-subtab-lorebooks:focus-visible ~ .card-subtab-labels label[for="card-subtab-lorebooks"] {
       outline: 2px solid #8fb8df;
@@ -638,6 +640,7 @@
     #card-subtab-limbus:checked ~ .card-subtab-content-limbus { display: block; }
     #card-subtab-wuwa:checked ~ .card-subtab-content-wuwa { display: block; }
     #card-subtab-persona:checked ~ .card-subtab-content-persona { display: block; }
+    #card-subtab-danganronpa:checked ~ .card-subtab-content-danganronpa { display: block; }
     #card-subtab-oc:checked ~ .card-subtab-content-oc { display: block; }
     #card-subtab-lorebooks:checked ~ .card-subtab-content-lorebooks { display: block; }
 
@@ -691,6 +694,7 @@
     .card-subtab-labels label[for="card-subtab-limbus"] { --pill-hue: 24; }
     .card-subtab-labels label[for="card-subtab-wuwa"] { --pill-hue: 205; }
     .card-subtab-labels label[for="card-subtab-persona"] { --pill-hue: 265; }
+    .card-subtab-labels label[for="card-subtab-danganronpa"] { --pill-hue: 0; }
     .card-subtab-labels label[for="card-subtab-oc"] { --pill-hue: 325; }
     .card-subtab-labels label[for="card-subtab-lorebooks"] { --pill-hue: 142; }
 
@@ -712,6 +716,7 @@
     #card-subtab-limbus:checked ~ .card-subtab-labels label[for="card-subtab-limbus"],
     #card-subtab-wuwa:checked ~ .card-subtab-labels label[for="card-subtab-wuwa"],
     #card-subtab-persona:checked ~ .card-subtab-labels label[for="card-subtab-persona"],
+    #card-subtab-danganronpa:checked ~ .card-subtab-labels label[for="card-subtab-danganronpa"],
     #card-subtab-oc:checked ~ .card-subtab-labels label[for="card-subtab-oc"],
     #card-subtab-lorebooks:checked ~ .card-subtab-labels label[for="card-subtab-lorebooks"] {
       background: linear-gradient(135deg, var(--pill-active-bg), rgba(31, 42, 54, 0.94) 72%);
@@ -1721,7 +1726,7 @@
     <img class="hero-favicon" src="favicon-256.png" alt="" aria-hidden="true" decoding="async">
     <h1 class="rainbow">welcome :3</h1>
     <p class="subtitle">purachina's stuff</p>
-    <p class="last-updated">Last Updated August 15, 2026</p>
+    <p class="last-updated">Last Updated August 17, 2026</p>
     <div class="links">
       <a href="https://platberlitz.github.io/platinum-startpage/" class="glow-pill startpage-link">startpage<span class="link-info">localStorage customisable startpage</span></a>
       <a href="assistant/" class="glow-pill synapse-link">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
@@ -3646,6 +3651,7 @@
         <input type="radio" name="card-subtab" id="card-subtab-limbus">
         <input type="radio" name="card-subtab" id="card-subtab-wuwa">
         <input type="radio" name="card-subtab" id="card-subtab-persona">
+        <input type="radio" name="card-subtab" id="card-subtab-danganronpa">
         <input type="radio" name="card-subtab" id="card-subtab-oc">
         <input type="radio" name="card-subtab" id="card-subtab-lorebooks">
 
@@ -3654,6 +3660,7 @@
           <label for="card-subtab-limbus">Limbus Company</label>
           <label for="card-subtab-wuwa">Wuthering Waves</label>
           <label for="card-subtab-persona">Persona</label>
+          <label for="card-subtab-danganronpa">Danganronpa</label>
           <label for="card-subtab-oc">OC</label>
           <label for="card-subtab-lorebooks">Lorebooks</label>
         </div>
@@ -3769,7 +3776,7 @@
         </div>
 
         <div class="card-subtab-content card-subtab-content-limbus">
-          <p class="card-section-intro"><strong>8 cards.</strong> Includes the expanded 325-entry Project Moon + Limbus Company lorebook, though it's more focused on Limbus Company lore. All of them contain spoilers up to Canto IX, so tread carefully.</p>
+          <p class="card-section-intro"><strong>9 cards.</strong> Includes the expanded 325-entry Project Moon + Limbus Company lorebook, though it's more focused on Limbus Company lore. All of them contain spoilers up to Canto IX, so tread carefully.</p>
           <div class="cards-grid">
           <a class="card-item" href="cards/Limbus/Don%20Quixote.png" target="_blank" rel="noopener">
             <img src="cards/thumbs/Limbus/Don%20Quixote.webp" alt="Don Quixote" loading="lazy">
@@ -3786,6 +3793,10 @@
           <a class="card-item" href="cards/Limbus/Ishmael.png" target="_blank" rel="noopener">
             <img src="cards/thumbs/Limbus/Ishmael.webp" alt="Ishmael" loading="lazy">
             <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/ishmael.png" alt="Ishmael icon" title="Ishmael">Ishmael <span class="card-version">v1.0</span></strong><span class="card-copy">Steady, now. We'll row through hell if we must; don't mistake my patience for forgiveness.</span></span>
+          </a>
+          <a class="card-item" href="cards/Limbus/Kong%20Qiu.png" target="_blank" rel="noopener">
+            <img src="cards/thumbs/Limbus/Kong%20Qiu.webp" alt="Kong Qiu" loading="lazy">
+            <span class="card-caption"><strong class="card-title"><img class="card-title-portrait" src="assets/card-icons/limbus/pinky.png" alt="The Pinky icon" title="The Pinky">Kong Qiu <span class="card-version">v1.0</span></strong><span class="card-copy">Names decide who feeds you and who buries you. I keep a ledger of both.<br>Art by wohaoxuanku.</span></span>
           </a>
           <a class="card-item" href="cards/Limbus/Lei%20Heng.png" target="_blank" rel="noopener">
             <img src="cards/thumbs/Limbus/Lei%20Heng.webp" alt="Lei Heng" loading="lazy">
@@ -3858,6 +3869,24 @@
         </div>
         </div>
 
+        <div class="card-subtab-content card-subtab-content-danganronpa">
+          <p class="card-section-intro"><strong>3 cards.</strong> Only three so far - there's a pile more sitting half-finished. They share an 89-entry Danganronpa lorebook, which you can also grab on its own from the Lorebooks tab. Between them they spoil the first two games and Ultra Despair Girls.</p>
+          <div class="cards-grid">
+          <a class="card-item" href="cards/Danganronpa/Hajime%20Hinata.png" target="_blank" rel="noopener">
+            <img src="cards/thumbs/Danganronpa/Hajime%20Hinata.webp" alt="Hajime Hinata" loading="lazy">
+            <span class="card-caption"><strong class="card-title">Hajime Hinata <span class="card-version">v1.0</span></strong><span class="card-copy">Everyone here has a title. Mine's blank, so I ask the questions nobody else wants to say out loud.<br>Art by suangasua.</span></span>
+          </a>
+          <a class="card-item" href="cards/Danganronpa/Nagito%20Komaeda.png" target="_blank" rel="noopener">
+            <img src="cards/thumbs/Danganronpa/Nagito%20Komaeda.webp" alt="Nagito Komaeda" loading="lazy">
+            <span class="card-caption"><strong class="card-title">Nagito Komaeda <span class="card-version">v1.0</span></strong><span class="card-copy">Please don't mind me, I'm only a stepping stone. But the hope that climbs out of despair... ah, that's worth anything.<br>Art by motimonaka3.</span></span>
+          </a>
+          <a class="card-item" href="cards/Danganronpa/Toko%20Fukawa.png" target="_blank" rel="noopener">
+            <img src="cards/thumbs/Danganronpa/Toko%20Fukawa.webp" alt="Toko Fukawa" loading="lazy">
+            <span class="card-caption"><strong class="card-title">Toko Fukawa <span class="card-version">v1.0</span></strong><span class="card-copy">I've got a stun gun and a serial killer sharing my head, so spare me the concern. If I ever write it down, it'll be for m-me.<br>Art by danraz0r.</span></span>
+          </a>
+        </div>
+        </div>
+
         <div class="card-subtab-content card-subtab-content-oc">
           <p class="card-section-intro"><strong>2 original cards.</strong> Original ones for now. I might place scenario cards in the future, maybe.</p>
           <div class="cards-grid">
@@ -3875,6 +3904,13 @@
         <div class="card-subtab-content card-subtab-content-lorebooks">
           <p class="card-section-intro"><strong>Standalone lorebook downloads.</strong> Same card-pack books, split out for people who want the world info without importing a character first.</p>
           <div class="extensions-list lorebook-list">
+            <div class="ext-item">
+              <div class="ext-name">Danganronpa</div>
+              <div class="ext-desc">Danganronpa General Lorebook, 89 entries. Both Hope's Peak classes, the killing game systems, and the Towa City side of things. Spoilers through Trigger Happy Havoc, Goodbye Despair and Ultra Despair Girls.</div>
+              <div class="preset-downloads">
+                <a href="cards/Danganronpa/Danganronpa%20-%20General%20Lorebook.json" download="Danganronpa - General Lorebook.json">Download Lorebook</a>
+              </div>
+            </div>
             <div class="ext-item">
               <div class="ext-name">Genshin Impact</div>
               <div class="ext-desc">Teyvat General Lorebook, 199 entries. Pulled from the current Genshin card pack for standalone import.</div>
