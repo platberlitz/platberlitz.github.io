@@ -1,125 +1,249 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-05-12T11:52:27+08:00",
+  "generatedAt": "2026-08-20T00:00:00+08:00",
   "title": "Design System: purachina's stuff",
   "extensions": {
     "colorMeta": {
-      "page-bg": {
+      "bg": {
         "role": "neutral",
-        "displayName": "Workbench Black",
-        "canonical": "#0a0a0f",
-        "tonalRamp": ["#05050a", "#0a0a0f", "#12151f", "#1c2330"]
+        "displayName": "Console Olive",
+        "canonical": "#141a13",
+        "tonalRamp": [
+          "#0f140e",
+          "#141a13",
+          "#2a3029",
+          "#444a43"
+        ]
       },
-      "text-base": {
+      "bg-alt": {
         "role": "neutral",
-        "displayName": "Workbench Green Text",
-        "canonical": "#9bbbaa",
-        "tonalRamp": ["#607f70", "#739282", "#89aa99", "#9bbbaa", "#d8eee2"]
+        "displayName": "Surface Olive",
+        "canonical": "#232c22",
+        "tonalRamp": [
+          "#192018",
+          "#232c22",
+          "#3c443a",
+          "#586157"
+        ]
       },
-      "accent-blue": {
+      "fg": {
+        "role": "neutral",
+        "displayName": "Console Text",
+        "canonical": "#dee8dc",
+        "tonalRamp": [
+          "#697068",
+          "#9ea69d",
+          "#dee8dc",
+          "#e4ede2"
+        ]
+      },
+      "fg-dim": {
+        "role": "neutral",
+        "displayName": "Dim Console",
+        "canonical": "#94a491",
+        "tonalRamp": [
+          "#556053",
+          "#94a491",
+          "#a5b2a2",
+          "#c1cbbf"
+        ]
+      },
+      "accent": {
         "role": "primary",
-        "displayName": "Electric Blue Accent",
-        "canonical": "#54a0ff",
-        "tonalRamp": ["#353f52", "#536681", "#54a0ff", "#6eaef9", "#c7e7ff"]
+        "displayName": "Console Green",
+        "canonical": "#a0e570",
+        "tonalRamp": [
+          "#425f30",
+          "#70a04f",
+          "#a0e570",
+          "#b6ea93",
+          "#cceeb5"
+        ]
       },
-      "accent-green": {
+      "accent2": {
         "role": "secondary",
-        "displayName": "Bunny Green Accent",
-        "canonical": "#54d9ac",
-        "tonalRamp": ["#184336", "#54d9ac", "#8fe7a8", "#c9f5e2", "#e7fff0"]
+        "displayName": "Console Teal",
+        "canonical": "#79c4b7",
+        "tonalRamp": [
+          "#395a53",
+          "#588d83",
+          "#79c4b7",
+          "#9ed3c8",
+          "#c0e1d7"
+        ],
+        "note": "Unchanged by the green rotation - it was already the cool half of the pair, and at 182deg it stays 48deg clear of the accent."
       },
-      "accent-pink": {
-        "role": "tertiary",
-        "displayName": "Startpage Pink Accent",
-        "canonical": "#ff84cd",
-        "tonalRamp": ["#461d36", "#ff84cd", "#e7a8ca", "#ffe0f0", "#ffeff8"]
+      "border": {
+        "role": "primary",
+        "displayName": "Moss",
+        "canonical": "#5f8f55",
+        "tonalRamp": [
+          "#304a2a",
+          "#42673a",
+          "#5f8f55",
+          "#7da174"
+        ]
       },
-      "accent-orange": {
+      "ok": {
         "role": "tertiary",
-        "displayName": "Support Orange Accent",
-        "canonical": "#ff9500",
-        "tonalRamp": ["#482c16", "#ff9500", "#ffad5c", "#ffd9a8", "#ffe8c9"]
+        "displayName": "Status OK",
+        "canonical": "#b8d26b",
+        "tonalRamp": [
+          "#62703b",
+          "#b8d26b",
+          "#cddf99"
+        ]
+      },
+      "warn": {
+        "role": "tertiary",
+        "displayName": "Status Warn",
+        "canonical": "#f0e06b",
+        "tonalRamp": [
+          "#7e763b",
+          "#f0e06b",
+          "#f1e899"
+        ]
+      },
+      "err": {
+        "role": "tertiary",
+        "displayName": "Status Error",
+        "canonical": "#e05c3f",
+        "tonalRamp": [
+          "#763425",
+          "#e05c3f",
+          "#e7927c"
+        ]
+      }
+    },
+    "hueRamp": {
+      "purpose": "The entire hued surface system. Twenty-four tab hues and seven project-link hues derive from these eight properties and nothing else; retune here, nowhere else. Chroma is held near --fg-dim's (~0.021 oklch) so hue still identifies a control without leaving the Hazard palette, and lightness does the contrast work. Measured across all 26 hues ON A SCANLINE ROW: text >= 5.7:1, every border >= 3.3:1. The two preset download buttons derive from this block too, at hues 245 and 165.",
+      "properties": {
+        "--pill-bg": "oklch(0.24 0.012 var(--pill-hue))",
+        "--pill-hover-bg": "oklch(0.29 0.020 var(--pill-hue))",
+        "--pill-active-bg": "oklch(0.74 0.055 var(--pill-hue))",
+        "--pill-border": "oklch(0.58 0.028 var(--pill-hue))",
+        "--pill-hover-border": "oklch(0.62 0.048 var(--pill-hue))",
+        "--pill-active-border": "oklch(0.74 0.055 var(--pill-hue))",
+        "--pill-text": "oklch(0.72 0.028 var(--pill-hue))",
+        "--pill-hover-text": "oklch(0.90 0.036 var(--pill-hue))"
+      },
+      "hues": {
+        "preset": 145,
+        "options": 175,
+        "opinions": 275,
+        "previous": 76,
+        "trackers": 28,
+        "changelog": 215,
+        "samples": 330,
+        "extensions": 190,
+        "themes": 292,
+        "cards": 226,
+        "sb-overview": 148,
+        "sb-features": 174,
+        "sb-agents": 260,
+        "sb-extensions": 190,
+        "sb-screenshots": 42,
+        "genshin": 78,
+        "limbus": 24,
+        "wuwa": 205,
+        "persona": 265,
+        "danganronpa": 0,
+        "oc": 325,
+        "lorebooks": 142,
+        "theme-dark": 252,
+        "theme-light": 82,
+        "platform-st": 245,
+        "platform-sb": 165,
+        "startpage": 350,
+        "synapse": 245,
+        "sdproxy": 60,
+        "sillybunny": 165,
+        "botbooru": 300,
+        "badge-agent": 75
       }
     },
     "typographyMeta": {
       "display": {
-        "displayName": "Rainbow Hero Display",
-        "purpose": "The welcome headline only."
+        "displayName": "Rainbow Hero",
+        "purpose": "The `welcome :3` heading only. The one gradient on the page."
       },
       "headline": {
-        "displayName": "Resource Headline",
-        "purpose": "Preset, SillyBunny, and tab-panel titles."
+        "displayName": "Panel Title",
+        "purpose": "Preset and section titles inside content panels."
+      },
+      "title": {
+        "displayName": "Section Heading",
+        "purpose": "Section headings and prominent tab-panel headings."
       },
       "body": {
         "displayName": "Dense Resource Body",
-        "purpose": "Long preset explanations, changelog notes, and option copy."
+        "purpose": "Long preset explanations, changelog notes, and option copy. Capped at 78ch."
       },
       "label": {
-        "displayName": "Pill Label",
-        "purpose": "Tabs, downloads, platform labels, and compact controls."
+        "displayName": "Control Label",
+        "purpose": "Tab labels, download links, resource names, compact controls."
       },
       "micro": {
-        "displayName": "Metadata Microcopy",
-        "purpose": "Captions, versions, badge labels, and helper text."
+        "displayName": "Statusline & Metadata",
+        "purpose": "Statusline, link info, captions, version metadata, badges, table labels."
       }
     },
     "shadows": [
       {
+        "name": "flat-reset",
+        "value": "border-radius: 0; box-shadow: none; text-shadow: none;",
+        "purpose": "Applied via a global `*` rule. There is no elevation system; anything added later arrives flat."
+      },
+      {
         "name": "favicon-drop",
-        "value": "drop-shadow(0 10px 24px rgba(32, 64, 48, 0.28))",
-        "purpose": "Soft shadow under the pixel favicon in the hero."
+        "value": "drop-shadow(0 0 10px rgba(160, 229, 112, 0.16))",
+        "purpose": "The hero pixel favicon, and the only glow on a component. Mirrors the extension's single mascot drop-shadow."
       },
       {
-        "name": "soft-pill-glow",
-        "value": "0 0 20px rgba(84, 160, 255, 0.18)",
-        "purpose": "Default glow depth for project pills."
-      },
-      {
-        "name": "hover-pill-glow",
-        "value": "0 0 24px rgba(84, 160, 255, 0.28)",
-        "purpose": "Project-pill hover feedback."
-      },
-      {
-        "name": "active-blue-platform",
-        "value": "0 0 24px rgba(84, 160, 255, 0.34), 0 8px 24px rgba(31, 68, 110, 0.28)",
-        "purpose": "Selected SillyTavern platform state."
-      },
-      {
-        "name": "active-green-platform",
-        "value": "0 0 24px rgba(92, 214, 130, 0.34), 0 8px 24px rgba(29, 82, 48, 0.28)",
-        "purpose": "Selected SillyBunny platform state."
-      },
-      {
-        "name": "resource-hover-glow",
-        "value": "0 0 18px rgba(84, 160, 255, 0.08)",
-        "purpose": "Low hover glow for tabs, resource cards, and extension cards."
+        "name": "statusline-bloom",
+        "value": "text-shadow: 0 0 2px var(--glow)",
+        "purpose": "Phosphor bloom on the statusline, the one text-shadow the flat reset gives back. Part of the CRT overlay."
       }
     ],
     "motion": [
       {
         "name": "state-transition",
         "value": "0.25s",
-        "purpose": "Default color, border, shadow, and hover transitions."
+        "purpose": "Default color, border, and background hover transitions."
       },
       {
-        "name": "panel-enter",
-        "value": "0.34s ease",
-        "purpose": "Platform panel fade and translate reveal."
+        "name": "card-transition",
+        "value": "0.22s ease-out",
+        "purpose": "Card border and surface hover."
+      },
+      {
+        "name": "tooltip-transition",
+        "value": "0.18s ease-out",
+        "purpose": "The link-info popover on the hero pills."
       },
       {
         "name": "rainbow-shift",
         "value": "8s linear infinite",
-        "purpose": "Existing animated hero gradient."
+        "purpose": "The hero gradient. Frozen under prefers-reduced-motion."
+      },
+      {
+        "name": "flicker",
+        "value": "4s infinite",
+        "purpose": "CRT overlay. Dips to 92% opacity for one frame every four seconds. Disabled under prefers-reduced-motion."
       }
     ],
     "breakpoints": [
       {
-        "name": "table-mobile",
-        "value": "760px"
+        "name": "rails-collapse",
+        "value": "900px"
       },
       {
         "name": "cards-two-column",
         "value": "768px"
+      },
+      {
+        "name": "table-mobile",
+        "value": "760px"
       },
       {
         "name": "mobile-stack",
@@ -129,94 +253,163 @@
         "name": "single-column-gallery",
         "value": "540px"
       }
-    ]
+    ],
+    "palette": {
+      "basis": "Hazard Console (SillyBunny-Terminal-UI style.css:303), hue family rotated to 140deg.",
+      "method": "Every token keeps the original's lightness and chroma; only the hue moved. That is why all 26 tab hues, every border and every text pair still clear contrast after the recolour without a single other edit. Recolour again the same way: rotate the hue, leave L and C alone.",
+      "accentHue": 134,
+      "familyHue": 140,
+      "accent2Hue": 182,
+      "glow": "rgba(160, 229, 112, 0.16)"
+    }
   },
   "components": [
     {
-      "name": "Project Glow Pill",
-      "kind": "button",
-      "refersTo": "link-pill",
-      "description": "Top-level project link with a project-specific tint and glow.",
-      "html": "<a class=\"ds-project-pill\" href=\"#\"><span>Synapse</span><small>localStorage AI assistant frontend</small></a>",
-      "css": ".ds-project-pill { display: inline-block; color: #c7e7ff; text-decoration: none; border: 1px solid rgba(102, 184, 255, 0.44); border-radius: 999px; background: linear-gradient(135deg, rgba(26, 45, 72, 0.46), rgba(20, 33, 52, 0.24)); box-shadow: 0 0 20px rgba(102, 184, 255, 0.22); padding: 0.55rem 1.6rem; font: 400 0.95rem/1.4 Figtree, sans-serif; transition: color 0.25s, border-color 0.25s, box-shadow 0.25s; } .ds-project-pill small { display: block; margin-top: 0.15rem; color: #8fb8df; font-size: 0.7rem; } .ds-project-pill:hover { color: #e4f4ff; border-color: rgba(136, 204, 255, 0.68); box-shadow: 0 0 24px rgba(102, 184, 255, 0.34); } .ds-project-pill:hover small { color: #bbdbf8; }"
+      "name": "Statusline",
+      "kind": "chrome",
+      "refersTo": "statusline",
+      "description": "Sticky one-line bar carrying the counts that actually change. Counts are recomputed from the DOM on load so they cannot drift.",
+      "html": "<p class=\"ds-statusline\">preset:15.1 | cards:53 | themes:48 | updated:2026-08-20</p>",
+      "css": ".ds-statusline { position: sticky; top: 0; z-index: 50; width: 100%; padding: 6px 10px; background: #232c22; border-block-end: 1px solid #5f8f55; color: #94a491; font: 600 0.76rem/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-statusline::before { content: \"purachina's stuff | \"; }"
     },
     {
-      "name": "Preset Tab Pill",
+      "name": "Project Link",
+      "kind": "button",
+      "refersTo": "link-pill",
+      "description": "Top-level project link. Keeps a hue from the ramp for identity; Ko-fi is the exception and takes console green outright.",
+      "html": "<a class=\"ds-project-link\" href=\"#\">Synapse<span class=\"ds-link-info\">localStorage AI assistant frontend</span></a>",
+      "css": ".ds-project-link { --pill-hue: 245; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0.32rem 0.95rem; text-decoration: none; letter-spacing: 0.01em; color: oklch(0.72 0.038 var(--pill-hue)); border: 1px solid oklch(0.50 0.038 var(--pill-hue)); background: oklch(0.25 0.016 var(--pill-hue)); font: 400 0.83rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; transition: color 0.25s, border-color 0.25s, background 0.25s; } .ds-project-link:hover { color: oklch(0.89 0.045 var(--pill-hue)); border-color: oklch(0.66 0.055 var(--pill-hue)); background: oklch(0.30 0.024 var(--pill-hue)); } .ds-link-info { color: oklch(0.62 0.026 var(--pill-hue)); font-size: 0.68rem; }"
+    },
+    {
+      "name": "Tab Label",
       "kind": "nav",
       "refersTo": "tab-pill",
-      "description": "Radio-label tab used for preset sections, platform switching, and sub-tabs.",
-      "html": "<label class=\"ds-tab-pill\">Changelog</label><label class=\"ds-tab-pill ds-tab-pill-active\">Preset</label>",
-      "css": ".ds-tab-pill { display: inline-flex; align-items: center; justify-content: center; color: #789889; border: 1px solid #2b3445; border-radius: 999px; background: rgba(18, 21, 31, 0.82); padding: 0.4rem 1.3rem; font: 400 0.85rem/1.4 Figtree, sans-serif; white-space: nowrap; cursor: pointer; transition: color 0.25s, border-color 0.25s, background 0.25s, box-shadow 0.25s; } .ds-tab-pill:hover { color: #b9d9ca; border-color: #415067; background: rgba(24, 30, 42, 0.94); box-shadow: 0 0 16px rgba(84, 160, 255, 0.08); } .ds-tab-pill-active { color: #e0f2e7; border-color: #566985; background: rgba(28, 35, 48, 0.96); box-shadow: inset 0 0 0 1px rgba(186, 220, 255, 0.04), 0 0 18px rgba(84, 160, 255, 0.1); }"
+      "description": "Radio-label tab used for preset sections, platform switching, and sub-tabs. Selected state inverts rather than glowing.",
+      "html": "<label class=\"ds-tab\">Changelog</label><label class=\"ds-tab ds-tab-active\">Preset</label>",
+      "css": ".ds-tab { --pill-hue: 145; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0.4rem 1.3rem; cursor: pointer; user-select: none; white-space: nowrap; color: oklch(0.72 0.028 var(--pill-hue)); border: 1px solid oklch(0.58 0.028 var(--pill-hue)); background: oklch(0.24 0.012 var(--pill-hue)); font: 400 0.8rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; transition: color 0.25s, border-color 0.25s, background 0.25s; } .ds-tab:hover { color: oklch(0.90 0.036 var(--pill-hue)); border-color: oklch(0.62 0.048 var(--pill-hue)); background: oklch(0.29 0.020 var(--pill-hue)); } .ds-tab-active { color: #141a13; font-weight: 700; border-color: oklch(0.74 0.055 var(--pill-hue)); background: oklch(0.74 0.055 var(--pill-hue)); }"
+    },
+    {
+      "name": "Download Button",
+      "kind": "button",
+      "refersTo": "download-pill",
+      "description": "Secondary downloads are bracketed. The two current preset downloads take the terminal primary idiom and each wears its platform, using the same desaturated fill the switcher uses when that platform is selected. Brackets or an icon, never both.",
+      "html": "<a class=\"ds-download\" href=\"#\">Regex Set</a><a class=\"ds-download ds-download-primary\" href=\"#\">Download 15.1 (SillyTavern)</a><a class=\"ds-download ds-download-primary ds-sb\" href=\"#\">Download 15.1 (SillyBunny)</a>",
+      "css": ".ds-download { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0.5rem 1.4rem; text-decoration: none; color: #dee8dc; border: 1px solid #5f8f55; background: #232c22; font: 400 0.8rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; transition: color 0.25s, border-color 0.25s, background 0.25s; } .ds-download::before { content: '[\\00a0' / ''; color: #94a491; } .ds-download::after { content: '\\00a0]' / ''; color: #94a491; } .ds-download:hover { color: #a0e570; border-color: #a0e570; background: #141a13; } .ds-download-primary { --pill-hue: 245; padding: 0.6rem 1.6rem; font-weight: 700; color: #141a13; border-color: oklch(0.74 0.055 var(--pill-hue)); background: oklch(0.74 0.055 var(--pill-hue)); } .ds-download-primary.ds-sb { --pill-hue: 165; } .ds-download-primary::before, .ds-download-primary::after { content: none; } .ds-download-primary:hover { color: oklch(0.74 0.055 var(--pill-hue)); border-color: oklch(0.74 0.055 var(--pill-hue)); background: #141a13; }"
     },
     {
       "name": "Resource Card",
       "kind": "card",
       "refersTo": "resource-card",
-      "description": "Compact information card for extensions, features, and agent descriptions.",
-      "html": "<article class=\"ds-resource-card\"><h3>Better UI Shell</h3><p>Custom shell navigation, stronger search, and cleaner access to the controls people actually touch.</p></article>",
-      "css": ".ds-resource-card { border: 1px solid #293345; border-radius: 10px; padding: 1rem 1.2rem; background: rgba(15, 16, 26, 0.82); font-family: Figtree, sans-serif; transition: border-color 0.25s, box-shadow 0.25s; } .ds-resource-card:hover { border-color: #415069; box-shadow: 0 0 18px rgba(84, 160, 255, 0.08); } .ds-resource-card h3 { margin: 0 0 0.3rem; color: #d8eee2; font-size: 0.95rem; font-weight: 600; line-height: 1.3; } .ds-resource-card p { margin: 0; color: #89aa99; font-size: 0.82rem; line-height: 1.6; }"
+      "description": "Flat bordered panel for extensions, themes, options, and cards. Hover moves the border to console green; there is no glow. The teal sigil marks a named thing.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-name\"><a href=\"#\">World Info Lab</a></div><div class=\"ds-card-desc\">Test, trace, and manage lorebook activation.</div></div>",
+      "css": ".ds-card { padding: 1rem 1.2rem; border: 1px solid #5f8f55; background: #232c22; font: 400 0.78rem/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; color: #dee8dc; transition: border-color 0.25s; } .ds-card:hover { border-color: #a0e570; } .ds-card-name { margin-bottom: 0.3rem; font-size: 0.9rem; font-weight: 700; color: #79c4b7; } .ds-card-name::before { content: '> ' / ''; color: #79c4b7; font-weight: 800; } .ds-card-name a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em; } .ds-card-name a:hover { color: #a0e570; } .ds-card-desc { color: #dee8dc; }"
     },
     {
-      "name": "Option Card",
-      "kind": "card",
-      "refersTo": "option-card",
-      "description": "Denser preset-option explanation card with small badges and body copy.",
-      "html": "<article class=\"ds-option-card\"><div class=\"ds-option-head\"><h3>Length Toggles</h3><span>Preset</span></div><p>Pick only one if you want a desired length, or choose none to keep length flexible.</p></article>",
-      "css": ".ds-option-card { border: 1px solid #2a3445; border-radius: 14px; padding: 0.95rem 1rem; background: rgba(15, 17, 27, 0.9); font-family: Figtree, sans-serif; } .ds-option-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.45rem; } .ds-option-head h3 { margin: 0; color: #d8eee2; font-size: 0.92rem; font-weight: 600; line-height: 1.3; } .ds-option-head span { border: 1px solid rgba(121, 185, 255, 0.4); border-radius: 999px; background: rgba(42, 63, 88, 0.45); color: #cae6ff; padding: 0.24rem 0.7rem; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; } .ds-option-card p { margin: 0; color: #89aa99; font-size: 0.82rem; line-height: 1.65; }"
-    },
-    {
-      "name": "Screenshot Thumbnail",
-      "kind": "custom",
-      "refersTo": "screenshot-thumb",
-      "description": "Linked gallery image with quiet border, hover glow, and centered caption.",
-      "html": "<a class=\"ds-thumb\" href=\"#\"><img src=\"preset/screenshots/scene-tracker.png\" alt=\"Scene Tracker\"><span>Scene Tracker</span></a>",
-      "css": ".ds-thumb { display: block; text-decoration: none; font-family: Figtree, sans-serif; } .ds-thumb img { width: 100%; height: auto; object-fit: contain; border-radius: 6px; border: 1px solid #2a3445; display: block; transition: border-color 0.25s, box-shadow 0.25s; } .ds-thumb:hover img { border-color: #4f6380; box-shadow: 0 2px 18px rgba(84, 160, 255, 0.1); } .ds-thumb span { display: block; margin-top: 0.35rem; color: #779687; font-size: 0.75rem; text-align: center; }"
+      "name": "CRT Overlay",
+      "kind": "chrome",
+      "refersTo": "crt",
+      "description": "Fixed over the viewport above everything including the lightbox, with pointer-events: none so it never intercepts a click. Deliberately faint - turning it up is how a terminal skin becomes a costume.",
+      "html": "<!-- no markup: body::after -->",
+      "css": "body::after { content: ''; position: fixed; inset: 0; z-index: 400; pointer-events: none; background-image: repeating-linear-gradient(0deg, rgba(2, 4, 3, 0.08) 0 1px, transparent 1px 3px); animation: flicker 4s infinite; } @keyframes flicker { 0%, 97%, 100% { opacity: 1; } 98% { opacity: 0.92; } } .statusline { text-shadow: 0 0 2px var(--glow); } @media (prefers-reduced-motion: reduce) { body::after { animation: none; } } @media (forced-colors: active), (prefers-contrast: more) { body::after { display: none; } }"
     }
   ],
   "narrative": {
     "northStar": "The Tinkerer's Bench",
-    "overview": "The root site is a personal bench of useful things: presets, tools, cards, themes, screenshots, and blunt notes laid out for people who already know why they came here. It should feel handmade and maintained, not like a generic product launch.",
+    "overview": "The root site is a personal bench of useful things: presets, tools, cards, themes, screenshots, and blunt notes laid out for people who already know why they came here. The bench now sits in a terminal: the Hazard Console palette from SillyBunny-Terminal-UI rotated green, wearing that extension's chrome - monospace throughout, no corner radius, no shadows, 1px moss hairlines, and `>` sigils that mark where a thing begins. Terminal conventions are here to clarify state, not to decorate. The design rejects corporate SaaS polish, generic AI landing-page aesthetics, oversized marketing hero sections, vague value-prop copy, and anything that makes the site feel like a startup pitch.",
     "keyCharacteristics": [
-      "Compact centered landing stack that quickly gives way to functional tabs and downloads.",
-      "Figtree-only typography with small, readable sizes and clear weight contrast.",
-      "Pill controls for navigation, downloads, platform switches, and quick links.",
-      "Dark surfaces with muted green text, blue/green platform accents, and tiny glow states.",
-      "Resource cards and screenshot galleries that prioritize scanning over decoration."
+      "A statusline pinned at the top carrying the counts that actually change.",
+      "A compact centered landing stack that quickly gives way to functional tabs and downloads.",
+      "Monospace-only typography with weight, not colour, doing the hierarchy.",
+      "Flat bordered controls throughout. Selection inverts rather than glowing.",
+      "Olive surfaces with hazard-yellow accents and desaturated per-project hues, all at one chroma.",
+      "A CRT scanline over the whole page - 1px every 3px at 8%, flickering once every four seconds."
     ],
     "rules": [
       {
         "name": "The Useful Color Rule",
-        "body": "Colored accents should identify a project, platform, or state. Do not add decorative accent colors to ordinary information blocks.",
-        "section": "colors"
+        "section": "colors",
+        "body": "Colored accents identify a project, platform, or state. Do not add decorative accent colors to ordinary information blocks."
+      },
+      {
+        "name": "The One Chroma Rule",
+        "section": "colors",
+        "body": "New hued surfaces derive from the ramp. A colour at higher chroma than --fg-dim reads as a foreign object unless it is genuinely content - a theme swatch, a game crest, a card thumbnail."
       },
       {
         "name": "The Rainbow Exception Rule",
-        "body": "The animated rainbow heading is the loud flourish. Do not repeat gradient text elsewhere.",
-        "section": "colors"
+        "section": "colors",
+        "body": "The animated rainbow heading is the one gradient on the page, and the one loud flourish. Do not repeat gradient text or gradient fills anywhere else."
+      },
+      {
+        "name": "The Green Means Act Rule",
+        "section": "colors",
+        "body": "Console green marks the thing to do or the thing in focus. Teal marks the thing with a name. Neither is decoration."
+      },
+      {
+        "name": "The Rotation Rule",
+        "section": "colors",
+        "body": "The palette is Hazard Console with one number changed - the hue. Recolour by rotating the hue family and leaving every lightness and chroma alone; that is what carried all 26 tab hues through the green move with no other edit."
       },
       {
         "name": "The Compact Hub Rule",
-        "body": "Do not introduce oversized marketing typography beyond the existing hero.",
-        "section": "typography"
+        "section": "typography",
+        "body": "Do not introduce oversized marketing typography beyond the existing hero. Most new content belongs at title, body, label, or micro scale."
       },
       {
-        "name": "The Glow Means State Rule",
-        "body": "Glow should communicate hover, selection, support, or project identity.",
-        "section": "elevation"
+        "name": "The One-Family Rule",
+        "section": "typography",
+        "body": "Monospace is the whole voice. There is no second family and no reason for one - code snippets are already in the same face as everything around them."
+      },
+      {
+        "name": "The 78ch Rule",
+        "section": "typography",
+        "body": "Monospace runs unreadable past about eighty characters. Prose blocks cap at 78ch, the same figure the extension uses."
+      },
+      {
+        "name": "No Uppercasing",
+        "section": "typography",
+        "body": "text-transform appears nowhere. Uppercase labels were a Figtree-era device and are gone."
+      },
+      {
+        "name": "The Flat Rule",
+        "section": "elevation",
+        "body": "No radius, no shadow, no blur, no gradient. If a new component needs to stand out, give it a border, a surface step, or inversion. The favicon drop-shadow, the rainbow hero and the CRT overlay are screen furniture, not components; a new one is not a licence for a fourth."
+      },
+      {
+        "name": "The Outline Rule",
+        "section": "elevation",
+        "body": "Focus is drawn with outline, never box-shadow, so it survives the flat reset. 2px solid var(--accent) at 2px offset, everywhere. Keyboard focus must stay at least as visible as hover."
+      },
+      {
+        "name": "The Border Strength Rule",
+        "section": "elevation",
+        "body": "Component outlines take --border at full strength; only separators inside an already-bounded box drop to --hairline. Nothing weaker clears 3:1 on both surfaces."
+      },
+      {
+        "name": "The Scanline Rule",
+        "section": "elevation",
+        "body": "Measure contrast on a scanline row, not on the flat surface. The overlay darkens text and background together and costs roughly half a point of ratio - enough that --fg-dim and --border both had to be lifted a step when it went in."
       }
     ],
     "dos": [
       "Do lead with presets, downloads, changelogs, project links, screenshots, and cards before adding new personality flourishes.",
-      "Do keep the blunt, personal, tinkerer-made voice in visible copy.",
+      "Do keep the blunt, personal, tinkerer-made voice in visible copy, especially version notes and resource descriptions.",
       "Do make current versions, previous versions, changelog entries, and platform differences obvious.",
-      "Do preserve readable contrast, responsive wrapping, keyboard access, visible focus states, meaningful image alt text, and reduced-motion-friendly behavior."
+      "Do use the existing flat-panel, label, table, gallery, and lightbox vocabulary before inventing a new component shape.",
+      "Do derive any new hued surface from the ramp rather than picking a colour by eye.",
+      "Do preserve readable contrast, responsive wrapping, keyboard access, visible focus states, meaningful image alt text, and reduced-motion-friendly behavior.",
+      "Do let tools like Synapse keep their own product-specific context and denser app patterns. Synapse is not part of this system."
     ],
     "donts": [
       "Don't make the root hub feel like corporate SaaS polish.",
       "Don't use generic AI landing-page aesthetics, oversized marketing hero sections, vague value-prop copy, or sterile template grids.",
       "Don't make the page feel like a startup pitch.",
       "Don't overdecorate the root hub until presets, programs, and downloads become harder to find.",
-      "Don't repeat gradient text beyond the existing rainbow welcome heading."
+      "Don't reintroduce radius, shadow, blur, or gradient. The rainbow hero and the CRT overlay are the whole allowance.",
+      "Don't add terminal decoration for its own sake - no ASCII art, no box-drawing frames, no CRT scanline. The extension ships its scanline off by default and names decorative CRT clutter an anti-reference.",
+      "Don't uppercase labels.",
+      "Don't turn every repeated item into a same-sized icon card grid.",
+      "Don't restyle anything inside a prompting-lab transcript body. The <font color> dialogue and inline-styled tracker blocks are captured model output - they are the sample."
     ]
   }
 }

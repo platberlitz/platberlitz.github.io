@@ -14,11 +14,11 @@ The root site exists as a personal public hub: a compact place to discover what 
 
 ## Brand Personality
 
-Personal, blunt, tinkerer-made. The site should feel like a real person's bench of useful things: opinionated, direct, a little playful, and built by someone who actually uses the tools. It can be sardonic and casual, but it should still make downloads, version notes, and project links easy to scan.
+Personal, blunt, tinkerer-made. The site should feel like a real person's bench of useful things: opinionated, direct, a little playful, and built by someone who actually uses the tools. It can be sardonic and casual, but it should still make downloads, version notes, and project links easy to scan. The site wears the Hazard Console palette from SillyBunny-Terminal-UI rotated green, under a faint CRT scanline, so the bench reads as a working terminal - which suits a hub built by someone who lives in one.
 
 ## Anti-references
 
-Avoid corporate SaaS polish, generic AI landing-page aesthetics, oversized marketing hero sections, vague value-prop copy, sterile template grids, and anything that makes the site feel like a startup pitch. Avoid overexplaining the personality out of the page. Avoid making the root hub so decorative that the presets, programs, and downloads become harder to find.
+Avoid corporate SaaS polish, generic AI landing-page aesthetics, oversized marketing hero sections, vague value-prop copy, sterile template grids, and anything that makes the site feel like a startup pitch. Avoid overexplaining the personality out of the page. Avoid making the root hub so decorative that the presets, programs, and downloads become harder to find. Now that the site is a terminal, avoid terminal decoration for its own sake - no ASCII art, no box-drawing frames. The CRT scanline is deliberate but deliberately faint; turning it up, or adding a second effect beside it, is where a terminal skin becomes a costume. Terminal conventions are here to clarify state, not to perform.
 
 ## Design Principles
 
