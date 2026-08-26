@@ -445,6 +445,16 @@
 
     .platform-labels label[for="platform-view-st"] { --pill-hue: 245; }
     .platform-labels label[for="platform-view-sb"] { --pill-hue: 165; }
+    .platform-labels label[for="preset-view-pdp"] { --pill-hue: 145; }
+    .platform-labels label[for="preset-view-tee"] { --pill-hue: 305; }
+
+    /* Preset names are long enough to need two lines on narrow screens. */
+    .tab-labels.preset-labels label {
+      white-space: normal;
+      min-width: 0;
+      line-height: 1.15;
+      padding: 0.4rem 0.9rem;
+    }
 
     .platform-labels label:hover {
       color: var(--pill-hover-text);
@@ -455,7 +465,9 @@
     /* Selected state is inversion — a solid fill with the page colour as text.
        That is the terminal's own idiom, and it keeps the hue doing the work. */
     #platform-view-st:checked ~ .platform-labels label[for="platform-view-st"],
-    #platform-view-sb:checked ~ .platform-labels label[for="platform-view-sb"] {
+    #platform-view-sb:checked ~ .platform-labels label[for="platform-view-sb"],
+    #preset-view-pdp:checked ~ .platform-labels label[for="preset-view-pdp"],
+    #preset-view-tee:checked ~ .platform-labels label[for="preset-view-tee"] {
       color: var(--on-accent);
       border-color: var(--pill-active-border);
       background: var(--pill-active-bg);
@@ -465,13 +477,25 @@
     #platform-view-st:checked ~ .platform-labels label[for="platform-view-st"]::before,
     #platform-view-st:checked ~ .platform-labels label[for="platform-view-st"]::after,
     #platform-view-sb:checked ~ .platform-labels label[for="platform-view-sb"]::before,
-    #platform-view-sb:checked ~ .platform-labels label[for="platform-view-sb"]::after {
+    #platform-view-sb:checked ~ .platform-labels label[for="platform-view-sb"]::after,
+    #preset-view-pdp:checked ~ .platform-labels label[for="preset-view-pdp"]::before,
+    #preset-view-pdp:checked ~ .platform-labels label[for="preset-view-pdp"]::after,
+    #preset-view-tee:checked ~ .platform-labels label[for="preset-view-tee"]::before,
+    #preset-view-tee:checked ~ .platform-labels label[for="preset-view-tee"]::after {
       color: var(--on-accent);
     }
 
-    #platform-view-st:checked ~ .platform-panel-st,
-    #platform-view-sb:checked ~ .platform-panel-sb {
+    #platform-view-st:checked ~ #preset-view-pdp:checked ~ .platform-panel-st,
+    #platform-view-sb:checked ~ #preset-view-pdp:checked ~ .platform-panel-sb,
+    #preset-view-tee:checked ~ .platform-panel-tee {
       display: block;
+    }
+
+    /* The Ethereality Express is one file for both platforms, so the
+       platform picker has nothing to pick while it is selected. */
+    #preset-view-tee:checked ~ .platform-eyebrow-platform,
+    #preset-view-tee:checked ~ .platform-labels:not(.preset-labels) {
+      display: none;
     }
 
     .platform-panel {
@@ -603,6 +627,9 @@
     .preset-tabs > .tab-labels label[for="sb-tab-agents"] { --pill-hue: 260; }
     .preset-tabs > .tab-labels label[for="sb-tab-extensions"] { --pill-hue: 190; }
     .preset-tabs > .tab-labels label[for="sb-tab-screenshots"] { --pill-hue: 42; }
+    .preset-tabs > .tab-labels label[for="tee-tab-preset"] { --pill-hue: 305; }
+    .preset-tabs > .tab-labels label[for="tee-tab-options"] { --pill-hue: 175; }
+    .preset-tabs > .tab-labels label[for="tee-tab-trackers"] { --pill-hue: 28; }
 
     .tab-labels label:hover {
       color: var(--pill-hover-text);
@@ -635,6 +662,11 @@
        hue border disappears into the fill — so the ring is always console green. */
     #platform-view-st:focus-visible ~ .platform-labels label[for="platform-view-st"],
     #platform-view-sb:focus-visible ~ .platform-labels label[for="platform-view-sb"],
+    #preset-view-pdp:focus-visible ~ .platform-labels label[for="preset-view-pdp"],
+    #preset-view-tee:focus-visible ~ .platform-labels label[for="preset-view-tee"],
+    #tee-tab-preset:focus-visible ~ .tab-labels label[for="tee-tab-preset"],
+    #tee-tab-options:focus-visible ~ .tab-labels label[for="tee-tab-options"],
+    #tee-tab-trackers:focus-visible ~ .tab-labels label[for="tee-tab-trackers"],
     #tab-preset:focus-visible ~ .tab-labels label[for="tab-preset"],
     #tab-options:focus-visible ~ .tab-labels label[for="tab-options"],
     #tab-opinions:focus-visible ~ .tab-labels label[for="tab-opinions"],
@@ -687,6 +719,9 @@
     #sb-tab-agents:checked ~ .sb-tab-content-agents { display: block; }
     #sb-tab-extensions:checked ~ .sb-tab-content-extensions { display: block; }
     #sb-tab-screenshots:checked ~ .sb-tab-content-screenshots { display: block; }
+    #tee-tab-preset:checked ~ .tee-tab-content-preset { display: block; }
+    #tee-tab-options:checked ~ .tee-tab-content-options { display: block; }
+    #tee-tab-trackers:checked ~ .tee-tab-content-trackers { display: block; }
 
     /* Card sub-tabs */
     .card-subtab-content { display: none; }
@@ -1666,7 +1701,9 @@
     }
 
     @media (max-width: 600px) {
-      .statusline { font-size: 0.68rem; padding: 5px 8px; }
+      /* Two version numbers no longer fit on one phone line, so let it wrap
+         rather than swallow the date in an ellipsis. */
+      .statusline { font-size: 0.68rem; padding: 5px 8px; white-space: normal; text-overflow: clip; }
       .statusline::before { content: none; }
 
       .container { padding: 1.25rem 1rem 0.8rem; }
@@ -1714,6 +1751,10 @@
       .platform-labels label {
         min-width: 0;
         flex: 1 1 0;
+      }
+      .tab-labels.preset-labels label {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.72rem;
       }
 
       .preset-section { padding: 0 1rem; }
@@ -1820,13 +1861,13 @@
 </head>
 <body>
   <a class="skip-link" href="#presets">Skip to presets</a>
-  <p class="statusline" id="statusline">preset:15.1 | cards:53 | themes:48 | updated:2026-08-20</p>
+  <p class="statusline" id="statusline">pdp:15.1 | tee:0.5b | cards:54 | themes:48 | updated:2026-08-26</p>
   <main>
   <div class="container">
     <img class="hero-favicon" src="favicon-256.png" alt="" aria-hidden="true" decoding="async">
     <h1 class="rainbow">welcome :3</h1>
     <p class="subtitle">purachina's stuff</p>
-    <p class="last-updated">Last Updated August 23, 2026</p>
+    <p class="last-updated">Last Updated August 26, 2026</p>
     <div class="links">
       <a href="https://platberlitz.github.io/platinum-startpage/" class="glow-pill startpage-link">startpage<span class="link-info">localStorage customisable startpage</span></a>
       <a href="assistant/" class="glow-pill synapse-link">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
@@ -1841,8 +1882,16 @@
   <div class="platform-switcher" id="presets" tabindex="-1">
     <input type="radio" name="platform-view" id="platform-view-st" checked>
     <input type="radio" name="platform-view" id="platform-view-sb">
+    <input type="radio" name="preset-view" id="preset-view-pdp" checked>
+    <input type="radio" name="preset-view" id="preset-view-tee">
 
-    <p class="platform-eyebrow">Pick your platform</p>
+    <p class="platform-eyebrow">Pick your preset</p>
+    <div class="tab-labels platform-labels preset-labels">
+      <label for="preset-view-pdp">Pura's Director Preset (15.1)</label>
+      <label for="preset-view-tee">The Ethereality Express (0.5 beta)</label>
+    </div>
+
+    <p class="platform-eyebrow platform-eyebrow-platform">Pick your platform</p>
     <div class="tab-labels platform-labels">
       <label for="platform-view-st">SillyTavern</label>
       <label for="platform-view-sb">SillyBunny</label>
@@ -4315,6 +4364,420 @@
       </div>
     </div>
   </section>
+
+  <section class="preset-section platform-panel platform-panel-tee">
+    <div class="divider"></div>
+    <h2 class="section-heading">The Ethereality Express</h2>
+    <div class="preset-tabs">
+      <input type="radio" name="tee-tab" id="tee-tab-preset" checked>
+      <input type="radio" name="tee-tab" id="tee-tab-options">
+      <input type="radio" name="tee-tab" id="tee-tab-trackers">
+      <div class="tab-labels">
+        <label for="tee-tab-preset">Preset</label>
+        <label for="tee-tab-options">Preset Options</label>
+        <label for="tee-tab-trackers">Trackers</label>
+      </div>
+
+      <div class="tab-content tee-tab-content-preset">
+        <div class="preset-info">
+          <h2 class="preset-title">The Ethereality Express</h2>
+          <p class="preset-version">Latest Version: 0.5 beta</p>
+          <div class="preset-downloads downloads-primary" style="margin-top: 0; margin-bottom: 1.6rem;">
+            <a class="dl-st" href="preset/The%20Ethereality%20Express%200.5.json" download="The Ethereality Express 0.5.json"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Download 0.5 beta</a>
+            <a class="dl-stacked" href="preset/The%20Ethereality%20Express%20Regexes.json" download="The Ethereality Express Regexes.json">Regex Set<span class="dl-sub">SillyTavern</span></a>
+            <a class="dl-stacked" href="preset/The%20Ethereality%20Express%20Regexes%20(Marinara).json" download="The Ethereality Express Regexes (Marinara).json">Regex Set<span class="dl-sub">Marinara Engine</span></a>
+          </div>
+          <div class="preset-desc">
+            <p>This is the beta version of my magical realism-focused preset, The Ethereality Express. It&apos;s the opposite of my Pura&apos;s Director Preset, which is more about grounded realism and less metaphorical prose - in this one, the genre is all about the world itself being <em>alive</em>, literally, and to others it&apos;s normal.</p>
+            <p>Tested on Kimi K3, GLM 5.2 and 5.3, Deepseek V4 Pro and Flash, Gemini 3.7 Flash, Gemma 4 31B, Gemma 4 26B A4B, Gemma 4 12B (ran locally), Opus 4.6 and 5, and Fable 5. Still need to do further testing for other usual ones, but so far so good.</p>
+            <p>Main prompt is around ~1300 tokens. It is possible that the NSFW won&apos;t mesh super well with the average person&apos;s idea of NSFW and intimacy - after all it&apos;s supposed to be combined with magical realism.</p>
+            <p>In my experience it seems to ensure the prose is less sloppy, however it is more metaphorical. If you find descriptive prose to be automatically purple, this isn&apos;t for you.</p>
+            <p>Still in beta due to its highly experimental nature.</p>
+            <p>Inspirations: Authors in Narration Voices and Disco Elysium.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content tee-tab-content-options">
+        <div class="preset-info">
+          <h2 class="preset-title">Preset Options</h2>
+          <p class="preset-version">What each toggle actually does</p>
+          <p class="option-note">One file, no SillyTavern and SillyBunny split this time. Nearly everything starts switched off: turn on the Liminal Main Prompt, pick a length, and you have a working setup. Grab the regex set from the Preset tab too, or the trackers arrive as raw brackets.</p>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Core Prompting</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Liminal Main Prompt</div>
+                </div>
+                <p class="option-card-copy">The whole preset, around 1300 tokens. You&apos;re the overseer, impossible things are ordinary, and characters treat the strange the way you&apos;d treat a leaky tap.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Ethereal Prose Rules</div>
+                </div>
+                <p class="option-card-copy">The post-history anti-slop layer, which bans the word &apos;ethereal&apos; in a preset called The Ethereality Express. Leave it off on smaller models.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Genre</div>
+                </div>
+                <p class="option-card-copy">Two sentences telling the model what magical realism actually is, mostly so it stops staging strangeness as a big reveal.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Formatting</div>
+                </div>
+                <p class="option-card-copy">Present tense, third person, dialogue in quotes, no asterisk narration. Delete the <code>{{dialoguecolors}}</code> line at the bottom if you don&apos;t use the Dialogue Colours extension.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Length</div>
+                </div>
+                <p class="option-card-copy">Short is 3-5 paragraphs, Medium is 8-13, Flexible reads the scene. Pick one; I run Flexible.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Write for User / Don&apos;t Write for User</div>
+                </div>
+                <p class="option-card-copy">Pick one. Don&apos;t Write for User says never rather than asking politely, and ends the scene when a character asks you something directly.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Optional User Instructions</div>
+                </div>
+                <p class="option-card-copy">An empty slot for whatever you want to add on top. I left a joke in there about characters turning into tiny goblins, so clear it out first.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">NSFW</div>
+                </div>
+                <p class="option-card-copy">The same flat, physical register as the rest of the preset, with the strange turning up in it and leaving something behind. If that isn&apos;t your idea of intimacy, leave it off.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Veil Modes (one at most)</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Veil Thin</div>
+                </div>
+                <p class="option-card-copy">Two or three strange things a scene: rooms rearranging by mood, doors leading somewhere adjacent. The loudest of the five.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Anchor</div>
+                </div>
+                <p class="option-card-copy">One small strange detail per scene at most, with the rest spent on chores, money and people being irritated. I use it to cool down after something big.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Elegy</div>
+                </div>
+                <p class="option-card-copy">Strangeness through memory and absence, like a coat that keeps its owner&apos;s posture. Grief stays practical.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Feral Wonder</div>
+                </div>
+                <p class="option-card-copy">Folk-tale rules, so the impossible bargains, keeps score and sends a bill. My favourite of the five, honestly.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Farce</div>
+                </div>
+                <p class="option-card-copy">The ridiculous played completely straight, all committees and paperwork for miracles. The stranger the event, the drier the sentence.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Narration Voice</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Generational Murmur</div>
+                </div>
+                <p class="option-card-copy">Márquez. Long, warm sentences that treat decades and dinner with the same patience.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Quiet Static</div>
+                </div>
+                <p class="option-card-copy">Murakami. Cool and plain and faintly detached, anchored in cooking and laundry, with the strange arriving sideways.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Lucid Geometry</div>
+                </div>
+                <p class="option-card-copy">Calvino. Playful precision, rooms and relationships handled like elegant machines with rules.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Velvet Teeth</div>
+                </div>
+                <p class="option-card-copy">Carter. Rich, sensuous and a little dangerous, where desire and hazard share the same detail.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Randomised</div>
+                </div>
+                <p class="option-card-copy">Rolls one of the four each reply. Chaotic, and I enjoy it more than I expected to.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Chance</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Unscheduled Phenomena</div>
+                </div>
+                <p class="option-card-copy">A d20 every reply decides whether reality amends itself mid-scene. The threshold sits in the prompt as a plain <code>14</code>, so raise it for a calmer world.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Trackers</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Drift</div>
+                </div>
+                <p class="option-card-copy">A needle measuring how far the scene has moved from ordinary, MUNDANE up through to SUBLIME. It only files when the level genuinely changes.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Motif</div>
+                </div>
+                <p class="option-card-copy">Counts recurring symbols and what they&apos;ve picked up: objects, animals, phrases, weather. It logs continuity rather than meaning, or the model starts writing an essay about itself.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Omen</div>
+                </div>
+                <p class="option-card-copy">Signs the world plants about what&apos;s coming, DISTANT through to ARRIVED or PASSED OVER. Readings are allowed to be wrong.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Thin Places</div>
+                </div>
+                <p class="option-card-copy">Locations and hours worn through at the elbow: the pantry, the sixth stair, 3:03 AM. Once a thin place has rules, those rules stick.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Absurd Trackers</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Entanglement</div>
+                </div>
+                <p class="option-card-copy">Relationships as physical objects, like a red thread at the wrist or a debt of three teaspoons of sleep. One form per pair.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">The Clock Is Lying</div>
+                </div>
+                <p class="option-card-copy">Official time against actual time, both correct at once. It says 3:47 PM, the truth is &apos;two griefs past noon&apos;.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Improbable Effects</div>
+                </div>
+                <p class="option-card-copy">Inventory, except the possessions have moods and demands. Anything borrowed from the strange accrues interest.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Afflictions &amp; Blessings</div>
+                </div>
+                <p class="option-card-copy">Impossible conditions people catch, inherit or earn, like casting two shadows, one of them punctual. Cures always cost something specific.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">The Ledger</div>
+                </div>
+                <p class="option-card-copy">Debts owed to and by the strange: three true compliments, one afternoon of childhood, the good scissors. It always collects, always slightly askew of the terms.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">What the Town Knows</div>
+                </div>
+                <p class="option-card-copy">Rumours kept like livestock, hatching and feeding and mutating. They drift towards the satisfying version rather than the accurate one.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Department of Small Miracles</div>
+                </div>
+                <p class="option-card-copy">An unseen bureaucracy issues deadpan certificates for notable impossibilities, form numbers and office hours included. One per scene at most.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Meanwhile, Impossibly</div>
+                </div>
+                <p class="option-card-copy">Three bullets of off-screen strangeness every few scenes, tagged with how close it&apos;s getting. It accumulates until it walks into the scene.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">The Thought Cabinet</div>
+                </div>
+                <p class="option-card-copy">Straight out of Disco Elysium. Ideas move into a head as tenants, then either settle in permanently or get evicted and leave a dent behind.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">The Committee</div>
+                </div>
+                <p class="option-card-copy">Also Disco Elysium. Inner faculties interrupt mid-prose with a pass or a fail, and a failure is confidently wrong until events correct it.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">The Becoming</div>
+                </div>
+                <p class="option-card-copy">The story stitches people an epithet out of whatever they keep doing. The Apology Landlord. The Tuesday Widow.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">The Census</div>
+                </div>
+                <p class="option-card-copy">Registry-style profile sheets for new named characters, sorted into RESIDENT, LODGER and PASSERBY. Nobody is ever seen collecting it.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="option-group">
+            <h3 class="option-group-title">Doors &amp; Dice</h3>
+            <div class="option-grid">
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Doors</div>
+                </div>
+                <p class="option-card-copy">A choice menu of 3 to 7 options at the end of every response, some treating the impossible as an errand and some entirely mundane. One is always slightly ill-advised.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Doors with Fate Checks</div>
+                </div>
+                <p class="option-card-copy">The same menu with a hidden d100 rolled against your Almanac competencies. Pick this or plain Doors, not both.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">The Four Winds</div>
+                </div>
+                <p class="option-card-copy">Four plot pivots at the end of every reply, two grounded and two where the impossible arrives at the worst moment. Sits fine alongside Doors.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">Almanac Generator</div>
+                </div>
+                <p class="option-card-copy">Rolls you a stat sheet compiled by a local clerk who finds none of it remarkable. Turn it off once it has printed or it keeps regenerating.</p>
+              </div>
+              <div class="option-card">
+                <div class="option-card-head">
+                  <div class="option-card-title">The Turning</div>
+                </div>
+                <p class="option-card-copy">Level-ups, kept rare. A season only turns after something that mattered, so ordinary wins accumulate in silence and get nothing.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content tee-tab-content-trackers">
+        <div class="tracker-grid">
+          <a class="tracker-item" href="#lb-tee-2">
+            <img src="preset/screenshots/ethereality/census.png" alt="The Census" loading="lazy">
+            <span class="tracker-caption">The Census</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-3">
+            <img src="preset/screenshots/ethereality/drift.png" alt="Drift Tracker" loading="lazy">
+            <span class="tracker-caption">Drift Tracker</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-4">
+            <img src="preset/screenshots/ethereality/motif.png" alt="Motif Tracker" loading="lazy">
+            <span class="tracker-caption">Motif Tracker</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-5">
+            <img src="preset/screenshots/ethereality/omen.png" alt="Omen Tracker" loading="lazy">
+            <span class="tracker-caption">Omen Tracker</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-6">
+            <img src="preset/screenshots/ethereality/thin-places.png" alt="Thin Places Tracker" loading="lazy">
+            <span class="tracker-caption">Thin Places Tracker</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-7">
+            <img src="preset/screenshots/ethereality/entanglement.png" alt="Entanglement Tracker" loading="lazy">
+            <span class="tracker-caption">Entanglement Tracker</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-8">
+            <img src="preset/screenshots/ethereality/clock-is-lying.png" alt="The Clock Is Lying" loading="lazy">
+            <span class="tracker-caption">The Clock Is Lying</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-9">
+            <img src="preset/screenshots/ethereality/unscheduled-phenomena.png" alt="Unscheduled Phenomena" loading="lazy">
+            <span class="tracker-caption">Unscheduled Phenomena</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-10">
+            <img src="preset/screenshots/ethereality/improbable-effects.png" alt="Improbable Effects" loading="lazy">
+            <span class="tracker-caption">Improbable Effects</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-11">
+            <img src="preset/screenshots/ethereality/afflictions-blessings.png" alt="Afflictions &amp; Blessings" loading="lazy">
+            <span class="tracker-caption">Afflictions &amp; Blessings</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-12">
+            <img src="preset/screenshots/ethereality/ledger.png" alt="The Ledger" loading="lazy">
+            <span class="tracker-caption">The Ledger</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-13">
+            <img src="preset/screenshots/ethereality/town-knows.png" alt="What the Town Knows" loading="lazy">
+            <span class="tracker-caption">What the Town Knows</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-14">
+            <img src="preset/screenshots/ethereality/small-miracles.png" alt="Department of Small Miracles" loading="lazy">
+            <span class="tracker-caption">Department of Small Miracles</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-15">
+            <img src="preset/screenshots/ethereality/meanwhile-impossibly.png" alt="Meanwhile, Impossibly" loading="lazy">
+            <span class="tracker-caption">Meanwhile, Impossibly</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-16">
+            <img src="preset/screenshots/ethereality/thought-cabinet.png" alt="The Thought Cabinet" loading="lazy">
+            <span class="tracker-caption">The Thought Cabinet</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-17">
+            <img src="preset/screenshots/ethereality/committee.png" alt="The Committee" loading="lazy">
+            <span class="tracker-caption">The Committee</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-18">
+            <img src="preset/screenshots/ethereality/becoming.png" alt="The Becoming" loading="lazy">
+            <span class="tracker-caption">The Becoming</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-19">
+            <img src="preset/screenshots/ethereality/turning.png" alt="The Turning" loading="lazy">
+            <span class="tracker-caption">The Turning</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-20">
+            <img src="preset/screenshots/ethereality/doors.png" alt="Doors" loading="lazy">
+            <span class="tracker-caption">Doors</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-21">
+            <img src="preset/screenshots/ethereality/four-winds.png" alt="The Four Winds" loading="lazy">
+            <span class="tracker-caption">The Four Winds</span>
+          </a>
+          <a class="tracker-item" href="#lb-tee-1">
+            <img src="preset/screenshots/ethereality/almanac.png" alt="The Almanac" loading="lazy">
+            <span class="tracker-caption">The Almanac</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
   </div>
   </main>
 
@@ -4355,9 +4818,31 @@
   <a class="lightbox" id="lb-sb-14" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-desktop-conversation-v1.7.0.png" alt="SillyBunny desktop Conversation Mode"></a>
   <a class="lightbox" id="lb-sb-15" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-mobile-conversation-v1.7.0.png" alt="SillyBunny mobile Conversation Mode"></a>
   <a class="lightbox" id="lb-preset-15-1" href="#close"><img loading="lazy" src="preset/screenshots/pura-director-preset-15.1.png" alt="Pura's Director Preset 15.1 release art"></a>
+  <a class="lightbox" id="lb-tee-1" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/almanac.png" alt="The Almanac"></a>
+  <a class="lightbox" id="lb-tee-2" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/census.png" alt="The Census"></a>
+  <a class="lightbox" id="lb-tee-3" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/drift.png" alt="Drift Tracker"></a>
+  <a class="lightbox" id="lb-tee-4" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/motif.png" alt="Motif Tracker"></a>
+  <a class="lightbox" id="lb-tee-5" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/omen.png" alt="Omen Tracker"></a>
+  <a class="lightbox" id="lb-tee-6" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/thin-places.png" alt="Thin Places Tracker"></a>
+  <a class="lightbox" id="lb-tee-7" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/entanglement.png" alt="Entanglement Tracker"></a>
+  <a class="lightbox" id="lb-tee-8" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/clock-is-lying.png" alt="The Clock Is Lying"></a>
+  <a class="lightbox" id="lb-tee-9" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/unscheduled-phenomena.png" alt="Unscheduled Phenomena"></a>
+  <a class="lightbox" id="lb-tee-10" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/improbable-effects.png" alt="Improbable Effects"></a>
+  <a class="lightbox" id="lb-tee-11" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/afflictions-blessings.png" alt="Afflictions &amp; Blessings"></a>
+  <a class="lightbox" id="lb-tee-12" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/ledger.png" alt="The Ledger"></a>
+  <a class="lightbox" id="lb-tee-13" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/town-knows.png" alt="What the Town Knows"></a>
+  <a class="lightbox" id="lb-tee-14" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/small-miracles.png" alt="Department of Small Miracles"></a>
+  <a class="lightbox" id="lb-tee-15" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/meanwhile-impossibly.png" alt="Meanwhile, Impossibly"></a>
+  <a class="lightbox" id="lb-tee-16" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/thought-cabinet.png" alt="The Thought Cabinet"></a>
+  <a class="lightbox" id="lb-tee-17" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/committee.png" alt="The Committee"></a>
+  <a class="lightbox" id="lb-tee-18" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/becoming.png" alt="The Becoming"></a>
+  <a class="lightbox" id="lb-tee-19" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/turning.png" alt="The Turning"></a>
+  <a class="lightbox" id="lb-tee-20" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/doors.png" alt="Doors"></a>
+  <a class="lightbox" id="lb-tee-21" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/four-winds.png" alt="The Four Winds"></a>
 
   <script>
     const currentPresetVersion = "15.1";
+    const currentTeeVersion = "0.5b";
 
     // Tabs are radios, so #model-samples etc. need wiring up by hand.
     (function () {
@@ -4375,7 +4860,7 @@
       const themes = document.querySelectorAll(".theme-colors").length;
       const updated = line.textContent.split("updated:")[1] || "";
       line.textContent =
-        `preset:${currentPresetVersion} | cards:${cards} | themes:${themes} | updated:${updated}`;
+        `pdp:${currentPresetVersion} | tee:${currentTeeVersion} | cards:${cards} | themes:${themes} | updated:${updated}`;
     })();
 
     (function () {
