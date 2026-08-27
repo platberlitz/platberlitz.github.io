@@ -630,6 +630,8 @@
     .preset-tabs > .tab-labels label[for="tee-tab-preset"] { --pill-hue: 305; }
     .preset-tabs > .tab-labels label[for="tee-tab-options"] { --pill-hue: 175; }
     .preset-tabs > .tab-labels label[for="tee-tab-trackers"] { --pill-hue: 28; }
+    .preset-tabs > .tab-labels label[for="tee-tab-sample"] { --pill-hue: 330; }
+    .preset-tabs > .tab-labels label[for="tee-tab-previous"] { --pill-hue: 76; }
 
     .tab-labels label:hover {
       color: var(--pill-hover-text);
@@ -651,7 +653,12 @@
     #sb-tab-features:checked ~ .tab-labels label[for="sb-tab-features"],
     #sb-tab-agents:checked ~ .tab-labels label[for="sb-tab-agents"],
     #sb-tab-extensions:checked ~ .tab-labels label[for="sb-tab-extensions"],
-    #sb-tab-screenshots:checked ~ .tab-labels label[for="sb-tab-screenshots"] {
+    #sb-tab-screenshots:checked ~ .tab-labels label[for="sb-tab-screenshots"],
+    #tee-tab-preset:checked ~ .tab-labels label[for="tee-tab-preset"],
+    #tee-tab-options:checked ~ .tab-labels label[for="tee-tab-options"],
+    #tee-tab-trackers:checked ~ .tab-labels label[for="tee-tab-trackers"],
+    #tee-tab-sample:checked ~ .tab-labels label[for="tee-tab-sample"],
+    #tee-tab-previous:checked ~ .tab-labels label[for="tee-tab-previous"] {
       color: var(--on-accent);
       border-color: var(--pill-active-border);
       background: var(--pill-active-bg);
@@ -667,6 +674,8 @@
     #tee-tab-preset:focus-visible ~ .tab-labels label[for="tee-tab-preset"],
     #tee-tab-options:focus-visible ~ .tab-labels label[for="tee-tab-options"],
     #tee-tab-trackers:focus-visible ~ .tab-labels label[for="tee-tab-trackers"],
+    #tee-tab-sample:focus-visible ~ .tab-labels label[for="tee-tab-sample"],
+    #tee-tab-previous:focus-visible ~ .tab-labels label[for="tee-tab-previous"],
     #tab-preset:focus-visible ~ .tab-labels label[for="tab-preset"],
     #tab-options:focus-visible ~ .tab-labels label[for="tab-options"],
     #tab-opinions:focus-visible ~ .tab-labels label[for="tab-opinions"],
@@ -722,6 +731,8 @@
     #tee-tab-preset:checked ~ .tee-tab-content-preset { display: block; }
     #tee-tab-options:checked ~ .tee-tab-content-options { display: block; }
     #tee-tab-trackers:checked ~ .tee-tab-content-trackers { display: block; }
+    #tee-tab-sample:checked ~ .tee-tab-content-sample { display: block; }
+    #tee-tab-previous:checked ~ .tee-tab-content-previous { display: block; }
 
     /* Card sub-tabs */
     .card-subtab-content { display: none; }
@@ -1861,13 +1872,13 @@
 </head>
 <body>
   <a class="skip-link" href="#presets">Skip to presets</a>
-  <p class="statusline" id="statusline">pdp:15.1 | tee:0.5b | cards:54 | themes:48 | updated:2026-08-26</p>
+  <p class="statusline" id="statusline">pdp:15.1 | tee:1.0 | cards:54 | themes:48 | updated:2026-08-27</p>
   <main>
   <div class="container">
     <img class="hero-favicon" src="favicon-256.png" alt="" aria-hidden="true" decoding="async">
     <h1 class="rainbow">welcome :3</h1>
     <p class="subtitle">purachina's stuff</p>
-    <p class="last-updated">Last Updated August 26, 2026</p>
+    <p class="last-updated">Last Updated August 27, 2026</p>
     <div class="links">
       <a href="https://platberlitz.github.io/platinum-startpage/" class="glow-pill startpage-link">startpage<span class="link-info">localStorage customisable startpage</span></a>
       <a href="assistant/" class="glow-pill synapse-link">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
@@ -1888,7 +1899,7 @@
     <p class="platform-eyebrow">Pick your preset</p>
     <div class="tab-labels platform-labels preset-labels">
       <label for="preset-view-pdp">Pura's Director Preset (15.1)</label>
-      <label for="preset-view-tee">The Ethereality Express (0.5 beta)</label>
+      <label for="preset-view-tee">The Ethereality Express (1.0)</label>
     </div>
 
     <p class="platform-eyebrow platform-eyebrow-platform">Pick your platform</p>
@@ -4372,28 +4383,38 @@
       <input type="radio" name="tee-tab" id="tee-tab-preset" checked>
       <input type="radio" name="tee-tab" id="tee-tab-options">
       <input type="radio" name="tee-tab" id="tee-tab-trackers">
+      <input type="radio" name="tee-tab" id="tee-tab-sample">
+      <input type="radio" name="tee-tab" id="tee-tab-previous">
       <div class="tab-labels">
         <label for="tee-tab-preset">Preset</label>
         <label for="tee-tab-options">Preset Options</label>
         <label for="tee-tab-trackers">Trackers</label>
+        <label for="tee-tab-sample">Sample</label>
+        <label for="tee-tab-previous">Previous Versions</label>
       </div>
 
       <div class="tab-content tee-tab-content-preset">
         <div class="preset-info">
           <h2 class="preset-title">The Ethereality Express</h2>
-          <p class="preset-version">Latest Version: 0.5 beta</p>
+          <p class="preset-version">Latest Version: 1.0</p>
           <div class="preset-downloads downloads-primary" style="margin-top: 0; margin-bottom: 1.6rem;">
-            <a class="dl-st" href="preset/The%20Ethereality%20Express%200.5.json" download="The Ethereality Express 0.5.json"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Download 0.5 beta</a>
+            <a class="dl-st" href="preset/The%20Ethereality%20Express%201.0.json" download="The Ethereality Express 1.0.json"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Download 1.0</a>
             <a class="dl-stacked" href="preset/The%20Ethereality%20Express%20Regexes.json" download="The Ethereality Express Regexes.json">Regex Set<span class="dl-sub">SillyTavern</span></a>
             <a class="dl-stacked" href="preset/The%20Ethereality%20Express%20Regexes%20(Marinara).json" download="The Ethereality Express Regexes (Marinara).json">Regex Set<span class="dl-sub">Marinara Engine</span></a>
           </div>
           <div class="preset-desc">
-            <p>This is the beta version of my magical realism-focused preset, The Ethereality Express. It&apos;s the opposite of my Pura&apos;s Director Preset, which is more about grounded realism and less metaphorical prose - in this one, the genre is all about the world itself being <em>alive</em>, literally, and to others it&apos;s normal.</p>
-            <p>Tested on Kimi K3, GLM 5.2 and 5.3, Deepseek V4 Pro and Flash, Gemini 3.7 Flash, Gemma 4 31B, Gemma 4 26B A4B, Gemma 4 12B (ran locally), Opus 4.6 and 5, and Fable 5. Still need to do further testing for other usual ones, but so far so good.</p>
-            <p>Main prompt is around ~1300 tokens. It is possible that the NSFW won&apos;t mesh super well with the average person&apos;s idea of NSFW and intimacy - after all it&apos;s supposed to be combined with magical realism.</p>
+            <p>The magical realism sibling of Pura&apos;s Director Preset. The impossible is mundane, nobody explains it, strangeness follows emotional logic, and the prose stays flat and direct. The total opposite of the grounded realism in the director preset. Main prompt is roughly 1300 tokens.</p>
+            <p>This is specifically made for a world that literally <em>lives</em> - so expect strange things to happen, such as objects talking to you, being followed by fruits, and so on. The style is written to be as strong as possible to push the model into hard magical realism. Turn on Anchor mode if you&apos;d like a break from all the weird stuff. I tried to make this preset as easy to edit as possible; hopefully you feel that you can edit it as you like.</p>
+            <p>By default, these are on: Drift, Omen, Hour, Voice, Becoming, and the Census. Everything else in Preset Options is off until you switch it on.</p>
+            <p>Veil Modes set how much strangeness a scene is allowed. Toggle at most one; with none on, the main prompt&apos;s own default level applies.</p>
+            <p>Trackers are all optional. Each one makes the model print a small labelled block of text, which a regex then renders as an animated card. Toggle whatever you like, but running all fifteen at once means fifteen sets of formatting rules competing for the model&apos;s attention, and output quality drops well before that. Poor model&hellip;</p>
+            <p>While I tried to make it compatible with NSFW and intimate scenes, your mileage may vary, as always. It&apos;s possible it won&apos;t mesh with the average person&apos;s idea of intimacy; after all it&apos;s supposed to be combined with magical realism.</p>
             <p>In my experience it seems to ensure the prose is less sloppy, however it is more metaphorical. If you find descriptive prose to be automatically purple, this isn&apos;t for you.</p>
-            <p>Still in beta due to its highly experimental nature.</p>
+            <p>Tested on Kimi K3, GLM 5.2 and 5.3, Deepseek V4 Pro and Flash, Gemini 3.7 Flash, Gemma 4 31B, Gemma 4 26B A4B, Gemma 4 12B (ran locally), Opus 4.6 and 5, and Fable 5. Still need to do further testing for other usual ones, but so far so good.</p>
             <p>Inspirations: Authors in Narration Voices and Disco Elysium.</p>
+            <a class="preset-release-art" href="#lb-preset-tee-1-0" aria-label="Open The Ethereality Express 1.0 release art">
+              <img src="preset/screenshots/the-ethereality-express-1.0.png" alt="The Ethereality Express 1.0 release art" loading="lazy">
+            </a>
           </div>
         </div>
       </div>
@@ -4402,7 +4423,8 @@
         <div class="preset-info">
           <h2 class="preset-title">Preset Options</h2>
           <p class="preset-version">What each toggle actually does</p>
-          <p class="option-note">One file, no SillyTavern and SillyBunny split this time. Nearly everything starts switched off: turn on the Liminal Main Prompt, pick a length, and you have a working setup. Grab the regex set from the Preset tab too, or the trackers arrive as raw brackets.</p>
+          <p class="option-note">One file, no SillyTavern and SillyBunny split this time. 1.0 ships ready to run: the Liminal Main Prompt, Genre, Formatting, Flexible length and Don&apos;t Write for User are on, along with six trackers - Drift, Omen, The Clock Is Lying, The Committee, The Becoming and The Census. Everything below that is off until you switch it on. Grab the regex set from the Preset tab too, or the trackers arrive as raw brackets.</p>
+          <p class="option-note">Toggle whatever you like, but running all fifteen trackers at once means fifteen sets of formatting rules competing for the model&apos;s attention, and output quality drops well before that.</p>
 
           <div class="option-group">
             <h3 class="option-group-title">Core Prompting</h3>
@@ -4537,7 +4559,7 @@
                 <div class="option-card-head">
                   <div class="option-card-title">Unscheduled Phenomena</div>
                 </div>
-                <p class="option-card-copy">A d20 every reply decides whether reality amends itself mid-scene. The threshold sits in the prompt as a plain <code>14</code>, so raise it for a calmer world.</p>
+                <p class="option-card-copy">A silent d20 every reply decides whether reality amends itself partway through the scene, and a natural 20 brings a second amendment later in the same reply. The threshold sits in the prompt as a plain <code>14</code>, so raise it for a calmer world.</p>
               </div>
             </div>
           </div>
@@ -4633,7 +4655,7 @@
                 <div class="option-card-head">
                   <div class="option-card-title">The Committee</div>
                 </div>
-                <p class="option-card-copy">Also Disco Elysium. Inner faculties interrupt mid-prose with a pass or a fail, and a failure is confidently wrong until events correct it.</p>
+                <p class="option-card-copy">Also Disco Elysium. Four to six named inner faculties interrupt mid-prose with a pass or a fail, and a failure stays confidently wrong until events correct it. Mostly fluff; it isn&apos;t tied to any skills or numbers.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -4652,6 +4674,7 @@
 
           <div class="option-group">
             <h3 class="option-group-title">Doors &amp; Dice</h3>
+            <p class="option-note">All off by default. Two regexes in the set strip old Doors and Winds menus out of what gets sent to the model, so they don&apos;t pile up in your context; the copies already in your chat log stay visible where they are.</p>
             <div class="option-grid">
               <div class="option-card">
                 <div class="option-card-head">
@@ -4663,7 +4686,7 @@
                 <div class="option-card-head">
                   <div class="option-card-title">Doors with Fate Checks</div>
                 </div>
-                <p class="option-card-copy">The same menu with a hidden d100 rolled against your Almanac competencies. Pick this or plain Doors, not both.</p>
+                <p class="option-card-copy">The same menu, except every option carries a competency and target number from your Almanac and is resolved by one hidden d100 whose arithmetic never reaches the page. Pick this or plain Doors, never both.</p>
               </div>
               <div class="option-card">
                 <div class="option-card-head">
@@ -4776,6 +4799,33 @@
           </a>
         </div>
       </div>
+
+      <div class="tab-content tee-tab-content-sample">
+        <div class="preset-info">
+          <div class="preset-desc">
+            <p>One run of 1.0 on my Nagito Komaeda card. The defaults were left alone; Drift, Omen, The Clock Is Lying, The Committee, The Becoming and The Census, with Unscheduled Phenomena switched on as the only addition and no Veil Mode picked.</p>
+            <p>The trackers below are rendered by the regex set exactly the way they land in the chat, so this is also the easiest way to see what the cards actually look like before you install anything.</p>
+          </div>
+
+          <div class="extensions-list">
+            <a class="ext-item sample-item" href="prompting-lab/tee-1-0-nagito.html">
+              <div class="ext-name">GLM 5.3 <span class="option-badge option-badge-sb">Nagito Komaeda</span></div>
+              <div class="ext-desc">Room 13 and the Warm Keycard. A pre-dawn beach, a keycard that stays warm to the touch, and a hotel corridor that agrees to exist. Drift, Omen, Hour, Voice and Unscheduled Phenomena all fire across the three turns.</div>
+              <div class="sample-cue">Read the transcript &rarr;</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content tee-tab-content-previous">
+        <div class="preset-info">
+          <h2 class="preset-title">Previous Preset Versions</h2>
+          <p class="preset-version">Older releases</p>
+          <div class="preset-downloads" id="tee-previous-versions-list">
+            <a href="preset/The%20Ethereality%20Express%200.5.json" download="The Ethereality Express 0.5.json">The Ethereality Express 0.5</a>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
   </div>
@@ -4818,6 +4868,7 @@
   <a class="lightbox" id="lb-sb-14" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-desktop-conversation-v1.7.0.png" alt="SillyBunny desktop Conversation Mode"></a>
   <a class="lightbox" id="lb-sb-15" href="#close"><img loading="lazy" src="preset/screenshots/sillybunny/sillybunny-ui-mobile-conversation-v1.7.0.png" alt="SillyBunny mobile Conversation Mode"></a>
   <a class="lightbox" id="lb-preset-15-1" href="#close"><img loading="lazy" src="preset/screenshots/pura-director-preset-15.1.png" alt="Pura's Director Preset 15.1 release art"></a>
+  <a class="lightbox" id="lb-preset-tee-1-0" href="#close"><img loading="lazy" src="preset/screenshots/the-ethereality-express-1.0.png" alt="The Ethereality Express 1.0 release art"></a>
   <a class="lightbox" id="lb-tee-1" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/almanac.png" alt="The Almanac"></a>
   <a class="lightbox" id="lb-tee-2" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/census.png" alt="The Census"></a>
   <a class="lightbox" id="lb-tee-3" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/drift.png" alt="Drift Tracker"></a>
@@ -4842,13 +4893,19 @@
 
   <script>
     const currentPresetVersion = "15.1";
-    const currentTeeVersion = "0.5b";
+    const currentTeeVersion = "1.0";
 
-    // Tabs are radios, so #model-samples etc. need wiring up by hand.
+    // Tabs are radios, so #model-samples etc. need wiring up by hand. The TEE
+    // sample sits two levels in, so it has to tick the preset switcher too.
     (function () {
-      const tabForHash = { "model-samples": "tab-samples" };
-      const target = document.getElementById(tabForHash[location.hash.slice(1)]);
-      if (target) target.checked = true;
+      const tabsForHash = {
+        "model-samples": ["tab-samples"],
+        "tee-sample": ["preset-view-tee", "tee-tab-sample"],
+      };
+      (tabsForHash[location.hash.slice(1)] || []).forEach((id) => {
+        const target = document.getElementById(id);
+        if (target) target.checked = true;
+      });
     })();
 
     // Counts are read off the page so they can't drift; the date is static
@@ -4863,14 +4920,28 @@
         `pdp:${currentPresetVersion} | tee:${currentTeeVersion} | cards:${cards} | themes:${themes} | updated:${updated}`;
     })();
 
+    // Both version lists read the same preset directory, so one API call feeds
+    // them both. If it fails, the static fallback links in the HTML stay put.
     (function () {
-      const list = document.getElementById("previous-versions-list");
-      if (!list) return;
+      const lists = [
+        {
+          el: document.getElementById("previous-versions-list"),
+          pattern: /^Pura's Director Preset ([0-9]+(?:\.[0-9]+)*)(?: \((SillyTavern|SillyBunny)\))?\.json$/,
+          current: currentPresetVersion,
+          label: (version, platform) => (platform ? `Preset ${version} (${platform})` : `Preset ${version}`),
+        },
+        {
+          el: document.getElementById("tee-previous-versions-list"),
+          pattern: /^The Ethereality Express ([0-9]+(?:\.[0-9]+)*)\.json$/,
+          current: currentTeeVersion,
+          label: (version) => `The Ethereality Express ${version}`,
+        },
+      ].filter((entry) => entry.el);
+      if (!lists.length) return;
 
       const owner = "platberlitz";
       const repo = "platberlitz.github.io";
       const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/preset`;
-      const presetPattern = /^Pura's Director Preset ([0-9]+(?:\.[0-9]+)*)(?: \((SillyTavern|SillyBunny)\))?\.json$/;
 
       function compareVersionsDesc(a, b) {
         const aParts = a.split(".").map(Number);
@@ -4886,39 +4957,41 @@
         return 0;
       }
 
+      function render(entry, files) {
+        const previous = files
+          .filter((file) => file && file.type === "file" && entry.pattern.test(file.name))
+          .map((file) => {
+            const match = file.name.match(entry.pattern);
+            return { name: file.name, version: match[1], platform: match[2] || "" };
+          })
+          .sort((a, b) => compareVersionsDesc(a.version, b.version))
+          .filter((item) => item.version !== entry.current);
+
+        entry.el.innerHTML = "";
+
+        if (!previous.length) {
+          const message = document.createElement("span");
+          message.className = "preset-version";
+          message.textContent = "No previous versions yet.";
+          entry.el.appendChild(message);
+          return;
+        }
+
+        previous.forEach((item) => {
+          const link = document.createElement("a");
+          link.href = `preset/${encodeURIComponent(item.name)}`;
+          link.download = item.name;
+          link.textContent = entry.label(item.version, item.platform);
+          entry.el.appendChild(link);
+        });
+      }
+
       fetch(apiUrl, { headers: { Accept: "application/vnd.github+json" } })
         .then((response) => {
           if (!response.ok) throw new Error("Failed to load preset versions");
           return response.json();
         })
-        .then((files) => {
-          const versions = files
-            .filter((file) => file && file.type === "file" && presetPattern.test(file.name))
-            .map((file) => {
-              const match = file.name.match(presetPattern);
-              return { name: file.name, version: match ? match[1] : "", platform: match ? match[2] || "" : "" };
-            })
-            .sort((a, b) => compareVersionsDesc(a.version, b.version));
-
-          const previous = versions.filter((item) => item.version !== currentPresetVersion);
-          if (!previous.length) {
-            list.innerHTML = "";
-            const message = document.createElement("span");
-            message.className = "preset-version";
-            message.textContent = "No previous versions yet.";
-            list.appendChild(message);
-            return;
-          }
-
-          list.innerHTML = "";
-          previous.forEach((item) => {
-            const link = document.createElement("a");
-            link.href = `preset/${encodeURIComponent(item.name)}`;
-            link.download = item.name;
-            link.textContent = item.platform ? `Preset ${item.version} (${item.platform})` : `Preset ${item.version}`;
-            list.appendChild(link);
-          });
-        })
+        .then((files) => lists.forEach((entry) => render(entry, files)))
         .catch(() => {
           // Keep fallback link(s) already rendered in HTML.
         });
