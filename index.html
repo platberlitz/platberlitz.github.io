@@ -755,6 +755,7 @@
     }
 
     .prompt-reader select,
+    .prompt-reader input[type="text"],
     .prompt-reader textarea,
     .prompt-reader button {
       border: 1px solid var(--border);
@@ -776,6 +777,7 @@
       max-height: 65vh;
       min-height: 12rem;
       line-height: 1.65;
+      font-weight: 400;
       resize: vertical;
     }
 
@@ -792,8 +794,44 @@
       color: var(--accent);
       border-color: var(--accent);
     }
-    .prompt-reader button:disabled { cursor: wait; }
+    .prompt-reader button:disabled { cursor: not-allowed; }
     .prompt-status { color: var(--fg-dim); font-size: 0.8rem; }
+
+    .prompt-mixer { margin: 1.2rem 0; border-block: 1px solid var(--border); }
+    .prompt-mixer > summary {
+      padding: 0.85rem 0;
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .prompt-mixer[open] { padding-bottom: 1rem; }
+    .mix-choices {
+      max-height: 18rem;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      padding: 0.4rem;
+      margin: 0.75rem 0;
+    }
+    .mix-choices label {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      min-height: 44px;
+      padding: 0.65rem 0.4rem;
+      margin: 0;
+      font-weight: 400;
+      cursor: pointer;
+      overflow-wrap: anywhere;
+    }
+    .mix-choices label:has(:checked) { color: var(--accent); background: var(--bg-alt); }
+    .mix-choices label:has(:disabled) { color: var(--fg-dim); cursor: not-allowed; }
+    .mix-choices input { flex: none; width: 1rem; height: 1rem; margin-top: 0.15rem; accent-color: var(--accent); }
+    .mix-choices small { display: block; font-size: 0.75rem; color: var(--fg-dim); }
+    .mix-names { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .mix-names label { flex: 1 1 12rem; min-width: 0; }
+    .mix-names input { display: block; width: 100%; margin-top: 0.4rem; }
+    .mix-status { font-size: 0.8rem; color: var(--fg-dim); overflow-wrap: anywhere; }
+    .mix-status[data-error="true"] { color: var(--err); }
 
     /* Card sub-tabs */
     .card-subtab-content { display: none; }
@@ -2033,7 +2071,7 @@
           <h2 class="preset-title">Prompts</h2>
           <p class="preset-version">Pura's Director Preset / SillyTavern</p>
           <p class="option-note">I've included the optional prompts too. Pick one to read or copy; the text comes straight from the current preset. Placeholders and macros are unchanged, so some prompts still need SillyTavern to work.</p>
-          <label for="st-prompt-choice">Choose a prompt</label>
+          <label for="st-prompt-choice">Original prompt (with app macros)</label>
           <select id="st-prompt-choice" disabled><option>Loading prompts...</option></select>
           <div class="prompt-actions">
             <button type="button" class="prompt-copy" disabled>Copy prompt</button>
@@ -4257,7 +4295,7 @@
           <h2 class="preset-title">Prompts</h2>
           <p class="preset-version">Pura's Director Preset / SillyBunny</p>
           <p class="option-note">I've included the optional prompts too. Pick one to read or copy; the text comes straight from the current preset. Placeholders and macros are unchanged, so some prompts still need SillyBunny to work.</p>
-          <label for="sb-prompt-choice">Choose a prompt</label>
+          <label for="sb-prompt-choice">Original prompt (with app macros)</label>
           <select id="sb-prompt-choice" disabled><option>Loading prompts...</option></select>
           <div class="prompt-actions">
             <button type="button" class="prompt-copy" disabled>Copy prompt</button>
@@ -4525,7 +4563,7 @@
           <h2 class="preset-title">Prompts</h2>
           <p class="preset-version">The Ethereality Express</p>
           <p class="option-note">I've included the optional prompts too. Pick one to read or copy; the text comes straight from the current preset. Placeholders and macros are unchanged, so some prompts still need a compatible roleplay app to work.</p>
-          <label for="tee-prompt-choice">Choose a prompt</label>
+          <label for="tee-prompt-choice">Original prompt (with app macros)</label>
           <select id="tee-prompt-choice" disabled><option>Loading prompts...</option></select>
           <div class="prompt-actions">
             <button type="button" class="prompt-copy" disabled>Copy prompt</button>
@@ -5009,6 +5047,26 @@
   <a class="lightbox" id="lb-tee-20" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/doors.png" alt="Doors"></a>
   <a class="lightbox" id="lb-tee-21" href="#close"><img loading="lazy" src="preset/screenshots/ethereality/four-winds.png" alt="The Four Winds"></a>
 
+  <template id="prompt-mixer-template">
+    <details class="prompt-mixer">
+      <summary>Mix prompts for JanitorAI / other apps</summary>
+      <p class="option-note">I've made this for apps that can't run the preset's macros. Tick what you want, then copy the combined instructions into your app's custom prompt field. Start with a main prompt and add only what you need.</p>
+      <div class="mix-choices" role="group" aria-label="Prompts to combine"></div>
+      <p class="option-note">Pick one length, voice and user-control option. Randomisers, dice and live summaries aren't portable; unavailable entries say why. Comments and dialogue colour controls are removed. Trackers stay as text, without their styled cards.</p>
+      <div class="mix-names">
+        <label>Your name (optional)<input type="text" class="mix-user" placeholder="Keep {{user}}" autocomplete="off"></label>
+        <label>Character name (optional)<input type="text" class="mix-char" placeholder="Keep {{char}}" autocomplete="off"></label>
+      </div>
+      <p class="option-note">Leave names blank to keep {{user}} and {{char}}. Fill them in if your app doesn't support either placeholder. Review the result before pasting; one text field can't reproduce message placement or every app feature.</p>
+      <div class="prompt-actions">
+        <button type="button" class="mix-copy" disabled>Copy combined prompt</button>
+        <button type="button" class="mix-clear">Clear selection</button>
+      </div>
+      <p class="mix-status" role="status">Choose prompts to start your mix.</p>
+      <label>Combined prompt preview<textarea class="mix-preview" readonly spellcheck="false"></textarea></label>
+    </details>
+  </template>
+
   <script>
     const currentPresetVersion = "15.1";
     const currentTeeVersion = "1.0";
@@ -5038,6 +5096,112 @@
         `pdp:${currentPresetVersion} | tee:${currentTeeVersion} | cards:${cards} | themes:${themes} | updated:${updated}`;
     })();
 
+    function compilePromptMix(selected, names = {}) {
+      const variables = new Map();
+      const used = new Set();
+      const resolving = new Set();
+      const keys = new Set(['friction', 'custom', 'writefor', 'nsfw', 'genre', 'length', 'narration', 'veil']);
+      if (selected.filter(p => /Main Prompt$/i.test(p.name)).length > 1) {
+        throw new Error('Choose only one main prompt.');
+      }
+
+      // Balanced scanning keeps nested name placeholders and comments intact.
+      function scan(source, macro, literal = value => value) {
+        let result = '';
+        let start = 0;
+        for (let i = 0; i < source.length;) {
+          const pair = source.slice(i, i + 2);
+          if (pair === '}}') throw new Error('Unmatched macro closing braces.');
+          if (pair !== '{{') { i++; continue; }
+          result += literal(source.slice(start, i));
+          const body = i + 2;
+          let depth = 1;
+          i += 2;
+          while (i < source.length && depth) {
+            const token = source.slice(i, i + 2);
+            if (token === '{{') { depth++; i += 2; }
+            else if (token === '}}') { depth--; i += 2; }
+            else i++;
+          }
+          if (depth) throw new Error('Unclosed macro.');
+          result += macro(source.slice(body, i - 2).trim());
+          start = i;
+        }
+        return result + literal(source.slice(start));
+      }
+
+      // Collect options before resolving the main prompt, regardless of source order.
+      const records = selected.map(prompt => {
+        if (prompt.role === 'assistant') throw new Error('Assistant prefill needs a separate assistant message.');
+        const assignments = [];
+        const body = scan(prompt.content, macro => {
+          if (macro.startsWith('//') || macro === 'trim') return '';
+          const match = /^setvar::(\w+)::([\s\S]*)$/.exec(macro);
+          if (!match) return `{{${macro}}}`;
+          const [, key, value] = match;
+          if (!keys.has(key)) throw new Error(`Unsupported variable: ${key}.`);
+          if (variables.has(key)) throw new Error(`Choose one: ${variables.get(key).name} or ${prompt.name}.`);
+          variables.set(key, { value, name: prompt.name });
+          assignments.push(key);
+          return '';
+        });
+        return { body, assignments };
+      });
+
+      function variable(key) {
+        if (!keys.has(key)) throw new Error(`Unsupported variable: ${key}.`);
+        if (!variables.has(key)) return '';
+        if (resolving.has(key)) throw new Error(`Circular variable: ${key}.`);
+        used.add(key);
+        resolving.add(key);
+        const value = render(variables.get(key).value);
+        resolving.delete(key);
+        return value;
+      }
+
+      function render(source) {
+        const branches = [];
+        const active = () => branches.every(branch => branch.active);
+        const result = scan(source, macro => {
+          const condition = /^#if \.(\w+)$/.exec(macro);
+          if (condition) {
+            if (!keys.has(condition[1])) throw new Error(`Unsupported variable: ${condition[1]}.`);
+            branches.push({ active: Boolean(variables.get(condition[1])?.value.trim()), alternative: false });
+            return '';
+          }
+          if (macro === 'else') {
+            const branch = branches.at(-1);
+            if (!branch || branch.alternative) throw new Error('Unexpected conditional alternative.');
+            branch.active = !branch.active;
+            branch.alternative = true;
+            return '';
+          }
+          if (macro === '/if') {
+            if (!branches.pop()) throw new Error('Unexpected conditional ending.');
+            return '';
+          }
+          if (!active()) return '';
+          if (macro.startsWith('//') || macro === 'trim' || macro === 'dialoguecolors') return '';
+          if (macro === 'user' || macro === 'char') return `{{${macro}}}`;
+          const reference = /^getvar::(\w+)$/.exec(macro);
+          if (reference) return variable(reference[1]);
+          // ponytail: static instructions only; never freeze per-message chance into a permanent value.
+          if (/^(random::|roll:)/.test(macro)) throw new Error('Needs per-message random choices or dice. Choose a fixed alternative.');
+          if (macro === 'summary') throw new Error('Needs a live conversation summary.');
+          throw new Error(`Unsupported macro: ${macro.split(/[:\s]/)[0]}.`);
+        }, value => active() ? value : '');
+        if (branches.length) throw new Error('Unclosed conditional.');
+        return result;
+      }
+
+      const rendered = records.map(record => render(record.body));
+      const extras = records.map(record => record.assignments.filter(key => !used.has(key)).map(variable).join('\n\n'));
+      const output = rendered.map((body, index) => [body, extras[index]].filter(Boolean).join('\n\n'))
+        .join('\n\n').replace(/^[\t ]*[-*][\t ]*$/gm, '').replace(/\n[\t ]*\n(?:[\t ]*\n)+/g, '\n\n').trim();
+      // Substitute literal names last: names are data, never another pass of macro syntax.
+      return output.replace(/\{\{(user|char)\}\}/g, (placeholder, key) => names[key]?.trim() || placeholder);
+    }
+
     // ponytail: read the existing download links, not a second copy of the prompts.
     document.querySelectorAll('.prompt-reader').forEach((reader) => {
       const tab = document.getElementById(reader.dataset.promptTab);
@@ -5046,8 +5210,58 @@
       const copy = reader.querySelector('.prompt-copy');
       const retry = reader.querySelector('.prompt-retry');
       const status = reader.querySelector('.prompt-status');
+      const mixer = document.getElementById('prompt-mixer-template').content.firstElementChild.cloneNode(true);
+      reader.querySelector('.option-note').after(mixer);
+      const mixChoices = mixer.querySelector('.mix-choices');
+      const mixText = mixer.querySelector('.mix-preview');
+      const mixCopy = mixer.querySelector('.mix-copy');
+      const mixStatus = mixer.querySelector('.mix-status');
       let prompts = [];
       let loading = false;
+      let copyingMix = false;
+
+      function updateMix() {
+        const selected = [...mixChoices.querySelectorAll('input:checked')].map(input => prompts[input.value]);
+        mixStatus.dataset.error = 'false';
+        try {
+          mixText.value = compilePromptMix(selected, {
+            user: mixer.querySelector('.mix-user').value,
+            char: mixer.querySelector('.mix-char').value,
+          });
+          mixStatus.textContent = selected.length
+            ? `${selected.length} selected / ${mixText.value.length.toLocaleString()} characters. Review the preview before copying.`
+            : 'Choose prompts to start your mix.';
+        } catch (error) {
+          mixText.value = '';
+          mixStatus.textContent = error.message;
+          mixStatus.dataset.error = 'true';
+        }
+        mixCopy.disabled = copyingMix || !mixText.value;
+      }
+
+      mixer.addEventListener('input', updateMix);
+      mixer.querySelector('.mix-clear').addEventListener('click', () => {
+        mixChoices.querySelectorAll('input').forEach(input => { input.checked = false; });
+        updateMix();
+      });
+      mixCopy.addEventListener('click', async () => {
+        const content = mixText.value;
+        copyingMix = true;
+        mixCopy.disabled = true;
+        try {
+          await navigator.clipboard.writeText(content);
+          if (mixText.value === content) mixStatus.textContent = 'Copied combined prompt.';
+        } catch {
+          if (mixText.value === content) {
+            mixText.focus();
+            mixText.select();
+            mixStatus.textContent = 'Clipboard unavailable. The combined text is selected; copy it manually.';
+          }
+        } finally {
+          copyingMix = false;
+          mixCopy.disabled = !mixText.value;
+        }
+      });
 
       function showPrompt() {
         const prompt = prompts[choice.value];
@@ -5085,6 +5299,30 @@
           if (!ordered.length) throw new Error('No prompt text');
           choice.replaceChildren(...ordered.map((prompt, index) => new Option(prompt.name, index)));
           prompts = ordered;
+          mixChoices.replaceChildren(...prompts.map((prompt, index) => {
+            const label = document.createElement('label');
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.value = index;
+            const caption = document.createElement('span');
+            caption.textContent = prompt.name;
+            try {
+              if (!compilePromptMix([prompt])) throw new Error('Documentation only; no instructions to copy.');
+            } catch (error) {
+              input.disabled = true;
+              const reason = document.createElement('small');
+              reason.textContent = error.message;
+              caption.appendChild(reason);
+            }
+            if (!input.disabled && prompt.name === 'Optional User Instructions') {
+              const warning = document.createElement('small');
+              warning.textContent = 'Contains example instructions, not your own. Read the original before selecting.';
+              caption.appendChild(warning);
+            }
+            label.append(input, caption);
+            return label;
+          }));
+          updateMix();
           choice.value = String(Math.max(0, prompts.findIndex((prompt) => prompt.identifier === 'main')));
           choice.disabled = false;
           copy.disabled = false;

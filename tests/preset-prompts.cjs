@@ -39,6 +39,27 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
 
     await page.goto(origin, { waitUntil: 'networkidle' });
     assert.equal(requests.length, 0, 'Prompt downloads are lazy');
+    const compile = (selected, names) => page.evaluate(({ selected, names }) => compilePromptMix(selected, names), { selected, names });
+    const sample = (name, content) => ({ name, content });
+    const main = sample('Main', 'Before\n{{#if .friction}}Active: {{getvar::friction}}{{else}}Inactive{{/if}}\nAfter');
+    const friction = sample('Friction', '{{ // Comment containing {{user}} }}{{trim}}{{setvar::friction::Respect {{user}}.}}');
+    assert.equal(await compile([main]), 'Before\nInactive\nAfter');
+    assert.equal(await compile([main, friction]), 'Before\nActive: Respect {{user}}.\nAfter');
+    assert.equal(await compile([friction, main]), 'Before\nActive: Respect {{user}}.\nAfter');
+    assert.equal(await compile([friction]), 'Respect {{user}}.');
+    assert.equal(await compile([friction], { user: '$& <Alex>' }), 'Respect $& <Alex>.');
+    assert.equal(await compile([sample('Names', '{{user}} / {{char}}')], { user: 'Alex', char: 'Sam' }), 'Alex / Sam');
+    assert.equal(await compile([sample('Comment', '{{// Documentation {{dialoguecolors}} continues }}')]), '');
+    assert.equal(await compile([sample('Tags', '<technical_directives>\n[SCENE|text]\n</technical_directives>')]), '<technical_directives>\n[SCENE|text]\n</technical_directives>');
+    assert.equal(await compile([sample('Formatting', '- {{getvar::length}}\n- {{dialoguecolors}}\nKeep this.')]), 'Keep this.');
+    await assert.rejects(compile([friction, sample('Other friction', '{{setvar::friction::Different.}}')]), /Choose one/);
+    for (const content of ['{{pick::a::b}}', '{{getvar::unknown}}', '{{unknown}}', '{{unclosed', 'stray}}', '{{#if .length}}missing end', '{{else}}', '{{/if}}', '{{#if .length}}{{else}}{{else}}{{/if}}']) {
+      await assert.rejects(compile([sample('Invalid', content)]), /Unsupported|Unclosed|Unmatched|Unexpected/);
+    }
+    for (const content of ['{{random::a::b}}', '{{roll:1d100}}', '{{setvar::custom::{{roll::1d100}}% chance}}', '{{setvar::narration::{{random::a::b}}}}']) {
+      await assert.rejects(compile([sample('Dynamic', content)]), /per-message/);
+    }
+    await assert.rejects(compile([sample('Cycle', '{{setvar::length::{{getvar::length}}}}')]), /Circular/);
     for (const [tab, platform, sourceClass] of [
       ['tab-prompts', 'platform-view-st', 'dl-st'],
       ['sb-tab-prompts', 'platform-view-sb', 'dl-sb'],
@@ -59,11 +80,11 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
         ...entries.filter(p => !ids.includes(p.identifier)),
       ];
       assert.deepEqual(await choice.locator('option').allTextContents(), expected.map(p => p.name));
-      assert.equal(await reader.locator('textarea').inputValue(), entries.find(p => p.identifier === 'main').content);
+      assert.equal(await reader.locator(':scope > textarea').inputValue(), entries.find(p => p.identifier === 'main').content);
       for (let index = 0; index < expected.length; index++) {
         const prompt = expected[index];
         await choice.selectOption(String(index));
-        assert.equal(await reader.locator('textarea').inputValue(), prompt.content, prompt.name);
+        assert.equal(await reader.locator(':scope > textarea').inputValue(), prompt.content, prompt.name);
         if (prompt.identifier === 'main' || prompt.name === 'Friction Mode') {
           await reader.locator('.prompt-copy').click();
           await page.waitForFunction(() => [...document.querySelectorAll('.prompt-status')].some(el => el.textContent.startsWith('Copied ')));
@@ -75,12 +96,72 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
       await page.locator(`label[for="${tab}"]`).click();
       assert.equal(requests.length, count, 'Reopening does not refetch');
 
+      const mixer = reader.locator('.prompt-mixer');
+      await mixer.locator('summary').click();
+      const mixText = mixer.locator('.mix-preview');
+      const mixCopy = mixer.locator('.mix-copy');
+      const checkbox = prompt => mixer.locator(`input[type="checkbox"][value="${expected.indexOf(prompt)}"]`);
+      assert.equal(await mixCopy.isDisabled(), true);
+      let portable = 0;
+      for (const prompt of expected) {
+        const result = await compile([prompt]).then(text => ({ text }), error => ({ error: error.message }));
+        if (result.error) assert.match(result.error, /per-message|live conversation summary|Assistant prefill/, prompt.name);
+        else if (!result.text) assert.match(prompt.name, /README|Disabled/, prompt.name);
+        else {
+          portable++;
+          assert.doesNotMatch(result.text.replace(/\{\{(?:user|char)\}\}/g, ''), /\{\{|\}\}/, prompt.name);
+          if (!prompt.content.includes('{{')) assert.equal(result.text, prompt.content.trim());
+        }
+        assert.equal(await checkbox(prompt).isDisabled(), !result.text, prompt.name);
+      }
+      const selected = [
+        expected.find(p => p.identifier === 'main'),
+        expected.find(p => p.name === 'Formatting'),
+        expected.find(p => /^Short\b/.test(p.name)),
+        expected.find(p => /^Don.t Write for User$/.test(p.name)),
+        expected.find(p => /^Voice:/.test(p.name) && !p.name.includes('Random')),
+      ];
+      if (tab !== 'tee-tab-prompts') selected.push(expected.find(p => p.name === 'Friction Mode'));
+      assert.ok(selected.every(Boolean));
+      for (const prompt of selected) await checkbox(prompt).check();
+      const mixed = await mixText.inputValue();
+      assert.ok(mixed.length > 100);
+      assert.equal(mixed.split('End immediately after 3-5 short paragraphs.').length, 2, 'Length rule inserted exactly once');
+      for (const prompt of selected.filter(p => /Friction|^Voice:/.test(p.name))) {
+        const body = await compile([prompt]);
+        assert.equal(mixed.split(body).length, 2, `${prompt.name} inserted once`);
+      }
+      assert.doesNotMatch(mixed, /\{\{(?:setvar|getvar|#if|else|\/if|trim|dialoguecolors)/);
+      await mixCopy.click();
+      await page.waitForFunction(tab => document.querySelector(`[data-prompt-tab="${tab}"] .mix-status`).textContent === 'Copied combined prompt.', tab);
+      assert.equal(await page.evaluate(() => navigator.clipboard.readText()), mixed);
+      const medium = expected.find(p => /^Medium\b/.test(p.name));
+      await checkbox(medium).check();
+      assert.equal(await mixCopy.isDisabled(), true);
+      assert.equal(await mixText.inputValue(), '');
+      assert.match(await mixer.locator('.mix-status').textContent(), /Choose one:.*Short.*Medium/);
+      await checkbox(medium).uncheck();
+      assert.equal(await mixText.inputValue(), mixed);
+      await mixer.locator('.mix-user').fill('Alex');
+      assert.doesNotMatch(await mixText.inputValue(), /\{\{user\}\}/);
+      assert.match(await mixText.inputValue(), /Alex/);
+      await mixer.locator('.mix-user').fill('');
+      await mixer.locator('.mix-clear').click();
+      assert.equal(await mixText.inputValue(), '');
+      assert.equal(await mixCopy.isDisabled(), true);
+      for (const prompt of [...selected].reverse()) await checkbox(prompt).check();
+      assert.equal(await mixText.inputValue(), mixed, 'Click order does not change preset order');
+      await mixer.locator('input:checked').first().focus();
+      await page.keyboard.press('Space');
+      assert.equal(await mixer.locator('input:checked').count(), selected.length - 1);
+      await page.keyboard.press('Space');
+
       await choice.selectOption(String(expected.findIndex(p => p.identifier === 'main')));
       for (const width of [1440, 390, 320]) {
         await page.setViewportSize({ width, height: 1000 });
         const box = await reader.boundingBox();
         assert.ok(box && box.x >= 0 && box.x + box.width <= width + 1, `${tab} fits at ${width}px`);
-        for (const selector of ['select', 'textarea', '.prompt-copy']) {
+        for (const selector of ['select', ':scope > textarea', '.prompt-copy', '.mix-choices', '.mix-user', '.mix-char', '.mix-copy', '.mix-preview']) {
           const control = await reader.locator(selector).boundingBox();
           assert.ok(control.x >= box.x && control.x + control.width <= box.x + box.width + 1, `${selector} fits`);
         }
@@ -89,7 +170,8 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
         }
       }
       await page.setViewportSize({ width: 1440, height: 1000 });
-      console.log(`${tab}: ${expected.length} exact prompt texts, clipboard and layouts passed`);
+      await mixer.locator('summary').click();
+      console.log(`${tab}: ${expected.length} raw / ${portable} portable prompts, mixing, clipboard and layouts passed`);
     }
 
     for (failure of ['http', 'invalid', 'empty']) {
@@ -109,8 +191,14 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
     }));
     await reader.locator('.prompt-copy').click();
     await page.waitForFunction(() => document.activeElement.tagName === 'TEXTAREA');
-    assert.equal(await reader.locator('textarea').evaluate(el => el.selectionEnd - el.selectionStart), (await reader.locator('textarea').inputValue()).length);
+    assert.equal(await reader.locator(':scope > textarea').evaluate(el => el.selectionEnd - el.selectionStart), (await reader.locator(':scope > textarea').inputValue()).length);
     assert.match(await reader.locator('.prompt-status').textContent(), /copy it manually/);
+    await reader.locator('.prompt-mixer summary').click();
+    await reader.locator('.mix-choices input:enabled').first().check();
+    await reader.locator('.mix-copy').click();
+    await page.waitForFunction(() => document.activeElement.classList.contains('mix-preview'));
+    assert.equal(await reader.locator('.mix-preview').evaluate(el => el.selectionEnd - el.selectionStart), (await reader.locator('.mix-preview').inputValue()).length);
+    assert.match(await reader.locator('.mix-status').textContent(), /copy it manually/);
     await reader.locator('select').focus();
     assert.equal(await reader.locator('select').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
     await page.locator('#tab-prompts').focus();
