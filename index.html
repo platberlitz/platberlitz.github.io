@@ -614,6 +614,9 @@
 
     .preset-tabs > .tab-labels label[for="tab-preset"] { --pill-hue: 145; }
     .preset-tabs > .tab-labels label[for="tab-options"] { --pill-hue: 175; }
+    .preset-tabs > .tab-labels label[for="tab-prompts"],
+    .preset-tabs > .tab-labels label[for="sb-tab-prompts"],
+    .preset-tabs > .tab-labels label[for="tee-tab-prompts"] { --pill-hue: 195; }
     .preset-tabs > .tab-labels label[for="tab-opinions"] { --pill-hue: 275; }
     .preset-tabs > .tab-labels label[for="tab-previous"] { --pill-hue: 76; }
     .preset-tabs > .tab-labels label[for="tab-trackers"] { --pill-hue: 28; }
@@ -641,6 +644,9 @@
 
     #tab-preset:checked ~ .tab-labels label[for="tab-preset"],
     #tab-options:checked ~ .tab-labels label[for="tab-options"],
+    #tab-prompts:checked ~ .tab-labels label[for="tab-prompts"],
+    #sb-tab-prompts:checked ~ .tab-labels label[for="sb-tab-prompts"],
+    #tee-tab-prompts:checked ~ .tab-labels label[for="tee-tab-prompts"],
     #tab-opinions:checked ~ .tab-labels label[for="tab-opinions"],
     #tab-previous:checked ~ .tab-labels label[for="tab-previous"],
     #tab-trackers:checked ~ .tab-labels label[for="tab-trackers"],
@@ -678,6 +684,9 @@
     #tee-tab-previous:focus-visible ~ .tab-labels label[for="tee-tab-previous"],
     #tab-preset:focus-visible ~ .tab-labels label[for="tab-preset"],
     #tab-options:focus-visible ~ .tab-labels label[for="tab-options"],
+    #tab-prompts:focus-visible ~ .tab-labels label[for="tab-prompts"],
+    #sb-tab-prompts:focus-visible ~ .tab-labels label[for="sb-tab-prompts"],
+    #tee-tab-prompts:focus-visible ~ .tab-labels label[for="tee-tab-prompts"],
     #tab-opinions:focus-visible ~ .tab-labels label[for="tab-opinions"],
     #tab-previous:focus-visible ~ .tab-labels label[for="tab-previous"],
     #tab-trackers:focus-visible ~ .tab-labels label[for="tab-trackers"],
@@ -733,6 +742,58 @@
     #tee-tab-trackers:checked ~ .tee-tab-content-trackers { display: block; }
     #tee-tab-sample:checked ~ .tee-tab-content-sample { display: block; }
     #tee-tab-previous:checked ~ .tee-tab-content-previous { display: block; }
+
+    #tab-prompts:checked ~ .tab-content-prompts,
+    #sb-tab-prompts:checked ~ .tab-content-prompts,
+    #tee-tab-prompts:checked ~ .tab-content-prompts { display: block; }
+
+    .prompt-reader label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .prompt-reader select,
+    .prompt-reader textarea,
+    .prompt-reader button {
+      border: 1px solid var(--border);
+      background: var(--bg-alt);
+      color: var(--fg);
+      font: inherit;
+      font-size: 0.85rem;
+      padding: 0.65rem 0.8rem;
+      min-height: 44px;
+      color-scheme: dark;
+    }
+
+    .prompt-reader select,
+    .prompt-reader textarea { width: 100%; }
+
+    .prompt-reader textarea {
+      display: block;
+      height: 26rem;
+      max-height: 65vh;
+      min-height: 12rem;
+      line-height: 1.65;
+      resize: vertical;
+    }
+
+    .prompt-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.8rem 0;
+    }
+
+    .prompt-reader button { cursor: pointer; }
+    .prompt-reader button:not(:disabled):hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .prompt-reader button:disabled { cursor: wait; }
+    .prompt-status { color: var(--fg-dim); font-size: 0.8rem; }
 
     /* Card sub-tabs */
     .card-subtab-content { display: none; }
@@ -1914,6 +1975,7 @@
     <div class="preset-tabs">
       <input type="radio" name="tab" id="tab-preset" checked>
       <input type="radio" name="tab" id="tab-options">
+      <input type="radio" name="tab" id="tab-prompts">
       <input type="radio" name="tab" id="tab-opinions">
       <input type="radio" name="tab" id="tab-previous">
       <input type="radio" name="tab" id="tab-trackers">
@@ -1925,6 +1987,7 @@
       <div class="tab-labels">
         <label for="tab-preset">Preset</label>
         <label for="tab-options">Preset Options</label>
+        <label for="tab-prompts">Prompts</label>
         <label for="tab-opinions">Model Opinions</label>
         <label for="tab-previous">Previous Versions</label>
         <label for="tab-trackers">Trackers</label>
@@ -1962,6 +2025,23 @@
               <img src="preset/screenshots/pura-director-preset-15.1.png" alt="Pura's Director Preset 15.1 release art" loading="lazy">
             </a>
           </div>
+        </div>
+      </div>
+
+      <div class="tab-content tab-content-prompts">
+        <div class="preset-info prompt-reader" data-prompt-tab="tab-prompts" data-prompt-source=".dl-st">
+          <h2 class="preset-title">Prompts</h2>
+          <p class="preset-version">Pura's Director Preset / SillyTavern</p>
+          <p class="option-note">I've included the optional prompts too. Pick one to read or copy; the text comes straight from the current preset. Placeholders and macros are unchanged, so some prompts still need SillyTavern to work.</p>
+          <label for="st-prompt-choice">Choose a prompt</label>
+          <select id="st-prompt-choice" disabled><option>Loading prompts...</option></select>
+          <div class="prompt-actions">
+            <button type="button" class="prompt-copy" disabled>Copy prompt</button>
+            <button type="button" class="prompt-retry" hidden>Try again</button>
+            <span class="prompt-status" role="status"></span>
+          </div>
+          <textarea readonly spellcheck="false" aria-label="Prompt plaintext"></textarea>
+          <noscript>Enable JavaScript to browse prompts, or use the preset download.</noscript>
         </div>
       </div>
 
@@ -4132,6 +4212,7 @@
     <div class="preset-tabs">
       <input type="radio" name="sb-tab" id="sb-tab-overview" checked>
       <input type="radio" name="sb-tab" id="sb-tab-features">
+      <input type="radio" name="sb-tab" id="sb-tab-prompts">
       <input type="radio" name="sb-tab" id="sb-tab-agents">
       <input type="radio" name="sb-tab" id="sb-tab-extensions">
       <input type="radio" name="sb-tab" id="sb-tab-screenshots">
@@ -4139,6 +4220,7 @@
       <div class="tab-labels">
         <label for="sb-tab-overview">Overview</label>
         <label for="sb-tab-features">Features</label>
+        <label for="sb-tab-prompts">Prompts</label>
         <label for="sb-tab-agents">Agents</label>
         <label for="sb-tab-extensions">Extensions</label>
         <label for="sb-tab-screenshots">Screenshots</label>
@@ -4167,6 +4249,23 @@
             <a class="dl-stacked" href="preset/Pura's%20Director%20Regexes%20(Marinara).json" download="Pura's Director Regexes (Marinara).json">Regex Set<span class="dl-sub">Marinara Engine</span></a>
             <a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny">GitHub</a>
           </div>
+        </div>
+      </div>
+
+      <div class="tab-content tab-content-prompts">
+        <div class="preset-info prompt-reader" data-prompt-tab="sb-tab-prompts" data-prompt-source=".dl-sb">
+          <h2 class="preset-title">Prompts</h2>
+          <p class="preset-version">Pura's Director Preset / SillyBunny</p>
+          <p class="option-note">I've included the optional prompts too. Pick one to read or copy; the text comes straight from the current preset. Placeholders and macros are unchanged, so some prompts still need SillyBunny to work.</p>
+          <label for="sb-prompt-choice">Choose a prompt</label>
+          <select id="sb-prompt-choice" disabled><option>Loading prompts...</option></select>
+          <div class="prompt-actions">
+            <button type="button" class="prompt-copy" disabled>Copy prompt</button>
+            <button type="button" class="prompt-retry" hidden>Try again</button>
+            <span class="prompt-status" role="status"></span>
+          </div>
+          <textarea readonly spellcheck="false" aria-label="Prompt plaintext"></textarea>
+          <noscript>Enable JavaScript to browse prompts, or use the preset download.</noscript>
         </div>
       </div>
 
@@ -4382,12 +4481,14 @@
     <div class="preset-tabs">
       <input type="radio" name="tee-tab" id="tee-tab-preset" checked>
       <input type="radio" name="tee-tab" id="tee-tab-options">
+      <input type="radio" name="tee-tab" id="tee-tab-prompts">
       <input type="radio" name="tee-tab" id="tee-tab-trackers">
       <input type="radio" name="tee-tab" id="tee-tab-sample">
       <input type="radio" name="tee-tab" id="tee-tab-previous">
       <div class="tab-labels">
         <label for="tee-tab-preset">Preset</label>
         <label for="tee-tab-options">Preset Options</label>
+        <label for="tee-tab-prompts">Prompts</label>
         <label for="tee-tab-trackers">Trackers</label>
         <label for="tee-tab-sample">Sample</label>
         <label for="tee-tab-previous">Previous Versions</label>
@@ -4416,6 +4517,23 @@
               <img src="preset/screenshots/the-ethereality-express-1.0.png" alt="The Ethereality Express 1.0 release art" loading="lazy">
             </a>
           </div>
+        </div>
+      </div>
+
+      <div class="tab-content tab-content-prompts">
+        <div class="preset-info prompt-reader" data-prompt-tab="tee-tab-prompts" data-prompt-source=".dl-st">
+          <h2 class="preset-title">Prompts</h2>
+          <p class="preset-version">The Ethereality Express</p>
+          <p class="option-note">I've included the optional prompts too. Pick one to read or copy; the text comes straight from the current preset. Placeholders and macros are unchanged, so some prompts still need a compatible roleplay app to work.</p>
+          <label for="tee-prompt-choice">Choose a prompt</label>
+          <select id="tee-prompt-choice" disabled><option>Loading prompts...</option></select>
+          <div class="prompt-actions">
+            <button type="button" class="prompt-copy" disabled>Copy prompt</button>
+            <button type="button" class="prompt-retry" hidden>Try again</button>
+            <span class="prompt-status" role="status"></span>
+          </div>
+          <textarea readonly spellcheck="false" aria-label="Prompt plaintext"></textarea>
+          <noscript>Enable JavaScript to browse prompts, or use the preset download.</noscript>
         </div>
       </div>
 
@@ -4919,6 +5037,89 @@
       line.textContent =
         `pdp:${currentPresetVersion} | tee:${currentTeeVersion} | cards:${cards} | themes:${themes} | updated:${updated}`;
     })();
+
+    // ponytail: read the existing download links, not a second copy of the prompts.
+    document.querySelectorAll('.prompt-reader').forEach((reader) => {
+      const tab = document.getElementById(reader.dataset.promptTab);
+      const choice = reader.querySelector('select');
+      const text = reader.querySelector('textarea');
+      const copy = reader.querySelector('.prompt-copy');
+      const retry = reader.querySelector('.prompt-retry');
+      const status = reader.querySelector('.prompt-status');
+      let prompts = [];
+      let loading = false;
+
+      function showPrompt() {
+        const prompt = prompts[choice.value];
+        text.value = prompt.content;
+        text.scrollTop = 0;
+        text.setAttribute('aria-label', `${prompt.name} plaintext`);
+        status.textContent = `${Number(choice.value) + 1} of ${prompts.length} prompts`;
+      }
+
+      async function loadPrompts() {
+        if (loading || prompts.length) return;
+        loading = true;
+        retry.hidden = true;
+        status.textContent = 'Loading prompts...';
+        try {
+          const source = reader.closest('.platform-panel')
+            .querySelector(`.downloads-primary ${reader.dataset.promptSource}`);
+          const response = await fetch(source.href);
+          if (!response.ok) throw new Error('Preset download failed');
+          const preset = await response.json();
+          if (!Array.isArray(preset.prompts)) throw new Error('Missing prompts');
+          const entries = preset.prompts.filter((prompt) =>
+            prompt && !prompt.marker && typeof prompt.content === 'string' && prompt.content.trim());
+          const byId = new Map(entries.map((prompt) => [prompt.identifier, prompt]));
+          const order = preset.prompt_order?.find((entry) => entry.character_id === 100001)?.order || [];
+          const ordered = [];
+          order.forEach(({ identifier }) => {
+            if (byId.has(identifier)) {
+              ordered.push(byId.get(identifier));
+              byId.delete(identifier);
+            }
+          });
+          // Unlisted options (such as the simplified main prompt) still belong here.
+          ordered.push(...byId.values());
+          if (!ordered.length) throw new Error('No prompt text');
+          choice.replaceChildren(...ordered.map((prompt, index) => new Option(prompt.name, index)));
+          prompts = ordered;
+          choice.value = String(Math.max(0, prompts.findIndex((prompt) => prompt.identifier === 'main')));
+          choice.disabled = false;
+          copy.disabled = false;
+          showPrompt();
+        } catch {
+          choice.replaceChildren(new Option('Prompts unavailable'));
+          status.textContent = 'Could not load prompts. Try again or use the preset download.';
+          retry.hidden = false;
+        } finally {
+          loading = false;
+        }
+      }
+
+      choice.addEventListener('change', showPrompt);
+      retry.addEventListener('click', loadPrompts);
+      tab.addEventListener('change', () => { if (tab.checked) loadPrompts(); });
+      if (tab.checked) loadPrompts();
+      copy.addEventListener('click', async () => {
+        const prompt = prompts[choice.value];
+        copy.disabled = true;
+        status.textContent = '';
+        try {
+          await navigator.clipboard.writeText(prompt.content);
+          status.textContent = `Copied ${prompt.name}.`;
+        } catch {
+          if (prompts[choice.value] === prompt) {
+            text.focus();
+            text.select();
+            status.textContent = 'Clipboard unavailable. The text is selected; copy it manually.';
+          }
+        } finally {
+          copy.disabled = false;
+        }
+      });
+    });
 
     // Both version lists read the same preset directory, so one API call feeds
     // them both. If it fails, the static fallback links in the HTML stay put.
