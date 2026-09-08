@@ -211,7 +211,7 @@ module.exports = async function(page) {
       window.setModelOverride('another-model');
     }, base);
     plans.push({ response: json(answer('openai', 'Retried on A')) });
-    await page.evaluate(() => window.retryRequest(window.getActiveConv().messages.length - 1));
+    assert.equal(await page.evaluate(() => window.retryRequest(window.getActiveConv().messages.length - 1)), 'complete', JSON.stringify(await message()));
     assert.equal(requests.at(-1).url, base + '/a/v1/chat/completions');
     assert.equal(requests.at(-1).body.model, 'fixture-model');
     assert.deepEqual((await message()).swipes, ['Kept after Stop', 'Retried on A']);

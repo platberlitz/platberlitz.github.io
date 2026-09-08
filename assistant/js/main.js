@@ -20,8 +20,11 @@ let userScrolledAway = false;
 let _suppressScrollFlag = false;
 let pendingAttachments = [];
 let pendingAttachmentReads = 0;
+// Bumped by Clear-drafts; in-flight reads from before the clear must not redeliver.
+let attachmentDraftEpoch = 0;
 let attachmentStatusMessage = '';
 let voiceRec = null;
+let _voiceInputEditHandler = null;
 let spokenMessage = null;
 let speechUtterance = null;
 let modelOverride = null;
@@ -50,6 +53,8 @@ let pendingImport = null;
 let pendingImportMeta = null;
 let activeSettingsTab = 'api';
 const dirtySettingsTabs = new Set();
+// ponytail: profile application writes form fields; those writes are committed, not drafts.
+let _suppressSettingsDirty = false;
 let _promptSettingsAutosaveTimer = null;
 let _appearanceSettingsAutosaveTimer = null;
 let _promptSettingsAutosavePending = false;
@@ -103,15 +108,37 @@ function getPersistentActiveConvId() {
   return getPersistentConversations()[0]?.id || '';
 }
 
-function replacePersistentConversations(next, preserveTemporary = true) {
+function replacePersistentConversations(next, preserveTemporary = true, preview = false) {
   const temporary = preserveTemporary ? conversations.filter(isTemporaryConversation) : [];
   const temporaryIds = new Set(temporary.map(conv => conv.id));
-  conversations = temporary.concat((next || []).filter(conv => !temporaryIds.has(conv.id)));
+  const incoming = (next || []).filter(conv => !temporaryIds.has(conv.id));
+  // ponytail: session Context drafts live on conv objects. Re-key them onto replacements
+  // with identical saved content instead of dropping them silently.
+  const droppedDraftOwners = [];
+  const byId = new Map(incoming.map(conv => [conv.id, conv]));
+  conversations.forEach(old => {
+    if (temporaryIds.has(old.id)) return;
+    const draft = contextDrafts.get(old);
+    if (!draft || (draft.summary === undefined && draft.tools === undefined)) return;
+    const replacement = byId.get(old.id);
+    let unchanged = false;
+    try { unchanged = Boolean(replacement) && conversationContent(old) === conversationContent(replacement); } catch (error) {}
+    if (unchanged) {
+      if (!preview) {
+        contextDrafts.set(replacement, draft);
+        if (contextRevisions.has(old)) contextRevisions.set(replacement, contextRevisions.get(old));
+      }
+    } else {
+      droppedDraftOwners.push(old.title || 'Untitled chat');
+    }
+  });
+  if (!preview) conversations = temporary.concat(incoming);
+  return droppedDraftOwners;
 }
 
 const APP_VERSION = {
   name: 'Synapse',
-  buildDate: '2026-09-07T05:38:00+08:00',
+  buildDate: '2026-09-08T11:57:07+08:00',
   updateUrl: 'https://platberlitz.github.io/assistant/version.json'
 };
 
@@ -126,8 +153,7 @@ const SYNC_TOMBSTONES_KEY = 'assistantSyncTombstones';
 const SYNC_SETTINGS_STATE_KEY = 'assistantSyncSettingsState';
 const SYNC_STATE_GIST_KEY = 'assistantSyncStateGistId';
 const SYNC_AUTO_PUSH_DELAY = 1200;
-const SYNC_SETTINGS_KEYS = [
-  'llmStreaming', 'llmEnterSend', 'llmTemperature',
+const SYNC_SETTINGS_KEYS = [  'llmStreaming', 'llmEnterSend', 'llmTemperature',
   'llmMaxTokens', 'llmPromptCache', 'llmThinking', 'llmThinkingEffort',
   'llmExtraParams', 'llmExcludeParams', 'llmPrefill', 'llmPersona',
   'llmEnableStMacros', 'llmRpUserName', 'llmInputCost', 'llmOutputCost',
@@ -181,12 +207,63 @@ function sanitizeStoredUrl(value) {
     if (!['http:', 'https:'].includes(url.protocol)) return '';
     url.username = '';
     url.password = '';
+    url.hash = '';
     Array.from(url.searchParams.keys()).forEach(key => {
-      if (/(?:^|[-_])key$|(?:api[-_ ]?key|token|secret|password|auth)/i.test(key)) url.searchParams.delete(key);
+      // ponytail: match whole credential names, not substrings, or author= filters get stripped.
+      if (/(?:key|token|secret|passwd|password|credential|cookie|session)/i.test(key)
+        || /^(?:auth|authorization|api[-_ ]?key|x-api-key)$/i.test(key)) url.searchParams.delete(key);
     });
     return url.toString();
   } catch (e) {
     return '';
+  }
+}
+
+// Template-aware variant for the search URL, which may hold {key}/{query} placeholders.
+// sanitizeStoredUrl would strip ?key={key} (name looks like a credential) and the
+// placeholders must survive round-tripping byte-for-byte.
+function sanitizeTemplateUrl(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  // Hole whole name=value pairs whose value holds a placeholder, so a template like
+  // ?key={key} survives credential-param stripping in place and in order.
+  const pairNames = [];
+  const holes = [];
+  const holed = text
+    .replace(/([?&])([^?&#=;/\s]+)=([^?&#]*?(?:{{?\s*(?:key|query)\s*}}?|%s)[^?&#]*)/gi,
+      (match, sep, name, val) => `${sep}__SYNAPSEPN${pairNames.push(name) - 1}__=${val}`)
+    .replace(/{{?\s*(?:key|query)\s*}}?|%s/gi, match => `__SYNAPSEHOLE${holes.push(match) - 1}__`);
+  const clean = sanitizeStoredUrl(holed);
+  if (!clean) return '';
+  return clean
+    .replace(/__SYNAPSEPN(\d+)__/g, (_, i) => pairNames[Number(i)] ?? '')
+    .replace(/__SYNAPSEHOLE(\d+)__/g, (_, i) => holes[Number(i)] ?? '');
+}
+
+// Join an API path onto a base URL that may carry a query string (e.g. ?api-version=)
+// or fragment. Plain string concatenation would append the path to the query value.
+function joinApiPath(baseUrl, path) {
+  const clean = String(baseUrl || '').trim();
+  try {
+    const url = new URL(clean);
+    url.hash = '';
+    url.pathname = url.pathname.replace(/\/+$/, '') + path;
+    return url.toString();
+  } catch (e) {
+    return clean.replace(/\/+$/, '') + path;
+  }
+}
+
+// Strip a trailing /chat/completions or /messages from a base URL without touching
+// any query string or fragment.
+function stripApiEndpointSuffix(raw) {
+  const text = String(raw || '').trim();
+  try {
+    const url = new URL(text);
+    url.pathname = url.pathname.replace(/\/(?:chat\/completions|messages)\/?$/i, '');
+    return url.toString();
+  } catch (e) {
+    return text.replace(/\/(?:chat\/completions|messages)\/?$/i, '');
   }
 }
 
@@ -219,9 +296,11 @@ function sanitizeProfileSettings(settings) {
     .filter(([key, value]) => PROFILE_SETTING_KEYS.has(key) && ['string', 'number', 'boolean'].includes(typeof value))
     .map(([key, value]) => [key, String(value)]));
   if ('llmExtraParams' in safe) safe.llmExtraParams = sanitizeExtraParams(safe.llmExtraParams);
-  ['llmProxyUrl', 'llmSearchApiUrl', 'llmCorsProxy'].forEach(key => {
+  ['llmProxyUrl', 'llmCorsProxy'].forEach(key => {
     if (safe[key] != null) safe[key] = sanitizeStoredUrl(safe[key]);
   });
+  // ponytail: the search URL may hold {key}/{query} placeholders; keep them intact.
+  if (safe.llmSearchApiUrl != null) safe.llmSearchApiUrl = sanitizeTemplateUrl(safe.llmSearchApiUrl);
   return safe;
 }
 
@@ -406,6 +485,9 @@ function openModal(modalOrId, focusSelector) {
 
   requestAnimationFrame(() => {
     if (!modal.classList.contains('open') || modal.inert) return;
+    // ponytail: never steal focus the user already placed inside the dialog;
+    // this also makes the initial focus deterministic when opening is slow.
+    if (modal.contains(document.activeElement) && document.activeElement !== dialog && document.activeElement !== document.body) return;
     const focusable = getFocusableElements(dialog);
     const preferred = focusSelector && modal.querySelector(focusSelector);
     const focusTarget = focusable.includes(preferred) ? preferred : focusable[0] || dialog;
@@ -422,7 +504,8 @@ function closeModal(modalOrId, restoreFocus = true) {
   }
   if (modal.id === 'projectsModal') void flushProjectAutosave();
   if (modal.id === 'settingsModal') {
-    flushSettingsAutosaves();
+    // ponytail: a failed autosave keeps the dialog open so valid edits are not silently lost.
+    if (!flushSettingsAutosaves()) { showToast('Fix the highlighted setting before closing.', 'error'); return; }
     if (dirtySettingsTabs.size && !confirm('Discard unsaved ' + Array.from(dirtySettingsTabs, tab => tab === 'api' ? 'API' : 'Tools').join(' and ') + ' changes? Choose Cancel to keep editing, then use Save.')) return;
     dirtySettingsTabs.clear();
     updateSettingsFooter();
@@ -584,7 +667,7 @@ function renderConversationHeader() {
 }
 
 function modelCacheKey(baseUrl = localStorage.getItem('llmProxyUrl') || '', provider = localStorage.getItem('llmProvider') || '', apiFormat = localStorage.getItem('llmApiFormat') || 'auto') {
-  const base = sanitizeStoredUrl(String(baseUrl).replace(/\/(?:chat\/completions|messages)\/?$/i, '')).replace(/\/+$/, '');
+  const base = sanitizeStoredUrl(stripApiEndpointSuffix(baseUrl)).replace(/\/+$/, '');
   return 'llmModelCache:' + JSON.stringify([base, provider || inferRequestProvider({ llmProxyUrl: base, llmApiFormat: apiFormat }), apiFormat]);
 }
 
@@ -702,7 +785,7 @@ function getStoredApiCredential() {
 function getCredentialDestination(settings) {
   settings ||= Object.fromEntries(['llmProvider', 'llmProxyUrl', 'llmApiFormat', 'llmModel'].map(key => [key, localStorage.getItem(key) || '']));
   const provider = inferRequestProvider(settings);
-  const base = sanitizeStoredUrl(String(settings.llmProxyUrl || '').trim().replace(/\/(?:chat\/completions|messages)\/?$/i, '')).replace(/\/+$/, '');
+  const base = sanitizeStoredUrl(stripApiEndpointSuffix(settings.llmProxyUrl || '')).replace(/\/+$/, '');
   return JSON.stringify([base, provider, resolveRequestApiFormat(settings, provider, settings.llmModel || '')]);
 }
 
@@ -799,8 +882,13 @@ function normalizeConversationRecord(raw) {
   normalized.title = text(normalized.title) || 'New Chat';
   normalized.createdAt = number(normalized.createdAt) > 0 ? number(normalized.createdAt) : Date.now();
   normalized.updatedAt = number(normalized.updatedAt) > 0 ? number(normalized.updatedAt) : normalized.createdAt;
+  const messageIndices = new Map();
   normalized.messages = (Array.isArray(normalized.messages) ? normalized.messages : [])
-    .filter(message => message && (message.role === 'user' || message.role === 'assistant' || message.role === 'system'))
+    .filter((message, index) => {
+      if (!message || !['user', 'assistant', 'system'].includes(message.role)) return false;
+      messageIndices.set(index, messageIndices.size);
+      return true;
+    })
     .map(source => {
       const message = { ...source };
       if (Array.isArray(message.content)) {
@@ -882,7 +970,15 @@ function normalizeConversationRecord(raw) {
   ['summary', 'persona', 'characterDescription', 'characterSystemPrompt'].forEach(key => {
     if (key in normalized) normalized[key] = text(normalized[key]);
   });
-  if ('docs' in normalized) normalized.docs = (Array.isArray(normalized.docs) ? normalized.docs : []).filter(object).map(doc => ({ ...doc, name: text(doc.name), text: text(doc.text) }));
+  if ('docs' in normalized) normalized.docs = (Array.isArray(normalized.docs) ? normalized.docs : []).filter(object).flatMap(doc => {
+    // Legacy docs without ownership remain chat-wide. Invalid claimed owners must
+    // not become legacy docs, or a fork could retain files from discarded turns.
+    if (doc.messageIndex != null && (!Number.isInteger(doc.messageIndex) || !messageIndices.has(doc.messageIndex))) return [];
+    const safe = { ...doc, name: text(doc.name), text: text(doc.text) };
+    if (doc.messageIndex == null) delete safe.messageIndex;
+    else safe.messageIndex = messageIndices.get(doc.messageIndex);
+    return [safe];
+  });
   if (!TAG_COLORS.some(tag => tag.name === normalized.tag)) delete normalized.tag;
   if (!normalized.toolPolicy || typeof normalized.toolPolicy !== 'object') normalized.toolPolicy = null;
   normalized.goal = text(normalized.goal).slice(0, 4000);
@@ -895,7 +991,7 @@ function normalizeConversationRecord(raw) {
     ...item, id: text(item.id), text: text(item.text), modelOverride: text(item.modelOverride), createdAt: number(item.createdAt)
   })));
   const draft = object(normalized.draft) ? normalized.draft : {};
-  normalized.draft = { ...draft, text: text(draft.text), attachments: cloneDraftAttachments(draft.attachments) };
+  normalized.draft = { ...draft, text: text(draft.text), attachments: cloneDraftAttachments(draft.attachments), modelOverride: text(draft.modelOverride).slice(0, 300) || null };
   if ('updatedAt' in draft) normalized.draft.updatedAt = number(draft.updatedAt);
   if (normalized.syncVersion) normalized.syncVersion = normalizeConversationVersion(normalized.syncVersion);
   if (normalized.conflictOf && (typeof normalized.conflictOf !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(normalized.conflictOf))) delete normalized.conflictOf;
@@ -1482,8 +1578,9 @@ function applyMsgOverrides() {
   const s = document.documentElement.style;
   const fs = localStorage.getItem('assistantMsgFontSize');
   const mw = localStorage.getItem('assistantMsgMaxWidth');
-  if (fs) s.setProperty('--msg-font-size', fs);
-  if (mw) s.setProperty('--msg-max-width', mw);
+  // ponytail: clearing an override must remove the CSS var, not leave a stale value behind.
+  if (fs) s.setProperty('--msg-font-size', fs); else s.removeProperty('--msg-font-size');
+  if (mw) s.setProperty('--msg-max-width', mw); else s.removeProperty('--msg-max-width');
 }
 
 function toggleTheme() {
@@ -1681,9 +1778,11 @@ function isLocalUrl(url) {
   try {
     const host = canonicalHostname(url);
     const mappedIpv4 = mappedIpv4FromIpv6(host);
+    // ponytail: fc|fd prefixes only mean private on IPv6 literals; public names like fda.gov match too.
+    const isIpv6Literal = host.includes(':');
     return host === 'localhost' || host.endsWith('.localhost') || host.startsWith('::')
       || host.endsWith('.local') || isPrivateIpv4(host) || isPrivateIpv4(mappedIpv4)
-      || /^(?:0:0:0:0:0:0:0:[01]|fc|fd|fe[89ab]|2001:db8)/i.test(host);
+      || (isIpv6Literal && /^(?:0:0:0:0:0:0:0:[01]|fc|fd|fe[89ab]|2001:db8)/i.test(host));
   } catch { return false; }
 }
 
@@ -1695,10 +1794,13 @@ function requestContainsSensitiveData(url, options = {}, forceSensitive = false)
   if (['authorization', 'proxy-authorization', 'x-api-key', 'api-key', 'x-subscription-token']
     .some(name => headers.has(name))) return true;
   try {
-    return [...new URL(url).searchParams.keys()].some(key => {
+    const parsed = new URL(url);
+    if (parsed.username || parsed.password) return true;
+    return [...parsed.searchParams.keys()].some(key => {
       const compact = key.toLowerCase().replace(/[-_]/g, '');
       return /(?:^|[-_])(key|token|secret|password|auth|credential)(?:$|[-_])/i.test(key)
         || /^(?:api|access|auth|bearer|client|subscription)?(?:key|token|secret|password|credential)s?$/.test(compact)
+        || /(?:cookie|session|passwd)/i.test(key)
         || compact === 'authorization';
     });
   } catch (e) {
@@ -1754,20 +1856,28 @@ async function fetchApiWithHttpSupport(url, options, baseUrl, forceSensitive = f
     }
 
     // Non-local http:// URL: use a trusted proxy, or direct HTTP where allowed.
+    // ponytail: only fall back to direct when a proxy was actually tried; repeating a
+    // direct POST after its own failure submits the message twice.
+    const usedProxy = proxyAllowed;
     try {
-      const proxyResp = proxyAllowed ? await tryProxyFetch() : await tryDirectFetch();
+      const proxyResp = usedProxy ? await tryProxyFetch() : await tryDirectFetch();
       // If proxy returned a proxy-level error (not an upstream API error), try direct.
-      if (!proxyResp.ok && [403, 407, 502, 503].includes(proxyResp.status)) {
+      if (usedProxy && !proxyResp.ok && [403, 407, 502, 503].includes(proxyResp.status)) {
         const isApiError = await (async () => {
           try { const j = await proxyResp.clone().json(); return j.error || j.message; } catch { return false; }
         })();
         if (!isApiError && window.location.protocol !== 'https:') {
-          return await tryDirectFetch();
+          options?.signal?.throwIfAborted();
+          // Do not catch a failed direct fallback as another proxy failure.
+          return tryDirectFetch();
         }
       }
       return proxyResp;
     } catch (proxyErr) {
-      // Network-level proxy failure: try direct if not HTTPS.
+      options?.signal?.throwIfAborted();
+      // Network-level proxy failure: try direct if not HTTPS. A failed direct attempt
+      // is rethrown, never repeated.
+      if (!usedProxy) throw proxyErr;
       if (window.location.protocol !== 'https:') {
         try {
           return await tryDirectFetch();
@@ -1788,6 +1898,7 @@ async function fetchApiWithHttpSupport(url, options, baseUrl, forceSensitive = f
   try {
     return await fetch(url, options);
   } catch (err) {
+    options?.signal?.throwIfAborted();
     if (!isNetworkLikeFetchError(err) || !proxyAllowed) {
       if (isNetworkLikeFetchError(err) && requestContainsSensitiveData(url, options, forceSensitive)) {
         throw new Error('Direct API request failed. Credentials were not sent through the public CORS proxy; configure CORS on the API or use a proxy you control.');
@@ -1815,6 +1926,11 @@ function buildProviderHeaders(provider, apiKey) {
   return apiKey ? { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
 }
 
+function getPrimaryChoice(choices) {
+  // Some compatible providers omit index on their sole choice.
+  return Array.isArray(choices) ? choices.find(choice => choice && (choice.index ?? 0) === 0) : undefined;
+}
+
 function normalizeModelMetadata(data) {
   const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : (Array.isArray(data?.models) ? data.models : []));
   return list.map(item => {
@@ -1826,22 +1942,50 @@ function normalizeModelMetadata(data) {
   }).filter(Boolean);
 }
 
-async function fetchAvailableModelMetadata(baseUrl, apiKey, providerName = inferRequestProvider({ llmProxyUrl: baseUrl }), apiFormat = '') {
-  const provider = getProviderPreset(providerName);
-  const normalizedBase = String(baseUrl || '').replace(/\/+$/, '');
-  const url = providerName === 'ollama' && /\/v1$/i.test(normalizedBase)
-    ? normalizedBase.replace(/\/v1$/i, '') + '/api/tags'
-    : normalizedBase + '/models';
+async function fetchAvailableModelMetadata(baseUrl, apiKey, providerName = inferRequestProvider({ llmProxyUrl: baseUrl }), apiFormat = '', options = {}) {
+  // ponytail: discovery authenticates exactly like chat, including Auto-by-model-name.
+  const effectiveFormat = resolveRequestApiFormat({ llmApiFormat: apiFormat || 'auto' }, providerName,
+    (options && options.modelHint) || localStorage.getItem('llmModel') || '');
+  const headers = buildProviderHeaders(effectiveFormat, apiKey);
+  const timeoutCtrl = new AbortController();
+  const cancel = () => timeoutCtrl.abort(options.signal.reason);
+  if (options.signal?.aborted) cancel();
+  else options.signal?.addEventListener('abort', cancel, { once: true });
+  const timer = setTimeout(() => timeoutCtrl.abort(new Error('Model discovery timed out.')), 45000);
+  const signal = timeoutCtrl.signal;
   try {
-    const resp = await fetchApiWithHttpSupport(url, {
-      headers: buildProviderHeaders(providerName === 'anthropic' || apiFormat === 'anthropic' ? 'anthropic' : provider.apiFormat, apiKey)
-    }, baseUrl);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error.message || 'Model discovery failed.');
-    return normalizeModelMetadata(data);
+    const pageUrl = new URL(stripApiEndpointSuffix(baseUrl));
+    pageUrl.hash = '';
+    const path = pageUrl.pathname.replace(/\/+$/, '');
+    pageUrl.pathname = providerName === 'ollama' && /\/v1$/i.test(path)
+      ? path.replace(/\/v1$/i, '') + '/api/tags' : path + '/models';
+    // ponytail: follow Anthropic-style pagination (bounded); single-page providers return at once.
+    const collected = new Map();
+    const cursors = new Set(pageUrl.searchParams.has('after') ? [pageUrl.searchParams.get('after')] : []);
+    for (let page = 0; page < 10; page++) {
+      signal.throwIfAborted();
+      const resp = await fetchApiWithHttpSupport(pageUrl.toString(), { headers, signal }, baseUrl);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      signal.throwIfAborted();
+      if (data?.error) throw new Error(data.error.message || 'Model discovery failed.');
+      const items = Array.isArray(data?.data) ? data.data : [];
+      const previousSize = collected.size;
+      normalizeModelMetadata(data).forEach(item => collected.set(item.id, item));
+      if (effectiveFormat !== 'anthropic' || !data?.has_more) return [...collected.values()];
+      const lastId = data.last_id ?? items[items.length - 1]?.id;
+      if (!items.length || collected.size === previousSize || typeof lastId !== 'string' || !lastId || cursors.has(lastId)) {
+        throw new Error('Model discovery pagination made no progress. The model list was not updated.');
+      }
+      cursors.add(lastId);
+      pageUrl.searchParams.set('after', lastId);
+    }
+    throw new Error('Model discovery exceeded 10 pages. The incomplete model list was not saved.');
   } catch (error) {
     throw new Error(sanitizeErrorDetail(error, [apiKey]));
+  } finally {
+    clearTimeout(timer);
+    options.signal?.removeEventListener('abort', cancel);
   }
 }
 
@@ -1852,11 +1996,11 @@ async function fetchAvailableModels(baseUrl, apiKey, providerName = inferRequest
   return metadata.map(model => model.id);
 }
 
-function populateModelSelect(target, models) {
+function populateModelSelect(target, models, preferred = localStorage.getItem('llmModel') || '') {
   const select = document.getElementById(target === 'setup' ? 'setupModelSelect' : 'setModelSelect');
-  const currentModel = localStorage.getItem('llmModel') || '';
+  const currentModel = preferred || '';
   select.innerHTML = '<option value="">-- Select a model --</option>';
-  models.slice().sort().forEach(m => {
+  [...new Set(models.concat(currentModel ? [currentModel] : []))].sort().forEach(m => {
     const opt = document.createElement('option');
     opt.value = m;
     opt.textContent = m;
@@ -1866,10 +2010,15 @@ function populateModelSelect(target, models) {
 }
 
 const modelDiscoveryRequests = new Map();
+const modelDiscoveryControllers = new Map();
+
+function abortSupersededDiscovery(target) {
+  try { modelDiscoveryControllers.get(target)?.abort(new Error('Superseded by a newer discovery request.')); } catch (e) {}
+}
 
 async function refreshModels(target, btnEl) {
   const inputs = getConnectionInputs(target);
-  const baseUrl = inputs.base.value.trim().replace(/\/(chat\/completions|messages)\/?$/, '');
+  const baseUrl = stripApiEndpointSuffix(inputs.base.value);
   const apiKey = inputs.key.value.trim();
   const providerName = inputs.provider?.value || inferRequestProvider({ llmProxyUrl: baseUrl });
   const apiFormat = inputs.format?.value || getProviderPreset(providerName).apiFormat;
@@ -1877,25 +2026,33 @@ async function refreshModels(target, btnEl) {
   if (!baseUrl || (providerRequiresKey({ llmProvider: providerName }) && !apiKey)) { showToast(providerRequiresKey({ llmProvider: providerName }) ? 'Enter Base URL and API Key first.' : 'Enter Base URL first.', 'error'); return; }
   const token = {};
   modelDiscoveryRequests.set(target, token);
-  const isCurrent = () => modelDiscoveryRequests.get(target) === token &&
+  // ponytail: abort the previous pending discovery so a stalled body cannot hang the controls.
+  abortSupersededDiscovery(target);
+  const discoveryCtrl = new AbortController();
+  modelDiscoveryControllers.set(target, discoveryCtrl);
+  const isCurrent = () => modelDiscoveryRequests.get(target) === token && modelDiscoveryControllers.get(target) === discoveryCtrl &&
     key === modelCacheKey(inputs.base.value.trim(), inputs.provider?.value || providerName, inputs.format?.value || apiFormat) && inputs.key.value.trim() === apiKey;
   const btn = btnEl || document.activeElement;
   modelDiscoveryRequests.set(btn, token);
   btn.classList.add('spinning');
   btn.disabled = true;
+  // Snapshot the model for authentication, but preserve the live selection after discovery.
+  const keepModel = getSelectedModel(target);
   try {
-    const metadata = await fetchAvailableModelMetadata(baseUrl, apiKey, providerName, apiFormat);
+    const metadata = await fetchAvailableModelMetadata(baseUrl, apiKey, providerName, apiFormat, { signal: discoveryCtrl.signal, modelHint: keepModel });
     if (!isCurrent()) return;
     if (key === modelCacheKey()) localStorage.setItem(key, JSON.stringify(metadata));
-    populateModelSelect(target, metadata.map(model => model.id));
+    populateModelSelect(target, metadata.map(model => model.id), getSelectedModel(target));
   } catch (e) {
-    if (isCurrent()) showToast('Failed to fetch models: ' + sanitizeErrorDetail(e), 'error');
+    if (!isCurrent()) return;
+    showToast('Failed to fetch models: ' + sanitizeErrorDetail(e), 'error');
   } finally {
     if (modelDiscoveryRequests.get(btn) === token) {
       btn.classList.remove('spinning');
       btn.disabled = false;
       modelDiscoveryRequests.delete(btn);
     }
+    if (modelDiscoveryControllers.get(target) === discoveryCtrl) modelDiscoveryControllers.delete(target);
   }
 }
 
@@ -1936,6 +2093,8 @@ function normalizeMemoryEntry(raw, index, seedTimestamp) {
 
   if (!text) return null;
   if (!id) id = 'mem_' + createdAt + '_' + index;
+  // ponytail: never let an imported ID become a magic object property.
+  if (['__proto__', 'constructor', 'prototype'].includes(id)) id = 'mem_' + createdAt + '_' + index;
   return { id, text, createdAt };
 }
 
@@ -1978,26 +2137,43 @@ function normalizeMemoryList(rawList) {
 }
 
 async function loadMemories() {
+  let idbVisible = [];
   if (db) {
     try {
       const idbRaw = await idbGetAll('memories');
       const normalizedIdb = normalizeMemoryList(idbRaw);
-      const visible = syncFilterDeletedRecords(normalizedIdb.memories, syncLoadTombstones().memories, 'createdAt');
-      if (normalizedIdb.changed || visible.length !== normalizedIdb.memories.length) await saveMemories(visible);
-      if (visible.length > 0) return visible;
+      idbVisible = syncFilterDeletedRecords(normalizedIdb.memories, syncLoadTombstones().memories, 'createdAt');
+      if (normalizedIdb.changed || idbVisible.length !== normalizedIdb.memories.length) await saveMemories(idbVisible);
     } catch(e) {}
   }
 
+  let fallbackVisible = [];
+  let fallbackStored = null;
+  let fallbackChanged = false;
   try {
-    const legacyRaw = JSON.parse(localStorage.getItem('assistantMemories') || '[]');
-    const normalizedLegacy = normalizeMemoryList(legacyRaw);
-    const visible = syncFilterDeletedRecords(normalizedLegacy.memories, syncLoadTombstones().memories, 'createdAt');
-    if (visible.length > 0 || normalizedLegacy.changed) {
-      await saveMemories(visible);
-      if (db) localStorage.removeItem('assistantMemories');
+    fallbackStored = localStorage.getItem('assistantMemories');
+    if (fallbackStored !== null) {
+      const normalizedLegacy = normalizeMemoryList(JSON.parse(fallbackStored));
+      fallbackVisible = syncFilterDeletedRecords(normalizedLegacy.memories, syncLoadTombstones().memories, 'createdAt');
+      fallbackChanged = normalizedLegacy.changed || fallbackVisible.length !== normalizedLegacy.memories.length;
     }
-    return visible;
-  } catch(e) { return []; }
+  } catch(e) { fallbackVisible = []; }
+  // ponytail: a nonempty database must not hide fallback-only memories.
+  const merged = [...idbVisible];
+  fallbackVisible.forEach(memory => {
+    if (!merged.some(item => item.id === memory.id)) merged.push(memory);
+  });
+  if (!readOnlyShare && fallbackStored !== null && (db ? merged.length > idbVisible.length : fallbackChanged)) {
+    try {
+      await saveMemories(merged);
+      if (db && localStorage.getItem('assistantMemories') === fallbackStored) localStorage.removeItem('assistantMemories');
+    } catch (error) {
+      // ponytail: migration is optional; a failed write must not hide readable memories.
+      console.warn('Memory migration failed; source copies retained:', error);
+      showToast('Memories could not be migrated. The readable copies are still available; retry after freeing storage.', 'error');
+    }
+  }
+  return merged;
 }
 
 async function saveMemories(memories, valid = () => true, removals = []) {
@@ -2043,7 +2219,7 @@ function resolveRequestApiFormat(settings, provider, model) {
 }
 
 function buildRequestTarget(settings = {}, options = {}) {
-  const rawBase = String(settings.llmProxyUrl || '').trim().replace(/\/(?:chat\/completions|messages)\/?$/i, '');
+  const rawBase = stripApiEndpointSuffix(settings.llmProxyUrl || '');
   const baseUrl = sanitizeStoredUrl(rawBase).replace(/\/+$/, '');
   const model = String(options.model || settings.llmModel || '').trim();
   if (!baseUrl) throw new Error('Set a valid API base URL first.');
@@ -2119,7 +2295,7 @@ function getTrustedCorsProxyHost(target) {
   if (!target?.corsProxy || isLocalUrl(target.baseUrl)) return '';
   const endpoint = target.apiFormat === 'anthropic' ? '/messages' : '/chat/completions';
   const options = { method: 'POST', headers: { Authorization: 'Bearer [redacted]' }, body: '{}' };
-  if (!canUseCorsProxy(target.baseUrl + endpoint, options, target.corsProxy, true)) return '';
+  if (!canUseCorsProxy(joinApiPath(target.baseUrl, endpoint), options, target.corsProxy, true)) return '';
   try { return new URL(target.corsProxy).host; } catch (error) { return ''; }
 }
 
@@ -2161,18 +2337,26 @@ async function callApiNonStreaming(messages, options = {}) {
   let headers;
   let body;
   if (target.apiFormat === 'anthropic') {
-    url = target.baseUrl + '/messages';
+    url = joinApiPath(target.baseUrl, '/messages');
     headers = buildProviderHeaders('anthropic', target.apiKey);
     const prepared = prepareAnthropicMessages(messages);
     body = { model: target.model, system: prepared.system, messages: prepared.messages, max_tokens: outputTokens, stream: false };
   } else {
-    url = target.baseUrl + '/chat/completions';
+    url = joinApiPath(target.baseUrl, '/chat/completions');
     headers = buildProviderHeaders('openai', target.apiKey);
     body = { model: target.model, messages: prepareOpenAiMessages(messages), stream: false };
     const tokenKey = target.provider === 'openai' && /^(?:o\d|gpt-5)/i.test(target.model) ? 'max_completion_tokens' : 'max_tokens';
     body[tokenKey] = outputTokens;
   }
   if (target.temperature !== null && !NO_SAMPLING_PARAMS_RE.test(target.model)) body.temperature = target.temperature;
+  // ponytail: Compare follows the same extra/exclusion rules as ordinary chat.
+  try { body = { ...JSON.parse(target.extraParams || '{}'), ...body }; } catch(e) { console.warn('Extra params parse error:', e); }
+  (target.excludeParams || '').split(',').map(s => s.trim()).filter(Boolean).forEach(k => delete body[k]);
+  if (NO_SAMPLING_PARAMS_RE.test(target.model)) {
+    delete body.temperature; delete body.top_p; delete body.top_k;
+  }
+  body.model = target.model;
+  body.stream = false;
   assertProviderRequestFits(body, target);
 
   const resp = await fetchApiWithHttpSupport(url, {
@@ -2183,15 +2367,16 @@ async function callApiNonStreaming(messages, options = {}) {
   }, target.baseUrl, false, target.corsProxy);
   if (!resp.ok) {
     let detail = '';
-    try { detail = (await resp.text()).slice(0, 200); } catch (error) {}
-    const error = new Error(sanitizeErrorDetail('API returned ' + resp.status + (detail ? ': ' + detail : ''), [target.apiKey]));
+    // ponytail: redact the complete error before shortening, or a key prefix survives the cut.
+    try { detail = sanitizeErrorDetail(await resp.text(), [target.apiKey]); } catch (error) {}
+    const error = new Error('API returned ' + resp.status + (detail ? ': ' + detail : ''));
     error.httpStatus = resp.status;
     throw error;
   }
   const data = await resp.json();
   signal?.throwIfAborted();
   if (data.error || data.type === 'error') throw new Error(sanitizeErrorDetail(data.error?.message || 'The provider returned an error.', [target.apiKey]));
-  const result = extractImages(target.apiFormat === 'anthropic' ? data : data.choices?.[0]?.message);
+  const result = extractImages(target.apiFormat === 'anthropic' ? data : getPrimaryChoice(data.choices)?.message);
   if (!result.text.trim() && !(options.returnMessage && result.images.length)) throw new Error('The provider returned an empty response.');
   return options.returnMessage ? result : result.text;
 }
@@ -2463,6 +2648,10 @@ function createComparisonTargetField(slot, choices, defaultId) {
     keyInput.required = false;
     try {
       const target = previewTarget();
+      // ponytail: a hidden temporary key must never follow a changed destination.
+      const identity = comparisonTargetIdentity(target);
+      if (keyInput.dataset.boundAuthority && keyInput.dataset.boundAuthority !== identity) keyInput.value = '';
+      keyInput.dataset.boundAuthority = identity;
       destination.textContent = formatRequestTargetDestination(target);
       let active = null;
       try { active = getActiveRequestTarget(); } catch (error) {}
@@ -2470,6 +2659,7 @@ function createComparisonTargetField(slot, choices, defaultId) {
       const showKey = crossAuthority && (target.keyRequired || target.provider === 'custom');
       keyLabel.hidden = !showKey;
       keyInput.required = showKey && target.keyRequired;
+      if (!showKey) keyInput.value = '';
       keyText.textContent = target.keyRequired ? 'Temporary API key' : 'Temporary API key (optional)';
       keyInput.setAttribute('aria-label', keyText.textContent + ' for ' + target.host);
     } catch (error) {
@@ -2478,7 +2668,16 @@ function createComparisonTargetField(slot, choices, defaultId) {
   };
   const resolve = () => {
     const choice = selectedChoice();
-    if (choice?.kind === 'profile') return getProfileRequestTarget(choice.profile, keyInput.value);
+    if (choice?.kind === 'profile') {
+      let current = null;
+      try { current = previewTarget(); } catch (error) {}
+      let active = null;
+      try { active = getActiveRequestTarget(); } catch (error) {}
+      const crossAuthority = Boolean(current) && !requestAuthoritiesMatch(current, active);
+      // Ignore stale hidden input when this destination no longer needs a temporary key.
+      const supplied = crossAuthority ? keyInput.value : '';
+      return getProfileRequestTarget(choice.profile, supplied);
+    }
     const model = choice?.kind === 'model' ? choice.model : manual.value.trim();
     if (!model) throw new Error('Enter a model name for target ' + slot + '.');
     return getActiveRequestTarget(model);
@@ -2490,11 +2689,11 @@ function createComparisonTargetField(slot, choices, defaultId) {
   return { section, select, keyInput, resolve, update };
 }
 
-function selectAssistantSwipe(message, swipeIndex) {
+function selectAssistantSwipe(message, swipeIndex, invalidate = true) {
   if (!message?.swipes?.length) return;
   const next = Math.max(0, Math.min(message.swipes.length - 1, swipeIndex));
   const conv = getActiveConv();
-  if (message.swipeIndex !== next && conv?.messages.includes(message)) invalidateConversationContext(conv, conv.messages.indexOf(message));
+  if (invalidate && message.swipeIndex !== next && conv?.messages.includes(message)) invalidateConversationContext(conv, conv.messages.indexOf(message));
   message.swipeIndex = next;
   message.content = message.swipes[next];
   message.images = message.swipeImages?.[next] || [];
@@ -2520,7 +2719,8 @@ function addAssistantSwipe(message, copyIndex = null) {
       if (message[key]?.[copyIndex] !== undefined) message[key][index] = structuredClone(message[key][copyIndex]);
     });
   }
-  selectAssistantSwipe(message, index);
+  // Request preparation commits context changes only when dispatch is accepted.
+  selectAssistantSwipe(message, index, false);
   return index;
 }
 
@@ -2583,6 +2783,11 @@ function showComparisonResults(conv, assistantMsg, targets) {
         showToast('This comparison is no longer active.', 'info');
         return;
       }
+      // ponytail: same busy guard as swipes; a dispatched follow-up was built from the shown choice.
+      if (sending || streaming || processingFollowUpConversationId || queueingFollowUp) {
+        showToast('Wait until the current request finishes before changing the response.', 'info');
+        return;
+      }
       selectAssistantSwipe(assistantMsg, index);
       conv.updatedAt = Date.now();
       saveConversations();
@@ -2636,19 +2841,21 @@ async function runModelComparison(selectedTargets) {
     const addedDocs = [];
     if (attachments.length) {
       const docs = conv.docs || (conv.docs = []);
-      attachments.forEach(attachment => {
-        if (!attachment?.textContent || attachment.binary) return;
-        const doc = {
-          id: 'doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-          name: attachment.name || 'file',
-          text: attachment.textContent.slice(0, 20000),
-          createdAt: Date.now()
-        };
-        docs.push(doc);
-        addedDocs.push(doc);
-      });
-    }
-    const userMsg = { ...draftMessage, timestamp: Date.now() };
+        attachments.forEach(attachment => {
+          if (!attachment?.textContent || attachment.binary) return;
+          const doc = {
+            id: 'doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            name: attachment.name || 'file',
+            text: attachment.textContent.slice(0, 20000),
+            createdAt: Date.now(),
+            // ponytail: own the doc by its message so forks keep only retained attachments.
+            messageIndex: messageList.length
+          };
+          docs.push(doc);
+          addedDocs.push(doc);
+        });
+      }
+      const userMsg = { ...draftMessage, timestamp: Date.now() };
     updateMessageTokenMetadata(userMsg);
     messageList.push(userMsg);
     delete conv.draft;
@@ -2656,6 +2863,7 @@ async function runModelComparison(selectedTargets) {
     input.value = '';
     input.style.height = 'auto';
     pendingAttachments = [];
+    const preCompareOverride = modelOverride;
     clearModelOverride();
     renderPreviews();
     try {
@@ -2664,7 +2872,7 @@ async function runModelComparison(selectedTargets) {
       const index = messageList.indexOf(userMsg);
       if (index !== -1) messageList.splice(index, 1);
       if (addedDocs.length) conv.docs = (conv.docs || []).filter(doc => !addedDocs.includes(doc));
-      restoreComposerSnapshot(conv, input, originalText, attachments, '');
+      restoreComposerSnapshot(conv, input, originalText, attachments, preCompareOverride);
       throw new Error('Could not save your message before comparing: ' + sanitizeErrorDetail(error));
     }
     assertRequestOwner(conv, messageList, userMsg, controller.signal);
@@ -2800,7 +3008,7 @@ function openCompareModels() {
   };
 }
 
-async function extractMemories(conversationMessages, conv = getActiveConv(), target = null) {
+async function extractMemories(conversationMessages, conv = getActiveConv(), target = null, requestContext = null) {
   if (!conv || !isMemoryEnabled() || isTemporaryConversation(conv) || localDataOperationsInFlight || _syncPullInFlight) return;
   const sourceValid = captureContextSource(conv);
   const epoch = memoryEpoch;
@@ -2810,6 +3018,21 @@ async function extractMemories(conversationMessages, conv = getActiveConv(), tar
     const existing = await loadMemories();
     if (!valid()) return;
     const existingText = existing.map(m => '- ' + m.text).join('\n') || '(none yet)';
+    // ponytail: a turn excluded mid-generation must not leak into extraction via the stale
+    // assembled history. Keep only still-eligible sources (plus the just-sent draft, which
+    // has no persisted turn to exclude).
+    let eligible = null;
+    if (requestContext && Array.isArray(requestContext.included)) {
+      eligible = new Set();
+      const inContext = new Set(requestContext.included.map(entry => entry.normalized));
+      requestContext.included.forEach(entry => {
+        if (entry?.message && conv.messages.includes(entry.message) && entry.message.includeInContext !== false &&
+            JSON.stringify(buildApiContent(entry.message)) === JSON.stringify(entry.normalized.content)) {
+          eligible.add(entry.normalized);
+        }
+      });
+      conversationMessages = (conversationMessages || []).filter(message => !inContext.has(message) || eligible.has(message));
+    }
 
     const extractPrompt = [
       { role: 'system', content: `You are a memory extraction system. Given a conversation, identify important facts about the user worth remembering for future conversations (preferences, personal details, projects, interests, opinions).
@@ -2855,13 +3078,13 @@ async function cleanupMemories(conv = getActiveConv(), target = null, sourceVali
       { role: 'system', content: `You are a memory cleanup system. Given a list of user memories (each with an ID), identify contradictions and duplicates.
 
 Rules:
-- If two memories contradict, keep the NEWER one (higher ID number = newer). Mark the older for removal.
+- If two memories contradict, keep the NEWER one (later creation time shown after @). Mark the older for removal.
 - If two memories say the same thing differently, keep the more specific one. Mark the other for removal.
 - If a memory is outdated or superseded, mark it for removal.
 
-Respond ONLY with a JSON object: {"remove": ["id1", "id2"]}
+Respond ONLY with a JSON object: {"remove": ["id1", "id2"]} using each memory's ID exactly as shown before the @ sign.
 If no changes needed: {"remove": []}` },
-      { role: 'user', content: memories.map(m => '[' + m.id + '] ' + m.text).join('\n') }
+      { role: 'user', content: memories.map(m => '[' + m.id + ' @' + new Date(m.createdAt || 0).toISOString() + '] ' + m.text).join('\n') }
     ];
 
     const response = await callApiNonStreaming(prompt, { target, signal: null });
@@ -3188,11 +3411,12 @@ function captureContextSource(conv, checkSummary = false) {
     contextRevisions.get(conv) === revision && content() === before && (!checkSummary || summary() === previousSummary));
 }
 
-function invalidateConversationContext(conv, fromIndex = 0) {
+function invalidateConversationContext(conv, fromIndex = 0, explicit = false) {
   if (!conv) return;
   contextRevisions.set(conv, (contextRevisions.get(conv) || 0) + 1);
   const coverage = conv.summaryCoverage;
-  if (conv.summary && coverage?.version === 1 && Number.isInteger(coverage.through) && coverage.through >= 0 && coverage.through <= fromIndex) return;
+  // ponytail: an explicit Clear always clears, even a zero-coverage summary in an empty chat.
+  if (!explicit && conv.summary && coverage?.version === 1 && Number.isInteger(coverage.through) && coverage.through >= 0 && coverage.through <= fromIndex) return;
   // Legacy summaries have no coverage: discard on any earlier-history change, but
   // never guess which legacy exclusions were automatic. Only marked turns return.
   conv.summary = '';
@@ -3217,7 +3441,7 @@ function saveConversationSummary() {
   const input = document.getElementById('summaryText');
   if (!conv || !input || readOnlyShare) return;
   const next = input.value.trim();
-  if (!next) invalidateConversationContext(conv);
+  if (!next) invalidateConversationContext(conv, 0, true);
   else conv.summaryCoverage = { version: 1, through: conv.messages.length };
   conv.summary = next;
   delete (contextDrafts.get(conv) || {}).summary;
@@ -3234,7 +3458,7 @@ function saveConversationSummary() {
 function clearConversationSummary() {
   const conv = getActiveConv();
   if (!conv || readOnlyShare) return;
-  invalidateConversationContext(conv);
+  invalidateConversationContext(conv, 0, true);
   delete (contextDrafts.get(conv) || {}).summary;
   conv.updatedAt = Date.now();
   saveConversations();
@@ -3533,7 +3757,9 @@ async function deleteMemory(id) {
   if (!beginLocalDataOperation()) return;
   try {
   const existing = await loadMemories();
-  if (existing.some(memory => memory.id === id)) syncRecordTombstones('memories', [id]);
+  // ponytail: delete at/after the record's own time, or clock skew resurrects it.
+  const target = existing.find(memory => memory.id === id);
+  if (target) syncRecordTombstones('memories', [id], Math.max(Date.now(), Number(target.createdAt) || 0));
   await saveMemories(existing.filter(memory => memory.id !== id));
   openManageMemories();
   } finally {
@@ -3546,7 +3772,7 @@ async function clearAllMemories() {
   if (!beginLocalDataOperation()) return;
   try {
   const existing = await loadMemories();
-  syncRecordTombstones('memories', existing.map(memory => memory.id));
+  syncRecordTombstones('memories', existing.map(memory => memory.id), Math.max(Date.now(), ...existing.map(memory => Number(memory.createdAt) || 0)));
   await saveMemories([]);
   openManageMemories();
   } finally {
@@ -3843,6 +4069,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   ['input', 'change'].forEach(type => {
     document.getElementById('settingsModal')?.addEventListener(type, event => {
+      if (_suppressSettingsDirty) return;
       const tab = event.target.closest('.settings-tab-content')?.id.replace('settingsTab-', '');
       if (!['api', 'tools'].includes(tab)) return;
       dirtySettingsTabs.add(tab);
@@ -3943,6 +4170,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Global keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (e.isComposing || e.keyCode === 229) return;
+    // ponytail: a key some inner surface already consumed must not leak through.
+    if (e.defaultPrevented) return;
     const commandKey = e.ctrlKey || e.metaKey;
     const key = e.key.toLowerCase();
     if (readOnlyShare && ((commandKey && key === 'n') ||
@@ -4009,7 +4238,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       if (streaming && abortController) abortController.abort();
     }
-    if (openModalStack.length) return;
+    // ponytail: no background shortcuts through any open dialog or search.
+    if (openModalStack.length || transientDialogClose || globalSearchDismiss) return;
     // Ctrl+N - new conversation
     if (commandKey && key === 'n') {
       e.preventDefault();
@@ -4135,6 +4365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Select mode: click to toggle message selection (capture phase)
   msgsArea.addEventListener('click', e => {
     if (!_selectMode) return;
+    if (e.target.matches('.msg-select-checkbox')) return;
     if (_justEnteredSelectMode) { _justEnteredSelectMode = false; e.preventDefault(); e.stopPropagation(); return; }
     const wrapper = e.target.closest('.msg-wrapper');
     if (!wrapper) return;
@@ -4152,7 +4383,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!wrapper) return;
     _longPressTimer = setTimeout(() => {
       _longPressTimer = null;
-      enterSelectMode();
+      enterSelectMode(true);
       toggleMsgSelect(parseInt(wrapper.dataset.msgIdx));
     }, 500);
   });
@@ -4169,7 +4400,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     _lpTouchY = e.touches[0].clientY;
     _lpTouchTimer = setTimeout(() => {
       if (navigator.vibrate) navigator.vibrate(50);
-      enterSelectMode();
+      enterSelectMode(true);
       toggleMsgSelect(parseInt(wrapper.dataset.msgIdx));
       _lpTouchTimer = null;
     }, 500);
@@ -4281,7 +4512,8 @@ function extractImages(msg) {
       if (part.text && !text) text += part.text;
     }
   }
-  // 4. Extract images from text string (data URIs, URLs, raw base64)
+  // 4. Extract images from text string (data URIs, plain image URLs). Bare
+  // base64-looking prose such as a hash digest must stay text, never an image.
   if (typeof text === 'string' && text && !images.length) {
     const dataUriMatch = text.trim().match(/^data:image\/[^;]+;base64,[A-Za-z0-9+/=]+$/);
     if (dataUriMatch) {
@@ -4292,11 +4524,9 @@ function extractImages(msg) {
       const urlMatch = text.match(/^https?:\/\/[^\s]+\.(png|jpg|jpeg|webp|gif)(\?[^\s]*)?$/i);
       if (urlMatch) { images.push(text.trim()); text = ''; }
     }
-    if (!images.length) {
-      const rawB64 = text.match(/^[A-Za-z0-9+/]{100,}[=]{0,2}$/);
-      if (rawB64) { images.push('data:image/png;base64,' + rawB64[0]); text = ''; }
-    }
   }
+  // Refusals may accompany content; use the same display for JSON and streaming.
+  if (typeof msg.refusal === 'string' && msg.refusal.trim()) text = text.trim() ? text + '\n\n' + msg.refusal : msg.refusal;
   return { text, images: [...new Set(images.map(safeMediaUrl).filter(Boolean))] };
 }
 
@@ -4701,7 +4931,11 @@ function postRenderProcessing(bubble) {
 // ============================================
 function estimateTokens(text) {
   if (!text) return 0;
-  return Math.ceil(text.split(/[\s,.!?;:'"()\[\]{}]+/).filter(Boolean).length * 1.3);
+  const source = String(text);
+  // ponytail: JSON-escaped newlines/tabs must still count as separators, and
+  // unspaced text must not collapse to nothing. The character floor keeps both honest.
+  const words = source.replace(/\\[nrtbf]/g, ' ').split(/[\s,.!?;:'"()\[\]{}]+/).filter(Boolean).length;
+  return Math.max(Math.ceil(words * 1.3), Math.ceil(source.length / 4));
 }
 
 function getMsgText(msg) {
@@ -4942,6 +5176,12 @@ async function retryRequest(idx) {
     const messageList = messages;
     const original = getSwipeRequest(msg);
     let target = requestTargets.get(original);
+    if (target) {
+      // ponytail: keep the recorded destination, but authorise with the current key.
+      let active = null;
+      try { active = getActiveRequestTarget(); } catch (error) {}
+      target = Object.freeze({ ...target, apiKey: resolveRequestTargetKey(target, active) });
+    }
     if (!target) {
       const saved = original?.connection;
       if (!saved?.baseUrl) throw new Error('The original connection was not recorded. Use Regenerate to choose the current provider.');
@@ -4957,18 +5197,22 @@ async function retryRequest(idx) {
     const toolPolicy = getToolPolicy(conv);
     const requestContext = await buildRequestMessages(conv, { messageList: messageList.slice(), untilIndex: idx });
     assertRequestOwner(conv, messageList, msg);
-    if (guardTargetContextLimit(requestContext.messages, target, target.maxTokens || 8192)) return;
+    if (guardTargetContextLimit(requestContext.messages, target, target.maxTokens || 8192)) {
+      return;
+    }
     const swipeIdx = addAssistantSwipe(msg);
     renderMessages();
     const wrapper = document.querySelector('.msg-wrapper[data-msg-idx="' + idx + '"]');
     const bubble = wrapper?.querySelector('.msg-bubble');
-    if (!bubble) return;
+    if (!bubble) {
+      return;
+    }
     bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
     announce('Retrying the failed request.');
-    const status = await streamResponse(requestContext.messages, msg, swipeIdx, bubble, target.model, null, { conv, messageList, target, toolPolicy });
+    const status = await streamResponse(requestContext.messages, msg, swipeIdx, bubble, target.model, null, { conv, messageList, target, toolPolicy, commitContext: requestContext.commitInvalidation });
     assertRequestOwner(conv, messageList, msg, null);
     if (conv) conv.updatedAt = Date.now();
-    if (status === 'complete') extractMemories(requestContext.messages, conv, target);
+    if (status === 'complete') extractMemories(requestContext.messages, conv, target, requestContext);
     await saveConversationImmediately();
     renderMessages({ preserveScroll: true });
     updateTokenInfo();
@@ -5018,12 +5262,15 @@ async function updateTokenInfo() {
       const t = estimateTokens(getMsgText(m));
       cost += t * ((m.role === 'assistant' ? outputCost : inputCost) / 1000000);
     });
-    parts.push('~$' + cost.toFixed(4));
+    // ponytail: this is the cost of the text kept in the current transcript,
+    // not accumulated spend; the label says so rather than implying a total.
+    parts.push('Transcript ~$' + cost.toFixed(4));
   }
   let promptPart = '';
   try {
     const built = await buildRequestMessages(getActiveConv(), { messageList: messages, draftMessage: buildComposerMessage() });
-    const stats = getRequestContextStats(built.messages, built.excluded);
+    // ponytail: the estimate must match the request Send will actually submit.
+    const stats = getRequestContextStats(built.messages, built.excluded, modelOverride || localStorage.getItem('llmModel') || '');
     const limit = stats.contextWindow ? ' / ' + formatTokenCount(stats.contextWindow) : '';
     promptPart = 'Prompt: ~' + formatTokenCount(stats.includedTokens) + limit;
   } catch (e) {
@@ -5281,6 +5528,16 @@ function reconcileConversationRecord(byId, incoming, conflictId, baseline, delet
         const version = { ...current.syncVersion };
         Object.entries(incoming.syncVersion || {}).forEach(([key, value]) => { version[key] = Math.max(version[key] || 0, value); });
         const same = { ...current, syncVersion: version, updatedAt: Math.max(current.updatedAt || 0, incoming.updatedAt || 0) };
+        // ponytail: revisions outrank clocks; absent ownership wins an exact tie so stale links stay revoked.
+        const order = compareConversationVersions(incoming, current);
+        const timeDiff = Number(incoming.updatedAt || 0) - Number(current.updatedAt || 0);
+        const publication = record => JSON.stringify([record.shareGistId || '', record.shareUrl || '', record.shareId || '']);
+        if (order === 1 || (order !== -1 && (timeDiff > 0 || (timeDiff === 0 && publication(incoming) < publication(current))))) {
+          ['shareGistId', 'shareUrl', 'shareId'].forEach(key => {
+            if (Object.hasOwn(incoming, key)) same[key] = incoming[key];
+            else delete same[key];
+          });
+        }
         byId.set(current.id, same);
         return same;
       }
@@ -5667,6 +5924,15 @@ function migrateLegacyBranches(convs, usedIds) {
         fork.parentConversationId = conv.id;
         fork.forkMessageIndex = messageIndex;
         fork.forkedAt = now;
+        // ponytail: migrated branches keep only files from their retained history.
+        fork.docs = (fork.docs || []).filter(doc => doc.messageIndex == null || doc.messageIndex < messageIndex);
+        // ponytail: a summary reaching into the divergence belongs to the other history.
+        // Only a v1 summary provably covering pre-divergence turns survives.
+        if (fork.summary && !(fork.summaryCoverage?.version === 1 && Number.isInteger(fork.summaryCoverage.through) && fork.summaryCoverage.through <= messageIndex)) {
+          fork.summary = '';
+          fork.summaryUpdatedAt = null;
+          delete fork.summaryCoverage;
+        }
         delete fork.shareGistId;
         delete fork.shareUrl;
         delete fork.shareId;
@@ -5747,11 +6013,12 @@ function persistDraftFromUI() {
   if (!conv || !input || readOnlyShare) return;
   const text = input.value;
   const attachments = cloneDraftAttachments(pendingAttachments);
+  const override = modelOverride || null;
   const previousText = conv.draft?.text || '';
   const previousAttachments = cloneDraftAttachments(conv.draft?.attachments);
-  if (text === previousText && JSON.stringify(attachments) === JSON.stringify(previousAttachments)) return false;
+  if (text === previousText && JSON.stringify(attachments) === JSON.stringify(previousAttachments) && (conv.draft?.modelOverride || null) === override) return false;
   if (!text && attachments.length === 0) delete conv.draft;
-  else conv.draft = { text, attachments, updatedAt: Date.now() };
+  else conv.draft = { text, attachments, modelOverride: override, updatedAt: Date.now() };
   conv.updatedAt = Date.now();
   debouncedSave();
   return true;
@@ -5762,7 +6029,9 @@ function restoreActiveDraft() {
   const conv = getActiveConv();
   if (!input || !conv) return;
   const draft = conv.draft || {};
-  clearModelOverride();
+  // ponytail: the draft owns its one-message model choice, like queued items do.
+  if (draft.modelOverride) setModelOverride(draft.modelOverride);
+  else clearModelOverride();
   input.value = draft.text || '';
   pendingAttachments = cloneDraftAttachments(draft.attachments);
   renderPreviews();
@@ -5879,6 +6148,8 @@ function prepareConversationTransition() {
   }
   stopVoiceInput();
   persistDraftFromUI();
+  // ponytail: a screenshot selection belongs to its chat and must not leak across.
+  if (_selectMode) exitSelectMode();
   return true;
 }
 
@@ -6125,6 +6396,7 @@ function saveProjects(refresh = false) {
     }
     const removedDuringSave = new Set([...captured.keys()].filter(id => !projects.some(project => project.id === id)));
     result.applied.forEach(({ fromId, record }) => {
+      if (removedDuringSave.has(fromId)) removedDuringSave.add(record.id);
       if (fromId === record.id) return;
       const current = projects.find(project => project.id === fromId);
       if (!current) return;
@@ -6136,7 +6408,8 @@ function saveProjects(refresh = false) {
     const appliedIds = new Set(result.applied.map(item => item.record.id));
     result.records.forEach(record => {
       const index = projects.findIndex(project => project.id === record.id);
-      if (removedDuringSave.has(record.id)) return;
+      // ponytail: record the baseline so the queued deletion is detected by the next save.
+      if (removedDuringSave.has(record.id)) { projectBaseline.set(record.id, serializeConversation(record)); return; }
       const dirty = index !== -1 && serializeConversation(normalizeProjectRecord(projects[index])) !== captured.get(record.id);
       if (index === -1) projects.push(record);
       else if (!dirty) projects[index] = record;
@@ -6331,12 +6604,12 @@ function removeConversations(ids, showUndo = true) {
   if (!conversations.some(c => c.id === activeConvId)) activeConvId = conversations[0].id;
   messages = getActiveConv()?.messages || [];
   saveConversations();
+  selectedConversationIds.clear();
   renderSidebar();
   renderMessages();
   updateTokenInfo();
   restoreActiveDraft();
   updateCharacterUI();
-  selectedConversationIds.clear();
   if (!showUndo) return;
   showToast(targets.length + ' conversation' + (targets.length === 1 ? '' : 's') + ' deleted.', 'info', 5000, {
     label: 'Undo',
@@ -6388,26 +6661,13 @@ function projectDocsSystemText(project) {
 }
 
 function showProjectPicker(conv, anchorEl) {
-  document.querySelectorAll('.tag-picker').forEach(p => p.remove());
-  const picker = document.createElement('div');
-  picker.className = 'tag-picker project-picker';
-  const rect = anchorEl.getBoundingClientRect();
-  picker.style.top = rect.bottom + 4 + 'px';
-  picker.style.left = Math.max(8, rect.left - 120) + 'px';
-
-  const addItem = (label, active, onClick) => {
-    const btn = document.createElement('button');
-    btn.className = 'project-picker-item' + (active ? ' active' : '');
-    btn.textContent = label;
-    btn.onclick = () => { onClick(); picker.remove(); };
-    picker.appendChild(btn);
-  };
-
-  addItem('No project', !conv.projectId, () => assignConversationToProject(conv, null));
+  // ponytail: route through the action menu so the picker stacks above the
+  // mobile sidebar/backdrop and gets keyboard focus/Escape handling for free.
+  const items = [{ label: conv.projectId ? 'No project' : '✓ No project', action: () => assignConversationToProject(conv, null) }];
   projects.forEach(p => {
-    addItem(p.name, conv.projectId === p.id, () => assignConversationToProject(conv, p.id));
+    items.push({ label: (conv.projectId === p.id ? '✓ ' : '') + p.name, action: () => assignConversationToProject(conv, p.id) });
   });
-  addItem('+ New project', false, () => {
+  items.push({ label: '+ New project', action: () => {
     const proj = createProject('New project');
     assignConversationToProject(conv, proj.id);
     openProjectsModal(proj.id);
@@ -6416,16 +6676,8 @@ function showProjectPicker(conv, anchorEl) {
       input?.focus();
       input?.select();
     });
-  });
-
-  document.body.appendChild(picker);
-  const closePicker = (e) => {
-    if (!picker.contains(e.target) && e.target !== anchorEl) {
-      picker.remove();
-      document.removeEventListener('click', closePicker);
-    }
-  };
-  setTimeout(() => document.addEventListener('click', closePicker), 0);
+  }});
+  openActionMenu(anchorEl, items, 'Move to project');
 }
 
 // --- Projects modal ---
@@ -6566,19 +6818,22 @@ async function removeProjectDoc(docId) {
   if (!beginLocalDataOperation()) return;
   try {
   const projectId = _projectEditId;
+  // ponytail: track the object, not the ID; a conflict copy may rename it mid-save.
+  let proj = getProject(projectId);
+  if (!proj) return;
   await flushProjectAutosave();
-  const proj = getProject(projectId);
+  proj = getProject(proj.id);
   if (!proj) return;
   proj.docs = proj.docs.filter(d => d.id !== docId);
   proj.updatedAt = Date.now();
-  if (_projectEditId === projectId) renderProjectEditorPreservingPendingEdits(projectId);
+  if (_projectEditId === proj.id) renderProjectEditorPreservingPendingEdits(proj.id);
   const status = document.getElementById('projectSaveStatus');
-  if (_projectEditId === projectId && status) status.textContent = 'Saving...';
+  if (_projectEditId === proj.id && status) status.textContent = 'Saving...';
   const save = saveProjects();
   const revision = _projectSaveRevision;
   const saved = await save;
   const currentStatus = document.getElementById('projectSaveStatus');
-  if (_projectEditId === projectId && revision === _projectSaveRevision && currentStatus) currentStatus.textContent = saved ? 'Saved' : 'Could not save';
+  if (_projectEditId === proj.id && revision === _projectSaveRevision && currentStatus) currentStatus.textContent = saved ? 'Saved' : 'Could not save';
   if (!saved) showToast('Could not save project files.', 'error', 6000);
   } finally {
     endLocalDataOperation();
@@ -6593,9 +6848,12 @@ async function addProjectFiles(event) {
   }
   try {
   const projectId = _projectEditId;
+  // ponytail: track the object, not the ID; a conflict copy may rename it mid-save.
+  let proj = getProject(projectId);
+  if (!proj) { event.target.value = ''; return; }
   await flushProjectAutosave();
-  const proj = getProject(projectId);
-  if (!proj) return;
+  proj = getProject(proj.id);
+  if (!proj) { event.target.value = ''; return; }
   const files = Array.from(event.target.files || []);
   const docs = [];
   let skipped = 0;
@@ -6618,18 +6876,18 @@ async function addProjectFiles(event) {
     });
   }
   await flushProjectAutosave();
-  const currentProject = getProject(projectId);
-  if (!currentProject) { event.target.value = ''; return; }
-  currentProject.docs.push(...docs);
-  currentProject.updatedAt = Date.now();
-  if (_projectEditId === projectId) renderProjectEditorPreservingPendingEdits(projectId);
+  proj = getProject(proj.id);
+  if (!proj) { event.target.value = ''; return; }
+  proj.docs.push(...docs);
+  proj.updatedAt = Date.now();
+  if (_projectEditId === proj.id) renderProjectEditorPreservingPendingEdits(proj.id);
   const status = document.getElementById('projectSaveStatus');
-  if (_projectEditId === projectId && status) status.textContent = 'Saving...';
+  if (_projectEditId === proj.id && status) status.textContent = 'Saving...';
   const save = saveProjects();
   const revision = _projectSaveRevision;
   const saved = await save;
   const currentStatus = document.getElementById('projectSaveStatus');
-  if (_projectEditId === projectId && revision === _projectSaveRevision && currentStatus) currentStatus.textContent = saved ? 'Saved' : 'Could not save';
+  if (_projectEditId === proj.id && revision === _projectSaveRevision && currentStatus) currentStatus.textContent = saved ? 'Saved' : 'Could not save';
   if (!saved) showToast('Could not save project files.', 'error', 6000);
   if (skipped) showToast(skipped + ' file(s) skipped. Images and files without readable text cannot be project files.');
   } finally {
@@ -6677,7 +6935,7 @@ function renderSidebar() {
     if (!a.pinned && b.pinned) return 1;
     const pa = projectSortKey(a), pb = projectSortKey(b);
     if (pa !== pb) return pa < pb ? -1 : 1;
-    if (conversationSort === 'manual') return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+    if (conversationSort === 'manual') return ((a.sortOrder ?? 0) - (b.sortOrder ?? 0)) || String(a.id).localeCompare(String(b.id));
     if (conversationSort === 'created') return (b.createdAt || 0) - (a.createdAt || 0);
     if (conversationSort === 'title') return String(a.title || '').localeCompare(String(b.title || ''));
     return (b.updatedAt || 0) - (a.updatedAt || 0);
@@ -6704,7 +6962,7 @@ function renderSidebar() {
 
   let lastGroup = '';
   const collapsedProjects = getCollapsedProjectIds();
-  sorted.forEach((c, sortIdx) => {
+  sorted.forEach(c => {
     const group = getGroup(c);
     if (group.key !== lastGroup) {
       const header = document.createElement('div');
@@ -6759,24 +7017,7 @@ function renderSidebar() {
       e.preventDefault();
       div.classList.remove('drag-over');
       const draggedId = e.dataTransfer.getData('text/plain');
-      if (draggedId === c.id) return;
-      if (conversationSort !== 'manual') {
-        setConversationSort('manual');
-        showToast('Manual sorting enabled for dragging.', 'info');
-      }
-      const fromIdx = conversations.findIndex(x => x.id === draggedId);
-      const toIdx = conversations.findIndex(x => x.id === c.id);
-      if (fromIdx === -1 || toIdx === -1) return;
-      const [moved] = conversations.splice(fromIdx, 1);
-      conversations.splice(toIdx, 0, moved);
-      const reorderedAt = Date.now();
-      conversations.forEach((x, i) => {
-        if (x.sortOrder === i) return;
-        x.sortOrder = i;
-        x.updatedAt = reorderedAt;
-      });
-      saveConversations();
-      renderSidebar();
+      moveConversationInDisplayOrder(draggedId, 0, c.id);
     });
 
     if (bulkMode) {
@@ -6873,15 +7114,27 @@ function renderSidebar() {
     moreBtn.setAttribute('aria-expanded', 'false');
     moreBtn.onclick = event => {
       event.stopPropagation();
-      openActionMenu(moreBtn, [
+      const items = [
         { label: 'Rename', action: beginRename },
         { label: c.pinned ? 'Unpin' : 'Pin', action: () => { c.pinned = !c.pinned; c.updatedAt = Date.now(); saveConversations(); renderSidebar(); } },
         { label: 'Tag', action: () => showTagPicker(c, moreBtn) },
-        { label: 'Move to project', action: () => showProjectPicker(c, moreBtn) },
+        { label: 'Move to project', action: () => showProjectPicker(c, moreBtn) }
+      ];
+      // ponytail: keyboard move on the same ordering path as drag-and-drop.
+      if (conversationSort === 'manual') {
+        const peers = getConversationMovePeers(c);
+        const index = peers.findIndex(peer => peer.id === c.id);
+        items.push(
+          { label: 'Move up', disabled: bulkMode || index <= 0, action: () => moveConversationInDisplayOrder(c.id, -1) },
+          { label: 'Move down', disabled: bulkMode || index < 0 || index === peers.length - 1, action: () => moveConversationInDisplayOrder(c.id, 1) }
+        );
+      }
+      items.push(
         { label: 'Duplicate', action: () => duplicateConversation(c.id) },
         { label: c.archivedAt ? 'Restore' : 'Archive', action: () => archiveConversation(c.id) },
         { label: 'Delete', danger: true, action: () => deleteConversation(c.id) }
-      ], 'Conversation actions');
+      );
+      openActionMenu(moreBtn, items, 'Conversation actions');
     };
     div.appendChild(moreBtn);
     list.appendChild(div);
@@ -6897,34 +7150,50 @@ function renderSidebar() {
   updateBulkCount();
 }
 
+function getConversationMovePeers(conv, visibleOnly = true) {
+  const list = document.getElementById('convList');
+  if (!list || !conv) return [];
+  const byId = new Map(conversations.map(item => [item.id, item]));
+  return Array.from(list.querySelectorAll('.conv-item'), el => byId.get(el.dataset.convId)).filter(item => item &&
+    Boolean(item.pinned) === Boolean(conv.pinned) && (getProject(item.projectId)?.id || '') === (getProject(conv.projectId)?.id || '') &&
+    (!visibleOnly || isConversationVisibleInSidebar(item)));
+}
+
+// ponytail: reorder only visible slots within a sortable group; hidden rows keep their slots.
+function moveConversationInDisplayOrder(id, dir, beforeId = null) {
+  if (readOnlyShare || bulkMode || conversationSort !== 'manual') return;
+  const conv = conversations.find(item => item.id === id);
+  const peers = getConversationMovePeers(conv);
+  const from = peers.findIndex(item => item.id === id);
+  const to = beforeId == null ? from + dir : peers.findIndex(item => item.id === beforeId);
+  if (from < 0 || to < 0 || to >= peers.length || from === to) return;
+  const all = getConversationMovePeers(conv, false);
+  const visibleIds = new Set(peers.map(item => item.id));
+  peers.splice(from, 1);
+  peers.splice(beforeId != null && from < to ? to - 1 : to, 0, conv);
+  let next = 0;
+  const reorderedAt = Date.now();
+  all.map(item => visibleIds.has(item.id) ? peers[next++] : item).forEach((x, i) => {
+    if (x.sortOrder === i) return;
+    x.sortOrder = i;
+    x.updatedAt = reorderedAt;
+  });
+  saveConversations();
+  renderSidebar();
+  document.querySelector('.conv-item[data-conv-id="' + id + '"] .conv-title')?.focus();
+}
+
 // ============================================
 // Conversation Tags
 // ============================================
 function showTagPicker(conv, anchorEl) {
-  document.querySelectorAll('.tag-picker').forEach(p => p.remove());
-  const picker = document.createElement('div');
-  picker.className = 'tag-picker';
-  const rect = anchorEl.getBoundingClientRect();
-  picker.style.top = rect.bottom + 4 + 'px';
-  picker.style.left = rect.left + 'px';
-  // "None" option
-  const none = document.createElement('button');
-  none.className = 'tag-picker-item' + (!conv.tag ? ' active' : '');
-  none.style.background = 'var(--hover)';
-  none.title = 'None';
-  none.onclick = () => { delete conv.tag; conv.updatedAt = Date.now(); saveConversations(); renderSidebar(); picker.remove(); };
-  picker.appendChild(none);
+  // ponytail: route through the action menu so the picker stacks above the
+  // mobile sidebar/backdrop and gets keyboard focus/Escape handling for free.
+  const items = [{ label: conv.tag ? 'None' : '✓ None', action: () => { delete conv.tag; conv.updatedAt = Date.now(); saveConversations(); renderSidebar(); } }];
   TAG_COLORS.forEach(tc => {
-    const btn = document.createElement('button');
-    btn.className = 'tag-picker-item' + (conv.tag === tc.name ? ' active' : '');
-    btn.style.background = tc.color;
-    btn.title = tc.name;
-    btn.onclick = () => { conv.tag = tc.name; conv.updatedAt = Date.now(); saveConversations(); renderSidebar(); picker.remove(); };
-    picker.appendChild(btn);
+    items.push({ label: (conv.tag === tc.name ? '✓ ' : '') + tc.name, action: () => { conv.tag = tc.name; conv.updatedAt = Date.now(); saveConversations(); renderSidebar(); } });
   });
-  document.body.appendChild(picker);
-  const closePicker = (e) => { if (!picker.contains(e.target) && e.target !== anchorEl) { picker.remove(); document.removeEventListener('click', closePicker); } };
-  setTimeout(() => document.addEventListener('click', closePicker), 0);
+  openActionMenu(anchorEl, items, 'Choose tag');
 }
 
 function renderTagFilterBar() {
@@ -6960,8 +7229,7 @@ function setTagFilter(tag) {
 // Sidebar Search
 // ============================================
 function filterConversations() {
-  const searchEl = document.getElementById('sidebarSearch');
-  const query = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  const searchEl = document.getElementById('sidebarSearch');  const query = searchEl ? searchEl.value.trim().toLowerCase() : '';
   const filtering = Boolean(query || activeTagFilter);
   const collapsedProjects = getCollapsedProjectIds();
   const items = document.querySelectorAll('.conv-item');
@@ -7005,6 +7273,8 @@ function filterConversations() {
     empty.append(message, clear);
     document.getElementById('convList')?.appendChild(empty);
   }
+  // ponytail: bulk header state must follow every filter change, not just rerenders.
+  updateBulkCount();
 }
 
 function isConversationVisibleInSidebar(conv) {
@@ -7178,6 +7448,8 @@ function openActionMenu(anchor, items, label = 'Actions') {
     button.type = 'button';
     button.setAttribute('role', 'menuitem');
     button.textContent = item.label;
+    button.disabled = Boolean(item.disabled);
+    button.tabIndex = -1;
     if (item.id) button.dataset.action = item.id;
     if (item.danger) button.classList.add('danger');
     button.onclick = () => {
@@ -7211,7 +7483,7 @@ function openActionMenu(anchor, items, label = 'Actions') {
   actionMenuClose = close;
   menu.addEventListener('keydown', event => handleMenuKeydown(event, menu, close));
   setTimeout(() => document.addEventListener('click', onDocumentClick), 0);
-  const buttons = Array.from(menu.querySelectorAll('[role="menuitem"]'));
+  const buttons = Array.from(menu.querySelectorAll('[role="menuitem"]:not(:disabled)'));
   buttons.forEach((button, index) => { button.tabIndex = index === 0 ? 0 : -1; });
   buttons[0]?.focus();
 }
@@ -7286,7 +7558,7 @@ function renderConnectionStatus(target, text, state = '') {
 
 async function testConnection(target = 'settings') {
   const inputs = getConnectionInputs(target);
-  const baseUrl = inputs.base?.value.trim().replace(/\/(chat\/completions|messages)\/?$/, '') || '';
+  const baseUrl = stripApiEndpointSuffix(inputs.base?.value) || '';
   const providerName = inputs.provider?.value || inferRequestProvider({ llmProxyUrl: baseUrl });
   const key = inputs.key?.value.trim() || '';
   const apiFormat = inputs.format?.value || getProviderPreset(providerName).apiFormat;
@@ -7298,7 +7570,10 @@ async function testConnection(target = 'settings') {
   }
   const token = {};
   modelDiscoveryRequests.set(target, token);
-  const isCurrent = () => modelDiscoveryRequests.get(target) === token &&
+  abortSupersededDiscovery(target);
+  const discoveryCtrl = new AbortController();
+  modelDiscoveryControllers.set(target, discoveryCtrl);
+  const isCurrent = () => modelDiscoveryRequests.get(target) === token && modelDiscoveryControllers.get(target) === discoveryCtrl &&
     cacheKey === modelCacheKey(inputs.base.value.trim(), inputs.provider?.value || providerName, inputs.format?.value || apiFormat) && inputs.key.value.trim() === key;
   const started = performance.now();
   const statusEl = document.getElementById(target === 'setup' ? 'setupConnectionStatus' : 'settingsConnectionStatus');
@@ -7310,13 +7585,14 @@ async function testConnection(target = 'settings') {
   }
   renderConnectionStatus(target, 'Testing...', 'testing');
   announce('Testing ' + preset.label + ' connection.');
+  const keepModel = getSelectedModel(target);
   try {
-    const metadata = await fetchAvailableModelMetadata(baseUrl, key, providerName, apiFormat);
+    const metadata = await fetchAvailableModelMetadata(baseUrl, key, providerName, apiFormat, { signal: discoveryCtrl.signal, modelHint: keepModel });
     if (!isCurrent()) return;
     const elapsed = Math.max(0, Math.round(performance.now() - started));
     renderConnectionStatus(target, 'Success · ' + metadata.length + ' models · ' + elapsed + ' ms', 'success');
     announce('Connection succeeded. ' + metadata.length + ' models discovered.');
-    populateModelSelect(target, metadata.map(model => model.id));
+    populateModelSelect(target, metadata.map(model => model.id), getSelectedModel(target));
   } catch (err) {
     if (!isCurrent()) return;
     const elapsed = Math.max(0, Math.round(performance.now() - started));
@@ -7328,6 +7604,7 @@ async function testConnection(target = 'settings') {
       button.removeAttribute('aria-busy');
       modelDiscoveryRequests.delete(button);
     }
+    if (modelDiscoveryControllers.get(target) === discoveryCtrl) modelDiscoveryControllers.delete(target);
   }
 }
 
@@ -7355,7 +7632,7 @@ function saveSetup() {
     renderSetupError(providerRequiresKey({ llmProvider: provider }) ? 'Enter a base URL and API key.' : 'Enter a base URL.');
     return;
   }
-  proxy = proxy.replace(/\/(chat\/completions|messages)\/?$/, '');
+  proxy = stripApiEndpointSuffix(proxy);
   const model = getSelectedModel('setup');
   if (!model) { renderSetupError('Choose or enter a model.'); return; }
   localStorage.setItem('llmProxyUrl', proxy);
@@ -7453,7 +7730,7 @@ function openSettings() {
   document.getElementById('setApiFormat').value = localStorage.getItem('llmApiFormat') || 'auto';
   renderPromptEntries();
   const conv = getActiveConv();
-  document.getElementById('setPersona').value = (conv && conv.persona) || localStorage.getItem('llmPersona') || '';
+  document.getElementById('setPersona').value = (conv && conv.persona != null ? conv.persona : localStorage.getItem('llmPersona')) || '';
   document.getElementById('setEnableStMacros').checked = localStorage.getItem('llmEnableStMacros') === 'true';
   document.getElementById('setRpUserName').value = localStorage.getItem('llmRpUserName') || '';
   document.getElementById('setStarterPrompts').value = getStarterPrompts().join('\n');
@@ -7604,6 +7881,8 @@ function collectProfileSettingsFromInputs() {
 }
 
 function applyProfileToInputs(settings) {
+  _suppressSettingsDirty = true;
+  try {
   document.getElementById('setProxy').value = settings.llmProxyUrl || '';
   document.getElementById('setKey').value = getApiKeyForForm();
   const providerSelect = document.getElementById('setProvider');
@@ -7625,7 +7904,8 @@ function applyProfileToInputs(settings) {
   document.getElementById('setUrlFetch').checked = settings.llmUrlFetch === 'true';
   document.getElementById('setToolConfirm').checked = settings.llmToolConfirm !== 'false';
   document.getElementById('setSearchApiUrl').value = settings.llmSearchApiUrl || '';
-  document.getElementById('setSearchApiKey').value = settings.llmSearchApiKey || '';
+  // ponytail: profiles omit credentials; keep the stored search key for the same endpoint.
+  document.getElementById('setSearchApiKey').value = settings.llmSearchApiKey || (settings.llmSearchApiUrl === localStorage.getItem('llmSearchApiUrl') ? (localStorage.getItem('llmSearchApiKey') || '') : '');
   document.getElementById('setCorsProxy').value = normalizeCorsProxyUrl(settings.llmCorsProxy);
   document.getElementById('setMemory').checked = parseEnabledSetting(settings.llmMemoryEnabled);
   document.getElementById('setHoldScreenshot').checked = settings.llmHoldScreenshot === 'true';
@@ -7643,11 +7923,13 @@ function applyProfileToInputs(settings) {
   for (const opt of selectEl.options) {
     if (opt.value === model) { opt.selected = true; break; }
   }
+  } finally { _suppressSettingsDirty = false; }
 }
 
 function applyProfile(profile) {
   if (!profile) return;
   const settings = sanitizeProfileSettings(profile.settings);
+  if (dirtySettingsTabs.size && !confirm('Apply profile "' + profile.name + '" and overwrite unsaved ' + Array.from(dirtySettingsTabs, tab => tab === 'api' ? 'API' : 'Tools').join(' and ') + ' drafts?')) return;
   const apiEndpointChanged = settings.llmProxyUrl && settings.llmProxyUrl !== localStorage.getItem('llmProxyUrl');
   const searchEndpointChanged = settings.llmSearchApiUrl && settings.llmSearchApiUrl !== localStorage.getItem('llmSearchApiUrl');
   if (apiEndpointChanged) setApiKey('', getKeyStorageMode());
@@ -7659,6 +7941,9 @@ function applyProfile(profile) {
   });
   localStorage.setItem('assistantActiveProfileId', profile.id);
   applyProfileToInputs(settings);
+  // ponytail: profile application commits immediately; nothing unsaved remains to discard.
+  dirtySettingsTabs.clear();
+  updateSettingsFooter();
   if (!streaming) renderMessages({ preserveScroll: true });
   renderProfileSummary();
   renderConnectionChip();
@@ -7754,7 +8039,7 @@ function saveApiSettings() {
   const extraParamsVal = readValidatedExtraParams();
   if (extraParamsVal === null) return false;
   let proxy = document.getElementById('setProxy').value.trim();
-  proxy = proxy.replace(/\/(chat\/completions|messages)\/?$/, '');
+  proxy = stripApiEndpointSuffix(proxy);
   const providerName = document.getElementById('setProvider').value || 'custom';
   const keyValue = document.getElementById('setKey').value.trim();
   if (!proxy || (providerRequiresKey({ llmProvider: providerName }) && !keyValue)) {
@@ -7842,12 +8127,12 @@ function saveAppearanceSettings({ announceChange = true } = {}) {
   if (themeName === 'custom') {
     localStorage.setItem('assistantCustomTheme', JSON.stringify(getCustomThemeFromPickers()));
   }
-  applyTheme(themeName);
   const msgFs = document.getElementById('setMsgFontSize').value.trim();
   const msgMw = document.getElementById('setMsgMaxWidth').value.trim();
+  // ponytail: persist overrides before applying the theme so a cleared field restores the default immediately.
   msgFs ? localStorage.setItem('assistantMsgFontSize', msgFs) : localStorage.removeItem('assistantMsgFontSize');
   msgMw ? localStorage.setItem('assistantMsgMaxWidth', msgMw) : localStorage.removeItem('assistantMsgMaxWidth');
-  applyMsgOverrides();
+  applyTheme(themeName);
   const fontName = document.getElementById('setFont').value.trim();
   localStorage.setItem('assistantFont', fontName);
   loadCustomFont(fontName);
@@ -7885,8 +8170,12 @@ function flushSettingsAutosaves() {
   if (_appearanceSettingsAutosaveTimer) clearTimeout(_appearanceSettingsAutosaveTimer);
   _promptSettingsAutosaveTimer = null;
   _appearanceSettingsAutosaveTimer = null;
-  if (_promptSettingsAutosavePending) savePromptSettings({ announceChange: false });
-  if (_appearanceSettingsAutosavePending) saveAppearanceSettings({ announceChange: false });
+  if (_promptSettingsAutosavePending && savePromptSettings({ announceChange: false }) === false) return false;
+  if (_appearanceSettingsAutosavePending && saveAppearanceSettings({ announceChange: false }) === false) {
+      updateSettingsFooter();
+      return false;
+    }
+    return true;
 }
 
 function saveToolSettings() {
@@ -8082,7 +8371,9 @@ function importSTPreset(event) {
       'ignore_eos_token_ban', 'num_beams', 'length_penalty',
       'min_length', 'add_bos_token', 'truncation_length',
       'ban_eos_token', 'skip_special_tokens',
-      'sampler_priority', 'n'
+      'sampler_priority', 'n',
+      // ponytail: prompt metadata is not a request parameter.
+      'prompts', 'prompt_order', 'prompt_order_character'
     ]);
 
     const extra = {};
@@ -8109,29 +8400,34 @@ function importSTPreset(event) {
     document.getElementById('setExtraParams').value = Object.keys(extra).length ? JSON.stringify(extra, null, 2) : '';
     savePresetGenerationSettings();
 
-    // Extract prompt entries from ST prompts array
+    // Extract prompt entries from ST prompts array, honoring the declared order.
     if (Array.isArray(data.prompts)) {
-      // Build enabled map from prompt_order (use last order set)
+      // Build enabled map and order from prompt_order (use last order set)
       const enabledMap = {};
+      let declaredOrder = [];
       if (Array.isArray(data.prompt_order) && data.prompt_order.length > 0) {
         const orderSet = data.prompt_order[data.prompt_order.length - 1];
         if (orderSet && Array.isArray(orderSet.order)) {
           orderSet.order.forEach(o => { enabledMap[o.identifier] = o.enabled; });
+          declaredOrder = orderSet.order.map(o => o.identifier);
         }
       }
 
-      const entries = [];
+      const byIdentifier = new Map();
       data.prompts.forEach(p => {
         if (p.marker) return; // skip marker-only entries
         if (!p.content || !p.content.trim()) return; // skip empty
         const enabled = enabledMap[p.identifier] != null ? enabledMap[p.identifier] : (p.enabled !== false);
-        entries.push({
+        byIdentifier.set(p.identifier, {
           id: 'pe_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
           name: p.name || p.identifier || 'Untitled',
           content: p.content.trim(),
           enabled: enabled
         });
       });
+      // ponytail: walk the declared prompt order; append leftovers in definition order.
+      const entries = declaredOrder.map(id => byIdentifier.get(id)).filter(Boolean);
+      byIdentifier.forEach(entry => { if (!entries.includes(entry)) entries.push(entry); });
       if (entries.length > 0) {
         savePromptEntries(entries);
         renderPromptEntries();
@@ -8202,7 +8498,7 @@ function renderPromptEntries() {
   list.innerHTML = '';
   const entries = loadPromptEntries();
 
-  entries.forEach((entry) => {
+  entries.forEach((entry, index) => {
     const div = document.createElement('div');
     div.className = 'prompt-entry' + (entry.enabled ? '' : ' disabled');
     div.dataset.peId = entry.id;
@@ -8239,6 +8535,19 @@ function renderPromptEntries() {
     drag.textContent = '☰';
     drag.draggable = true;
 
+    const moveUp = document.createElement('button');
+    moveUp.textContent = '↑';
+    moveUp.title = 'Move prompt up';
+    moveUp.setAttribute('aria-label', 'Move prompt ' + entry.name + ' up');
+    moveUp.disabled = index === 0;
+    moveUp.onclick = () => movePromptEntry(entry.id, -1);
+    const moveDown = document.createElement('button');
+    moveDown.textContent = '↓';
+    moveDown.title = 'Move prompt down';
+    moveDown.setAttribute('aria-label', 'Move prompt ' + entry.name + ' down');
+    moveDown.disabled = index === entries.length - 1;
+    moveDown.onclick = () => movePromptEntry(entry.id, 1);
+
     const toggle = document.createElement('input');
     toggle.type = 'checkbox';
     toggle.checked = entry.enabled;
@@ -8266,6 +8575,8 @@ function renderPromptEntries() {
     delBtn.onclick = () => deletePromptEntry(entry.id);
 
     header.appendChild(drag);
+    header.appendChild(moveUp);
+    header.appendChild(moveDown);
     header.appendChild(toggle);
     header.appendChild(nameInput);
     header.appendChild(expandBtn);
@@ -8298,6 +8609,21 @@ function deletePromptEntry(id) {
   entries = entries.filter(e => e.id !== id);
   savePromptEntries(entries);
   renderPromptEntries();
+}
+
+// ponytail: keyboard move on the same ordering path as drag-and-drop.
+function movePromptEntry(id, dir) {
+  const entries = loadPromptEntries();
+  const from = entries.findIndex(e => e.id === id);
+  const to = from + dir;
+  if (from === -1 || to < 0 || to >= entries.length) return;
+  const [moved] = entries.splice(from, 1);
+  entries.splice(to, 0, moved);
+  savePromptEntries(entries);
+  renderPromptEntries();
+  const row = document.querySelector('.prompt-entry[data-pe-id="' + CSS.escape(id) + '"]');
+  const direction = dir < 0 ? 'up' : 'down';
+  (row?.querySelector('button[aria-label$=" ' + direction + '"]:not(:disabled)') || row?.querySelector('.pe-name'))?.focus();
 }
 
 function togglePromptEntry(id) {
@@ -8343,15 +8669,18 @@ function getRpMacroContext(conv) {
   };
 }
 
-function applyStMacros(text, context) {
+function applyStMacros(text, context, depth = 0) {
   if (typeof text !== 'string' || !text) return text;
   const ctx = context || {};
-  return text.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (match, rawKey) => {
+  // ponytail: one extra pass resolves macros inside substituted card fields; bounded against self-reference loops.
+  const resolved = text.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (match, rawKey) => {
     const key = String(rawKey || '').toLowerCase();
     if (!Object.prototype.hasOwnProperty.call(ctx, key)) return match;
     const value = ctx[key];
     return value == null ? '' : String(value);
   });
+  if (depth >= 1 || resolved === text) return resolved;
+  return applyStMacros(resolved, ctx, depth + 1);
 }
 
 async function buildSystemMessages(conv) {
@@ -8392,8 +8721,9 @@ async function buildSystemMessages(conv) {
   if (conv && conv.characterDescription && conv.characterDescription.trim()) {
     msgs.push({ role: 'system', content: 'The following describes your character \u2014 this is who YOU are, not the user:\n\n' + resolveText(conv.characterDescription) });
   }
-  // Persona — who the user is
-  const persona = (conv && conv.persona) || localStorage.getItem('llmPersona') || '';
+  // Persona — who the user is. A saved empty per-chat persona is an intentional
+  // blank, not a missing value; only fall back to the global default when absent.
+  const persona = (conv && conv.persona != null ? conv.persona : localStorage.getItem('llmPersona')) || '';
   if (persona.trim()) {
     msgs.push({ role: 'system', content: 'The following describes the user you are speaking with:\n\n' + resolveText(persona) });
   }
@@ -8430,7 +8760,9 @@ function filterRequestHistory(source, options = {}) {
   list.slice(0, end).forEach((message, index) => {
     if (!message || !['user', 'assistant'].includes(message.role)) return;
     const isTarget = index === options.targetIndex;
-    if (message.role === 'assistant' && (isPendingAssistantMessage(message) || isFailedAssistantMessage(message))) return;
+    // ponytail: an explicit continuation target rides along; only genuinely pending turns stay out.
+    if (message.role === 'assistant' && (isPendingAssistantMessage(message) ||
+      (isFailedAssistantMessage(message) && !(includeTarget && isTarget)))) return;
     if (message.includeInContext === false && !(includeTarget && isTarget)) {
       excluded.push({ message, index });
       return;
@@ -8464,27 +8796,45 @@ function buildComposerMessage(text = document.getElementById('chatInput')?.value
 
 async function buildRequestMessages(conv = getActiveConv(), options = {}) {
   const source = Array.isArray(options.messageList) ? options.messageList : messages;
-  if (Number.isInteger(options.untilIndex) && options.untilIndex < conv?.messages.length) {
-    invalidateConversationContext(conv, options.untilIndex);
+  let candidate = conv;
+  let candidateSource = source;
+  let commitInvalidation = null;
+  const invalidateFrom = options.includeTarget ? options.targetIndex : options.untilIndex;
+  if (Number.isInteger(invalidateFrom) && invalidateFrom < conv?.messages.length) {
+    // Prepare earlier history on a copy. Only a validated provider dispatch may
+    // invalidate the live summary; failed preparation needs no rollback.
+    candidateSource = source.map(message => ({ ...message }));
+    candidate = { ...conv, messages: candidateSource };
+    invalidateConversationContext(candidate, invalidateFrom);
+    const revision = contextRevisions.get(conv);
+    const fingerprint = () => JSON.stringify([conv.summary, conv.summaryUpdatedAt, conv.summaryCoverage,
+      contextDrafts.get(conv)?.summary, conv.messages.slice(0, invalidateFrom)]);
+    const before = fingerprint();
+    commitInvalidation = () => {
+      if (contextRevisions.get(conv) !== revision || fingerprint() !== before) {
+        throw new Error('The request context changed during preparation. Try again.');
+      }
+      invalidateConversationContext(conv, invalidateFrom);
+    };
   }
-  const systemMessages = await buildSystemMessages(conv);
+  const systemMessages = await buildSystemMessages(candidate);
   const toolPolicy = getToolPolicy(conv);
   if (toolPolicy.webSearch || toolPolicy.urlFetch) {
     systemMessages.push({ role: 'system', content: SOURCE_CITATION_INSTRUCTION });
   }
   const requestMessages = [...systemMessages];
-  const selection = filterRequestHistory(source, options);
+  const selection = filterRequestHistory(candidateSource, options);
   selection.included = selection.included.map(({ message, index }) => {
     const normalized = { role: message.role, content: buildApiContent(message) };
     requestMessages.push(normalized);
-    return { message, index, normalized };
+    return { message: source[index], index, normalized };
   });
   let draft = null;
   if (options.draftMessage && getMsgText(options.draftMessage).trim()) {
     draft = { message: options.draftMessage, index: source.length, normalized: { role: 'user', content: buildApiContent(options.draftMessage) } };
     requestMessages.push(draft.normalized);
   }
-  return { messages: requestMessages, systemMessages, included: selection.included, excluded: selection.excluded, draft, toolPolicy };
+  return { messages: requestMessages, systemMessages, included: selection.included, excluded: selection.excluded, draft, toolPolicy, commitInvalidation };
 }
 
 function getModelContextWindow(model = localStorage.getItem('llmModel') || '') {
@@ -8523,7 +8873,9 @@ async function buildContextPreviewData() {
   const draftMessage = buildComposerMessage();
   const built = await buildRequestMessages(conv, { messageList: messages, draftMessage });
   const all = await buildRequestMessages(conv, { messageList: messages });
-  const stats = getRequestContextStats(built.messages, built.excluded);
+  // ponytail: preview the override model Send will use, not just the stored default.
+  const previewModel = modelOverride || localStorage.getItem('llmModel') || '';
+  const stats = getRequestContextStats(built.messages, built.excluded, previewModel);
   const attachments = [];
   const collectAttachments = (message, included) => {
     if (!Array.isArray(message.content)) return;
@@ -8534,7 +8886,7 @@ async function buildContextPreviewData() {
   };
   messages.forEach(message => collectAttachments(message, message.includeInContext !== false));
   if (draftMessage) collectAttachments(draftMessage, true);
-  return { provider: getLlmProviderInfo(localStorage.getItem('llmModel') || '', detectApiFormat(localStorage.getItem('llmModel') || ''), localStorage.getItem('llmProxyUrl') || ''), model: localStorage.getItem('llmModel') || '(not set)', systemMessages: built.systemMessages, included: built.included, excluded: all.excluded, draft: built.draft, attachments, stats };
+  return { provider: getLlmProviderInfo(previewModel, detectApiFormat(previewModel), localStorage.getItem('llmProxyUrl') || ''), model: previewModel || '(not set)', systemMessages: built.systemMessages, included: built.included, excluded: all.excluded, draft: built.draft, attachments, stats };
 }
 
 function openContextSection(sectionId) {
@@ -8918,6 +9270,7 @@ function renderMessages({ preserveScroll = false } = {}) {
   if (messages.length === 0) {
     renderEmptyConversation(area);
     updateSendBtnState();
+    updateSelectCount();
     return;
   }
 
@@ -8933,6 +9286,22 @@ function renderMessages({ preserveScroll = false } = {}) {
     wrapper.setAttribute('role', 'article');
     wrapper.setAttribute('tabindex', '0');
     wrapper.setAttribute('aria-label', (msg.role === 'user' ? 'User message' : 'Assistant message') + (msg.includeInContext === false ? ', excluded from context' : ''));
+    // ponytail: keyboard selection mirrors the click toggle, with announced state.
+    wrapper.addEventListener('keydown', (e) => {
+      if (!_selectMode || e.target !== wrapper) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        _justEnteredSelectMode = false;
+        toggleMsgSelect(idx);
+      }
+    });
+    const selection = document.createElement('input');
+    selection.type = 'checkbox';
+    selection.className = 'msg-select-checkbox';
+    selection.hidden = !_selectMode;
+    selection.setAttribute('aria-label', 'Select ' + (msg.role === 'user' ? 'user' : 'assistant') + ' message ' + (idx + 1) + ' for screenshot');
+    selection.onchange = () => { _justEnteredSelectMode = false; toggleMsgSelect(idx); };
+    wrapper.appendChild(selection);
 
     const bubble = document.createElement('div');
     bubble.className = 'msg-bubble ' + msg.role;
@@ -9030,7 +9399,7 @@ function renderMessages({ preserveScroll = false } = {}) {
     )));
     const requestStatus = request?.status;
     const canContinue = !isComparison && msg.role === 'assistant' && idx === messages.length - 1 &&
-      Boolean(String(getMsgText(msg) || '').trim()) && (!requestStatus || requestStatus === 'complete') &&
+      Boolean(String(getMsgText(msg) || '').trim()) && (!requestStatus || ['complete', 'stopped', 'failed', 'interrupted'].includes(requestStatus)) &&
       !NO_TRAILING_ASSISTANT_RE.test(localStorage.getItem('llmModel') || '');
     const secondaryActions = [];
     if (msg.role === 'assistant') secondaryActions.push({ id: 'read-aloud', get label() { return spokenMessage === msg ? 'Stop reading aloud' : 'Read aloud'; }, action: () => speakMessage(msg) });
@@ -9084,9 +9453,14 @@ function renderMessages({ preserveScroll = false } = {}) {
       action: () => {
         if (readOnlyShare || sending || streaming || messages[idx] !== msg) return;
         if (msg.role === 'assistant' && !confirm('Delete this response?')) return;
-        invalidateConversationContext(getActiveConv(), idx);
-        messages.splice(idx, 1);
         const conv = getActiveConv();
+        invalidateConversationContext(conv, idx);
+        if (_selectMode) exitSelectMode();
+        messages.splice(idx, 1);
+        if (conv?.docs) {
+          conv.docs = conv.docs.filter(doc => doc.messageIndex !== idx);
+          conv.docs.forEach(doc => { if (doc.messageIndex > idx) doc.messageIndex--; });
+        }
         if (conv) conv.updatedAt = Date.now();
         saveConversations();
         renderMessages();
@@ -9141,14 +9515,7 @@ function renderMessages({ preserveScroll = false } = {}) {
   area.scrollTop = savedScrollTop === null ? area.scrollHeight : savedScrollTop;
   updateSendBtnState();
 
-  // Restore select mode state if active
-  if (_selectMode) {
-    area.classList.add('select-mode');
-    _selectedMsgs.forEach(idx => {
-      const w = area.querySelector('.msg-wrapper[data-msg-idx="' + idx + '"]');
-      if (w) w.classList.add('selected');
-    });
-  }
+  updateSelectCount();
 }
 
 function renderEditMode(area, msg, idx) {
@@ -9271,7 +9638,7 @@ async function resendAfterEdit() {
     assertRequestOwner(conv, messageList, assistantMsg, null);
 
     if (status === 'complete') {
-      extractMemories(apiMessages, conv, target);
+      extractMemories(apiMessages, conv, target, requestContext);
     }
     if (conv) conv.updatedAt = Date.now();
     await saveConversations();
@@ -9315,6 +9682,8 @@ function forkBranch(msgIdx) {
   newConv.id = genId();
   newConv.title = conv.title + ' (fork)';
   newConv.messages = structuredClone(messages.slice(0, msgIdx + 1));
+  // ponytail: keep only files attached at or before the fork point; unowned legacy docs stay.
+  newConv.docs = (newConv.docs || []).filter(doc => doc == null || doc.messageIndex == null || doc.messageIndex <= msgIdx);
   invalidateConversationContext(newConv, msgIdx + 1);
   newConv.messages.forEach(message => {
     delete message._editing;
@@ -9638,7 +10007,8 @@ function formatSearchResultsForModel(results, error, registry = null) {
   const numbered = (registry || activeSourceRegistry) ? registerSources(registry || activeSourceRegistry, results) : results.map((r, i) => ({ ...r, sourceNumber: i + 1 }));
   numbered.forEach((result, index) => { if (results[index] && result.sourceNumber) results[index].sourceNumber = result.sourceNumber; });
   return numbered.map((r, i) =>
-    '[' + (r.sourceNumber || i + 1) + '] ' + r.title + '\n   URL: ' + r.url + (r.snippet ? '\n   ' + r.snippet : '')
+    // ponytail: unlinked results get no positional number; it would collide with registry numbers.
+    (r.sourceNumber ? '[' + r.sourceNumber + '] ' : '[unlinked] ') + r.title + '\n   URL: ' + r.url + (r.snippet ? '\n   ' + r.snippet : '')
   ).join('\n\n') + '\n\n' + SOURCE_CITATION_INSTRUCTION;
 }
 
@@ -9789,6 +10159,8 @@ async function executeUrlFetch(url, signal, settings = getToolRequestSettings())
     return { content: '', error: 'Invalid URL. Use a full URL starting with http:// or https://.' };
   }
   if (isLocalUrl(targetUrl)) return { content: '', error: 'Private and local network URLs are not allowed.' };
+  // ponytail: a credential-bearing URL must never fall through to the public reader mirror.
+  const urlHasCredentials = requestContainsSensitiveData(targetUrl, { method: 'GET' });
 
   let primaryReadable = '';
   let lastError = '';
@@ -9821,18 +10193,24 @@ async function executeUrlFetch(url, signal, settings = getToolRequestSettings())
   }
 
   // Fallback for JS-heavy/CORS-blocked pages: server-side reader mirror.
-  try {
-    const readerUrls = buildReaderMirrorUrls(targetUrl);
-    for (const readerUrl of readerUrls) {
-      const r = await fetch(readerUrl, { signal });
-      if (!r.ok) continue;
-      const txt = stripReaderMirrorPreamble(await r.text());
-      if (txt && txt.length >= 40) {
-        return { content: txt.slice(0, URL_FETCH_MAX_CHARS), error: null };
+  // Never send a credential-bearing URL to the public reader, even when the
+  // primary fetch failed. A security refusal must stop here, not retry elsewhere.
+  if (!urlHasCredentials) {
+    try {
+      const readerUrls = buildReaderMirrorUrls(targetUrl);
+      for (const readerUrl of readerUrls) {
+        const r = await fetch(readerUrl, { signal });
+        if (!r.ok) continue;
+        const txt = stripReaderMirrorPreamble(await r.text());
+        if (txt && txt.length >= 40) {
+          return { content: txt.slice(0, URL_FETCH_MAX_CHARS), error: null };
+        }
       }
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
     }
-  } catch (e) {
-    if (e.name === 'AbortError') throw e;
+  } else if (!lastError) {
+    lastError = 'Refusing to fetch a URL containing credentials through a public service.';
   }
 
   // If we got something but it was short/blocked and mirror failed, return what we have.
@@ -9963,6 +10341,29 @@ function registerSources(registry, results = []) {
   });
 }
 
+// Citations belong to the answer block; cited_text is a source quotation, not an
+// answer offset. Derive display-only markers without changing replayed wire blocks.
+function registerNativeCitations(reply, registry) {
+  if (!reply || !Array.isArray(reply.content) || !registry) return reply;
+  return { ...reply, content: reply.content.map(block => {
+    if (!block || block.type !== 'text' || typeof block.text !== 'string'
+      || !block.text.trim() || !Array.isArray(block.citations)) return block;
+    const numbers = new Set();
+    for (const citation of block.citations) {
+      const url = safeHttpUrl(citation?.url || citation?.source?.url || citation?.document_url);
+      if (!url) continue;
+      const [registered] = registerSources(registry, [{
+        title: citation.title || citation?.source?.title || url,
+        url,
+        snippet: citation.cited_text || ''
+      }]);
+      if (registered?.sourceNumber) numbers.add(registered.sourceNumber);
+    }
+    const markers = [...numbers].map(number => ' [' + number + ']').join('');
+    return markers ? { ...block, text: block.text.replace(/\s*$/, tail => markers + tail) } : block;
+  }) };
+}
+
 function persistSwipeSources(assistantMsg, swipeIdx, registry) {
   const toolBlocks = assistantMsg.swipeToolUse?.[swipeIdx] || [];
   toolBlocks.forEach(block => {
@@ -10066,7 +10467,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
     }
 
     if (format === 'anthropic') {
-      url = baseUrl + '/messages';
+      url = joinApiPath(baseUrl, '/messages');
       headers = buildProviderHeaders('anthropic', apiKey);
       const prepared = prepareAnthropicMessages(apiMessages);
       const thinkingOn = target.thinking;
@@ -10101,7 +10502,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         body.system = [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }];
       }
     } else {
-      url = baseUrl + '/chat/completions';
+      url = joinApiPath(baseUrl, '/chat/completions');
       headers = buildProviderHeaders('openai', apiKey);
       body = { ...extra, model, messages: prepareOpenAiMessages(apiMessages), stream: useStream };
       const configuredMaxTokens = target.maxTokens;
@@ -10137,9 +10538,14 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
     }
     exclude.forEach(k => delete body[k]);
     body.model = model;
+    let contextCommitted = false;
     const fetchResponse = async () => {
       assertRequestOwner(requestConv, messageList, assistantMsg, controller.signal);
       assertProviderRequestFits(body, target);
+      if (!contextCommitted) {
+        requestOptions.commitContext?.();
+        contextCommitted = true;
+      }
       debugLogPayload('API request', body, { url, format, model });
       const response = await fetchApiWithHttpSupport(url, {
         method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal
@@ -10156,7 +10562,8 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         resp = await fetchResponse();
       }
       if (!resp.ok) {
-        const detail = (await resp.text()).slice(0, 200);
+        // ponytail: redact the complete error before shortening, or a key prefix survives the cut.
+        const detail = sanitizeErrorDetail(await resp.text(), [apiKey]);
         throw new Error('API returned ' + resp.status + (detail ? ': ' + detail : ''));
       }
       const textBeforeRound = fullText + (toolRound && fullText ? '\n\n' : '');
@@ -10175,7 +10582,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       const readMessage = message => {
         if (!message || typeof message !== 'object') throw new Error('The provider returned no assistant message.');
         reply = { ...message, role: 'assistant' };
-        const extracted = extractImages(reply);
+        const extracted = extractImages(format === 'anthropic' ? registerNativeCitations(reply, sourceRegistry) : reply);
         roundText = extracted.text;
         addImages(extracted.images);
         roundThinking = format === 'anthropic'
@@ -10188,8 +10595,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
       if ((resp.headers.get('content-type') || '').includes('application/json')) {
         const data = await resp.json();
         if (data.error || data.type === 'error') throw new Error(data.error?.message || 'The provider returned an error.');
-        stopReason = data.stop_reason || data.choices?.[0]?.finish_reason;
-        readMessage(format === 'anthropic' ? { role: 'assistant', content: data.content } : data.choices?.[0]?.message);
+        const choice = getPrimaryChoice(data.choices);
+        stopReason = format === 'anthropic' ? data.stop_reason : choice?.finish_reason;
+        readMessage(format === 'anthropic' ? { role: 'assistant', content: data.content } : choice?.message);
       } else {
         const reader = resp.body?.getReader();
         if (!reader) throw new Error('The provider returned no response body.');
@@ -10220,17 +10628,24 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
               else if (delta.type === 'signature_delta') block.signature = (block.signature || '') + (delta.signature || '');
               else if (delta.type === 'input_json_delta') inputJson[index] = (inputJson[index] || '') + (delta.partial_json || '');
               else if (delta.type === 'citations_delta') (block.citations ||= []).push(delta.citation);
-            } else if (data.type === 'content_block_stop' && inputJson[index]) {
-              reply.content[index].input = JSON.parse(inputJson[index]);
+            } else if (data.type === 'content_block_stop') {
+              if (inputJson[index]) reply.content[index].input = JSON.parse(inputJson[index]);
+              if (reply.content[index]?.type === 'text') readMessage(reply);
             } else if (data.type === 'message_delta') stopReason = data.delta?.stop_reason || stopReason;
             else if (data.type === 'message_stop') complete = true;
+            if (['content_block_start', 'content_block_delta'].includes(data.type) && reply.content[index]?.citations?.length) readMessage(reply);
           } else {
-            const choice = data.choices?.[0];
+            const choice = getPrimaryChoice(data.choices);
+            if (!choice) return;
             const delta = choice?.delta || {};
             if (choice?.message) readMessage(choice.message);
             else {
               for (const [key, value] of Object.entries(delta)) {
-                if (!['content', 'images', 'tool_calls', 'reasoning_content', 'reasoning', 'reasoning_details'].includes(key)) reply[key] = value;
+                if (!['content', 'images', 'tool_calls', 'reasoning_content', 'reasoning', 'reasoning_details', 'refusal'].includes(key)) reply[key] = value;
+              }
+              // ponytail: refusal fragments accumulate; a generic copy would keep only the last.
+              if (typeof delta.refusal === 'string' && delta.refusal) {
+                reply.refusal = (reply.refusal || '') + delta.refusal;
               }
               if (typeof delta.content === 'string') {
                 roundText += delta.content;
@@ -10269,7 +10684,8 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
                 };
               }
             }
-            if (choice?.finish_reason != null) { stopReason = choice.finish_reason; complete = true; }
+            roundText = extractImages(reply).text;
+            if (choice.finish_reason != null) { stopReason = choice.finish_reason; complete = true; }
           }
           fullText = textBeforeRound + roundText;
           thinkingText = thinkingBeforeRound + roundThinking;
@@ -10284,8 +10700,14 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
             const { done, value } = await reader.read();
             assertRequestOwner(requestConv, messageList, assistantMsg, controller.signal);
             buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
-            const lines = buffer.split(/\r?\n/);
-            buffer = lines.pop() || '';
+            // ponytail: SSE allows CR, LF and CRLF. A trailing CR may be half of a CRLF
+            // split across chunks, so hold it back until more data (or done) arrives.
+            let pending = buffer;
+            buffer = '';
+            let holdCr = false;
+            if (!done && pending.endsWith('\r')) { pending = pending.slice(0, -1); holdCr = true; }
+            const lines = pending.split(/\r\n|\r|\n/);
+            buffer = (lines.pop() ?? '') + (holdCr ? '\r' : '');
             for (const line of lines) { acceptLine(line); if (complete) break; }
             if (done) {
               if (buffer) acceptLine(buffer);
@@ -10552,7 +10974,7 @@ function restoreComposerSnapshot(conv, input, originalText, attachments, overrid
   const restoredAttachments = cloneDraftAttachments(attachments);
   if (!conv || getActiveConv() !== conv) {
     if (conv) {
-      if (originalText || restoredAttachments.length) conv.draft = { text: originalText, attachments: restoredAttachments, updatedAt: Date.now() };
+      if (originalText || restoredAttachments.length) conv.draft = { text: originalText, attachments: restoredAttachments, modelOverride: overrideModel || null, updatedAt: Date.now() };
       else delete conv.draft;
       conv.updatedAt = Date.now();
     }
@@ -10564,7 +10986,7 @@ function restoreComposerSnapshot(conv, input, originalText, attachments, overrid
   pendingAttachments = restoredAttachments.concat(cloneDraftAttachments(pendingAttachments));
   if (!modelOverride && overrideModel) setModelOverride(overrideModel);
   if (input.value || pendingAttachments.length) {
-    conv.draft = { text: input.value, attachments: cloneDraftAttachments(pendingAttachments), updatedAt: Date.now() };
+    conv.draft = { text: input.value, attachments: cloneDraftAttachments(pendingAttachments), modelOverride: overrideModel || modelOverride || null, updatedAt: Date.now() };
   } else {
     delete conv.draft;
   }
@@ -10619,6 +11041,11 @@ async function queueFollowUpFromComposer() {
       toolPolicy: Object.freeze(getToolPolicy(conv))
     }));
   } catch (error) { /* A disconnected draft can still be queued. */ }
+  const previousQueueLength = (conv.queuedFollowUps || []).length;
+  const wasArmedBeforeQueue = armedFollowUpConversationIds.has(conv.id);
+  // Grant permission before the save, so Stop/failure can revoke it while waiting.
+  // Appending to an existing paused queue must not resume its older items.
+  if (previousQueueLength === 0) armedFollowUpConversationIds.add(conv.id);
   conv.queuedFollowUps = (conv.queuedFollowUps || []).concat(item);
   delete conv.draft;
   conv.updatedAt = Date.now();
@@ -10635,6 +11062,7 @@ async function queueFollowUpFromComposer() {
     saved = true;
   } catch (error) {
     conv.queuedFollowUps = (conv.queuedFollowUps || []).filter(queued => queued.id !== item.id);
+    if (!wasArmedBeforeQueue) armedFollowUpConversationIds.delete(conv.id);
     restoreComposerSnapshot(conv, input, originalText, attachments, originalOverride);
     showToast('Could not save the queued follow-up: ' + sanitizeErrorDetail(error), 'error');
   } finally {
@@ -10651,11 +11079,10 @@ async function queueFollowUpFromComposer() {
     renderSidebar();
     return;
   }
-  armedFollowUpConversationIds.add(conv.id);
   renderFollowUpQueue();
   renderSidebar();
-  announce('Follow-up queued.');
-  if (!streaming && !sending) setTimeout(() => processQueuedFollowUps(conv.id), 0);
+  announce(armedFollowUpConversationIds.has(conv.id) ? 'Follow-up queued.' : 'Follow-up queued. Queue paused.');
+  if (armedFollowUpConversationIds.has(conv.id) && !streaming && !sending) setTimeout(() => processQueuedFollowUps(conv.id), 0);
 }
 
 async function cancelQueuedFollowUp(id) {
@@ -10665,18 +11092,15 @@ async function cancelQueuedFollowUp(id) {
   const before = conv.queuedFollowUps || [];
   conv.queuedFollowUps = before.filter(item => item.id !== id);
   if (conv.queuedFollowUps.length === before.length) return;
-  const wasArmed = armedFollowUpConversationIds.has(conv.id);
   const previousUpdatedAt = conv.updatedAt;
-  if (!conv.queuedFollowUps.length) armedFollowUpConversationIds.delete(conv.id);
   conv.updatedAt = Date.now();
   queueingFollowUp = true;
   try {
     await saveConversationImmediately();
+    if (!conv.queuedFollowUps.length) armedFollowUpConversationIds.delete(conv.id);
   } catch (error) {
     conv.queuedFollowUps = before;
     conv.updatedAt = previousUpdatedAt;
-    if (wasArmed) armedFollowUpConversationIds.add(conv.id);
-    else armedFollowUpConversationIds.delete(conv.id);
     showToast('Could not remove the queued follow-up: ' + sanitizeErrorDetail(error), 'error');
   } finally {
     queueingFollowUp = false;
@@ -10694,24 +11118,26 @@ async function cancelAllQueuedFollowUps() {
   const conv = getActiveConv();
   if (!conv?.queuedFollowUps?.length) return;
   const before = conv.queuedFollowUps;
-  const wasArmed = armedFollowUpConversationIds.has(conv.id);
   const previousUpdatedAt = conv.updatedAt;
   conv.queuedFollowUps = [];
-  armedFollowUpConversationIds.delete(conv.id);
   conv.updatedAt = Date.now();
   queueingFollowUp = true;
   try {
     await saveConversationImmediately();
+    armedFollowUpConversationIds.delete(conv.id);
   } catch (error) {
     conv.queuedFollowUps = before;
     conv.updatedAt = previousUpdatedAt;
-    if (wasArmed) armedFollowUpConversationIds.add(conv.id);
     showToast('Could not clear the follow-up queue: ' + sanitizeErrorDetail(error), 'error');
   } finally {
     queueingFollowUp = false;
     renderFollowUpQueue();
     renderSidebar();
     updateSendBtnState();
+    // ponytail: a failed Clear restores a runnable queue; resume it instead of stranding it.
+    if (activeConvId === conv.id && armedFollowUpConversationIds.has(conv.id) && conv.queuedFollowUps.length && !sending && !streaming && !processingFollowUpConversationId) {
+      setTimeout(() => processQueuedFollowUps(conv.id), 0);
+    }
   }
 }
 
@@ -10734,7 +11160,8 @@ async function processQueuedFollowUps(convId) {
   if (processingFollowUpConversationId || queueingFollowUp || sending || streaming || activeConvId !== convId || !armedFollowUpConversationIds.has(convId)) return;
   processingFollowUpConversationId = convId;
   try {
-    while (activeConvId === convId && armedFollowUpConversationIds.has(convId) && !sending && !streaming) {
+    // ponytail: recheck the mutation guard between sends; a Remove/Clear save may be pending.
+    while (!queueingFollowUp && activeConvId === convId && armedFollowUpConversationIds.has(convId) && !sending && !streaming) {
       const conv = getActiveConv();
       const item = conv?.queuedFollowUps?.[0];
       if (!item) {
@@ -10827,7 +11254,9 @@ async function sendMessage({ queuedFollowUp = null } = {}) {
               id: 'doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
               name: att.name || 'file',
               text: text,
-              createdAt: Date.now()
+              createdAt: Date.now(),
+              // ponytail: own the doc by its message so forks keep only retained attachments.
+              messageIndex: messageList.length
             };
             docs.push(doc);
             addedDocs.push(doc);
@@ -10907,7 +11336,7 @@ async function sendMessage({ queuedFollowUp = null } = {}) {
 
   assertRequestOwner(conv, messageList, assistantMsg, null);
   if (getSwipeRequest(assistantMsg)?.status === 'complete') {
-    extractMemories(apiMessages, conv, target);
+    extractMemories(apiMessages, conv, target, requestContext);
   }
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
@@ -10947,7 +11376,9 @@ async function regenerate() {
   const toolPolicy = getToolPolicy(conv);
   const requestContext = await buildRequestMessages(conv, { messageList: messageList.slice(), untilIndex: lastIdx });
   assertRequestOwner(conv, messageList, msg);
-  if (guardTargetContextLimit(requestContext.messages, target, target.maxTokens || 8192)) return;
+  if (guardTargetContextLimit(requestContext.messages, target, target.maxTokens || 8192)) {
+    return;
+  }
   const swipeIdx = addAssistantSwipe(msg);
   renderMessages();
 
@@ -10956,7 +11387,7 @@ async function regenerate() {
 
   const apiMessages = requestContext.messages;
 
-  const status = await streamResponse(apiMessages, msg, swipeIdx, bubble, target.model, null, { conv, messageList, target, toolPolicy });
+  const status = await streamResponse(apiMessages, msg, swipeIdx, bubble, target.model, null, { conv, messageList, target, toolPolicy, commitContext: requestContext.commitInvalidation });
   assertRequestOwner(conv, messageList, msg, null);
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
@@ -11008,13 +11439,15 @@ async function continueMessage() {
   });
   assertRequestOwner(conv, messageList, msg);
   const apiMessages = requestContext.messages;
-  if (guardTargetContextLimit(apiMessages, target, target.maxTokens || 8192)) return;
+  if (guardTargetContextLimit(apiMessages, target, target.maxTokens || 8192)) {
+    return;
+  }
   const swipeIdx = addAssistantSwipe(msg, sourceSwipe);
   renderMessages();
 
   const bubble = document.querySelector('.msg-wrapper[data-msg-idx="' + lastIdx + '"] .msg-bubble');
 
-  const status = await streamResponse(apiMessages, msg, swipeIdx, bubble, target.model, existingText, { conv, messageList, target, toolPolicy });
+  const status = await streamResponse(apiMessages, msg, swipeIdx, bubble, target.model, existingText, { conv, messageList, target, toolPolicy, commitContext: requestContext.commitInvalidation });
   assertRequestOwner(conv, messageList, msg, null);
   if (conv) conv.updatedAt = Date.now();
   debouncedSave();
@@ -11072,6 +11505,11 @@ const EXPORT_SETTING_ALLOWLIST = [
   'assistantCustomTheme', 'assistantFont', 'assistantMsgFontSize', 'assistantMsgMaxWidth', 'assistantPresets'
 ];
 const IMPORT_SETTING_URL_KEYS = new Set(['llmProxyUrl', 'llmSearchApiUrl', 'llmCorsProxy']);
+
+// ponytail: the search URL keeps its {key}/{query} template placeholders on import/export.
+function sanitizeImportedUrl(key, value) {
+  return key === 'llmSearchApiUrl' ? sanitizeTemplateUrl(value) : sanitizeStoredUrl(value);
+}
 const IMPORT_SETTING_ALLOWLIST = EXPORT_SETTING_ALLOWLIST.filter(key => ![
   'llmProvider', 'llmProxyUrl', 'llmModel', 'llmApiFormat', 'llmSearchApiUrl', 'llmCorsProxy',
   'llmWebSearch', 'llmForceSearch', 'llmUrlFetch', 'llmToolConfirm'
@@ -11092,7 +11530,7 @@ function buildSafeExportSettings() {
   EXPORT_SETTING_ALLOWLIST.forEach(key => {
     const value = localStorage.getItem(key);
     if (value === null) return;
-    const safe = IMPORT_SETTING_URL_KEYS.has(key) ? sanitizeStoredUrl(value) : normalizeStructuredSettingValue(key, value);
+    const safe = IMPORT_SETTING_URL_KEYS.has(key) ? sanitizeImportedUrl(key, value) : normalizeStructuredSettingValue(key, value);
     if (safe !== undefined) settings[key] = safe;
   });
   return settings;
@@ -11132,37 +11570,74 @@ async function exportAllConversations() {
   if (readOnlyShare) return;
   try {
   persistDraftFromUI();
-  if (_projectAutosaveTimer && !await flushProjectAutosave()) throw new Error('Project changes could not be saved.');
-  await saveConversationImmediately();
-  if (!await saveProjects(true)) throw new Error('Project changes could not be saved.');
-  const memories = await loadMemories();
-  const snapshot = db ? await syncCapturePullSnapshot() : { conversations: getPersistentConversations(), projects, memories };
-  const persistentConversations = snapshot.conversations;
+  // ponytail: failing storage must not block rescuing what is in memory.
+  let recoveryNote = '';
+  try {
+    if (_projectAutosaveTimer && !await flushProjectAutosave()) throw new Error('Project changes could not be saved.');
+    await saveConversationImmediately();
+    if (!await saveProjects(true)) throw new Error('Project changes could not be saved.');
+  } catch (saveError) {
+    recoveryNote = 'Local saving failed (' + sanitizeErrorDetail(saveError) + '). This recovery copy holds what is in memory and may be incomplete.';
+  }
+  let memories = [];
+  try { memories = await loadMemories(); }
+  catch (memoryError) {
+    recoveryNote = recoveryNote || 'Saved memories could not be read. This recovery copy may be incomplete.';
+  }
+  let snapshot = null;
+  try { snapshot = db ? await syncCapturePullSnapshot() : null; }
+  catch (snapshotError) { snapshot = null; }
+  if (!snapshot && db) recoveryNote = recoveryNote || 'Stored chats could not be re-read. This recovery copy holds what is in memory and may be incomplete.';
+  // ponytail: current edits win their IDs; retain differing stored content as separate copies.
+  const recovered = syncCloneJson({ conversations: getPersistentConversations(), projects, memories });
+  if (snapshot) {
+    for (const category of ['conversations', 'projects', 'memories']) {
+      const byId = new Map(recovered[category].map(record => [record.id, record]));
+      for (const stored of snapshot[category]) {
+        const current = byId.get(stored.id);
+        if (!current) {
+          recovered[category].push(stored);
+          byId.set(stored.id, stored);
+          continue;
+        }
+        const content = record => category === 'conversations' ? conversationContent(record)
+          : serializeConversation({ ...record, createdAt: 0, updatedAt: 0 });
+        if (content(current) === content(stored)) continue;
+        const copy = category === 'conversations' ? makeConversationConflict(stored, 'conflict_' + genId())
+          : { ...stored, id: 'recovered_' + genId(), ...(category === 'projects' ? { name: stored.name + ' (recovered copy)' } : {}) };
+        recovered[category].push(copy);
+        recoveryNote = recoveryNote || 'This recovery copy keeps current edits and separate copies of differing stored records.';
+      }
+    }
+  }
+  const persistentConversations = recovered.conversations;
   const data = {
     schema: EXPORT_SCHEMA,
     version: EXPORT_VERSION,
     conversations: persistentConversations,
     // Advertised as a full backup, so project instructions and files ride along too.
-    projects: snapshot.projects,
-    memories: snapshot.memories,
+    projects: recovered.projects,
+    memories: recovered.memories,
     drafts: persistentConversations.filter(conv => conv.draft).map(conv => ({ conversationId: conv.id, ...conv.draft })),
     exportedAt: new Date().toISOString(),
     settings: buildSafeExportSettings(),
-    profiles: buildSafeExportProfiles()
+    profiles: buildSafeExportProfiles(),
+    ...(recoveryNote ? { recovery: recoveryNote } : {})
   };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'assistant-export-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.download = (recoveryNote ? 'assistant-recovery-' : 'assistant-export-') + new Date().toISOString().slice(0, 10) + '.json';
     a.click();
     URL.revokeObjectURL(url);
+    if (recoveryNote) showToast(recoveryNote, 'error', 0);
     return data;
   } catch (error) { showToast('Could not prepare export: ' + sanitizeErrorDetail(error), 'error'); return null; }
 }
 
 function normalizeImportedData(data) {
-  if (!data || typeof data !== 'object') throw new Error('The file is not a JSON object.');
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('The file is not a JSON object.');
   if (data.schema && data.schema !== EXPORT_SCHEMA) throw new Error('Unsupported export schema.');
   if (data.version != null && (!Number.isInteger(Number(data.version)) || Number(data.version) < 1 || Number(data.version) > EXPORT_VERSION)) throw new Error('Unsupported export version.');
   let rawConversations = Array.isArray(data.conversations) ? data.conversations : [];
@@ -11177,25 +11652,26 @@ function normalizeImportedData(data) {
     delete conv.shareId;
     return conv;
   });
-  if (!importedConversations.length) throw new Error('No conversations found in this file.');
   importedConversations.forEach(conv => conv.messages.forEach(message => {
     if (message.role === 'assistant' && !Array.isArray(message.swipes)) {
       message.swipes = [typeof message.content === 'string' ? message.content : ''];
       message.swipeIndex = 0;
     }
   }));
-  const importedProjects = normalizeProjectList(data.projects);
+  const importedProjects = normalizeProjectList((Array.isArray(data.projects) ? data.projects : []).filter(project => project && typeof project === 'object' && !Array.isArray(project)));
   const importedMemories = normalizeMemoryList(Array.isArray(data.memories) ? data.memories : []).memories;
   const drafts = Array.isArray(data.drafts) ? data.drafts.filter(draft => draft && typeof draft === 'object').map(draft => ({ ...draft })) : [];
   const settings = {};
   Object.keys(data.settings || {}).forEach(key => {
     if (IMPORT_SETTING_ALLOWLIST.includes(key)) {
       const value = String(data.settings[key] ?? '');
-      const safeValue = IMPORT_SETTING_URL_KEYS.has(key) ? sanitizeStoredUrl(value) : normalizeStructuredSettingValue(key, value);
+      const safeValue = IMPORT_SETTING_URL_KEYS.has(key) ? sanitizeImportedUrl(key, value) : normalizeStructuredSettingValue(key, value);
       if (safeValue !== undefined) settings[key] = safeValue;
     }
   });
-  const profiles = Array.isArray(data.profiles) ? data.profiles.map(sanitizeImportedProfileRecord) : [];
+  const profiles = (Array.isArray(data.profiles) ? data.profiles : []).filter(profile => profile && typeof profile === 'object' && !Array.isArray(profile)).map(sanitizeImportedProfileRecord);
+  if (!importedConversations.length && !importedProjects.length && !importedMemories.length &&
+      !Object.keys(settings).length && !profiles.length) throw new Error('No recognised data found in this file.');
   return { conversations: importedConversations, projects: importedProjects, memories: importedMemories, drafts, settings, profiles };
 }
 
@@ -11344,7 +11820,7 @@ async function applyImport(mode = 'merge') {
   imported.drafts.forEach(draft => {
     const conv = importedConversations.find(item => item.id === draft.conversationId);
     if (conv && (!conv.draft || Number(draft.updatedAt || 0) > Number(conv.draft.updatedAt || 0))) {
-      conv.draft = { text: typeof draft.text === 'string' ? draft.text : '', attachments: cloneDraftAttachments(draft.attachments), updatedAt: Number(draft.updatedAt) || Date.now() };
+      conv.draft = { text: typeof draft.text === 'string' ? draft.text : '', attachments: cloneDraftAttachments(draft.attachments), modelOverride: typeof draft.modelOverride === 'string' ? draft.modelOverride.slice(0, 300) || null : null, updatedAt: Number(draft.updatedAt) || Date.now() };
       conv.updatedAt = Math.max(conv.updatedAt, conv.draft.updatedAt);
       delete conv.syncVersion;
     }
@@ -11400,6 +11876,8 @@ async function applyImport(mode = 'merge') {
         if (!ids.has(record.id)) {
           localTombstones[category][record.id] = Math.max(Date.now(), Number(record[timestamp]) || 0);
           if (category === 'conversations') localTombstones.conversationVersions[record.id] = normalizeConversationVersion(record.syncVersion);
+          // ponytail: Replace must record the same root relationship as ordinary deletion.
+          if (category === 'conversations') localTombstones.conversationRoots[record.id] = record.conflictOf || record.id;
         }
       });
     });
@@ -11411,7 +11889,7 @@ async function applyImport(mode = 'merge') {
   }
   const nextActiveId = mode !== 'replace' && merged.conversations.some(conv => conv.id === previousActiveConvId)
     ? previousActiveConvId : (merged.conversations[0]?.id || '');
-  const saved = await syncPersistPullData({ conversations: merged.conversations, projects: nextProjects, memories: nextMemories, persistentActiveId: nextActiveId, settingsValues }, snapshot);
+  const saved = await syncPersistPullData({ conversations: merged.conversations, projects: nextProjects, memories: nextMemories, persistentActiveId: nextActiveId, settingsValues, preserveTemporary: mode !== 'replace' }, snapshot);
   committed = true;
   replacePersistentConversations(saved.conversations, mode !== 'replace');
   projects = saved.projects;
@@ -11490,13 +11968,15 @@ async function clearDataCategory(category) {
       conv.queuedFollowUps = [];
     });
     armedFollowUpConversationIds.clear();
+    attachmentDraftEpoch++;
     pendingAttachments = [];
     const input = document.getElementById('chatInput');
     if (input) input.value = '';
     renderPreviews();
     await saveConversationImmediately();
   } else if (category === 'memories') {
-    syncRecordTombstones('memories', (await loadMemories()).map(memory => memory.id));
+    const wiped = await loadMemories();
+    syncRecordTombstones('memories', wiped.map(memory => memory.id), Math.max(Date.now(), ...wiped.map(memory => Number(memory.createdAt) || 0)));
     await saveMemories([]);
   } else if (category === 'credentials') {
     ['llmApiKey', 'llmSearchApiKey'].forEach(key => { localStorage.removeItem(key); sessionStorage.removeItem(key); });
@@ -11711,6 +12191,15 @@ function syncGetStoredConfig() {
     passphrase: localStorage.getItem('assistantSyncPassphrase') || '',
     autoPush: localStorage.getItem(SYNC_AUTO_PUSH_KEY) === 'true'
   };
+}
+
+// ponytail: a delayed push/pull must never apply under a newer pairing.
+function syncPairingMatches(cfg) {
+  try {
+    const live = syncGetStoredConfig();
+    return live.gistId === (cfg?.gistId || '') && live.token === (cfg?.token || '') &&
+      live.passphrase === (cfg?.passphrase || '');
+  } catch (error) { return false; }
 }
 
 function syncGetConfigFromInputs() {
@@ -12110,6 +12599,8 @@ function syncNormalizeTombstones(value) {
     const entries = source[category] && typeof source[category] === 'object' ? source[category] : {};
     Object.entries(entries).forEach(([id, deletedAt]) => {
       const timestamp = Number(deletedAt);
+      // ponytail: never let a hostile ID become a magic object property.
+      if (['__proto__', 'constructor', 'prototype'].includes(id)) return;
       if (id && Number.isFinite(timestamp) && timestamp > 0) normalized[category][id] = timestamp;
     });
   });
@@ -12139,9 +12630,11 @@ function syncRecordTombstones(category, ids, deletedAt = Date.now()) {
     ? new Set(conversations.filter(isTemporaryConversation).map(conv => conv.id))
     : new Set();
   (ids || []).filter(id => id && !temporaryIds.has(id)).forEach(id => {
-    const record = category === 'conversations' ? conversations.find(conv => conv.id === id) : null;
-    tombstones[category][id] = Math.max(Number(tombstones[category][id]) || 0, deletedAt, Number(record?.updatedAt) || 0);
-    if (record) {
+    // ponytail: deletion must cover the record's own timestamp, not just the local clock.
+    const record = category === 'conversations' ? conversations.find(conv => conv.id === id)
+      : category === 'projects' ? projects.find(project => project.id === id) : null;
+    tombstones[category][id] = Math.max(Number(tombstones[category][id]) || 0, deletedAt, Number(record?.updatedAt) || 0, Number(record?.createdAt) || 0);
+    if (category === 'conversations' && record) {
       const seen = { ...tombstones.conversationVersions[id] };
       Object.entries(normalizeConversationVersion(record.syncVersion)).forEach(([writer, count]) => { seen[writer] = Math.max(Number(seen[writer]) || 0, count); });
       tombstones.conversationVersions[id] = seen;
@@ -12278,6 +12771,7 @@ function syncMergeSettingsStates(localValue, remoteValue) {
     if (!hasLocal && !hasRemote) return;
     const localRevision = Number(local.revisions[key]) || 0;
     const remoteRevision = Number(remote.revisions[key]) || 0;
+    // ponytail: whole-collection revisions preserve deletions/order; independent additions need per-entry ancestry.
     const useRemote = hasRemote && (!hasLocal || remoteRevision > localRevision ||
       (remoteRevision === localRevision && String(remote.settings[key]) > String(local.settings[key])));
     merged.settings[key] = useRemote ? remote.settings[key] : local.settings[key];
@@ -12544,6 +13038,7 @@ async function syncPushToGist(options = {}) {
       } else if (!unchanged) expectedHashes.set(built.filename, await syncSha256Hex(built.payload));
 
       if (!unchanged || consolidated) {
+        if (!syncPairingMatches(cfg)) throw new Error('Sync pairing changed while pushing. Nothing was uploaded under the new pairing; retry.');
         for (const name of Object.keys(built.files)) {
           if (name !== 'manifest.json' && gist.files?.[name]) throw new Error('Sync update name already exists. Retry; no remote file was changed.');
         }
@@ -12585,6 +13080,11 @@ async function syncPushToGist(options = {}) {
       }, cfg.token);
       cfg.gistId = gist.id;
       uploaded = true;
+      // ponytail: never overwrite a newer pairing with a stale first-push ID.
+      if (!syncPairingMatches({ ...cfg, gistId: '' })) {
+        showToast('Sync created Gist ' + cfg.gistId + ' but pairing changed during creation. Copy that ID before retrying; the newer pairing was kept.', 'error', 0);
+        throw new Error('Sync pairing changed while creating the Gist. The newer pairing was kept; created Gist ID: ' + cfg.gistId);
+      }
       const gistEl = document.getElementById('setSyncGistId');
       if (gistEl) gistEl.value = cfg.gistId;
       localStorage.setItem('assistantSyncGistId', cfg.gistId);
@@ -12692,7 +13192,7 @@ function syncMergeMemoryLists(localList, remoteList, tombstones = {}) {
     .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
 }
 
-async function syncPersistPullData({ conversations: nextConversations, memories: nextMemories, projects: nextProjects, persistentActiveId, settingsValues = {} }, snapshot) {
+async function syncPersistPullData({ conversations: nextConversations, memories: nextMemories, projects: nextProjects, persistentActiveId, settingsValues = {}, preserveTemporary = true }, snapshot) {
   if (!db || !snapshot?.database) throw new Error('Import and pull need a working browser database. Free storage and reload, then retry.');
   const conversationRecords = (nextConversations || []).map(syncNormalizeConversation);
   for (const record of conversationRecords) {
@@ -12702,6 +13202,14 @@ async function syncPersistPullData({ conversations: nextConversations, memories:
   const projectRecords = normalizeProjectList(nextProjects || []);
   const storedActiveId = String(persistentActiveId || '');
   const values = { ...settingsValues, assistantActiveConvId: storedActiveId };
+  const draftState = () => serializeConversation(conversations.map(conv => [conv.id, contextDrafts.get(conv)?.summary, contextDrafts.get(conv)?.tools]));
+  const previousDrafts = draftState();
+  const droppedDraftOwners = replacePersistentConversations(conversationRecords, preserveTemporary, true);
+  if (droppedDraftOwners.length && !confirm('This operation will discard unsaved Context edits in ' +
+      droppedDraftOwners.slice(0, 3).join(', ') + (droppedDraftOwners.length > 3 ? ' and ' + (droppedDraftOwners.length - 3) + ' more' : '') +
+      '. Continue? Choose Cancel to save or copy those edits first.')) {
+    throw new Error('Operation cancelled. Unsaved Context edits were kept.');
+  }
   return new Promise((resolve, reject) => {
     const tx = db.transaction(['conversations', 'memories', 'meta'], 'readwrite');
     const conversationStore = tx.objectStore('conversations');
@@ -12723,6 +13231,7 @@ async function syncPersistPullData({ conversations: nextConversations, memories:
         };
         if (serializeConversation(current) !== serializeConversation(snapshot.database) ||
             sending || streaming || queueingFollowUp || pendingAttachmentReads > 0 ||
+            draftState() !== previousDrafts ||
             serializeConversation(getPersistentConversations()) !== snapshot.localConversations ||
             serializeConversation(projects) !== snapshot.localProjects ||
             Object.entries(snapshot.settingsValues).some(([key, value]) => localStorage.getItem(key) !== value)) {
@@ -12839,14 +13348,34 @@ async function syncPullFromGist() {
     const remote = await syncReadRemoteData(gist, manifest, cfg.passphrase);
     await saveConversationImmediately();
     const snapshot = await syncCapturePullSnapshot();
+    // ponytail: never apply an old archive under a newer pairing.
+    if (!syncPairingMatches(cfg)) throw new Error('Sync pairing changed while pulling. Nothing was applied; retry under the current pairing.');
     const remoteTombstones = syncNormalizeTombstones(remote.tombstones);
+    // ponytail: confirmation must mirror the root-aware removal reconciliation performs.
+    const remoteRoots = new Map([
+      ...snapshot.conversations.filter(record => record?.id).map(record => [record.id, record.conflictOf || record.id]),
+      ...(remote.conversations || []).filter(record => record?.id).map(record => [record.id, record.conflictOf || record.id]),
+      ...Object.entries(remoteTombstones.conversationRoots || {})
+    ]);
+    const incomingConversationDeletions = snapshot.conversations.filter(record => {
+      const root = record.conflictOf || record.id;
+      return Object.keys(remoteTombstones.conversations || {}).some(id => {
+        if (!(id === record.id || id === root || remoteRoots.get(id) === root)) return false;
+        const remoteDeletedAt = Number(remoteTombstones.conversations[id]) || 0;
+        const localDeletedAt = Number(snapshot.tombstones.conversations?.[id]) || 0;
+        if (!(remoteDeletedAt > localDeletedAt)) return false;
+        const versions = remoteTombstones.conversationVersions || {};
+        if (!Object.hasOwn(versions, id)) return remoteDeletedAt >= Number(record.updatedAt || 0);
+        return [0, 1].includes(compareConversationVersions({ syncVersion: versions[id] }, record));
+      });
+    }).length;
     const incomingDeletionCount = (records, category, timestampKey) => records.filter(record => {
       const remoteDeletedAt = Number(remoteTombstones[category]?.[record.id]) || 0;
       const localDeletedAt = Number(snapshot.tombstones[category]?.[record.id]) || 0;
       return remoteDeletedAt > localDeletedAt && remoteDeletedAt >= Number(record[timestampKey] || 0);
     }).length;
     const deletionCounts = {
-      conversations: incomingDeletionCount(snapshot.conversations, 'conversations', 'updatedAt'),
+      conversations: incomingConversationDeletions,
       projects: incomingDeletionCount(snapshot.projects, 'projects', 'updatedAt'),
       memories: incomingDeletionCount(snapshot.memories, 'memories', 'createdAt')
     };
@@ -13350,10 +13879,22 @@ async function shareConversation(options = {}) {
           method: 'POST',
           body: JSON.stringify({ description: 'Synapse shared conversation', public: false, files })
         }, token);
-    conv.shareGistId = gist.id;
+    const publishedId = gist && gist.id;
+    if (!publishedId) throw new Error('Publication did not return a link ID.');
+    conv.shareGistId = publishedId;
     conv.updatedAt = Date.now();
-    saveConversations();
-    const link = shareLinkFor(gist.id);
+    try {
+      await saveConversations();
+      const saved = db ? await idbGet('conversations', conv.id)
+        : JSON.parse(localStorage.getItem('assistantConversations') || '[]').find(record => record.id === conv.id);
+      if (saved?.shareGistId !== publishedId || !saved.messages?.length) throw new Error('Publication ownership was not saved.');
+    } catch (saveError) {
+      const link = shareLinkFor(publishedId);
+      await copyShareText(link);
+      showToast('Published, but the link ID could not be verified in local storage. Keep/revoke this link: ' + link, 'error', 0);
+      return false;
+    }
+    const link = shareLinkFor(publishedId);
     const copied = await copyShareText(link);
     showToast(copied ? 'Link copied. Anyone with it can read this chat.' : 'Shared: ' + link, 'success');
     return true;
@@ -13499,11 +14040,14 @@ let _selectMode = false;
 const _selectedMsgs = new Set();
 let _justEnteredSelectMode = false;
 
-function enterSelectMode() {
+function enterSelectMode(fromLongPress = false) {
+  if (_selectMode) return;
   if (isTemporaryConversation(getActiveConv())) { showToast('Temporary chats cannot be saved as screenshots.', 'info'); return; }
   if (messages.length === 0) { showToast('No messages to screenshot.', 'info'); return; }
   _selectMode = true;
-  _justEnteredSelectMode = true;
+  // ponytail: only a long-press release needs the next click suppressed; a
+  // toolbar click should select on the very next message click.
+  _justEnteredSelectMode = fromLongPress;
   _selectedMsgs.clear();
   document.getElementById('messagesArea').classList.add('select-mode');
   const selectToolbar = document.getElementById('selectToolbar');
@@ -13515,24 +14059,34 @@ function enterSelectMode() {
 
 function exitSelectMode() {
   _selectMode = false;
+  _justEnteredSelectMode = false;
   _selectedMsgs.clear();
   const area = document.getElementById('messagesArea');
   area.classList.remove('select-mode');
   area.querySelectorAll('.msg-wrapper.selected').forEach(el => el.classList.remove('selected'));
   document.getElementById('selectToolbar').classList.remove('visible');
+  updateSelectCount();
 }
 
 function toggleMsgSelect(idx) {
-  if (idx < 0 || idx >= messages.length) return;
+  if (!_selectMode || !Number.isInteger(idx) || idx < 0 || idx >= messages.length) return;
   if (_selectedMsgs.has(idx)) _selectedMsgs.delete(idx);
   else _selectedMsgs.add(idx);
-  const wrapper = document.querySelector('.msg-wrapper[data-msg-idx="' + idx + '"]');
-  if (wrapper) wrapper.classList.toggle('selected', _selectedMsgs.has(idx));
   updateSelectCount();
 }
 
 function updateSelectCount() {
-  document.getElementById('selectCount').textContent = _selectedMsgs.size + ' selected';
+  _selectedMsgs.forEach(idx => { if (idx >= messages.length) _selectedMsgs.delete(idx); });
+  document.querySelectorAll('#messagesArea .msg-wrapper[data-msg-idx]').forEach(wrapper => {
+    const selected = _selectMode && _selectedMsgs.has(Number(wrapper.dataset.msgIdx));
+    wrapper.classList.toggle('selected', selected);
+    wrapper.removeAttribute('aria-pressed');
+    const checkbox = wrapper.querySelector('.msg-select-checkbox');
+    if (checkbox) { checkbox.hidden = !_selectMode; checkbox.checked = selected; }
+  });
+  const count = document.getElementById('selectCount');
+  count.setAttribute('role', 'status');
+  count.textContent = _selectedMsgs.size + ' selected';
   document.getElementById('ssBtn').disabled = _selectedMsgs.size === 0;
 }
 
@@ -13554,6 +14108,7 @@ async function screenshotSelected() {
       });
     }
     if (activeConvId !== conversationId || isTemporaryConversation(getActiveConv())) throw new Error('The active chat changed before the screenshot was ready.');
+    if (!_selectMode || !_selectedMsgs.size) return;
     const indices = [..._selectedMsgs].sort((a, b) => a - b);
     const area = document.getElementById('messagesArea');
     const cs = getComputedStyle(document.documentElement);
@@ -13564,7 +14119,7 @@ async function screenshotSelected() {
       const wrapper = area.querySelector('.msg-wrapper[data-msg-idx="' + idx + '"]');
       if (!wrapper) return;
       const clone = wrapper.cloneNode(true);
-      clone.querySelectorAll('.msg-actions, .regen-btn, .swipe-nav, .msg-meta, .msg-timestamp').forEach(el => el.remove());
+      clone.querySelectorAll('.msg-select-checkbox, .msg-actions, .regen-btn, .swipe-nav, .msg-meta, .msg-timestamp').forEach(el => el.remove());
       clone.classList.remove('selected');
       container.appendChild(clone);
     });
@@ -13580,7 +14135,7 @@ async function screenshotSelected() {
     console.error('Screenshot failed:', err);
     showToast('Screenshot failed: ' + err.message, 'error');
   } finally {
-    btn.disabled = false;
+    updateSelectCount();
     btn.textContent = 'Screenshot';
   }
 }
@@ -13648,31 +14203,79 @@ function openGlobalSearch() {
   });
 }
 
+// ponytail: use the renderer's text, not a second Markdown parser. Only block
+// boundaries add spaces; inline formatting and syntax highlighting do not.
+function buildSearchSpanMap(root) {
+  let raw = '';
+  const ranges = [];
+  const boundary = () => { if (raw && !/\s$/.test(raw)) raw += ' '; };
+  const visit = node => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      ranges.push({ node, start: raw.length, len: node.textContent.length });
+      raw += node.textContent;
+      return;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE && node.matches('script, style, button, .thinking-block, .katex-mathml, [hidden]')) return;
+    const block = /^(BR|HR|P|DIV|H[1-6]|BLOCKQUOTE|PRE|UL|OL|LI|TABLE|THEAD|TBODY|TR|TD|TH|DETAILS)$/.test(node.nodeName);
+    if (block) boundary();
+    node.childNodes.forEach(visit);
+    if (block) boundary();
+  };
+  visit(root);
+  const chars = [], map = [], ends = [];
+  let offset = 0;
+  let space = -1;
+  for (const ch of raw) {
+    if (/\s/.test(ch)) {
+      if (chars.length && space < 0) space = offset;
+    } else {
+      if (space >= 0) { chars.push(' '); map.push(space); ends.push(offset); space = -1; }
+      chars.push(ch);
+      // Lowercasing can expand a character (e.g. U+0130), and supplementary
+      // characters occupy two UTF-16 units. Map every search offset back fully.
+      for (let i = 0; i < ch.toLowerCase().length; i++) { map.push(offset); ends.push(offset + ch.length); }
+    }
+    offset += ch.length;
+  }
+  return { norm: chars.join('').toLowerCase(), map, ends, raw, ranges };
+}
+
+function normalizeSearchText(text) {
+  return String(text || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
 function performGlobalSearch(query) {
   const container = document.getElementById('globalSearchResults');
   const status = document.getElementById('globalSearchStatus');
   if (!container) return;
+  query = normalizeSearchText(query);
   if (!query || query.length < 2) {
     container.innerHTML = '<div style="color:var(--text-secondary);font-size:0.85em;text-align:center;padding:20px">Type at least 2 characters</div>';
     if (status) status.textContent = 'Type at least 2 characters.';
     return;
   }
   const results = [];
-  const lq = query.toLowerCase();
+  // A template keeps rendered images inert while searching unopened chats.
+  const rendered = document.createElement('template');
   conversations.forEach(conv => {
     conv.messages.forEach((msg) => {
-      const raw = typeof msg.content === 'string' ? msg.content : (Array.isArray(msg.content) ? msg.content.filter(p => p.type === 'text').map(p => p.text).join(' ') : '');
-      // Search visible text only; hidden reasoning would surface unopenable hits
-      // and leak raw <think> markup into snippets.
-      const text = raw.includes('<think') ? stripThinkTags(raw).content : raw;
-      const idx = text.toLowerCase().indexOf(lq);
+      if (msg.role === 'assistant') rendered.innerHTML = renderMarkdown(stripThinkTags(getMsgText(msg)).content);
+      else {
+        rendered.content.replaceChildren();
+        const text = typeof msg.content === 'string' ? msg.content : (Array.isArray(msg.content) ? msg.content.map(part =>
+          part.type === 'text' ? part.text : part.type === 'file' ? '\u{1F4C4} ' + (part.file?.name || 'file') : '').join('') : '');
+        rendered.content.appendChild(document.createTextNode(text));
+      }
+      const { norm, map, ends, raw: text } = buildSearchSpanMap(rendered.content);
+      const idx = norm.indexOf(query);
       if (idx !== -1) {
-        const start = Math.max(0, idx - 40);
-        const end = Math.min(text.length, idx + query.length + 40);
+        const from = map[idx], to = ends[idx + query.length - 1];
+        const start = Math.max(0, from - 40);
+        const end = Math.min(text.length, to + 40);
         const snippet = (start > 0 ? '...' : '') +
-          escapeHTML(text.slice(start, idx)) +
-          '<mark>' + escapeHTML(text.slice(idx, idx + query.length)) + '</mark>' +
-          escapeHTML(text.slice(idx + query.length, end)) +
+          escapeHTML(text.slice(start, from)) +
+          '<mark>' + escapeHTML(text.slice(from, to)) + '</mark>' +
+          escapeHTML(text.slice(to, end)) +
           (end < text.length ? '...' : '');
         results.push({ convId: conv.id, convTitle: conv.title, role: msg.role, snippet });
       }
@@ -13736,6 +14339,7 @@ function openChatSearch() {
 }
 
 function closeChatSearch() {
+  clearTimeout(chatSearchDebounce);
   const bar = document.getElementById('chatSearchBar');
   bar.classList.remove('open');
   document.getElementById('chatSearchInput').value = '';
@@ -13764,55 +14368,77 @@ function performChatSearch() {
   chatSearchIdx = -1;
   const query = document.getElementById('chatSearchInput').value.trim();
   if (!query) { document.getElementById('chatSearchCount').textContent = ''; return; }
-
-  const textNodes = [];
+  const lowerQuery = normalizeSearchText(query);
+  // ponytail: search one visible-text string per bubble, then map each hit
+  // back onto its source text nodes for highlighting.
   document.querySelectorAll('#messagesArea .msg-bubble').forEach(bubble => {
-    const walker = document.createTreeWalker(bubble, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        return node.parentElement?.closest('.thinking-block, button')
-          ? NodeFilter.FILTER_REJECT
-          : NodeFilter.FILTER_ACCEPT;
-      }
-    });
-    while (walker.nextNode()) textNodes.push(walker.currentNode);
-  });
-
-  const lowerQuery = query.toLowerCase();
-  textNodes.forEach(node => {
-    const text = node.textContent;
-    const lower = text.toLowerCase();
-    let idx = lower.indexOf(lowerQuery);
-    if (idx === -1) return;
-    const frag = document.createDocumentFragment();
-    let lastIdx = 0;
+    const { norm, map, ends, ranges } = buildSearchSpanMap(bubble);
+    if (!norm) return;
+    const matches = [];
+    let idx = norm.indexOf(lowerQuery);
     while (idx !== -1) {
-      if (idx > lastIdx) frag.appendChild(document.createTextNode(text.slice(lastIdx, idx)));
-      const span = document.createElement('span');
-      span.className = 'search-highlight';
-      span.textContent = text.slice(idx, idx + query.length);
-      frag.appendChild(span);
-      chatSearchMatches.push(span);
-      lastIdx = idx + query.length;
-      idx = lower.indexOf(lowerQuery, lastIdx);
+      const end = idx + lowerQuery.length;
+      const rawFrom = map[idx];
+      const rawTo = ends[end - 1];
+      const match = { spans: [], segs: [] };
+      for (let k = 0; k < ranges.length; k++) {
+        const r = ranges[k];
+        if (r.start >= rawTo) break;
+        const localFrom = Math.max(rawFrom, r.start) - r.start;
+        const localTo = Math.min(rawTo, r.start + r.len) - r.start;
+        if (localFrom < localTo) match.segs.push({ node: r.node, from: localFrom, to: localTo });
+      }
+      if (match.segs.length) matches.push(match);
+      idx = norm.indexOf(lowerQuery, end);
     }
-    if (lastIdx < text.length) frag.appendChild(document.createTextNode(text.slice(lastIdx)));
-    node.parentNode.replaceChild(frag, node);
+    const segsByNode = new Map();
+    matches.forEach((match, mi) => match.segs.forEach(s => {
+      let list = segsByNode.get(s.node);
+      if (!list) { list = []; segsByNode.set(s.node, list); }
+      list.push({ mi, from: s.from, to: s.to });
+    }));
+    segsByNode.forEach((segs, node) => {
+      if (!node.parentNode) return;
+      segs.sort((a, b) => a.from - b.from);
+      const text = node.textContent;
+      const frag = document.createDocumentFragment();
+      let cursorPos = 0;
+      segs.forEach(s => {
+        if (s.from > cursorPos) frag.appendChild(document.createTextNode(text.slice(cursorPos, s.from)));
+        const span = document.createElement('span');
+        span.className = 'search-highlight';
+        span.textContent = text.slice(s.from, s.to);
+        frag.appendChild(span);
+        matches[s.mi].spans.push(span);
+        cursorPos = Math.max(cursorPos, s.to);
+      });
+      if (cursorPos < text.length) frag.appendChild(document.createTextNode(text.slice(cursorPos)));
+      node.parentNode.replaceChild(frag, node);
+    });
+    matches.forEach(m => { if (m.spans.length) chatSearchMatches.push(m.spans); });
   });
-
-  document.getElementById('chatSearchCount').textContent = chatSearchMatches.length + ' matches';
   if (chatSearchMatches.length > 0) {
+    document.getElementById('chatSearchCount').textContent = chatSearchMatches.length + ' matches';
     chatSearchIdx = 0;
-    chatSearchMatches[0].classList.add('active');
-    chatSearchMatches[0].scrollIntoView({ behavior: getScrollBehavior(), block: 'center' });
+    setActiveChatSearchMatch(0);
+  } else {
+    document.getElementById('chatSearchCount').textContent = 'No matches';
+  }
+}
+
+function setActiveChatSearchMatch(index) {
+  chatSearchMatches.forEach((spans, i) => {
+    spans.forEach(span => span.classList.toggle('active', i === index));
+  });
+  if (chatSearchMatches[index] && chatSearchMatches[index][0]) {
+    chatSearchMatches[index][0].scrollIntoView({ behavior: getScrollBehavior(), block: 'center' });
   }
 }
 
 function navigateChatSearch(dir) {
   if (chatSearchMatches.length === 0) return;
-  chatSearchMatches[chatSearchIdx]?.classList.remove('active');
   chatSearchIdx = (chatSearchIdx + dir + chatSearchMatches.length) % chatSearchMatches.length;
-  chatSearchMatches[chatSearchIdx].classList.add('active');
-  chatSearchMatches[chatSearchIdx].scrollIntoView({ behavior: getScrollBehavior(), block: 'center' });
+  setActiveChatSearchMatch(chatSearchIdx);
   document.getElementById('chatSearchCount').textContent = (chatSearchIdx + 1) + '/' + chatSearchMatches.length;
 }
 
@@ -13828,8 +14454,9 @@ function resizeImageIfNeeded(file, maxDim, quality) {
       let { width, height } = img;
       if (width <= maxDim && height <= maxDim) { resolve(null); return; }
       const scale = maxDim / Math.max(width, height);
-      width = Math.round(width * scale);
-      height = Math.round(height * scale);
+      // ponytail: a 1px edge would round to a zero-sized canvas; clamp to one pixel.
+      width = Math.max(1, Math.round(width * scale));
+      height = Math.max(1, Math.round(height * scale));
       const canvas = document.createElement('canvas');
       canvas.width = width; canvas.height = height;
       canvas.getContext('2d').drawImage(img, 0, 0, width, height);
@@ -14041,7 +14668,15 @@ async function extractDocxText(arrayBuffer) {
 }
 
 function extractRtfText(text) {
-  return cleanExtractedText(String(text || '')
+  let out = String(text || '');
+  // ponytail: drop non-text destination groups (pictures, objects, font/color tables,
+  // metadata) first, or picture hex bytes eat the text cap and bury the prose.
+  for (let i = 0; i < 10; i++) {
+    const next = out.replace(/\{\\(?:\*|[a-z]*pict|object|objdata|fonttbl|colortbl|stylesheet|info)[^{}]*(\{[^{}]*\}[^{}]*)*\}/gi, '');
+    if (next === out) break;
+    out = next;
+  }
+  return cleanExtractedText(out
     .replace(/\\u(-?\d+)\??/g, (_, code) => String.fromCharCode(Number(code) < 0 ? Number(code) + 65536 : Number(code)))
     .replace(/\\'[0-9a-f]{2}/gi, match => String.fromCharCode(parseInt(match.slice(2), 16)))
     .replace(/\\par[d]?/g, '\n')
@@ -14085,9 +14720,13 @@ async function readAttachmentFile(file, options = {}) {
   const mime = (file.type || '').toLowerCase();
   const name = file.name || 'file';
   const originConv = getActiveConv();
+  const attachmentEpoch = attachmentDraftEpoch;
   const deliver = typeof options.onAttachment === 'function'
     ? options.onAttachment
-    : attachment => queueAttachmentForConversation(originConv?.id, attachment);
+    : attachment => {
+      // ponytail: a Clear-drafts issued mid-read invalidates this delivery.
+      if (attachmentEpoch === attachmentDraftEpoch) queueAttachmentForConversation(originConv?.id, attachment);
+    };
   const queueText = (text, fallbackMime, typeName) => {
     const value = String(text || '').trim();
     if (!value) throw new Error(typeName + ' contains no readable text.');
@@ -14209,6 +14848,7 @@ function setModelOverride(model) {
   document.getElementById('modelOverrideText').textContent = model;
   document.getElementById('modelOverrideBadge').classList.add('visible');
   closeMentionDropdown();
+  updateTokenInfo();
 }
 
 function closeMentionDropdown() {
@@ -14304,8 +14944,11 @@ function extractCharaFromPNG(arrayBuffer) {
       const nullIdx = data.indexOf(0);
       const keyword = new TextDecoder().decode(data.slice(0, nullIdx));
       if (keyword === 'chara') {
-        const text = new TextDecoder().decode(data.slice(nullIdx + 1));
-        return JSON.parse(atob(text));
+        const bytes = data.slice(nullIdx + 1);
+        // ponytail: the payload is UTF-8 JSON; atob() would mangle non-ASCII text.
+        const binary = new TextDecoder('latin1').decode(bytes);
+        const rawBytes = Uint8Array.from(atob(binary.trim()), ch => ch.charCodeAt(0));
+        return JSON.parse(new TextDecoder().decode(rawBytes));
       }
     }
     offset += 12 + len; // 4 length + 4 type + data + 4 CRC
@@ -14314,11 +14957,16 @@ function extractCharaFromPNG(arrayBuffer) {
 }
 
 function normalizeCharaCard(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Unrecognized character card format.');
   // V2 format wraps in { spec, data }
-  if (raw.spec === 'chara_card_v2' && raw.data) return raw.data;
+  if (raw.spec === 'chara_card_v2' && raw.data) {
+    if (typeof raw.data !== 'object' || Array.isArray(raw.data)) throw new Error('Unrecognized character card format.');
+    return raw.data;
+  }
+  if (raw.spec && raw.spec !== 'chara_card_v2' && !raw.data) throw new Error('Unsupported character card version: ' + raw.spec);
   // V1 is flat
   if (raw.name || raw.description || raw.first_mes) return raw;
-  return raw;
+  throw new Error('Unrecognized character card format.');
 }
 
 function buildCharaDescription(card) {
@@ -14358,6 +15006,10 @@ async function importCharacterCard(event) {
     }
 
     const card = normalizeCharaCard(rawCard);
+    // ponytail: reject non-string card fields before creating the chat; Character info assumes strings.
+    ['name', 'description', 'personality', 'scenario', 'first_mes', 'system_prompt', 'mes_example', 'creator_notes'].forEach(key => {
+      if (card[key] != null && typeof card[key] !== 'string') throw new Error('Character card field "' + key + '" must be text.');
+    });
     const charName = card.name || 'Character';
     const charDescription = buildCharaDescription(card);
 
@@ -14467,6 +15119,10 @@ function showCharacterInfo() {
 function stopVoiceInput() {
   const recognition = voiceRec;
   voiceRec = null;
+  if (_voiceInputEditHandler) {
+    document.getElementById('chatInput')?.removeEventListener('input', _voiceInputEditHandler);
+    _voiceInputEditHandler = null;
+  }
   if (recognition) {
     recognition.onresult = null;
     recognition.onend = null;
@@ -14506,12 +15162,23 @@ function toggleVoice() {
   btn.setAttribute('aria-label', 'Stop voice input');
   btn.title = 'Stop voice input';
 
+  // ponytail: manual edits during dictation end it, so a late recognition
+  // result cannot overwrite the correction.
+  let programmaticVoiceUpdate = false;
+  _voiceInputEditHandler = () => {
+    if (programmaticVoiceUpdate || voiceRec !== recognition) return;
+    stopVoiceInput();
+  };
+  input.addEventListener('input', _voiceInputEditHandler);
+
   recognition.onresult = (e) => {
     if (voiceRec !== recognition || activeConvId !== originConvId) return;
     let transcript = '';
     for (let i = 0; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+    programmaticVoiceUpdate = true;
     input.value = startText + transcript;
     input.dispatchEvent(new Event('input', { bubbles: true }));
+    programmaticVoiceUpdate = false;
   };
 
   recognition.onend = () => { if (voiceRec === recognition) stopVoiceInput(); };
