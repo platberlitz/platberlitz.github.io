@@ -6,11 +6,11 @@ brand
 
 ## Users
 
-This site is for people who want to find purachina's presets, programs, character cards, themes, and related projects without digging through scattered links. The main audience is roleplay and prompt/preset users looking for Pura's Director Preset, SillyTavern/SillyBunny resources, screenshots, changelogs, downloads, and practical notes. A secondary audience includes people browsing the author's tools, GitHub projects, and support links.
+This site is for people who want to find purachina's presets, programs, character cards, themes, and related projects without digging through scattered links. The main audience is roleplay and prompt/preset users looking for Pura's Director Preset, SillyTavern/Neconyan resources, screenshots, changelogs, downloads, and practical notes. A secondary audience includes people browsing the author's tools, GitHub projects, and support links.
 
 ## Product Purpose
 
-The root site exists as a personal public hub: a compact place to discover what purachina has made, download current preset files, browse supporting resources, and jump into related tools such as Synapse, SD Proxy, and SillyBunny. Success means visitors can quickly understand what is available, trust that downloads and changelogs are current, and feel the personality behind the work rather than landing on a sterile catalog.
+The root site exists as a personal public hub: a compact place to discover what purachina has made, download current preset files, browse supporting resources, and jump into related tools such as Synapse, SD Proxy, and Neconyan. Success means visitors can quickly understand what is available, trust that downloads and changelogs are current, and feel the personality behind the work rather than landing on a sterile catalog.
 
 ## Brand Personality
 

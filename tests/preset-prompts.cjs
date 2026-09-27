@@ -118,7 +118,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
         expected.find(p => p.identifier === 'main'),
         expected.find(p => p.name === 'Formatting'),
         expected.find(p => /^Short\b/.test(p.name)),
-        expected.find(p => /^Don.t Write for User$/.test(p.name)),
+        expected.find(p => /^(?:Don.t Write for User|User Controls User)$/.test(p.name)),
         expected.find(p => /^Voice:/.test(p.name) && !p.name.includes('Random')),
       ];
       if (tab !== 'tee-tab-prompts') selected.push(expected.find(p => p.name === 'Friction Mode'));

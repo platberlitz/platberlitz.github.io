@@ -228,14 +228,14 @@ There is none, and that is the point. `border-radius`, `box-shadow` and `text-sh
 
 ### Buttons
 - **Shape:** Flat rectangles with a 1px moss border. No radius anywhere.
-- **Primary:** The current preset downloads take the terminal's primary idiom — a solid fill with `#141a13` text — and each one wears its own platform, using the exact fill the switcher above uses for that platform when selected: SillyTavern at hue 245 (`#8eafcc`), SillyBunny at hue 165 (`#8bb6a2`). They join the hue ramp rather than hardcoding the colour. Hover inverts back to platform-colour-on-dark.
+- **Primary:** The current preset downloads take the terminal's primary idiom — a solid fill with `#141a13` text — and each one wears its own platform, using the exact fill the switcher above uses for that platform when selected: SillyTavern at hue 245 (`#8eafcc`), Neconyan at hue 165 (`#8bb6a2`). They join the hue ramp rather than hardcoding the colour. Hover inverts back to platform-colour-on-dark.
 - **Secondary:** `#232c22` surface, `1px #5f8f55` border, wrapped in `[ ` and ` ]` via `::before`/`::after`. Hover moves text and border to console green. The regex sets stay secondary on purpose — the platform fills mark the two downloads most people came for.
 - **Brackets or an icon, never both.** The two primary downloads carry a download arrow, so they are excluded from the bracket rule; the stacked regex pills are excluded too, because in a column the brackets stack vertically.
 - **Equal cells.** `.downloads-primary` is a grid of `repeat(auto-fit, minmax(min(100%, 20rem), 1fr))` with `grid-auto-rows: 1fr`, so every button in the row is the same rectangle regardless of how long its label is. Three natural widths wrapping ragged was the thing this replaced. Plain `.preset-downloads` stays a flex row — the previous-versions list holds twenty-five short pills and must not be forced into columns.
 
 ### Chips
 - **Style:** Option badges are flat micro labels on a hued surface from the ramp, with `0.04em` tracking and no uppercasing.
-- **State:** SillyTavern badges sit at hue 245, SillyBunny at 165, agent badges at 75. Keep badges informational, not button-like.
+- **State:** SillyTavern badges sit at hue 245, Neconyan at 165, agent badges at 75. Keep badges informational, not button-like.
 
 ### Cards / Containers
 - **Corner Style:** Square. All of them.
@@ -272,7 +272,7 @@ Sigils replace what colour and size used to do. Adding one is how a new heading 
 
 ### Signature Component: Project Links
 
-The seven top links each keep a hue from the ramp for project identity: startpage 350, Synapse 245, SD Proxy 60 (its GitHub link one step quieter on the same hue), SillyBunny 165, Botbooru 300. Ko-fi is the exception and takes console green outright, because support is the one call on the page that should read as an action.
+The seven top links each keep a hue from the ramp for project identity: startpage 350, Synapse 245, SD Proxy 60 (its GitHub link one step quieter on the same hue), Neconyan 165, Botbooru 300. Ko-fi is the exception and takes console green outright, because support is the one call on the page that should read as an action.
 
 ### Signature Component: Screenshot And Card Galleries
 
