@@ -14,11 +14,11 @@ The root site exists as a personal public hub: a compact place to discover what 
 
 ## Brand Personality
 
-Personal, blunt, tinkerer-made. The site should feel like a real person's bench of useful things: opinionated, direct, a little playful, and built by someone who actually uses the tools. It can be sardonic and casual, but it should still make downloads, version notes, and project links easy to scan. The site keeps its moss-green identity with soft rounded surfaces and a friendly type pairing, so it feels cared for rather than clinical, and the preset picker does the heavy lifting.
+Personal, blunt, tinkerer-made. Opinionated, direct, a little playful, and built by someone who actually uses the tools. It can be sardonic and casual, but downloads, version notes, and project links should stay easy to scan. I want a cute terminal look: muted greens, monospace text, pixel headings and a little cat. Compact controls suit this better than big rounded cards.
 
 ## Anti-references
 
-Avoid corporate SaaS polish, generic AI landing-page aesthetics, oversized marketing hero sections, vague value-prop copy, sterile template grids, and anything that makes the site feel like a startup pitch. Avoid overexplaining the personality out of the page. Avoid making the root hub so decorative that the presets, programs, and downloads become harder to find. Avoid stacking decoration: one loud moment per view (the hero gradient, the selected preset) and quiet surfaces everywhere else.
+Avoid corporate SaaS polish, generic AI landing-page aesthetics, oversized marketing hero sections, vague value-prop copy, sterile template grids, and anything that makes the site feel like a startup pitch. Avoid overexplaining the personality out of the page. Keep the terminal styling readable: no fake boot sequence, flashing text, or scanlines over the copy. The cat and pixel headings give it enough character without decorating every control.
 
 ## Design Principles
 

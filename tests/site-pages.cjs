@@ -8,6 +8,9 @@ const root = path.join(__dirname, '..');
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 const pages = ['index.html', 'extensions.html', 'themes.html', 'cards.html'];
 const html = Object.fromEntries(pages.map(name => [name, read(name)]));
+const stylesheets = pages.map(name => html[name].match(/href="(site\.css\?v=[^"]+)"/)?.[1]);
+assert(stylesheets.every(Boolean), 'Every page must load the versioned shared stylesheet');
+assert.strictEqual(new Set(stylesheets).size, 1, 'Shared stylesheet versions differ between pages');
 
 const count = (source, cls) => (source.match(new RegExp(`class="${cls}[" ]`, 'g')) || []).length;
 const cards = count(html['cards.html'], 'card-item');
