@@ -47,10 +47,10 @@ The site is my shelf of things people come to download: two presets, their regex
 The old look was a green terminal: monospace everywhere, square corners, a scanline overlay. It was fun but cluttered, and it made a long page harder to scan. The current look keeps the green identity and trades the terminal for soft surfaces, rounded corners and a real type pairing.
 
 **Key characteristics:**
-- A slim sticky top bar: the site name, jump links to Presets, Extensions, Themes and Cards, and the statusline with the live counts.
+- A slim sticky top bar on every page: the site name, links to the four pages (Presets, Extensions, Themes, Cards) with the current one highlighted, and the statusline.
 - A short hero: pixel cat, `welcome :3`, one sentence on what's here, and my other projects as small chips.
 - The preset picker is the centre of the page. Pick a preset by its release art, then pick your app.
-- Extensions, Themes and Cards are their own sections below the presets, always visible, not buried in preset tabs.
+- Extensions, Themes and Cards each have their own page (`extensions.html`, `themes.html`, `cards.html`). The home page is only the hero and the presets.
 - A footer with Ko-fi and back to top.
 
 ## 2. Colours
@@ -97,7 +97,7 @@ Prose caps at `70ch`. Body text is 16px so it stays readable on a phone without 
 ## 5. Components
 
 ### Top bar
-Sticky, blurred surface, 56px tall (52px on phones). Brand on the left, section jump links, statusline on the right. The statusline counts are recomputed from the page on load; only the preset versions and the date are written by hand. On phones the statusline hides so the jump links fit.
+Sticky, blurred surface, 56px tall (52px on phones). Brand on the left, page links (the current page carries `aria-current="page"` and a Surface 2 fill), statusline on the right. The statusline is written by hand and repeated on all four pages; `tests/site-pages.cjs` fails if the pages disagree or if the card and theme counts don't match `cards.html` and `themes.html`. On phones the statusline hides so the page links fit.
 
 ### Preset tickets (signature)
 Two large cards, one per preset, each showing its release art, name, version and one line about what it's for. The selected one gets a leaf border, a soft glow and a round check badge in the corner. This is how people choose a preset, so it gets the page's boldest styling. On phones the art sits above the name.
@@ -123,7 +123,9 @@ The model opinions table turns each row into its own card below 760px, with labe
 ### Lightbox
 Full-screen dark overlay opened with `:target`, image capped at 90vh. No JavaScript.
 
-## 6. How the page works
+## 6. How the pages work
+
+All four pages share one stylesheet, `site.css`. Old links to `#extensions`, `#themes` and `#cards` on the home page forward to the new pages.
 
 All switching is CSS radio buttons, no JavaScript: the preset and app radios sit at the top of `#presets`, and each panel's tab radios sit at the top of its `.preset-tabs`. Rules take the form `#tab-x:checked ~ .tab-content-x { display: block }`. Keep new radios as earlier siblings of what they control, or the `~` selector can't reach it.
 
@@ -141,5 +143,5 @@ The prompt readers still look up their preset file from the nearest `.platform-p
 ### Don't
 - **Don't** bring back monospace body text, square corners or the scanline overlay.
 - **Don't** add a second gradient or a second loud accent colour.
-- **Don't** put site-wide content (extensions, themes, cards) back inside a preset's tabs.
+- **Don't** put extensions, themes or cards back on the home page or inside a preset's tabs.
 - **Don't** restyle anything inside a `prompting-lab/` transcript body. That's captured model output.

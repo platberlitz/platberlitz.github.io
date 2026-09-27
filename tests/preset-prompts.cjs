@@ -27,6 +27,9 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
       if (url.pathname === '/') {
         return route.fulfill({ contentType: 'text/html', body: await readFile(path.join(root, 'index.html')) });
       }
+      if (url.pathname === '/site.css') {
+        return route.fulfill({ contentType: 'text/css', body: await readFile(path.join(root, 'site.css')) });
+      }
       if (url.pathname.startsWith('/preset/') && url.pathname.endsWith('.json')) {
         requests.push(url.pathname);
         if (failure === 'http') return route.fulfill({ status: 503, body: 'Unavailable' });
