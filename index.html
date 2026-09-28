@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=VT323&display=swap">
-  <link rel="stylesheet" href="site.css?v=2">
+  <link rel="stylesheet" href="site.css?v=3">
 </head>
 <body>
   <a class="skip-link" href="#presets">Skip to presets</a>
@@ -30,7 +30,7 @@
       <a href="themes.html">Themes</a>
       <a href="cards.html">Cards</a>
     </nav>
-    <p class="statusline" id="statusline">pdp:16.0 | tee:1.1 | cards:55 | themes:48 | updated:2026-09-27</p>
+    <p class="statusline" id="statusline">pdp:16.0 | tee:1.1 | cards:55 | themes:48 | updated:2026-09-28</p>
   </header>
   <main id="top">
   <div class="container hero">
@@ -1387,14 +1387,15 @@
       <div class="tab-content sb-tab-content-overview">
         <div class="preset-info preset-overview">
           <aside class="preset-aside">
-            <a class="preset-release-art" href="#lb-sb-1" aria-label="Open the Neconyan under construction art">
-                <img src="preset/screenshots/neconyan/under-construction.png" alt="Neconyan under construction: chibi catboy Kris in a hard hat with calico kitten builders" loading="lazy">
+            <a class="preset-release-art" href="#lb-sb-1" aria-label="Open the Neconyan 1.0 release art">
+                <img src="preset/screenshots/neconyan/release-fumos.webp" alt="Neconyan 1.0 release art: fumo plushies of Miso, Taro and Nori in party hats behind a 1.0 cake, lit like a corporate headshot" loading="lazy">
               </a>
             <div class="preset-downloads downloads-primary">
               <a class="dl-sb" href="preset/Pura's%20Director%20Preset%2016.0.json" download="Pura's Director Preset 16.0.json"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Download Neconyan Preset</a>
               <a class="dl-st" href="preset/Pura's%20Director%20Preset%2016.0%20(SillyTavern).json" download="Pura's Director Preset 16.0 (SillyTavern).json"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Download ST Preset</a>
               <a class="dl-stacked" href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set<span class="dl-sub">SillyTavern &amp; Neconyan</span></a>
               <a class="dl-stacked" href="preset/Pura's%20Director%20Regexes%20(Marinara).json" download="Pura's Director Regexes (Marinara).json">Regex Set<span class="dl-sub">Marinara Engine</span></a>
+              <a target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan/releases/latest">Android App</a>
               <a target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan">GitHub</a>
             </div>
           </aside>
@@ -1408,6 +1409,8 @@
               <li>Four modes: Roleplay, Conversation, Meower and Story Mode.</li>
               <li>Pura&apos;s Director Preset 16.0 and The Ethereality Express 1.1 come bundled as the default presets. The trackers and randomisers ship as agents instead of preset toggles.</li>
               <li>Replies keep generating on the server if your phone kills the tab, and land in the chat when you come back.</li>
+              <li>Mewmory keeps track of what happened in a roleplay, and you can look through it, correct it or undo it when it gets something wrong.</li>
+              <li>There&apos;s an Android app now. It runs the whole thing on the phone itself, so no Termux and no separate server - you just bring your own model connection. It needs Android 11 or newer and Android System WebView 124 or newer.</li>
               <li>Default address is <code>http://127.0.0.1:4433/</code>. Bun or Node.js, with launchers for Windows, macOS, Linux and Termux.</li>
             </ul>
           </div>
@@ -1549,11 +1552,44 @@
       <div class="tab-content sb-tab-content-screenshots">
         <div class="preset-info">
           <h2 class="preset-title">UI Preview</h2>
-          <p class="preset-version">Under construction - real desktop and phone screenshots are coming</p>
-          <div class="preset-desc">
-            <a class="preset-release-art" href="#lb-sb-1" aria-label="Open the Neconyan under construction art">
-              <img src="preset/screenshots/neconyan/under-construction.png" alt="Neconyan under construction: chibi catboy Kris in a hard hat with calico kitten builders" loading="lazy">
-            </a>
+          <p class="preset-version">Real screenshots from 1.0.0, on a desktop and on a phone</p>
+          <div class="option-group">
+            <h3 class="option-group-title">Desktop</h3>
+            <div class="tracker-grid tracker-grid-wide">
+              <a class="tracker-item" href="#lb-sb-2">
+                <img src="preset/screenshots/neconyan/home-desktop.webp" alt="Neconyan Home on a desktop" loading="lazy">
+                <span class="tracker-caption">Home</span>
+              </a>
+              <a class="tracker-item" href="#lb-sb-3">
+                <img src="preset/screenshots/neconyan/roleplay-desktop.webp" alt="A Roleplay chat with Miso on a desktop" loading="lazy">
+                <span class="tracker-caption">Roleplay</span>
+              </a>
+              <a class="tracker-item" href="#lb-sb-4">
+                <img src="preset/screenshots/neconyan/conversation-desktop.webp" alt="Conversation mode on a desktop" loading="lazy">
+                <span class="tracker-caption">Conversation</span>
+              </a>
+              <a class="tracker-item" href="#lb-sb-5">
+                <img src="preset/screenshots/neconyan/agents-desktop.webp" alt="The Agents workspace on a desktop" loading="lazy">
+                <span class="tracker-caption">Agents</span>
+              </a>
+            </div>
+          </div>
+          <div class="option-group">
+            <h3 class="option-group-title">Phone</h3>
+            <div class="tracker-grid tracker-grid-phone">
+              <a class="tracker-item" href="#lb-sb-6">
+                <img src="preset/screenshots/neconyan/home-phone.webp" alt="Neconyan Home on a phone" loading="lazy">
+                <span class="tracker-caption">Home</span>
+              </a>
+              <a class="tracker-item" href="#lb-sb-7">
+                <img src="preset/screenshots/neconyan/roleplay-phone.webp" alt="A Roleplay chat with Miso on a phone" loading="lazy">
+                <span class="tracker-caption">Roleplay</span>
+              </a>
+              <a class="tracker-item" href="#lb-sb-8">
+                <img src="preset/screenshots/neconyan/conversation-phone.webp" alt="Conversation mode on a phone" loading="lazy">
+                <span class="tracker-caption">Conversation</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -2152,7 +2188,14 @@
   <a class="lightbox" id="lb-19" href="#close"><img loading="lazy" src="preset/screenshots/choices-skill-check.png" alt="CYOA Skill Checks"></a>
   <a class="lightbox" id="lb-20" href="#close"><img loading="lazy" src="preset/screenshots/user-stats.png" alt="User Stats"></a>
   <a class="lightbox" id="lb-21" href="#close"><img loading="lazy" src="preset/screenshots/level-up.png" alt="Level Up Companion"></a>
-  <a class="lightbox" id="lb-sb-1" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/under-construction.png" alt="Neconyan under construction: chibi catboy Kris in a hard hat with calico kitten builders"></a>
+  <a class="lightbox" id="lb-sb-1" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/release-fumos.webp" alt="Neconyan 1.0 release art: fumo plushies of Miso, Taro and Nori in party hats behind a 1.0 cake, lit like a corporate headshot"></a>
+  <a class="lightbox" id="lb-sb-2" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/home-desktop.webp" alt="Neconyan Home on a desktop"></a>
+  <a class="lightbox" id="lb-sb-3" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/roleplay-desktop.webp" alt="A Roleplay chat with Miso on a desktop"></a>
+  <a class="lightbox" id="lb-sb-4" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/conversation-desktop.webp" alt="Conversation mode on a desktop"></a>
+  <a class="lightbox" id="lb-sb-5" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/agents-desktop.webp" alt="The Agents workspace on a desktop"></a>
+  <a class="lightbox" id="lb-sb-6" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/home-phone.webp" alt="Neconyan Home on a phone"></a>
+  <a class="lightbox" id="lb-sb-7" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/roleplay-phone.webp" alt="A Roleplay chat with Miso on a phone"></a>
+  <a class="lightbox" id="lb-sb-8" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/conversation-phone.webp" alt="Conversation mode on a phone"></a>
   <a class="lightbox" id="lb-preset-15-1" href="#close"><img loading="lazy" src="preset/screenshots/pura-director-preset-15.1.png" alt="Pura's Director Preset 15.1 release art"></a>
   <a class="lightbox" id="lb-preset-16-0" href="#close"><img loading="lazy" src="preset/screenshots/pura-director-preset-16.0.png" alt="Pura's Director Preset 16.0 release art: Sigewinne and Wriothesley"></a>
   <a class="lightbox" id="lb-preset-tee-1-1" href="#close"><img loading="lazy" src="preset/screenshots/the-ethereality-express-1.1.png" alt="The Ethereality Express 1.1 release art: Kaveh yelling at unionising furniture while Alhaitham reads"></a>

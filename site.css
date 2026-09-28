@@ -541,6 +541,8 @@ main { display: block; }
 
 /* Trackers */
 .tracker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 1rem; }
+.tracker-grid-wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); }
+.tracker-grid-phone { grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); max-width: 760px; }
 .tracker-item { display: block; text-decoration: none; }
 .tracker-item img { display: block; width: 100%; height: auto; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface); transition: border-color 0.2s, transform 0.2s; }
 .tracker-item:hover img { border-color: var(--accent); transform: translateY(-2px); }
