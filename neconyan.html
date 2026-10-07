@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neconyan · purachina's stuff</title>
+  <meta name="description" content="Neconyan, my cat-themed SillyTavern fork for roleplay on a phone or a desktop: four chat modes, Notebooks, Scratchpad, story memory and an Android app.">
+  <meta property="og:title" content="Neconyan · purachina's stuff">
+  <meta property="og:description" content="Neconyan, my cat-themed SillyTavern fork for roleplay on a phone or a desktop: four chat modes, Notebooks, Scratchpad, story memory and an Android app.">
+  <meta property="og:image" content="https://platberlitz.github.io/favicon-256.png">
+  <meta property="og:url" content="https://platberlitz.github.io/neconyan.html">
+  <meta name="twitter:card" content="summary">
+  <meta name="theme-color" content="#172018">
+  <link rel="icon" type="image/png" sizes="256x256" href="favicon-256.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=VT323&display=swap">
+  <link rel="stylesheet" href="site.css?v=4">
+</head>
+<body>
+  <a class="skip-link" href="#neconyan">Skip to Neconyan</a>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="purachina's stuff, home"><img src="favicon-256.png" alt="" width="28" height="28" decoding="async"><span>purachina's stuff</span></a>
+    <nav class="site-nav" aria-label="Pages">
+      <a href="./">Presets</a>
+      <a href="neconyan.html" aria-current="page">Neconyan</a>
+      <a href="extensions.html">Extensions</a>
+      <a href="themes.html">Themes</a>
+      <a href="cards.html">Cards</a>
+    </nav>
+    <p class="statusline" id="statusline">pdp:16.0 | tee:1.1 | cards:55 | themes:48 | updated:2026-10-07</p>
+  </header>
+  <main id="top" class="page-main">
+  <section class="site-section" id="neconyan" tabindex="-1">
+    <div class="section-head">
+      <h1 class="section-title">Neconyan</h1>
+      <p class="section-lede">My SillyTavern fork. The Cutest LLM RP Frontend&trade;, now on 1.2.0.</p>
+    </div>
+    <div class="preset-tabs">
+      <input type="radio" name="sb-tab" id="sb-tab-overview" checked>
+      <input type="radio" name="sb-tab" id="sb-tab-screenshots">
+      <input type="radio" name="sb-tab" id="sb-tab-features">
+      <input type="radio" name="sb-tab" id="sb-tab-agents">
+      <input type="radio" name="sb-tab" id="sb-tab-extensions">
+      <input type="radio" name="sb-tab" id="sb-tab-updates">
+
+      <div class="tab-labels">
+        <label for="sb-tab-overview">Overview</label>
+        <label for="sb-tab-screenshots">Screenshots</label>
+        <label for="sb-tab-features">Features</label>
+        <label for="sb-tab-agents">Agents</label>
+        <label for="sb-tab-extensions">Included Tools</label>
+        <label for="sb-tab-updates">What&apos;s New</label>
+      </div>
+
+      <div class="tab-content sb-tab-content-overview">
+        <div class="preset-info preset-overview">
+          <aside class="preset-aside">
+            <a class="preset-release-art" href="#lb-nc-1" aria-label="Open the Neconyan 1.0 release art">
+                <img src="preset/screenshots/neconyan/release-fumos.webp" alt="Neconyan 1.0 release art: fumo plushies of Miso, Taro and Nori in party hats behind a 1.0 cake, lit like a corporate headshot" loading="lazy">
+              </a>
+            <div class="preset-downloads downloads-primary">
+              <a class="dl-sb" target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan/releases/latest"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Get Neconyan 1.2.0</a>
+              <a class="dl-stacked" target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan/releases/latest">Android App<span class="dl-sub">the -android-arm64.apk file</span></a>
+              <a class="dl-stacked" target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan#getting-started">Install Guide<span class="dl-sub">Windows, macOS, Linux &amp; Termux</span></a>
+              <a target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan">GitHub</a>
+              <a href="./#neconyan-preset">Neconyan Preset</a>
+            </div>
+          </aside>
+          <h2 class="preset-title">Neconyan</h2>
+          <p class="preset-version">v1.2.0 &middot; The Cutest LLM RP Frontend&trade;</p>
+          <div class="preset-desc">
+            <p>My own fork of SillyTavern and SillyBunny, with its own interface, defaults and direction. Character chats, notes, writing tools and model settings all live in one cat-themed workspace that works on a phone as well as it does on a desktop. You bring the model, either a local backend or an API key - no model access or credits come with it.</p>
+            <p>I run it on a small server and use it mostly from my phone, so phones aren&apos;t a squashed desktop here. Almost everything runs on the server now, so you can send a message, switch apps or lock the screen, and the reply&apos;s sitting there when you come back. A few things still need the page open, like in-browser WebLLM models and Kokoro voices.</p>
+            <p>It reads the same character cards, chats, lorebooks, personas and presets as SillyTavern, so bringing your stuff over is a starting point rather than a rebuild. I only pull in the upstream bits I want though, so some things look and behave differently, and extensions that depend on SillyTavern&apos;s page layout might not work. If you want SillyTavern with everything working exactly like upstream, use <a target="_blank" rel="noopener" href="https://github.com/SillyBunnyTeam/SillyBunny">SillyBunny</a> instead.</p>
+            <ul>
+              <li>Four ways to chat: Roleplay, Conversation, Meower and Story Mode.</li>
+              <li>Notebooks for character drafts, places, scene plans and session journals, right next to your chats.</li>
+              <li>Scratchpad, a side chat with Miso, Taro or Nori for planning a scene or checking continuity. Nothing you write there ends up in the story.</li>
+              <li>Pura&apos;s Director Preset 16.0 and The Ethereality Express 1.1 come bundled as the default presets. The trackers and randomisers ship as agents instead of preset toggles.</li>
+              <li>The Android app runs the whole thing on the phone itself, so no Termux and no computer. It needs Android 11 or newer on a 64-bit ARM phone, Android System WebView 124 or newer, and about 2 GiB free.</li>
+              <li>On a computer it runs on Bun or Node.js, with launchers for Windows, macOS, Linux and Termux. Clone it with Git and the launcher updates itself every time you start it. Default address is <code>http://127.0.0.1:4433/</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content sb-tab-content-screenshots">
+        <div class="preset-info">
+          <h2 class="preset-title">Screenshots</h2>
+          <p class="preset-version">Real screenshots from 1.2.0, on a desktop and on a phone</p>
+          <p class="option-note">These are staged demo chats and notes with the bundled assistants, so don&apos;t read too much into the replies.</p>
+          <div class="option-group">
+            <h3 class="option-group-title">Desktop</h3>
+            <div class="tracker-grid tracker-grid-wide">
+              <a class="tracker-item" href="#lb-nc-2">
+                <img src="preset/screenshots/neconyan/home-desktop.webp" alt="Neconyan Home on a desktop" loading="lazy">
+                <span class="tracker-caption">Home</span>
+              </a>
+              <a class="tracker-item" href="#lb-nc-3">
+                <img src="preset/screenshots/neconyan/roleplay-desktop.webp" alt="A Roleplay chat on a desktop" loading="lazy">
+                <span class="tracker-caption">Roleplay</span>
+              </a>
+              <a class="tracker-item" href="#lb-nc-4">
+                <img src="preset/screenshots/neconyan/conversation-desktop.webp" alt="Conversation mode on a desktop" loading="lazy">
+                <span class="tracker-caption">Conversation</span>
+              </a>
+              <a class="tracker-item" href="#lb-nc-5">
+                <img src="preset/screenshots/neconyan/meower-desktop.webp" alt="The Meower timeline on a desktop" loading="lazy">
+                <span class="tracker-caption">Meower</span>
+              </a>
+              <a class="tracker-item" href="#lb-nc-6">
+                <img src="preset/screenshots/neconyan/story-desktop.webp" alt="Story Mode on a desktop" loading="lazy">
+                <span class="tracker-caption">Story Mode</span>
+              </a>
+              <a class="tracker-item" href="#lb-nc-7">
+                <img src="preset/screenshots/neconyan/notes-desktop.webp" alt="A character note in Notebooks on a desktop" loading="lazy">
+                <span class="tracker-caption">Notebooks</span>
+              </a>
+            </div>
+          </div>
+          <div class="option-group">
+            <h3 class="option-group-title">Phone</h3>
+            <div class="tracker-grid tracker-grid-phone">
+              <a class="tracker-item" href="#lb-nc-8">
+                <img src="preset/screenshots/neconyan/home-phone.webp" alt="Neconyan Home on a phone" loading="lazy">
+                <span class="tracker-caption">Home</span>
+              </a>
+              <a class="tracker-item" href="#lb-nc-9">
+                <img src="preset/screenshots/neconyan/roleplay-phone.webp" alt="A Roleplay chat on a phone" loading="lazy">
+                <span class="tracker-caption">Roleplay</span>
+              </a>
+              <a class="tracker-item" href="#lb-nc-10">
+                <img src="preset/screenshots/neconyan/conversation-phone.webp" alt="Conversation mode on a phone" loading="lazy">
+                <span class="tracker-caption">Conversation</span>
+              </a>
+              <a class="tracker-item" href="#lb-nc-11">
+                <img src="preset/screenshots/neconyan/meower-phone.webp" alt="The Meower timeline on a phone" loading="lazy">
+                <span class="tracker-caption">Meower</span>
+              </a>
+              <a class="tracker-item" href="#lb-nc-12">
+                <img src="preset/screenshots/neconyan/story-phone.webp" alt="Story Mode on a phone" loading="lazy">
+                <span class="tracker-caption">Story Mode</span>
+              </a>
+              <a class="tracker-item" href="#lb-nc-13">
+                <img src="preset/screenshots/neconyan/notes-phone.webp" alt="A character note in Notebooks on a phone" loading="lazy">
+                <span class="tracker-caption">Notebooks</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content sb-tab-content-features">
+        <div class="preset-info">
+          <h2 class="preset-title">What&apos;s Different</h2>
+          <p class="preset-version">The stuff I actually wanted out of a frontend</p>
+          <div class="extensions-list">
+            <div class="ext-item">
+              <div class="ext-name">It Keeps Going When You Leave</div>
+              <div class="ext-desc">Replies, agents and most background work run on the server, not in the tab. Send a message on your phone, lock the screen, and it&apos;s done when you come back. Phone browsers kill tabs constantly, so this was the first thing I fixed.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Phones Come First</div>
+              <div class="ext-desc">Labelled tab rows instead of dropdowns, a slim bottom chat bar, a sliding menu and a sign-in that can remember your device for 30 days. Anything you can reach on a desktop you can reach on a phone, and there&apos;s no simple/advanced switch hiding half the settings from you.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Four Modes</div>
+              <div class="ext-desc">Roleplay is the classic chat, with a cat asleep on your messages. Conversation is texting your characters like a friend, with a Pals list, group chats, branches and characters who can be busy or offline. Meower is a tiny social timeline where your cast posts, replies to each other and runs polls about snacks. Story Mode turns the chat into continuous prose.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Notebooks</div>
+              <div class="ext-desc">Somewhere for the character drafts and scene plans you&apos;d otherwise lose in a text file. Templates, folders, properties, a read view, and links between notes and to your lorebooks. You can open it beside a chat, and the assistants can edit notes if you let them.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Scratchpad</div>
+              <div class="ext-desc">A side chat with Miso, Taro or Nori that never touches the story. Ask them to read the scene, pitch plot ideas, catch you up, check continuity or find lore gaps. Round table asks up to three at once, each on their own connection, and Ask Scratchpad from a note shares just that note.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Mewmory</div>
+              <div class="ext-desc">Story memory that keeps track of what happened, the NPCs you&apos;ve met and what they said, so you&apos;re not re-explaining everything 200 messages later. It can run on a cheaper model than the one writing your replies, and you can look through it, correct it or undo it when it gets something wrong.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Assistants and a Tour</div>
+              <div class="ext-desc">Miso, Taro and Nori each come in male, female and neutral versions. They can use tool calls to make characters with portraits, edit lorebooks and adjust presets, and since 1.1.1 they can build agents for you too. The short First paws tour walks you through the basics, and you can hide it.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Chat Links</div>
+              <div class="ext-desc">Copy a link to an exact saved chat, branch included, and bookmark it. Optionally keep the address bar on the chat you&apos;re viewing, or reopen your last chat on launch. Both are off by default.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">It&apos;s Cute</div>
+              <div class="ext-desc">Calico themes, cats napping on your messages and a pixel cat on Home. That was the whole point, really. There are also AMOLED Black, Windows 98 and Windows Aero themes if you&apos;d rather not, and every bundled theme is checked for readable contrast.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Your Data Stays Yours</div>
+              <div class="ext-desc">Same file formats as SillyTavern for characters, chats, lorebooks, personas and presets, and no telemetry. Back up your old install and use a separate data folder when you move over.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content sb-tab-content-agents">
+        <div class="preset-info">
+          <h2 class="preset-title">Agent Stack</h2>
+          <p class="preset-version">Small models doing the boring work so the good one can write</p>
+          <div class="extensions-list">
+            <div class="ext-item">
+              <div class="ext-name">In-Chat Agents</div>
+              <div class="ext-desc">An agent is a stored prompt with its own conditions, stage, connection profile and output handling. Toggle them, group them, import and export them. Each one can run on a different model than your main chat, which is the part I use most - a cheap model doing tracker work while the expensive one writes prose.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">The Pipeline</div>
+              <div class="ext-desc">Agents can run before the reply to add rules or trackers, alongside it for commentary, or after it for a second pass over the finished text. The after-reply pass is where proofreading and prose polishing happen.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Companion Agents</div>
+              <div class="ext-desc">Companions make their own model calls and store the results instead of touching your reply - that&apos;s how the tracker panels get filled in. They can run all at once or one at a time. Parallel if you&apos;re impatient like me, sequential if your provider starts complaining about rate limits.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Built From the Presets</div>
+              <div class="ext-desc">Every bundled tracker agent uses the same prompt and regex as its toggle in Pura&apos;s Director Preset 16.0 (SillyTavern) or The Ethereality Express 1.1, so the cards look the same either way. That&apos;s why the Neconyan preset can stay lean.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Proofreader and Prose Polisher</div>
+              <div class="ext-desc">Both come installed and switched off until you want them. They run after the reply and rewrite the finished text as a second pass, so the main model doesn&apos;t have to get everything right in one go.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Ask for One</div>
+              <div class="ext-desc">If none of the bundled ones fit, describe what you want to Miso, Taro or Nori and they&apos;ll make the agent for you.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">What Ships Right Now</div>
+              <div class="ext-desc">Every Pura tracker and randomiser, the Ethereality Express trackers and Doors &amp; Dice menus, formatting helpers, content toggles, preset groups, and companions like Expressions and Plot Compass.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content sb-tab-content-extensions">
+        <div class="preset-info">
+          <h2 class="preset-title">Included Tools</h2>
+          <p class="preset-version">Things that come in the box</p>
+          <p class="option-note">They update with Neconyan, and you can turn any of them off under Extensions &rarr; Manage extensions. <a target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan/blob/main/docs/neconyan-native-tools.md">Full list with versions and who made them.</a></p>
+          <h3 class="ext-group-heading">Chatting and Writing</h3>
+          <div class="extensions-list">
+            <div class="ext-item">
+              <div class="ext-name">Story Mode</div>
+              <div class="ext-desc">Turns a saved chat into a continuous manuscript.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Meower</div>
+              <div class="ext-desc">A private social timeline for your cast.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Guided Generations</div>
+              <div class="ext-desc">Steer the next reply with a short instruction.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Deep Swipe</div>
+              <div class="ext-desc">More control over swipes. By Rurijian.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Dialogue Colours</div>
+              <div class="ext-desc">Gives each speaker their own dialogue colour.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Quick Image Gen</div>
+              <div class="ext-desc">Generate images from inside a chat.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Input History</div>
+              <div class="ext-desc">Bring back what you typed earlier.</div>
+            </div>
+          </div>
+          <h3 class="ext-group-heading">Characters, Prompts and Lore</h3>
+          <div class="extensions-list">
+            <div class="ext-item">
+              <div class="ext-name">BotSearcher</div>
+              <div class="ext-desc">Search supported character-card sites and import cards straight into Neconyan.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Prompting Lab</div>
+              <div class="ext-desc">Compare prompts, caching and macros side by side.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">World Info Lab</div>
+              <div class="ext-desc">Test, trace and manage lorebook activation.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Lorebook Distiller</div>
+              <div class="ext-desc">Trim and tidy lorebooks.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Preset Tools</div>
+              <div class="ext-desc">Helpers for model and prompt setup.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Chat Completion Tabs</div>
+              <div class="ext-desc">Splits the chat completion settings into tabs. By Rivelle.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Prompt Tags</div>
+              <div class="ext-desc">Configurable XML-style boundaries around prompt sections.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Macro Enhanced</div>
+              <div class="ext-desc">Utility, logic, state, lorebook and custom macros.</div>
+            </div>
+          </div>
+          <h3 class="ext-group-heading">Keeping Things Safe</h3>
+          <div class="extensions-list">
+            <div class="ext-item">
+              <div class="ext-name">Chat Archive</div>
+              <div class="ext-desc">Keeps old chats tidy and findable.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Card &amp; Lorebook Time Machine</div>
+              <div class="ext-desc">Older versions of your cards and lorebooks, with a comparison view and restore.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Debugger</div>
+              <div class="ext-desc">Diagnostics for when something breaks. On by default, and you can turn it off.</div>
+            </div>
+          </div>
+          <h3 class="ext-group-heading">Looks</h3>
+          <div class="extensions-list">
+            <div class="ext-item">
+              <div class="ext-name">Regex Agent Themes</div>
+              <div class="ext-desc">Change how tracker and companion panels look.</div>
+            </div>
+            <div class="ext-item">
+              <div class="ext-name">Termeownal UI</div>
+              <div class="ext-desc">An optional terminal look with a pixel kitty that follows your palette.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content sb-tab-content-updates">
+        <div class="preset-info">
+          <h2 class="preset-title">What&apos;s New</h2>
+          <p class="preset-version">Since 1.0. <a target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan/blob/main/changelog.md">Full changelog on GitHub.</a></p>
+          <div class="option-group">
+            <h3 class="option-group-title">1.2.0</h3>
+            <div class="preset-desc">
+              <ul>
+                <li>Scratchpad and Notebooks talk to each other now. Ask Scratchpad from a note shares that note, or just the bit you selected.</li>
+                <li>Renaming a chat keeps its Scratchpad sessions.</li>
+                <li>Rebuilt the Persona page.</li>
+                <li>Note templates show which one you picked, and notes have a Delete button.</li>
+                <li>Tab accepts a Notebook link suggestion on list lines.</li>
+                <li>Chat Archive loads on big libraries instead of giving up.</li>
+                <li>The phone menu doesn&apos;t throw you back to Home anymore.</li>
+                <li>A lot more of the interface is in Portuguese.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="option-group">
+            <h3 class="option-group-title">1.1.1</h3>
+            <div class="preset-desc">
+              <ul>
+                <li>Added Scratchpad, a side chat for planning stories with Miso, Taro and Nori.</li>
+                <li>Chat links, and an option to reopen your last chat on launch.</li>
+                <li>The assistants can make agents for you.</li>
+                <li>AMOLED Black theme.</li>
+                <li>Slimmer bottom chat bar, and more character cards fit on screen in the phone list.</li>
+                <li>Dismissed tour invitations stay dismissed after a reload.</li>
+                <li>Preset names don&apos;t get translated anymore, so picking, renaming and deleting presets works in every language.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="option-group">
+            <h3 class="option-group-title">1.1.0</h3>
+            <div class="preset-desc">
+              <ul>
+                <li>Added Notebooks, with assistant edits and links to your lorebooks.</li>
+                <li>Windows 98, Windows Aero and Windows Aero Light themes.</li>
+                <li>Roleplay replies use your configured reply length, and a quoted context size can&apos;t block them anymore.</li>
+                <li>Italian and German translation fixes.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  </main>
+  <footer class="site-footer"><p>made by purachina &middot; <a href="https://ko-fi.com/purachina" target="_blank" rel="noopener noreferrer">Ko-fi</a> &middot; <a href="#top">back to top</a></p></footer>
+
+  <a class="lightbox" id="lb-nc-1" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/release-fumos.webp" alt="Neconyan 1.0 release art: fumo plushies of Miso, Taro and Nori in party hats behind a 1.0 cake, lit like a corporate headshot"></a>
+  <a class="lightbox" id="lb-nc-2" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/home-desktop.webp" alt="Neconyan Home on a desktop"></a>
+  <a class="lightbox" id="lb-nc-3" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/roleplay-desktop.webp" alt="A Roleplay chat on a desktop"></a>
+  <a class="lightbox" id="lb-nc-4" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/conversation-desktop.webp" alt="Conversation mode on a desktop"></a>
+  <a class="lightbox" id="lb-nc-5" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/meower-desktop.webp" alt="The Meower timeline on a desktop"></a>
+  <a class="lightbox" id="lb-nc-6" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/story-desktop.webp" alt="Story Mode on a desktop"></a>
+  <a class="lightbox" id="lb-nc-7" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/notes-desktop.webp" alt="A character note in Notebooks on a desktop"></a>
+  <a class="lightbox" id="lb-nc-8" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/home-phone.webp" alt="Neconyan Home on a phone"></a>
+  <a class="lightbox" id="lb-nc-9" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/roleplay-phone.webp" alt="A Roleplay chat on a phone"></a>
+  <a class="lightbox" id="lb-nc-10" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/conversation-phone.webp" alt="Conversation mode on a phone"></a>
+  <a class="lightbox" id="lb-nc-11" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/meower-phone.webp" alt="The Meower timeline on a phone"></a>
+  <a class="lightbox" id="lb-nc-12" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/story-phone.webp" alt="Story Mode on a phone"></a>
+  <a class="lightbox" id="lb-nc-13" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/notes-phone.webp" alt="A character note in Notebooks on a phone"></a>
+
+  <script>
+    // Tabs are radios, so #screenshots etc. need ticking by hand.
+    (function () {
+      const target = document.getElementById("sb-tab-" + location.hash.slice(1));
+      if (target && target.type === "radio") target.checked = true;
+    })();
+  </script>
+</body>
+</html>

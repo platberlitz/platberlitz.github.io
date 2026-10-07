@@ -286,6 +286,9 @@ main { display: block; }
 #sb-tab-screenshots:checked ~ .sb-tab-content-screenshots{display:block}
 #sb-tab-screenshots:checked ~ .tab-labels label[for=sb-tab-screenshots]{color:var(--fg);background:var(--surface-2);box-shadow:inset 0 -2px 0 var(--accent)}
 #sb-tab-screenshots:focus-visible ~ .tab-labels label[for=sb-tab-screenshots]{outline:2px solid var(--accent);outline-offset:2px}
+#sb-tab-updates:checked ~ .sb-tab-content-updates{display:block}
+#sb-tab-updates:checked ~ .tab-labels label[for=sb-tab-updates]{color:var(--fg);background:var(--surface-2);box-shadow:inset 0 -2px 0 var(--accent)}
+#sb-tab-updates:focus-visible ~ .tab-labels label[for=sb-tab-updates]{outline:2px solid var(--accent);outline-offset:2px}
 #tee-tab-preset:checked ~ .tee-tab-content-preset{display:block}
 #tee-tab-preset:checked ~ .tab-labels label[for=tee-tab-preset]{color:var(--fg);background:var(--surface-2);box-shadow:inset 0 -2px 0 var(--accent)}
 #tee-tab-preset:focus-visible ~ .tab-labels label[for=tee-tab-preset]{outline:2px solid var(--accent);outline-offset:2px}
@@ -635,6 +638,11 @@ main { display: block; }
   .cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
   .card-caption .card-copy { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .lightbox { padding: 0.75rem; }
+}
+@media (max-width: 440px) {
+  .topbar { gap: 0.5rem; }
+  .site-nav { gap: 0; }
+  .site-nav a { padding: 0.55rem 0.3rem; font-size: 0.68rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

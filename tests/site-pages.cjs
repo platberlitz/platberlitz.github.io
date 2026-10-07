@@ -6,7 +6,7 @@ const assert = require('assert');
 
 const root = path.join(__dirname, '..');
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
-const pages = ['index.html', 'extensions.html', 'themes.html', 'cards.html'];
+const pages = ['index.html', 'neconyan.html', 'extensions.html', 'themes.html', 'cards.html'];
 const html = Object.fromEntries(pages.map(name => [name, read(name)]));
 const stylesheets = pages.map(name => html[name].match(/href="(site\.css\?v=[^"]+)"/)?.[1]);
 assert(stylesheets.every(Boolean), 'Every page must load the versioned shared stylesheet');
@@ -30,7 +30,7 @@ const expected = new RegExp(`^pdp:${pdp.replace('.', '\\.')} \\| tee:${tee.repla
 assert.match(statuslines[0], expected, `statusline should read pdp:${pdp} | tee:${tee} | cards:${cards} | themes:${themes}`);
 
 for (const name of pages) {
-  for (const id of ['extensions', 'themes', 'cards']) {
+  for (const id of ['neconyan', 'extensions', 'themes', 'cards']) {
     const own = name === `${id}.html`;
     assert.strictEqual(html[name].includes(`id="${id}"`), own, `${name} ${own ? 'should' : 'should not'} contain #${id}`);
   }
