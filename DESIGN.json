@@ -1,39 +1,44 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-09-27",
+  "updatedAt": "2026-10-10",
   "title": "purachina's stuff",
-  "direction": "Cute terminal",
+  "direction": "Windows XP Olive cat desktop",
   "stylesheet": "site.css",
-  "pages": ["index.html", "extensions.html", "themes.html", "cards.html"],
+  "pages": ["index.html", "neconyan.html", "extensions.html", "themes.html", "cards.html"],
   "colors": {
-    "bg": "#172018",
-    "surface": "#1c281e",
-    "surface-2": "#28362a",
-    "line": "#3b503e",
-    "line-strong": "#6e8b67",
-    "fg": "#e1ecd9",
-    "fg-dim": "#a9bba2",
-    "accent": "#b6d995",
-    "accent2": "#9ad4c0",
-    "blush": "#edb0bd",
-    "on-accent": "#172018",
-    "err": "#ff9a8f"
+    "bg": "#161d13",
+    "surface": "#252c20",
+    "surface-2": "#35422b",
+    "line": "#46523a",
+    "line-strong": "#78885a",
+    "fg": "#eeeedd",
+    "fg-dim": "#c0c5ae",
+    "accent": "#c5d69b",
+    "accent2": "#d5dfbb",
+    "blush": "#edb8b1",
+    "on-accent": "#202919",
+    "err": "#f4b1a0"
   },
   "typography": {
-    "display": { "family": "VT323", "weight": 400 },
-    "body": { "family": "IBM Plex Mono", "weights": [400, 500, 600, 700], "size": "15px", "lineHeight": 1.7 },
+    "display": { "family": "Tahoma, Liberation Sans, Arial, sans-serif", "weight": 700 },
+    "body": { "family": "Tahoma, Liberation Sans, Arial, sans-serif", "weights": [400, 500, 600, 700], "size": "14px", "lineHeight": 1.65 },
+    "mono": { "family": "Liberation Mono, Consolas, monospace" },
     "proseWidth": "70ch",
-    "fontDisplay": "swap"
+    "source": "Local system fonts"
   },
-  "radii": { "small": "2px", "medium": "3px", "large": "4px" },
+  "radii": { "small": "2px", "medium": "3px", "large": "6px" },
   "layout": {
-    "contentWidth": "1160px",
-    "topbarHeight": "56px",
-    "phoneTopbarHeight": "52px",
+    "contentWidth": "1120px",
+    "welcomeWidth": "760px",
+    "alignment": "Left, with space for the wallpaper on desktop",
+    "topbarHeight": "40px",
+    "phoneTopbarHeight": "46px",
     "overviewStackAt": "900px",
     "phoneLayoutAt": "700px"
   },
-  "signature": "Welcome window with static cursor and text-art cat",
+  "wallpaper": "assets/cat-bliss-night.webp",
+  "windowOpacity": 0.97,
+  "signature": "Cat Start button, olive taskbar, bevelled windows and painted-cat night wallpaper",
   "motion": "Hover transitions only; respect prefers-reduced-motion",
-  "controls": "CSS radio tabs, ordinary download links, separate resource pages"
+  "controls": "Native Start disclosure with optional script, CSS radio tabs, ordinary download links, separate resource pages"
 }

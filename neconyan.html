@@ -10,20 +10,29 @@
   <meta property="og:image" content="https://platberlitz.github.io/favicon-256.png">
   <meta property="og:url" content="https://platberlitz.github.io/neconyan.html">
   <meta name="twitter:card" content="summary">
-  <meta name="theme-color" content="#172018">
+  <meta name="theme-color" content="#303b25">
   <link rel="icon" type="image/png" sizes="256x256" href="favicon-256.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=VT323&display=swap">
-  <link rel="stylesheet" href="site.css?v=4">
+  <link rel="icon" type="image/svg+xml" href="assets/xp-cat.svg">
+  <link rel="stylesheet" href="site.css?v=6">
+  <script src="site.js?v=1" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#neconyan">Skip to Neconyan</a>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="purachina's stuff, home"><img src="favicon-256.png" alt="" width="28" height="28" decoding="async"><span>purachina's stuff</span></a>
+    <details class="start-launcher">
+      <summary class="start-button"><img src="assets/xp-cat.svg" alt="" width="26" height="26"><span>start</span></summary>
+      <nav class="start-menu" aria-label="Start menu">
+        <div class="start-profile"><img src="assets/xp-cat.svg" alt="" width="40" height="40"><strong>purachina's stuff</strong></div>
+        <div class="start-pages">
+          <a href="./">Presets</a><a href="neconyan.html">Neconyan</a><a href="extensions.html">Extensions</a><a href="themes.html">Themes</a><a href="cards.html">Cards &amp; lorebooks</a>
+        </div>
+        <div class="start-projects"><span>My other projects</span><a href="https://platberlitz.github.io/platinum-startpage/">Startpage</a><a href="assistant/">Synapse</a><a href="https://purasdproxy.duckdns.org" target="_blank" rel="noopener">SD Proxy</a></div>
+        <a class="start-footer" href="https://ko-fi.com/purachina" target="_blank" rel="noopener noreferrer">Support my work on Ko-fi <span aria-hidden="true">↗</span></a>
+      </nav>
+    </details>
     <nav class="site-nav" aria-label="Pages">
       <a href="./">Presets</a>
       <a href="neconyan.html" aria-current="page">Neconyan</a>
@@ -31,13 +40,13 @@
       <a href="themes.html">Themes</a>
       <a href="cards.html">Cards</a>
     </nav>
-    <p class="statusline" id="statusline">pdp:16.0 | tee:1.1 | cards:55 | themes:48 | updated:2026-10-07</p>
+    <p class="statusline" id="statusline">pdp:16.0 | tee:1.1 | cards:55 | themes:48 | updated:2026-10-10</p>
   </header>
   <main id="top" class="page-main">
   <section class="site-section" id="neconyan" tabindex="-1">
     <div class="section-head">
       <h1 class="section-title">Neconyan</h1>
-      <p class="section-lede">My SillyTavern fork. The Cutest LLM RP Frontend&trade;, now on 1.2.0.</p>
+      <p class="section-lede">My SillyTavern fork. The Cutest LLM RP Frontend&trade;, now on 1.2.5.</p>
     </div>
     <div class="preset-tabs">
       <input type="radio" name="sb-tab" id="sb-tab-overview" checked>
@@ -63,7 +72,7 @@
                 <img src="preset/screenshots/neconyan/release-fumos.webp" alt="Neconyan 1.0 release art: fumo plushies of Miso, Taro and Nori in party hats behind a 1.0 cake, lit like a corporate headshot" loading="lazy">
               </a>
             <div class="preset-downloads downloads-primary">
-              <a class="dl-sb" target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan/releases/latest"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Get Neconyan 1.2.0</a>
+              <a class="dl-sb" target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan/releases/latest"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Get Neconyan 1.2.5</a>
               <a class="dl-stacked" target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan/releases/latest">Android App<span class="dl-sub">the -android-arm64.apk file</span></a>
               <a class="dl-stacked" target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan#getting-started">Install Guide<span class="dl-sub">Windows, macOS, Linux &amp; Termux</span></a>
               <a target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan">GitHub</a>
@@ -71,7 +80,7 @@
             </div>
           </aside>
           <h2 class="preset-title">Neconyan</h2>
-          <p class="preset-version">v1.2.0 &middot; The Cutest LLM RP Frontend&trade;</p>
+          <p class="preset-version">v1.2.5 &middot; The Cutest LLM RP Frontend&trade;</p>
           <div class="preset-desc">
             <p>My own fork of SillyTavern and SillyBunny, with its own interface, defaults and direction. Character chats, notes, writing tools and model settings all live in one cat-themed workspace that works on a phone as well as it does on a desktop. You bring the model, either a local backend or an API key - no model access or credits come with it.</p>
             <p>I run it on a small server and use it mostly from my phone, so phones aren&apos;t a squashed desktop here. Almost everything runs on the server now, so you can send a message, switch apps or lock the screen, and the reply&apos;s sitting there when you come back. A few things still need the page open, like in-browser WebLLM models and Kokoro voices.</p>
@@ -91,33 +100,33 @@
       <div class="tab-content sb-tab-content-screenshots">
         <div class="preset-info">
           <h2 class="preset-title">Screenshots</h2>
-          <p class="preset-version">Real screenshots from 1.2.0, on a desktop and on a phone</p>
+          <p class="preset-version">Real screenshots from 1.2.5, at desktop and phone sizes</p>
           <p class="option-note">These are staged demo chats and notes with the bundled assistants, so don&apos;t read too much into the replies.</p>
           <div class="option-group">
             <h3 class="option-group-title">Desktop</h3>
             <div class="tracker-grid tracker-grid-wide">
               <a class="tracker-item" href="#lb-nc-2">
-                <img src="preset/screenshots/neconyan/home-desktop.webp" alt="Neconyan Home on a desktop" loading="lazy">
+                <img src="preset/screenshots/neconyan/home-desktop.webp?v=1.2.5" alt="Neconyan Home on a desktop" loading="lazy">
                 <span class="tracker-caption">Home</span>
               </a>
               <a class="tracker-item" href="#lb-nc-3">
-                <img src="preset/screenshots/neconyan/roleplay-desktop.webp" alt="A Roleplay chat on a desktop" loading="lazy">
+                <img src="preset/screenshots/neconyan/roleplay-desktop.webp?v=1.2.5" alt="A Roleplay chat on a desktop" loading="lazy">
                 <span class="tracker-caption">Roleplay</span>
               </a>
               <a class="tracker-item" href="#lb-nc-4">
-                <img src="preset/screenshots/neconyan/conversation-desktop.webp" alt="Conversation mode on a desktop" loading="lazy">
+                <img src="preset/screenshots/neconyan/conversation-desktop.webp?v=1.2.5" alt="Conversation mode on a desktop" loading="lazy">
                 <span class="tracker-caption">Conversation</span>
               </a>
               <a class="tracker-item" href="#lb-nc-5">
-                <img src="preset/screenshots/neconyan/meower-desktop.webp" alt="The Meower timeline on a desktop" loading="lazy">
+                <img src="preset/screenshots/neconyan/meower-desktop.webp?v=1.2.5" alt="The Meower timeline on a desktop" loading="lazy">
                 <span class="tracker-caption">Meower</span>
               </a>
               <a class="tracker-item" href="#lb-nc-6">
-                <img src="preset/screenshots/neconyan/story-desktop.webp" alt="Story Mode on a desktop" loading="lazy">
+                <img src="preset/screenshots/neconyan/story-desktop.webp?v=1.2.5" alt="Story Mode on a desktop" loading="lazy">
                 <span class="tracker-caption">Story Mode</span>
               </a>
               <a class="tracker-item" href="#lb-nc-7">
-                <img src="preset/screenshots/neconyan/notes-desktop.webp" alt="A character note in Notebooks on a desktop" loading="lazy">
+                <img src="preset/screenshots/neconyan/notes-desktop.webp?v=1.2.5" alt="A character note in Notebooks on a desktop" loading="lazy">
                 <span class="tracker-caption">Notebooks</span>
               </a>
             </div>
@@ -126,27 +135,27 @@
             <h3 class="option-group-title">Phone</h3>
             <div class="tracker-grid tracker-grid-phone">
               <a class="tracker-item" href="#lb-nc-8">
-                <img src="preset/screenshots/neconyan/home-phone.webp" alt="Neconyan Home on a phone" loading="lazy">
+                <img src="preset/screenshots/neconyan/home-phone.webp?v=1.2.5" alt="Neconyan Home on a phone" loading="lazy">
                 <span class="tracker-caption">Home</span>
               </a>
               <a class="tracker-item" href="#lb-nc-9">
-                <img src="preset/screenshots/neconyan/roleplay-phone.webp" alt="A Roleplay chat on a phone" loading="lazy">
+                <img src="preset/screenshots/neconyan/roleplay-phone.webp?v=1.2.5" alt="A Roleplay chat on a phone" loading="lazy">
                 <span class="tracker-caption">Roleplay</span>
               </a>
               <a class="tracker-item" href="#lb-nc-10">
-                <img src="preset/screenshots/neconyan/conversation-phone.webp" alt="Conversation mode on a phone" loading="lazy">
+                <img src="preset/screenshots/neconyan/conversation-phone.webp?v=1.2.5" alt="Conversation mode on a phone" loading="lazy">
                 <span class="tracker-caption">Conversation</span>
               </a>
               <a class="tracker-item" href="#lb-nc-11">
-                <img src="preset/screenshots/neconyan/meower-phone.webp" alt="The Meower timeline on a phone" loading="lazy">
+                <img src="preset/screenshots/neconyan/meower-phone.webp?v=1.2.5" alt="The Meower timeline on a phone" loading="lazy">
                 <span class="tracker-caption">Meower</span>
               </a>
               <a class="tracker-item" href="#lb-nc-12">
-                <img src="preset/screenshots/neconyan/story-phone.webp" alt="Story Mode on a phone" loading="lazy">
+                <img src="preset/screenshots/neconyan/story-phone.webp?v=1.2.5" alt="Story Mode on a phone" loading="lazy">
                 <span class="tracker-caption">Story Mode</span>
               </a>
               <a class="tracker-item" href="#lb-nc-13">
-                <img src="preset/screenshots/neconyan/notes-phone.webp" alt="A character note in Notebooks on a phone" loading="lazy">
+                <img src="preset/screenshots/neconyan/notes-phone.webp?v=1.2.5" alt="A character note in Notebooks on a phone" loading="lazy">
                 <span class="tracker-caption">Notebooks</span>
               </a>
             </div>
@@ -345,6 +354,21 @@
           <h2 class="preset-title">What&apos;s New</h2>
           <p class="preset-version">Since 1.0. <a target="_blank" rel="noopener" href="https://github.com/platberlitz/Neconyan/blob/main/changelog.md">Full changelog on GitHub.</a></p>
           <div class="option-group">
+            <h3 class="option-group-title">1.2.5</h3>
+            <div class="preset-desc">
+              <ul>
+                <li>Reorganised Agents, with Quick settings on each card and shared edits for selected agents.</li>
+                <li>Added Character Authenticity Checker, an optional reply rewriter for keeping characters in character. It starts switched off.</li>
+                <li>Scratchpad can propose character cards from a discussion or notebook. You review the changes before saving.</li>
+                <li>Character Expressions supports separate sets for people sharing a card, named speakers, custom expression lists and better image cleanup.</li>
+                <li>Slash-command scripts can run during replies without losing your draft.</li>
+                <li>Rebuilt Formatting, kept Connections status compact and made Companion actions easier to reach on phones.</li>
+                <li>Added a dark Windows XP Olive theme and separate sleeping-cat choices for each side of the chat.</li>
+                <li>Android export fixes, smoother drawers, and more German, Italian and Portuguese translations.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="option-group">
             <h3 class="option-group-title">1.2.0</h3>
             <div class="preset-desc">
               <ul>
@@ -392,18 +416,18 @@
   <footer class="site-footer"><p>made by purachina &middot; <a href="https://ko-fi.com/purachina" target="_blank" rel="noopener noreferrer">Ko-fi</a> &middot; <a href="#top">back to top</a></p></footer>
 
   <a class="lightbox" id="lb-nc-1" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/release-fumos.webp" alt="Neconyan 1.0 release art: fumo plushies of Miso, Taro and Nori in party hats behind a 1.0 cake, lit like a corporate headshot"></a>
-  <a class="lightbox" id="lb-nc-2" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/home-desktop.webp" alt="Neconyan Home on a desktop"></a>
-  <a class="lightbox" id="lb-nc-3" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/roleplay-desktop.webp" alt="A Roleplay chat on a desktop"></a>
-  <a class="lightbox" id="lb-nc-4" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/conversation-desktop.webp" alt="Conversation mode on a desktop"></a>
-  <a class="lightbox" id="lb-nc-5" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/meower-desktop.webp" alt="The Meower timeline on a desktop"></a>
-  <a class="lightbox" id="lb-nc-6" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/story-desktop.webp" alt="Story Mode on a desktop"></a>
-  <a class="lightbox" id="lb-nc-7" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/notes-desktop.webp" alt="A character note in Notebooks on a desktop"></a>
-  <a class="lightbox" id="lb-nc-8" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/home-phone.webp" alt="Neconyan Home on a phone"></a>
-  <a class="lightbox" id="lb-nc-9" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/roleplay-phone.webp" alt="A Roleplay chat on a phone"></a>
-  <a class="lightbox" id="lb-nc-10" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/conversation-phone.webp" alt="Conversation mode on a phone"></a>
-  <a class="lightbox" id="lb-nc-11" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/meower-phone.webp" alt="The Meower timeline on a phone"></a>
-  <a class="lightbox" id="lb-nc-12" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/story-phone.webp" alt="Story Mode on a phone"></a>
-  <a class="lightbox" id="lb-nc-13" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/notes-phone.webp" alt="A character note in Notebooks on a phone"></a>
+  <a class="lightbox" id="lb-nc-2" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/home-desktop.webp?v=1.2.5" alt="Neconyan Home on a desktop"></a>
+  <a class="lightbox" id="lb-nc-3" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/roleplay-desktop.webp?v=1.2.5" alt="A Roleplay chat on a desktop"></a>
+  <a class="lightbox" id="lb-nc-4" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/conversation-desktop.webp?v=1.2.5" alt="Conversation mode on a desktop"></a>
+  <a class="lightbox" id="lb-nc-5" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/meower-desktop.webp?v=1.2.5" alt="The Meower timeline on a desktop"></a>
+  <a class="lightbox" id="lb-nc-6" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/story-desktop.webp?v=1.2.5" alt="Story Mode on a desktop"></a>
+  <a class="lightbox" id="lb-nc-7" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/notes-desktop.webp?v=1.2.5" alt="A character note in Notebooks on a desktop"></a>
+  <a class="lightbox" id="lb-nc-8" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/home-phone.webp?v=1.2.5" alt="Neconyan Home on a phone"></a>
+  <a class="lightbox" id="lb-nc-9" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/roleplay-phone.webp?v=1.2.5" alt="A Roleplay chat on a phone"></a>
+  <a class="lightbox" id="lb-nc-10" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/conversation-phone.webp?v=1.2.5" alt="Conversation mode on a phone"></a>
+  <a class="lightbox" id="lb-nc-11" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/meower-phone.webp?v=1.2.5" alt="The Meower timeline on a phone"></a>
+  <a class="lightbox" id="lb-nc-12" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/story-phone.webp?v=1.2.5" alt="Story Mode on a phone"></a>
+  <a class="lightbox" id="lb-nc-13" href="#close"><img loading="lazy" src="preset/screenshots/neconyan/notes-phone.webp?v=1.2.5" alt="A character note in Notebooks on a phone"></a>
 
   <script>
     // Tabs are radios, so #screenshots etc. need ticking by hand.

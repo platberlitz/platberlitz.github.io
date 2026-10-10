@@ -42,6 +42,9 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
 
     await page.goto(origin, { waitUntil: 'networkidle' });
     assert.equal(requests.length, 0, 'Prompt downloads are lazy');
+    assert.equal(await page.locator('input[name="platform-view"], .platform-row').count(), 0, 'No redundant App selector');
+    assert.equal(await page.locator('.downloads-primary .dl-st:visible').count(), 1);
+    assert.equal(await page.locator('.downloads-primary .dl-sb:visible').count(), 1, 'Both app downloads share the overview');
     const compile = (selected, names) => page.evaluate(({ selected, names }) => compilePromptMix(selected, names), { selected, names });
     const sample = (name, content) => ({ name, content });
     const main = sample('Main', 'Before\n{{#if .friction}}Active: {{getvar::friction}}{{else}}Inactive{{/if}}\nAfter');
@@ -63,14 +66,15 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
       await assert.rejects(compile([sample('Dynamic', content)]), /per-message/);
     }
     await assert.rejects(compile([sample('Cycle', '{{setvar::length::{{getvar::length}}}}')]), /Circular/);
-    for (const [tab, platform, sourceClass] of [
-      ['tab-prompts', 'platform-view-st', 'dl-st'],
-      ['sb-tab-prompts', 'platform-view-sb', 'dl-sb'],
+    for (const [tab, presetChoice, sourceClass] of [
+      ['tab-prompts', 'preset-view-pdp', 'dl-st'],
+      ['tab-prompts', 'preset-view-pdp', 'dl-sb'],
       ['tee-tab-prompts', 'preset-view-tee', 'dl-st'],
     ]) {
-      await page.locator(`label[for="${platform}"]`).click();
+      await page.locator(`label[for="${presetChoice}"]`).click();
       await page.locator(`label[for="${tab}"]`).click();
-      const reader = page.locator(`[data-prompt-tab="${tab}"]`);
+      const readerSelector = `[data-prompt-tab="${tab}"][data-prompt-source=".${sourceClass}"]`;
+      const reader = page.locator(readerSelector);
       const choice = reader.locator('select');
       await reader.locator('.prompt-copy:enabled').waitFor();
       const href = await reader.evaluate((el, cls) => el.closest('.platform-panel').querySelector(`.downloads-primary .${cls}`).href, sourceClass);
@@ -95,7 +99,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
         }
       }
       const count = requests.length;
-      await page.locator(`label[for="${tab === 'sb-tab-prompts' ? 'sb-tab-overview' : tab === 'tee-tab-prompts' ? 'tee-tab-preset' : 'tab-preset'}"]`).click();
+      await page.locator(`label[for="${tab === 'tee-tab-prompts' ? 'tee-tab-preset' : 'tab-preset'}"]`).click();
       await page.locator(`label[for="${tab}"]`).click();
       assert.equal(requests.length, count, 'Reopening does not refetch');
 
@@ -136,7 +140,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
       }
       assert.doesNotMatch(mixed, /\{\{(?:setvar|getvar|#if|else|\/if|trim|dialoguecolors)/);
       await mixCopy.click();
-      await page.waitForFunction(tab => document.querySelector(`[data-prompt-tab="${tab}"] .mix-status`).textContent === 'Copied combined prompt.', tab);
+      await page.waitForFunction(selector => document.querySelector(`${selector} .mix-status`).textContent === 'Copied combined prompt.', readerSelector);
       assert.equal(await page.evaluate(() => navigator.clipboard.readText()), mixed);
       const medium = expected.find(p => /^Medium\b/.test(p.name));
       await checkbox(medium).check();
@@ -169,18 +173,18 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
           assert.ok(control.x >= box.x && control.x + control.width <= box.x + box.width + 1, `${selector} fits`);
         }
         if (process.env.SCREENSHOT_DIR && width !== 320) {
-          await reader.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, `${tab}-${width}.png`) });
+          await reader.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, `${tab}-${sourceClass}-${width}.png`) });
         }
       }
       await page.setViewportSize({ width: 1440, height: 1000 });
       await mixer.locator('summary').click();
-      console.log(`${tab}: ${expected.length} raw / ${portable} portable prompts, mixing, clipboard and layouts passed`);
+      console.log(`${tab} (${sourceClass}): ${expected.length} raw / ${portable} portable prompts, mixing, clipboard and layouts passed`);
     }
 
     for (failure of ['http', 'invalid', 'empty']) {
       await page.goto(origin, { waitUntil: 'networkidle' });
       await page.locator('label[for="tab-prompts"]').click();
-      const reader = page.locator('[data-prompt-tab="tab-prompts"]');
+      const reader = page.locator('[data-prompt-tab="tab-prompts"][data-prompt-source=".dl-st"]');
       await reader.locator('.prompt-retry:visible').waitFor();
       assert.equal(await reader.locator('.prompt-copy').isDisabled(), true);
       failure = null;
@@ -188,7 +192,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
       await reader.locator('.prompt-copy:enabled').waitFor();
     }
 
-    const reader = page.locator('[data-prompt-tab="tab-prompts"]');
+    const reader = page.locator('[data-prompt-tab="tab-prompts"][data-prompt-source=".dl-st"]');
     await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', {
       value: { writeText: () => Promise.reject(new Error('Permission denied')) },
     }));

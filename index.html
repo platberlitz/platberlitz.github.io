@@ -10,20 +10,29 @@
   <meta property="og:image" content="https://platberlitz.github.io/favicon-256.png">
   <meta property="og:url" content="https://platberlitz.github.io/">
   <meta name="twitter:card" content="summary">
-  <meta name="theme-color" content="#172018">
+  <meta name="theme-color" content="#303b25">
   <link rel="icon" type="image/png" sizes="256x256" href="favicon-256.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=VT323&display=swap">
-  <link rel="stylesheet" href="site.css?v=4">
+  <link rel="icon" type="image/svg+xml" href="assets/xp-cat.svg">
+  <link rel="stylesheet" href="site.css?v=6">
+  <script src="site.js?v=1" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#presets">Skip to presets</a>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="purachina's stuff, home"><img src="favicon-256.png" alt="" width="28" height="28" decoding="async"><span>purachina's stuff</span></a>
+    <details class="start-launcher">
+      <summary class="start-button"><img src="assets/xp-cat.svg" alt="" width="26" height="26"><span>start</span></summary>
+      <nav class="start-menu" aria-label="Start menu">
+        <div class="start-profile"><img src="assets/xp-cat.svg" alt="" width="40" height="40"><strong>purachina's stuff</strong></div>
+        <div class="start-pages">
+          <a href="./">Presets</a><a href="neconyan.html">Neconyan</a><a href="extensions.html">Extensions</a><a href="themes.html">Themes</a><a href="cards.html">Cards &amp; lorebooks</a>
+        </div>
+        <div class="start-projects"><span>My other projects</span><a href="https://platberlitz.github.io/platinum-startpage/">Startpage</a><a href="assistant/">Synapse</a><a href="https://purasdproxy.duckdns.org" target="_blank" rel="noopener">SD Proxy</a></div>
+        <a class="start-footer" href="https://ko-fi.com/purachina" target="_blank" rel="noopener noreferrer">Support my work on Ko-fi <span aria-hidden="true">↗</span></a>
+      </nav>
+    </details>
     <nav class="site-nav" aria-label="Pages">
       <a href="./" aria-current="page">Presets</a>
       <a href="neconyan.html">Neconyan</a>
@@ -31,20 +40,17 @@
       <a href="themes.html">Themes</a>
       <a href="cards.html">Cards</a>
     </nav>
-    <p class="statusline" id="statusline">pdp:16.0 | tee:1.1 | cards:55 | themes:48 | updated:2026-10-07</p>
+    <p class="statusline" id="statusline">pdp:16.0 | tee:1.1 | cards:55 | themes:48 | updated:2026-10-10</p>
   </header>
   <main id="top">
   <div class="container hero">
-    <div class="terminal-titlebar" aria-hidden="true"><span>~/purachina/home.txt</span><span>nya~</span></div>
+    <div class="window-titlebar"><span><img src="assets/xp-cat.svg" alt="" width="18" height="18">purachina's stuff</span><a href="#presets">Browse presets <span aria-hidden="true">↓</span></a></div>
     <div class="hero-text">
-      <p class="terminal-prompt">purachina@home:~</p>
-      <h1 class="rainbow">welcome :3</h1>
+      <h1 class="welcome-title">welcome :3</h1>
       <p class="subtitle">Presets, character cards, themes and extensions for LLM roleplay, plus a few other things I've made.</p>
-      <p class="last-updated">Last Updated October 7, 2026</p>
+      <p class="last-updated">Last Updated October 10, 2026</p>
     </div>
-    <pre class="terminal-cat" aria-hidden="true"> /\_/\
-( <span>o.o</span> )
- &gt; ^ &lt;</pre>
+    <img class="welcome-cat" src="assets/xp-cat.svg" alt="" width="80" height="80">
     <nav class="links" aria-label="My other projects">
         <a href="https://platberlitz.github.io/platinum-startpage/" class="glow-pill startpage-link">startpage<span class="link-info">localStorage customisable startpage</span></a>
         <a href="assistant/" class="glow-pill synapse-link">Synapse<span class="link-info">localStorage AI assistant frontend &middot; bring your own API</span></a>
@@ -57,8 +63,6 @@
   </div>
 
   <div class="platform-switcher" id="presets" tabindex="-1">
-    <input type="radio" name="platform-view" id="platform-view-st" checked>
-    <input type="radio" name="platform-view" id="platform-view-sb">
     <input type="radio" name="preset-view" id="preset-view-pdp" checked>
     <input type="radio" name="preset-view" id="preset-view-tee">
 
@@ -73,16 +77,9 @@
         <span class="ticket-body"><span class="ticket-name">The Ethereality Express</span><span class="ticket-version">1.1</span><span class="ticket-line">Magical realism where the impossible is mundane</span></span>
       </label>
     </div>
-    <div class="platform-row">
-      <span class="platform-row-label" aria-hidden="true">App</span>
-      <div class="platform-labels" role="presentation">
-        <label for="platform-view-st">SillyTavern</label>
-        <label for="platform-view-sb">Neconyan</label>
-      </div>
-    </div>
 
-  <section class="preset-section platform-panel platform-panel-st">
-    <h2 class="section-heading sr-only">SillyTavern</h2>
+  <section class="preset-section platform-panel platform-panel-st" id="neconyan-preset" tabindex="-1">
+    <h2 class="section-heading sr-only">Pura's Director Preset</h2>
     <div class="preset-tabs">
       <input type="radio" name="tab" id="tab-preset" checked>
       <input type="radio" name="tab" id="tab-options">
@@ -140,11 +137,25 @@
 
       <div class="tab-content tab-content-prompts">
         <div class="preset-info prompt-reader" data-prompt-tab="tab-prompts" data-prompt-source=".dl-st">
-          <h2 class="preset-title">Prompts</h2>
+          <h2 class="preset-title">SillyTavern prompts</h2>
           <p class="preset-version">Pura's Director Preset / SillyTavern</p>
           <p class="option-note">I've included the optional prompts too. Pick one to read or copy; the text comes straight from the current preset. Placeholders and macros are unchanged, so some prompts still need SillyTavern to work.</p>
           <label for="st-prompt-choice">Original prompt (with app macros)</label>
           <select id="st-prompt-choice" disabled><option>Loading prompts...</option></select>
+          <div class="prompt-actions">
+            <button type="button" class="prompt-copy" disabled>Copy prompt</button>
+            <button type="button" class="prompt-retry" hidden>Try again</button>
+            <span class="prompt-status" role="status"></span>
+          </div>
+          <textarea readonly spellcheck="false" aria-label="Prompt plaintext"></textarea>
+          <noscript>Enable JavaScript to browse prompts, or use the preset download.</noscript>
+        </div>
+        <div class="preset-info prompt-reader" data-prompt-tab="tab-prompts" data-prompt-source=".dl-sb">
+          <h2 class="preset-title">Neconyan prompts</h2>
+          <p class="preset-version">Pura's Director Preset / Neconyan</p>
+          <p class="option-note">This is the plain preset Neconyan ships with - no trackers, those are agents in Neconyan. Pick one to read or copy; the text comes straight from the current preset. Placeholders and macros are unchanged, so some prompts still need a compatible roleplay app to work.</p>
+          <label for="sb-prompt-choice">Original prompt (with app macros)</label>
+          <select id="sb-prompt-choice" disabled><option>Loading prompts...</option></select>
           <div class="prompt-actions">
             <button type="button" class="prompt-copy" disabled>Copy prompt</button>
             <button type="button" class="prompt-retry" hidden>Try again</button>
@@ -1366,60 +1377,6 @@
     </div>
   </section>
 
-  <section class="preset-section platform-panel platform-panel-sb" id="neconyan-preset" tabindex="-1">
-    <h2 class="section-heading sr-only">Neconyan</h2>
-    <div class="preset-tabs">
-      <input type="radio" name="sb-tab" id="sb-tab-overview" checked>
-      <input type="radio" name="sb-tab" id="sb-tab-prompts">
-
-      <div class="tab-labels">
-        <label for="sb-tab-overview">Overview</label>
-        <label for="sb-tab-prompts">Prompts</label>
-      </div>
-
-      <div class="tab-content sb-tab-content-overview">
-        <div class="preset-info preset-overview">
-          <aside class="preset-aside">
-            <a class="preset-release-art" href="#lb-preset-16-0" aria-label="Open Pura's Director Preset 16.0 release art">
-                <img src="preset/screenshots/pura-director-preset-16.0.png" alt="Pura's Director Preset 16.0 release art: Sigewinne and Wriothesley" loading="lazy">
-              </a>
-            <div class="preset-downloads downloads-primary">
-              <a class="dl-sb" href="preset/Pura's%20Director%20Preset%2016.0.json" download="Pura's Director Preset 16.0.json"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Download Neconyan Preset</a>
-              <a class="dl-st" href="preset/Pura's%20Director%20Preset%2016.0%20(SillyTavern).json" download="Pura's Director Preset 16.0 (SillyTavern).json"><svg class="dl-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 4v8.2l2.6-2.6L17 11l-5 5-5-5 1.4-1.4L11 12.2V4h2zM5 18h14v2H5z"/></svg>Download ST Preset</a>
-              <a class="dl-stacked" href="preset/Pura's%20Director%20Regexes.json" download="Pura's Director Regexes.json">Regex Set<span class="dl-sub">SillyTavern &amp; Neconyan</span></a>
-              <a class="dl-stacked" href="preset/Pura's%20Director%20Regexes%20(Marinara).json" download="Pura's Director Regexes (Marinara).json">Regex Set<span class="dl-sub">Marinara Engine</span></a>
-              <a href="neconyan.html">About Neconyan</a>
-            </div>
-          </aside>
-          <h2 class="preset-title">Pura&apos;s Director Preset for Neconyan</h2>
-          <p class="preset-version">v16.0 &middot; bundled with Neconyan 1.2.0</p>
-          <div class="preset-desc">
-            <p>Neconyan already ships with this preset as its default, so you only need the download if you&apos;ve edited yours into oblivion and want a clean copy back.</p>
-            <p>It&apos;s the same prompts as the SillyTavern version, minus the trackers and randomisers. In Neconyan those live as agents instead of preset toggles, so they run on their own pass and don&apos;t eat into the main prompt.</p>
-            <p>Looking for Neconyan itself - screenshots, features, the Android app and what changed in 1.2.0? That&apos;s got <a href="neconyan.html">its own page</a> now.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="tab-content tab-content-prompts">
-        <div class="preset-info prompt-reader" data-prompt-tab="sb-tab-prompts" data-prompt-source=".dl-sb">
-          <h2 class="preset-title">Prompts</h2>
-          <p class="preset-version">Pura's Director Preset / Neconyan</p>
-          <p class="option-note">This is the plain preset Neconyan ships with - no trackers, those are agents in Neconyan. Pick one to read or copy; the text comes straight from the current preset. Placeholders and macros are unchanged, so some prompts still need a compatible roleplay app to work.</p>
-          <label for="sb-prompt-choice">Original prompt (with app macros)</label>
-          <select id="sb-prompt-choice" disabled><option>Loading prompts...</option></select>
-          <div class="prompt-actions">
-            <button type="button" class="prompt-copy" disabled>Copy prompt</button>
-            <button type="button" class="prompt-retry" hidden>Try again</button>
-            <span class="prompt-status" role="status"></span>
-          </div>
-          <textarea readonly spellcheck="false" aria-label="Prompt plaintext"></textarea>
-          <noscript>Enable JavaScript to browse prompts, or use the preset download.</noscript>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section class="preset-section platform-panel platform-panel-tee">
     <h2 class="section-heading sr-only">The Ethereality Express</h2>
     <div class="preset-tabs">
@@ -2068,7 +2025,7 @@
       const tabsForHash = {
         "model-samples": ["tab-samples"],
         "tee-sample": ["preset-view-tee", "tee-tab-sample"],
-        "neconyan-preset": ["platform-view-sb", "preset-view-pdp"],
+        "neconyan-preset": ["preset-view-pdp", "tab-preset"],
       };
       (tabsForHash[location.hash.slice(1)] || []).forEach((id) => {
         const target = document.getElementById(id);

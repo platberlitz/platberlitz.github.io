@@ -14,11 +14,11 @@ The root site exists as a personal public hub: a compact place to discover what 
 
 ## Brand Personality
 
-Personal, blunt, tinkerer-made. Opinionated, direct, a little playful, and built by someone who actually uses the tools. It can be sardonic and casual, but downloads, version notes, and project links should stay easy to scan. I want a cute terminal look: muted greens, monospace text, pixel headings and a little cat. Compact controls suit this better than big rounded cards.
+Personal, blunt, tinkerer-made. Opinionated, direct, a little playful, and built by someone who actually uses the tools. It can be sardonic and casual, but downloads, version notes, and project links should stay easy to scan. I want it to match my Windows XP Olive cat desktop: dark olive windows, cream text, bevelled controls, a top taskbar and the painted white cat on a night-time Bliss wallpaper. Compact controls suit this better than big rounded cards.
 
 ## Anti-references
 
-Avoid corporate SaaS polish, generic AI landing-page aesthetics, oversized marketing hero sections, vague value-prop copy, sterile template grids, and anything that makes the site feel like a startup pitch. Avoid overexplaining the personality out of the page. Keep the terminal styling readable: no fake boot sequence, flashing text, or scanlines over the copy. The cat and pixel headings give it enough character without decorating every control.
+Avoid corporate SaaS polish, generic AI landing-page aesthetics, oversized marketing hero sections, vague value-prop copy, sterile template grids, and anything that makes the site feel like a startup pitch. Avoid overexplaining the personality out of the page. Keep the XP styling readable: no fake boot sequence, flashing text, scanlines, or pretend window controls. The cat and olive title bars give it enough character; the downloads still matter most.
 
 ## Design Principles
 
