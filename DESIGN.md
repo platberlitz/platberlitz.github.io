@@ -97,6 +97,13 @@ menu, link activation or Escape. Escape returns focus to Start.
 - The top-bar statusline is repeated on all pages. `tests/site-pages.cjs` compares
   the real card and theme counts, preset versions and stylesheet versions.
 - Update the last-updated date when editing the site.
+- Keep release dates beside current versions and Neconyan changelog entries. Use recorded
+  publication dates, not the date of a page redesign. For older preset changelog entries,
+  'Published here' means the first appearance of that version in this site's history.
+- Run `python3 scripts/update-site-dates.py` after committing changed downloads. It writes
+  static dates for cards, lorebooks, themes and previous preset downloads from their own
+  file history, following moves without treating a pure rename as an update. Extension
+  'Listed' dates mean the first link on this site, not the upstream release date.
 - Old home-page links to `#extensions`, `#themes` and `#cards` forward to their pages.
 - Keep Synapse and other tools' own designs. Don't restyle captured transcript bodies.
 - Keep the wallpaper and cat icon local in `assets/`, alongside the folder icon.
