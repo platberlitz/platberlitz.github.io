@@ -109,3 +109,12 @@ menu, link activation or Escape. Escape returns focus to Start.
 - Keep the wallpaper and cat icon local in `assets/`, alongside the folder icon.
 - Check all five pages in a browser at desktop and phone widths, and run both
   `tests/site-pages.cjs` and `tests/preset-prompts.cjs` after changing shared styles.
+
+## Vista Aero Mint skin (default)
+
+The site now defaults to my Vista Aero Mint desktop; XP Olive stays one click away via the Start menu's switch button (saved in `localStorage.siteSkin`). Without JavaScript the site shows XP Olive. Everything lives in `vista.css`, scoped to `html.skin-vista`, and mostly re-points the shared colour variables.
+
+- Palette: background #08120f, windows #14211d at 74% with blur, mint #6fdcb0 / #3eb489 / #aef0d3, text #e4f5ee, dim #a3c4b7, error #ff8a80.
+- Smoky glass taskbar and title bars with a hard gloss break at the midline; the Start button is the round cat orb; glossy mint primary download button.
+- Wallpaper: assets/mint-aurora-cat.webp. Icons: assets/vista-orb.png, vista-user.png, vista-folder.png (swapped in with CSS `content: url()`).
+- Glass is deliberate here because the desktop it mirrors is glass; keep text on the darker panes so it stays readable.

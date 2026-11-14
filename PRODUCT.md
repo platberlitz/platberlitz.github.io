@@ -14,7 +14,7 @@ The root site exists as a personal public hub: a compact place to discover what 
 
 ## Brand Personality
 
-Personal, blunt, tinkerer-made. Opinionated, direct, a little playful, and built by someone who actually uses the tools. It can be sardonic and casual, but downloads, version notes, and project links should stay easy to scan. I want it to match my Windows XP Olive cat desktop: dark olive windows, cream text, bevelled controls, a top taskbar and the painted white cat on a night-time Bliss wallpaper. Compact controls suit this better than big rounded cards.
+Personal, blunt, tinkerer-made. Opinionated, direct, a little playful, and built by someone who actually uses the tools. It can be sardonic and casual, but downloads, version notes, and project links should stay easy to scan. I want it to match my desktop: by default Vista Aero Mint (smoky dark mint glass, cat orb Start button, the painted white cat on a mint aurora wallpaper), with my Windows XP Olive look one click away. Compact controls suit this better than big rounded cards.
 
 ## Anti-references
 

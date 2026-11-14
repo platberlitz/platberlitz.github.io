@@ -16,8 +16,10 @@
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="assets/xp-cat.svg">
+  <script>if (localStorage.getItem('siteSkin') !== 'xp') document.documentElement.classList.add('skin-vista');</script>
   <link rel="stylesheet" href="site.css?v=9">
-  <script src="site.js?v=2" defer></script>
+  <link rel="stylesheet" href="vista.css?v=1">
+  <script src="site.js?v=3" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#extensions">Skip to extensions</a>
@@ -30,6 +32,7 @@
           <a href="./">Presets</a><a href="neconyan.html">Neconyan</a><a href="extensions.html">Extensions</a><a href="themes.html">Themes</a><a href="cards.html">Cards &amp; lorebooks</a>
         </div>
         <div class="start-projects"><span>My other projects</span><a href="https://platberlitz.github.io/platinum-startpage/">Startpage</a><a href="assistant/">Synapse</a><a href="https://purasdproxy.duckdns.org" target="_blank" rel="noopener">SD Proxy</a></div>
+        <button class="skin-switch" type="button" hidden></button>
         <a class="start-footer" href="https://ko-fi.com/purachina" target="_blank" rel="noopener noreferrer">Support my work on Ko-fi <span aria-hidden="true">↗</span></a>
       </nav>
     </details>

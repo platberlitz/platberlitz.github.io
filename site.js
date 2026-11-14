@@ -27,3 +27,19 @@ document.querySelectorAll('.site-nav, .preset-tabs > .tab-labels, .card-subtab-l
   window.addEventListener('resize', update);
   update();
 });
+
+// Vista Aero Mint is the default skin; the Start menu button flips to XP Olive and back.
+const skinSwitch = document.querySelector('.skin-switch');
+if (skinSwitch) {
+  const root = document.documentElement;
+  const label = () => {
+    skinSwitch.textContent = root.classList.contains('skin-vista') ? 'Switch to Windows XP Olive' : 'Switch to Vista Aero Mint';
+  };
+  skinSwitch.hidden = false;
+  label();
+  skinSwitch.addEventListener('click', () => {
+    const vista = root.classList.toggle('skin-vista');
+    localStorage.setItem('siteSkin', vista ? 'vista' : 'xp');
+    label();
+  });
+}
