@@ -629,6 +629,7 @@ main { display: block; }
 .resonance-glacio { --icon-bg: oklch(0.4 0.06 205); --icon-border: oklch(0.7 0.08 205); }
 .resonance-havoc { --icon-bg: oklch(0.38 0.08 330); --icon-border: oklch(0.66 0.1 330); }
 .card-version { display: inline-flex; align-items: center; gap: 0.2rem; font-family: var(--mono); font-size: 0.68rem; font-weight: 500; color: var(--fg-dim); white-space: nowrap; }
+.card-new { padding: 0 0.35rem; border-radius: 3px; background: var(--accent); color: var(--on-accent); font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .card-copy { display: block; }
 .lorebook-list { max-width: 820px; }
 .lorebook-list .preset-downloads { margin-top: 0.75rem; }
