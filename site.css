@@ -282,10 +282,8 @@ main { display: block; }
    background: var(--surface);
    border: 0; border-bottom: 1px solid var(--line-strong);
   overflow-x: auto;
-  scrollbar-width: none;
   touch-action: pan-x;
 }
-.preset-tabs > .tab-labels::-webkit-scrollbar { display: none; }
 .preset-tabs > .tab-labels label {
   flex: none;
    padding: 7px 12px; border-radius: 4px 4px 0 0; cursor: pointer;
@@ -598,8 +596,7 @@ main { display: block; }
 .tracker-caption { display: block; margin-top: 0.4rem; font-size: 0.85rem; font-weight: 600; color: var(--fg-dim); text-align: center; }
 
 /* Cards */
-.card-subtab-labels { margin-bottom: 1.25rem; max-width: 100%; overflow-x: auto; scrollbar-width: none; touch-action: pan-x; }
-.card-subtab-labels::-webkit-scrollbar { display: none; }
+.card-subtab-labels { margin-bottom: 1.25rem; max-width: 100%; overflow-x: auto; touch-action: pan-x; }
 .card-subtab-content { display: none; }
 .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: 0.9rem; align-items: stretch; }
 .card-item {
@@ -690,7 +687,6 @@ main { display: block; }
   .theme-tab-labels label, .card-subtab-labels label { padding: 0.55rem 0.75rem; font-size: 0.78rem; }
   .card-subtab-labels { display: flex; max-width: 100%; overflow-x: auto; }
   .cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
-  .card-caption .card-copy { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .lightbox { padding: 0.75rem; }
 }
 
@@ -705,3 +701,11 @@ main { display: block; }
 
 .site-nav a[aria-current="page"] { color: var(--fg); background: #25331d; box-shadow: inset 1px 1px 2px #10170d, inset -1px -1px 0 #667950; font-weight: 700; }
 .page-main { min-height: calc(100vh - 16rem); }
+
+/* Sideways scroll hints: visible scrollbar plus a fade and arrow on the side with more tabs */
+.site-nav, .preset-tabs > .tab-labels, .card-subtab-labels { scrollbar-width: thin; scrollbar-color: var(--accent) transparent; }
+.site-nav::-webkit-scrollbar, .preset-tabs > .tab-labels::-webkit-scrollbar, .card-subtab-labels::-webkit-scrollbar { height: 6px; }
+.site-nav::-webkit-scrollbar-thumb, .preset-tabs > .tab-labels::-webkit-scrollbar-thumb, .card-subtab-labels::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+.more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
+.more-left { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent); }
+.more-left.more-right { -webkit-mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent); }

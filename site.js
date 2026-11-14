@@ -17,3 +17,13 @@ if (startLauncher) {
     if (!startLauncher.contains(event.target)) startLauncher.open = false;
   });
 }
+
+document.querySelectorAll('.site-nav, .preset-tabs > .tab-labels, .card-subtab-labels').forEach(row => {
+  const update = () => {
+    row.classList.toggle('more-left', row.scrollLeft > 2);
+    row.classList.toggle('more-right', row.scrollLeft + row.clientWidth < row.scrollWidth - 2);
+  };
+  row.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+});
