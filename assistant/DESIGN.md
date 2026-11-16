@@ -232,6 +232,9 @@ Components are compact, predictable, and consistent. The same action shape and f
 
 ### Navigation
 - **Style:** A conversation sidebar, central chat, and Context panel form the desktop shell. Navigation is compact, text-first, and scan-friendly.
+- **Context panel:** Closed until the person opens it, and the choice is remembered. The toolbar button and panel both say 'Context'; the composer's 'Preview' button shows what will be sent. Composer chips summarise what the next message carries and open the matching section.
+- **Resizing:** Both side panels resize from a thin separator that shows an accent line on hover, drag or focus. Arrow keys, Home, End and Enter (reset) work on the separator, and the chat keeps at least 360px. Separators are hidden where panels become drawers.
+- **Workspaces:** Focused tools that need room, such as the outputs workspace, replace the Context panel's section list in place and offer 'Back to context' instead of opening a modal.
 - **States:** Active conversations receive a muted moss background and Primary Text. Hover states use Hover Veil.
 - **Mobile:** The conversation and Context panels become mutually exclusive drawers with safe-area padding. Touch controls expand to at least 44px where practical.
 
@@ -244,6 +247,8 @@ Components are compact, predictable, and consistent. The same action shape and f
 ### Modals And Popups
 - **Structure:** Modals use Canopy Panel, Soft Border, compact rounding, and a plain dimmed overlay.
 - **Density:** Settings tabs, form fields, and section dividers should remain compact enough for power users.
+- **Settings:** On wide screens settings use a vertical tab list with a search box above it; search hides tabs without matches and highlights the matching settings. Narrow screens keep the horizontal tabs.
+- **Side-by-side results:** Comparisons and prompt tests use two equal columns with a status line per column, stacking into one column on phones. Replies shown outside a chat bubble keep the bubble's Markdown spacing.
 - **Behavior:** Prefer inline panels where possible, but existing setup, settings, shortcuts, and popups should keep clear focus trapping and escape behavior.
 
 ## 6. Do's and Don'ts

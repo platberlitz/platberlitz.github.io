@@ -138,7 +138,7 @@ function replacePersistentConversations(next, preserveTemporary = true, preview 
 
 const APP_VERSION = {
   name: 'Synapse',
-  buildDate: '2026-09-08T11:57:07+08:00',
+  buildDate: '2026-11-16T15:49:00+08:00',
   updateUrl: 'https://platberlitz.github.io/assistant/version.json'
 };
 

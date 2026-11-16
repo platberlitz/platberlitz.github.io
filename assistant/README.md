@@ -14,7 +14,7 @@ Use it from GitHub Pages, run it from a local server, or download the standalone
 - Lets you save connection profiles for different base URLs, models, and request settings; API keys stay in the selected device/tab credential store and are scrubbed from profiles, exports, and sync payloads.
 - Supports streaming responses, stop generation, and one-message model overrides with `@model-name`.
 - The toolbar chip opens a searchable profile and model picker. Each assistant swipe records lifecycle, timing, HTTP, and sanitised error metadata.
-- Compare two models before sending. Synapse makes two non-streaming requests and stores both replies as response swipes. A cross-provider key stays in memory only for that comparison.
+- Compare two models before sending, or the same model with two prompt presets. Both replies stream side by side in the chat, then a results window shows them formatted with their timing and token use so you can pick which one stays in the conversation. 'Compare responses' in the message's More menu reopens it later. A cross-provider key stays in memory only for that comparison, and comparison replies don't use tools.
 
 API keys can be saved as **Remember on this device** (`localStorage`) or **This tab only** (`sessionStorage`). Each key is bound to its provider, base URL and API format, so changing the connection in another tab can't send it somewhere else. Older saved keys need one confirmation: review the prefilled connection and save it. Browser storage is not an encrypted vault.
 
@@ -28,9 +28,11 @@ API keys can be saved as **Remember on this device** (`localStorage`) or **This 
 - Edit a user message and resend from that point.
 - Regenerate assistant messages and switch between swipes.
 - Failed or interrupted responses keep the text already received. Retry and Continue create another version instead of replacing the old one. A failed response or Stop pauses the follow-up queue.
-- Fork a chat from any message. Parent and child links stay available in the Context panel.
+- Fork a chat from any message. Branches in the Context panel shows the whole family of forks as a tree, so you can hop between attempts without hunting through the sidebar.
+- Bookmark a message from its More menu to name a moment you want to come back to. Bookmarks in the Context panel jumps to it or branches from it.
 - Set a per-chat goal and generate or save a conversation summary for context.
-- Use the right Context panel for goals, request previews, per-chat tools, summaries, sources, and related forks. Individual messages can be included or excluded; compaction summarises older turns without deleting them. Summaries track which turns they cover, and edits or forks discard summaries that cross the changed history.
+- Choose Edit on a code block to open it in the outputs workspace in the Context panel. Outputs keep their last 30 saved versions, show what changed between a version and the editor, preview HTML and SVG in a sandboxed frame, and download as a file. Select part of an output and describe a change to have the model rewrite only that part; you see the change before applying it.
+- Use the right Context panel for goals, lorebooks, outputs, request previews, per-chat tools, summaries, sources, branches and bookmarks. It starts closed until you open it, remembers that choice, and both side panels can be resized by dragging their edge or with the arrow keys. Chips under the composer show what the next message will carry, such as the project, files, memories, lore entries, goal and tools; select one to jump to it. Individual messages can be included or excluded; compaction summarises older turns without deleting them. Summaries track which turns they cover, and edits or forks discard summaries that cross the changed history.
 - Unfinished Context edits survive redraws and chat switches until you save or discard them. They're session-only, unlike the saved composer draft.
 - Queue follow-up messages, attachments, and one-message model overrides while a response is streaming. Queues persist across reloads but remain paused until you choose Resume.
 - Draft text and pending attachments are saved per conversation and restored after switching chats or reloading.
@@ -42,13 +44,17 @@ API keys can be saved as **Remember on this device** (`localStorage`) or **This 
 - Images are sent for vision-capable models.
 - Text is extracted from supported document formats before sending.
 - Large text attachments are capped so one file does not flood the request.
+- Project files can each be set to Always include, Search when needed or Exclude. Search when needed sends only the passages that match the latest message and asks the model to cite them by file name and part, which keeps big reference files from eating the whole context. Matching is plain local keyword ranking, so it won't catch a passage that says the same thing in different words.
+- A project's overview lists its chats, starts a new chat in it and opens its memories.
 
 ### Roleplay and Prompting
 
-- Import SillyTavern character cards from `.png` or `.json`.
+- Import SillyTavern character cards from `.png` or `.json`. A card's embedded lorebook comes along with it.
+- Each chat can have a lorebook: entries with keywords that are sent only when a keyword turns up in the last few messages, plus always-on entries. Priority and a character allowance decide what fits, and the Context panel shows which entries go with the next message and why. Import and export use the character card lorebook format, and SillyTavern world info files import too.
 - Set a persona for the user.
 - Manage ordered prompt entries with enable/disable controls and drag reordering.
-- Save, load, and import prompt presets, including SillyTavern presets.
+- Save, load, and import prompt presets, including SillyTavern presets. Update preset saves your current prompts into the selected preset and keeps the previous 10 versions.
+- Test prompts sends the same example messages with two setups, such as your current prompts against a preset or an earlier version of it, and shows the replies side by side. Examples run on their own, without chat history, project files or memories. Each example costs two requests, so keep the list short.
 - Supports common SillyTavern macros such as `{{user}}` and `{{char}}`.
 
 ### Tools and Diagnostics
@@ -56,7 +62,8 @@ API keys can be saved as **Remember on this device** (`localStorage`) or **This 
 - Web search through Anthropic tools, SearXNG, Brave, or a custom search endpoint.
 - Composer commands include `/search`, `/files`, `/goal`, `/context`, `/summary`, `/tools`, `/settings`, and `/projects`. Per-chat web-search, URL-fetch, and confirmation policies override global defaults.
 - Tool calls show their state, require one confirmation per response when enabled, and persist deduplicated numbered sources for citations and the Sources drawer.
-- Optional memory across conversations.
+- Optional memory across conversations. Each memory applies everywhere, to one project, or to one character, and can be pinned, edited, added by hand, or traced back to the chat it came from. Pinned memories go first; when the allowance fills up, the rest are left out and the request preview says which.
+- Settings has a search box, and the setup window points at the field that needs fixing when something is missing.
 - Status and diagnostics panel for connection/search checks.
 - Debug tab with redacted request logging, optional full text logging, and a snapshot copy button.
 - Local update indicator when a local build can be compared against `version.json` or a `/version` endpoint.
@@ -139,8 +146,8 @@ Synapse uses browser storage:
 
 | Storage | Contents |
 |---|---|
-| IndexedDB | Persistent conversations, messages, drafts, queued follow-ups, goals, and memories |
-| `localStorage` | API settings, themes, profiles, prompt entries, presets, cached model list, and UI preferences |
+| IndexedDB | Persistent conversations, messages, drafts, queued follow-ups, goals, outputs, lorebooks, bookmarks, projects, and memories |
+| `localStorage` | API settings, themes, profiles, prompt entries, presets and their earlier versions, prompt test examples, cached model list, panel widths, and UI preferences |
 | `sessionStorage` | A key selected as “This tab only” |
 
 Important keys include:
@@ -154,6 +161,8 @@ Important keys include:
 | `assistantTheme` | Current theme |
 | `assistantCustomTheme` | Custom theme colours |
 | `llmPromptEntries` | Prompt entries |
+| `assistantPresets` | Prompt presets and their earlier versions |
+| `assistantPromptTests` | Example messages for Test prompts |
 | `assistantStarterPrompts` | Local starter prompts |
 | `assistantDebug` | Debug logging toggle |
 

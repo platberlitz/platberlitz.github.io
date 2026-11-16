@@ -2,13 +2,13 @@
  *
  * Bump CACHE_VERSION on every release.
  */
-const CACHE_VERSION = 'synapse-202609081157';
+const CACHE_VERSION = 'synapse-202611161549';
 
 const PRECACHE = [
   './',
   './index.html',
-  './styles.css?v=202609081157',
-  './js/main.js?v=202609081157',
+  './styles.css?v=202611161549',
+  './js/main.js?v=202611161549',
   './js/lib/dom-utils.js',
   './js/lib/text-utils.js',
   './manifest.json'
