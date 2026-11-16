@@ -442,6 +442,12 @@ const TAG_COLORS = [
   { name: 'Pink', color: '#ec4899' },
   { name: 'Teal', color: '#14b8a6' }
 ];
+const BOOKMARK_LABEL_LIMIT = 120;
+const LOREBOOK_ENTRY_LIMIT = 200;
+const LOREBOOK_ENTRY_CHARS = 8000;
+const LOREBOOK_KEY_LIMIT = 30;
+const LOREBOOK_DEFAULT_SCAN_DEPTH = 4;
+const LOREBOOK_DEFAULT_BUDGET = 4000;
 
 const EMOTION_SPRITE_ASSET_PATH = './assets/emotion-sprites/';
 const EMOTION_SPRITE_ASSET_URLS = {};
@@ -1009,6 +1015,12 @@ function normalizeConversationRecord(raw) {
         message.content = message.swipes[message.swipeIndex];
       } else delete message.comparison;
       if (message.includeInContext !== false) message.includeInContext = true;
+      if (object(message.bookmark)) {
+        message.bookmark = {
+          label: text(message.bookmark.label).trim().slice(0, BOOKMARK_LABEL_LIMIT) || 'Bookmark',
+          createdAt: number(message.bookmark.createdAt) > 0 ? number(message.bookmark.createdAt) : Date.now()
+        };
+      } else delete message.bookmark;
       return message;
     });
   if (normalized.characterAvatar) normalized.characterAvatar = safeMediaUrl(text(normalized.characterAvatar));
@@ -1045,6 +1057,11 @@ function normalizeConversationRecord(raw) {
       }
       return [output];
     });
+  }
+  if ('lorebook' in normalized) {
+    const lorebook = normalizeLorebook(normalized.lorebook);
+    if (lorebook) normalized.lorebook = lorebook;
+    else delete normalized.lorebook;
   }
   if (!TAG_COLORS.some(tag => tag.name === normalized.tag)) delete normalized.tag;
   if (!normalized.toolPolicy || typeof normalized.toolPolicy !== 'object') normalized.toolPolicy = null;
@@ -5033,6 +5050,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   toggleContextPanel(window.innerWidth > 1100 && localStorage.getItem('assistantContextPanelOpen') === 'true', false);
   initPanelResizers();
   initOutputWorkspace();
+  initLorebook();
   document.getElementById('sidebar')?.addEventListener('keydown', event => {
     const sidebar = document.getElementById('sidebar');
     if (window.innerWidth <= 768 && !sidebar.classList.contains('collapsed')) trapFocus(sidebar, event);
@@ -6720,8 +6738,10 @@ async function updateTokenInfo() {
     parts.push('Transcript ~$' + cost.toFixed(4));
   }
   let promptPart = '';
+  let loreCount = 0;
   try {
     const built = await buildRequestMessages(getActiveConv(), { messageList: messages, draftMessage: buildComposerMessage() });
+    loreCount = built.lorebook?.included.length || 0;
     // ponytail: the estimate must match the request Send will actually submit.
     const stats = getRequestContextStats(built.messages, built.excluded, modelOverride || localStorage.getItem('llmModel') || '');
     const limit = stats.contextWindow ? ' / ' + formatTokenCount(stats.contextWindow) : '';
@@ -6733,10 +6753,11 @@ async function updateTokenInfo() {
   try { memoryCount = (await getMemorySelection(tokenConv)).included.length; } catch {}
   if (requestId !== tokenInfoRequestId) return;
   el.textContent = parts.concat(promptPart ? [promptPart] : []).join(' | ');
-  renderComposerContext(tokenConv, activeProject, memoryCount);
+  renderComposerContext(tokenConv, activeProject, memoryCount, loreCount);
+  if (tokenConv?.lorebook && !readOnlyShare) renderLorebookSection(tokenConv);
 }
 
-function renderComposerContext(conv, project, memoryCount) {
+function renderComposerContext(conv, project, memoryCount, loreCount = 0) {
   const host = document.getElementById('composerContext');
   if (!host) return;
   const chips = [];
@@ -6752,6 +6773,7 @@ function renderComposerContext(conv, project, memoryCount) {
     chip(count === 1 ? '1 file' : count + ' files', 'Show files used in this chat', () => openContextSection('filesSection'));
   }
   if (memoryCount) chip(memoryCount === 1 ? '1 memory' : memoryCount + ' memories', 'Manage the memories sent with your next message', () => openManageMemories());
+  if (loreCount) chip(loreCount === 1 ? '1 lore entry' : loreCount + ' lore entries', 'Show the lorebook entries sent with your next message', () => openContextSection('lorebookSection'));
   if (conv?.goal?.trim()) chip('Goal', 'Edit the goal for this chat', () => openContextSection('goalSection'));
   const policy = getToolPolicy(conv);
   const tools = [policy.webSearch && 'Web search', policy.urlFetch && 'URL fetch'].filter(Boolean);
@@ -11123,6 +11145,12 @@ async function buildSystemMessages(conv, options = {}) {
   if (conv && conv.characterDescription && conv.characterDescription.trim()) {
     msgs.push({ role: 'system', content: 'The following describes your character \u2014 this is who YOU are, not the user:\n\n' + resolveText(conv.characterDescription) });
   }
+  // Lorebook entries whose keywords appear in the latest messages.
+  if (conv?.lorebook?.entries?.length) {
+    report.lorebook = lorebookSelectionFor(conv, options.loreScanMessages || []);
+    const lore = lorebookSystemText(report.lorebook, resolveText);
+    if (lore) msgs.push({ role: 'system', content: lore });
+  }
   // Persona — who the user is. A saved empty per-chat persona is an intentional
   // blank, not a missing value; only fall back to the global default when absent.
   const fallbackPersona = prompts && typeof prompts.persona === 'string' ? prompts.persona : localStorage.getItem('llmPersona');
@@ -11223,7 +11251,9 @@ async function buildRequestMessages(conv = getActiveConv(), options = {}) {
   const selection = filterRequestHistory(candidateSource, options);
   const report = {};
   const retrievalQuery = retrievalQueryFor(selection.included.map(item => item.message), options.draftMessage);
-  const systemMessages = await buildSystemMessages(candidate, { retrievalQuery, report, prompts: options.prompts || null });
+  const loreScanMessages = selection.included.map(item => item.message);
+  if (options.draftMessage) loreScanMessages.push(options.draftMessage);
+  const systemMessages = await buildSystemMessages(candidate, { retrievalQuery, report, loreScanMessages, prompts: options.prompts || null });
   const toolPolicy = getToolPolicy(conv);
   if (toolPolicy.webSearch || toolPolicy.urlFetch) {
     systemMessages.push({ role: 'system', content: SOURCE_CITATION_INSTRUCTION });
@@ -11239,7 +11269,7 @@ async function buildRequestMessages(conv = getActiveConv(), options = {}) {
     draft = { message: options.draftMessage, index: source.length, normalized: { role: 'user', content: buildApiContent(options.draftMessage) } };
     requestMessages.push(draft.normalized);
   }
-  return { messages: requestMessages, systemMessages, included: selection.included, excluded: selection.excluded, draft, toolPolicy, commitInvalidation, projectFiles: report.projectFiles || null };
+  return { messages: requestMessages, systemMessages, included: selection.included, excluded: selection.excluded, draft, toolPolicy, commitInvalidation, projectFiles: report.projectFiles || null, lorebook: report.lorebook || null };
 }
 
 function getModelContextWindow(model = localStorage.getItem('llmModel') || '') {
@@ -11292,7 +11322,7 @@ async function buildContextPreviewData() {
   messages.forEach(message => collectAttachments(message, message.includeInContext !== false));
   if (draftMessage) collectAttachments(draftMessage, true);
   const memories = isTemporaryConversation(conv) ? { included: [], omitted: [] } : await getMemorySelection(conv);
-  return { memories, projectFiles: built.projectFiles, provider: getLlmProviderInfo(previewModel, detectApiFormat(previewModel), localStorage.getItem('llmProxyUrl') || ''), model: previewModel || '(not set)', systemMessages: built.systemMessages, included: built.included, excluded: all.excluded, draft: built.draft, attachments, stats };
+  return { memories, projectFiles: built.projectFiles, lorebook: built.lorebook, provider: getLlmProviderInfo(previewModel, detectApiFormat(previewModel), localStorage.getItem('llmProxyUrl') || ''), model: previewModel || '(not set)', systemMessages: built.systemMessages, included: built.included, excluded: all.excluded, draft: built.draft, attachments, stats };
 }
 
 function openContextSection(sectionId) {
@@ -11458,37 +11488,183 @@ function renderContextPanel() {
   if (!conv.messages.includes(contextSourceMessage)) contextSourceMessage = null;
   renderContextSources(contextSourceMessage);
 
-  const links = document.getElementById('contextForkLinks');
-  const forkStatus = document.getElementById('forksStatus');
-  if (links) {
-    links.replaceChildren();
-    let count = 0;
-    const addLink = (label, related) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'context-fork-link';
-      button.textContent = label + ': ' + (related.title || 'Untitled chat');
-      button.onclick = () => navigateForkConversation(related.id);
-      links.appendChild(button);
-      count++;
-    };
-    if (conv.parentConversationId) {
-      const parent = conversations.find(item => item.id === conv.parentConversationId);
-      if (parent) addLink('Parent', parent);
-      else {
-        const missing = document.createElement('p');
-        missing.textContent = 'Parent unavailable.';
-        links.appendChild(missing);
-      }
-    }
-    conversations.filter(item => item.parentConversationId === conv.id).forEach(child => addLink('Fork', child));
-    if (!links.children.length) {
-      const empty = document.createElement('p');
-      empty.textContent = 'No related conversations.';
-      links.appendChild(empty);
-    }
-    if (forkStatus) forkStatus.textContent = count ? String(count) : 'None';
+  renderBranchTree(conv);
+  renderBookmarksSection(conv);
+  renderLorebookSection(conv);
+}
+
+// The chat this one was forked from, followed up to the first chat in the family.
+function branchRootOf(conv) {
+  const seen = new Set([conv.id]);
+  let root = conv;
+  let missingParent = false;
+  while (root.parentConversationId) {
+    const parent = conversations.find(item => item.id === root.parentConversationId);
+    if (!parent) { missingParent = root === conv; break; }
+    if (seen.has(parent.id)) break;
+    seen.add(parent.id);
+    root = parent;
   }
+  return { root, missingParent };
+}
+
+function branchTreeRows(root) {
+  const children = new Map();
+  conversations.forEach(item => {
+    if (!item.parentConversationId) return;
+    if (!children.has(item.parentConversationId)) children.set(item.parentConversationId, []);
+    children.get(item.parentConversationId).push(item);
+  });
+  const rows = [];
+  const seen = new Set();
+  const visit = (node, depth) => {
+    if (seen.has(node.id) || rows.length >= 200) return;
+    seen.add(node.id);
+    rows.push({ conv: node, depth });
+    (children.get(node.id) || [])
+      .slice()
+      .sort((a, b) => (a.forkedAt || a.createdAt || 0) - (b.forkedAt || b.createdAt || 0))
+      .forEach(child => visit(child, depth + 1));
+  };
+  visit(root, 0);
+  return rows;
+}
+
+function renderBranchTree(conv) {
+  const links = document.getElementById('contextForkLinks');
+  const status = document.getElementById('forksStatus');
+  if (!links) return;
+  links.replaceChildren();
+  const { root, missingParent } = branchRootOf(conv);
+  const rows = branchTreeRows(root);
+  if (missingParent) {
+    const missing = document.createElement('p');
+    missing.textContent = 'This chat was branched from a chat that has been deleted.';
+    links.appendChild(missing);
+  }
+  if (rows.length < 2) {
+    if (status) status.textContent = 'None';
+    const empty = document.createElement('p');
+    empty.textContent = 'No branches yet. Choose Fork from here in a message\u2019s More menu to try a different direction without losing this one.';
+    links.appendChild(empty);
+    return;
+  }
+  if (status) status.textContent = String(rows.length);
+  const list = document.createElement('div');
+  list.className = 'branch-tree';
+  list.setAttribute('role', 'list');
+  rows.forEach(({ conv: item, depth }) => {
+    const row = document.createElement('div');
+    row.className = 'branch-row';
+    row.setAttribute('role', 'listitem');
+    row.style.setProperty('--branch-depth', String(Math.min(depth, 6)));
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'branch-link';
+    if (item.id === conv.id) button.setAttribute('aria-current', 'true');
+    const title = document.createElement('span');
+    title.className = 'branch-title';
+    title.textContent = item.title || 'Untitled chat';
+    const meta = document.createElement('span');
+    meta.className = 'branch-meta';
+    const count = item.messages?.length || 0;
+    meta.textContent = [
+      depth === 0 ? 'First chat' : Number.isInteger(item.forkMessageIndex) ? 'From message ' + (item.forkMessageIndex + 1) : 'Branch',
+      count + (count === 1 ? ' message' : ' messages'),
+      item.id === conv.id ? 'Open now' : '',
+      item.archivedAt ? 'Archived' : ''
+    ].filter(Boolean).join(' \u00b7 ');
+    button.append(title, meta);
+    button.onclick = () => { if (item.id !== conv.id) navigateForkConversation(item.id); };
+    row.appendChild(button);
+    list.appendChild(row);
+  });
+  links.appendChild(list);
+}
+
+function renderBookmarksSection(conv) {
+  const body = document.getElementById('contextBookmarksBody');
+  const status = document.getElementById('bookmarksStatus');
+  if (!body) return;
+  body.replaceChildren();
+  const marks = conv.messages.map((message, index) => ({ message, index })).filter(item => item.message.bookmark);
+  if (status) status.textContent = marks.length ? String(marks.length) : 'None';
+  if (!marks.length) {
+    const empty = document.createElement('p');
+    empty.textContent = 'No bookmarks yet. Choose Bookmark in a message\u2019s More menu to mark a moment you want to come back to or branch from.';
+    body.appendChild(empty);
+    return;
+  }
+  marks.forEach(({ message, index }) => {
+    const row = document.createElement('div');
+    row.className = 'bookmark-row';
+    const jump = document.createElement('button');
+    jump.type = 'button';
+    jump.className = 'bookmark-jump';
+    const label = document.createElement('span');
+    label.className = 'branch-title';
+    label.textContent = message.bookmark.label;
+    const meta = document.createElement('span');
+    meta.className = 'branch-meta';
+    meta.textContent = 'Message ' + (index + 1) + ' \u00b7 ' + (message.role === 'user' ? 'You' : 'Assistant');
+    jump.append(label, meta);
+    jump.setAttribute('aria-label', 'Go to ' + message.bookmark.label + ', message ' + (index + 1));
+    jump.onclick = () => jumpToMessage(index);
+    const branch = document.createElement('button');
+    branch.type = 'button';
+    branch.className = 'btn btn-secondary bookmark-branch';
+    branch.textContent = 'Branch';
+    branch.setAttribute('aria-label', 'Branch from ' + message.bookmark.label);
+    branch.disabled = sending || streaming;
+    branch.onclick = () => forkBranch(index);
+    row.append(jump, branch);
+    body.appendChild(row);
+  });
+}
+
+function jumpToMessage(index) {
+  const wrapper = document.querySelector('#messagesArea .msg-wrapper[data-msg-idx="' + index + '"]');
+  if (!wrapper) return;
+  if (window.innerWidth <= 1100) toggleContextPanel(false, false);
+  wrapper.scrollIntoView({ block: 'center', behavior: getScrollBehavior() });
+  wrapper.focus({ preventScroll: true });
+  wrapper.classList.remove('msg-flash');
+  void wrapper.offsetWidth;
+  wrapper.classList.add('msg-flash');
+  setTimeout(() => wrapper.classList.remove('msg-flash'), 1600);
+}
+
+function defaultBookmarkLabel(message) {
+  const words = getMsgText(message).replace(/\s+/g, ' ').trim().split(' ').slice(0, 6).join(' ');
+  return words.slice(0, 60) || 'Bookmark';
+}
+
+function bookmarkMessage(index, rename = false) {
+  const conv = getActiveConv();
+  const message = messages[index];
+  if (!conv || !message || readOnlyShare) return;
+  const current = message.bookmark?.label || defaultBookmarkLabel(message);
+  const input = prompt(rename ? 'Rename this bookmark' : 'Name this bookmark', current);
+  if (input == null || messages[index] !== message) return;
+  const label = input.trim().slice(0, BOOKMARK_LABEL_LIMIT) || current;
+  message.bookmark = { label, createdAt: message.bookmark?.createdAt || Date.now() };
+  conv.updatedAt = Date.now();
+  saveConversations();
+  renderMessages();
+  renderContextPanel();
+  announce(rename ? 'Bookmark renamed.' : 'Bookmarked as ' + label + '.');
+}
+
+function removeBookmark(index) {
+  const conv = getActiveConv();
+  const message = messages[index];
+  if (!conv || !message?.bookmark || readOnlyShare) return;
+  delete message.bookmark;
+  conv.updatedAt = Date.now();
+  saveConversations();
+  renderMessages();
+  renderContextPanel();
+  announce('Bookmark removed.');
 }
 
 async function openContextPreview() {
@@ -11537,6 +11713,10 @@ async function openContextPreview() {
           : [files.query ? 'No passages matched the latest message.' : 'Passages are chosen once there is a message to match.']);
       }
       if (files.excluded.length) addSection('Project files excluded', files.excluded.map(doc => doc.name));
+    }
+    if (data.lorebook) {
+      addSection('Lorebook entries sent', data.lorebook.included.map(({ entry, reason }) => loreEntryTitle(entry) + ' · ' + reason + '\n' + entry.content.trim()));
+      if (data.lorebook.omitted.length) addSection('Lorebook entries left out (allowance full)', data.lorebook.omitted.map(({ entry, reason }) => loreEntryTitle(entry) + ' · ' + reason));
     }
     addSection('Attachments', data.attachments.map(att => att.name + ' · ' + (att.image ? 'image data redacted' : att.chars.toLocaleString() + ' extracted characters') + (att.included ? ' · included' : ' · excluded')));
     if (data.stats.contextWindow && data.stats.includedTokens + data.stats.maxOutput > data.stats.contextWindow) {
@@ -11714,7 +11894,7 @@ function renderMessages({ preserveScroll = false } = {}) {
     wrapper.dataset.msgIdx = idx;
     wrapper.setAttribute('role', 'article');
     wrapper.setAttribute('tabindex', '0');
-    wrapper.setAttribute('aria-label', (msg.role === 'user' ? 'User message' : 'Assistant message') + (msg.includeInContext === false ? ', excluded from context' : ''));
+    wrapper.setAttribute('aria-label', (msg.role === 'user' ? 'User message' : 'Assistant message') + (msg.includeInContext === false ? ', excluded from context' : '') + (msg.bookmark ? ', bookmarked: ' + msg.bookmark.label : ''));
     // ponytail: keyboard selection mirrors the click toggle, with announced state.
     wrapper.addEventListener('keydown', (e) => {
       if (!_selectMode || e.target !== wrapper) return;
@@ -11731,6 +11911,12 @@ function renderMessages({ preserveScroll = false } = {}) {
     selection.setAttribute('aria-label', 'Select ' + (msg.role === 'user' ? 'user' : 'assistant') + ' message ' + (idx + 1) + ' for screenshot');
     selection.onchange = () => { _justEnteredSelectMode = false; toggleMsgSelect(idx); };
     wrapper.appendChild(selection);
+    if (msg.bookmark) {
+      const mark = document.createElement('div');
+      mark.className = 'msg-bookmark';
+      mark.textContent = 'Bookmark: ' + msg.bookmark.label;
+      wrapper.appendChild(mark);
+    }
 
     const bubble = document.createElement('div');
     bubble.className = 'msg-bubble ' + msg.role;
@@ -11853,6 +12039,12 @@ function renderMessages({ preserveScroll = false } = {}) {
     });
     if (msg.role === 'user') secondaryActions.push({ label: 'Edit and resend', action: () => { msg._editing = true; renderMessages(); } });
     secondaryActions.push({ label: 'Fork from here', action: () => forkBranch(idx) });
+    if (msg.bookmark) {
+      secondaryActions.push({ label: 'Rename bookmark', action: () => bookmarkMessage(idx, true) });
+      secondaryActions.push({ label: 'Remove bookmark', action: () => removeBookmark(idx) });
+    } else {
+      secondaryActions.push({ label: 'Bookmark', action: () => bookmarkMessage(idx) });
+    }
     if (msg.role === 'assistant' && msg.swipes?.length > 1) {
       secondaryActions.push({
         label: 'Delete this response version',
@@ -11891,9 +12083,16 @@ function renderMessages({ preserveScroll = false } = {}) {
           conv.docs = conv.docs.filter(doc => doc.messageIndex !== idx);
           conv.docs.forEach(doc => { if (doc.messageIndex > idx) doc.messageIndex--; });
         }
+        // Outputs stay, but forget a source message that no longer exists.
+        getConversationOutputs(conv).forEach(output => {
+          if (!Number.isInteger(output.sourceMessageIndex)) return;
+          if (output.sourceMessageIndex === idx) delete output.sourceMessageIndex;
+          else if (output.sourceMessageIndex > idx) output.sourceMessageIndex--;
+        });
         if (conv) conv.updatedAt = Date.now();
         saveConversations();
         renderMessages();
+        renderContextPanel();
         updateTokenInfo();
       }
     });
@@ -17447,6 +17646,9 @@ async function importCharacterCard(event) {
     });
     const charName = card.name || 'Character';
     const charDescription = buildCharaDescription(card);
+    // The card's character_book becomes the chat's editable lorebook instead of a second copy.
+    const cardLorebook = card.character_book ? lorebookFromImport({ character_book: card.character_book }, charName) : null;
+    delete card.character_book;
 
     // Create a new conversation
     const conv = {
@@ -17463,6 +17665,7 @@ async function importCharacterCard(event) {
     if (card.system_prompt) conv.characterSystemPrompt = card.system_prompt;
 
     if (avatarDataUrl) conv.characterAvatar = avatarDataUrl;
+    if (cardLorebook) conv.lorebook = cardLorebook;
 
     // Add first message if present
     if (card.first_mes) {
@@ -17487,7 +17690,8 @@ async function importCharacterCard(event) {
     updateTokenInfo();
     updateCharacterUI();
 
-    showToast('Character imported: ' + charName, 'success');
+    const loreCount = cardLorebook?.entries.length || 0;
+    showToast('Character imported: ' + charName + (loreCount ? ', with ' + loreCount + (loreCount === 1 ? ' lorebook entry' : ' lorebook entries') : ''), 'success');
     if (window.innerWidth <= 768) toggleSidebar();
   } catch (err) {
     showToast('Error importing character: ' + err.message, 'error');
@@ -17545,6 +17749,627 @@ function showCharacterInfo() {
   popup.innerHTML = html;
   const close = openTransientDialog(overlay, popup, popup.querySelector('[data-close-character]'));
   popup.querySelector('[data-close-character]').onclick = close;
+}
+
+// ============================================
+// Lorebook
+// ============================================
+const LORE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/;
+const loreKeyPatternCache = new Map();
+let lorebookConvId = null;
+let lorebookEditingId = null;
+
+function clampInt(value, min, max, fallback) {
+  if (value === '' || value == null) return fallback;
+  const number = Math.round(Number(value));
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(max, Math.max(min, number));
+}
+
+function genLoreEntryId() {
+  return 'lore_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function normalizeLoreKeys(raw) {
+  const list = Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split(',') : [];
+  const seen = new Set();
+  const keys = [];
+  list.forEach(item => {
+    if (typeof item !== 'string' && typeof item !== 'number') return;
+    const key = String(item).trim().slice(0, 100);
+    const folded = key.toLowerCase();
+    if (!key || seen.has(folded) || keys.length >= LOREBOOK_KEY_LIMIT) return;
+    seen.add(folded);
+    keys.push(key);
+  });
+  return keys;
+}
+
+function normalizeLoreEntry(raw, seen = new Set()) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const content = typeof raw.content === 'string' ? raw.content.slice(0, LOREBOOK_ENTRY_CHARS) : '';
+  if (!content.trim()) return null;
+  let id = typeof raw.id === 'string' && LORE_ID_RE.test(raw.id) ? raw.id : genLoreEntryId();
+  while (seen.has(id)) id = genLoreEntryId();
+  seen.add(id);
+  const entry = {
+    id,
+    name: typeof raw.name === 'string' ? raw.name.trim().slice(0, 120) : '',
+    keys: normalizeLoreKeys(raw.keys),
+    content,
+    priority: clampInt(raw.priority, -1000, 1000, 0)
+  };
+  if (raw.enabled === false) entry.enabled = false;
+  if (raw.constant === true) entry.constant = true;
+  if (raw.caseSensitive === true) entry.caseSensitive = true;
+  return entry;
+}
+
+function normalizeLorebook(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const seen = new Set();
+  const entries = (Array.isArray(raw.entries) ? raw.entries : [])
+    .map(entry => normalizeLoreEntry(entry, seen))
+    .filter(Boolean)
+    .slice(0, LOREBOOK_ENTRY_LIMIT);
+  return {
+    name: typeof raw.name === 'string' ? raw.name.trim().slice(0, 120) : '',
+    scanDepth: clampInt(raw.scanDepth, 1, 50, LOREBOOK_DEFAULT_SCAN_DEPTH),
+    budget: clampInt(raw.budget, 500, 20000, LOREBOOK_DEFAULT_BUDGET),
+    entries
+  };
+}
+
+// Reads Synapse exports, character cards with a character_book, and SillyTavern world info files.
+function lorebookFromImport(raw, fallbackName = '') {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  if (raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data) && !raw.entries) {
+    return lorebookFromImport(raw.data, fallbackName || raw.data.name);
+  }
+  if (raw.character_book && typeof raw.character_book === 'object') {
+    return lorebookFromImport(raw.character_book, fallbackName || (typeof raw.name === 'string' ? raw.name : ''));
+  }
+  const source = Array.isArray(raw.entries) ? raw.entries
+    : raw.entries && typeof raw.entries === 'object' ? Object.values(raw.entries) : null;
+  if (!source) return null;
+  const firstNumber = (...values) => values.find(value => value !== '' && value != null && Number.isFinite(Number(value)));
+  const entries = source.map(item => {
+    if (!item || typeof item !== 'object') return null;
+    const name = typeof item.name === 'string' && item.name.trim() ? item.name
+      : typeof item.comment === 'string' ? item.comment : '';
+    return {
+      id: typeof item.id === 'string' ? item.id : undefined,
+      name,
+      keys: normalizeLoreKeys(item.keys ?? item.key ?? []),
+      content: typeof item.content === 'string' ? item.content : '',
+      priority: firstNumber(item.priority, item.order, item.insertion_order) ?? 0,
+      enabled: item.enabled === false || item.disable === true ? false : undefined,
+      constant: item.constant === true,
+      caseSensitive: item.caseSensitive === true || item.case_sensitive === true
+    };
+  });
+  const tokenBudget = firstNumber(raw.token_budget);
+  const book = normalizeLorebook({
+    name: typeof raw.name === 'string' && raw.name.trim() ? raw.name : fallbackName,
+    scanDepth: firstNumber(raw.scanDepth, raw.scan_depth),
+    budget: raw.budget ?? (tokenBudget != null ? Number(tokenBudget) * 4 : undefined),
+    entries
+  });
+  return book && book.entries.length ? book : null;
+}
+
+// Whole-word matching, except in scripts that do not separate words with spaces.
+function loreKeyMatches(key, text, caseSensitive = false) {
+  if (!key || !text) return false;
+  const needle = caseSensitive ? key : key.toLowerCase();
+  const haystack = caseSensitive ? text : text.toLowerCase();
+  if (!haystack.includes(needle)) return false;
+  if (/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]/u.test(needle)) return true;
+  let pattern = loreKeyPatternCache.get(needle);
+  if (!pattern) {
+    const escaped = needle.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+    const start = /^[\p{L}\p{N}]/u.test(needle) ? '(?<![\\p{L}\\p{N}])' : '';
+    const end = /[\p{L}\p{N}]$/u.test(needle) ? '(?![\\p{L}\\p{N}])' : '';
+    pattern = new RegExp(start + escaped + end, 'u');
+    if (loreKeyPatternCache.size > 500) loreKeyPatternCache.clear();
+    loreKeyPatternCache.set(needle, pattern);
+  }
+  return pattern.test(haystack);
+}
+
+function loreScanText(book, scanMessages) {
+  const list = Array.isArray(scanMessages) ? scanMessages : [];
+  return list.slice(-(book?.scanDepth || LOREBOOK_DEFAULT_SCAN_DEPTH)).map(message => getMsgText(message) || '').join('\n');
+}
+
+function selectLoreEntries(book, scanText) {
+  const candidates = [];
+  (book?.entries || []).forEach((entry, order) => {
+    if (entry.enabled === false) return;
+    let reason = '';
+    if (entry.constant) reason = 'Always on';
+    else {
+      const key = entry.keys.find(item => loreKeyMatches(item, scanText, entry.caseSensitive === true));
+      if (key) reason = 'Matched \u201c' + key + '\u201d';
+    }
+    if (reason) candidates.push({ entry, reason, order });
+  });
+  candidates.sort((a, b) => (b.entry.constant === true) - (a.entry.constant === true) || b.entry.priority - a.entry.priority || a.order - b.order);
+  const budget = book?.budget || LOREBOOK_DEFAULT_BUDGET;
+  const included = [];
+  const omitted = [];
+  let used = 0;
+  candidates.forEach(item => {
+    const size = item.entry.content.length;
+    if (used + size <= budget) {
+      included.push(item);
+      used += size;
+    } else {
+      omitted.push(item);
+    }
+  });
+  return { included, omitted, used, budget, scanned: Boolean(scanText) };
+}
+
+function loreEntryTitle(entry) {
+  return entry.name || entry.keys[0] || (entry.constant ? 'Always-on entry' : 'Untitled entry');
+}
+
+function lorebookSystemText(selection, resolveText = value => value) {
+  if (!selection?.included.length) return '';
+  return 'Lore notes that apply to this part of the conversation:\n\n' +
+    selection.included.map(({ entry }) => '[' + loreEntryTitle(entry) + ']\n' + resolveText(entry.content.trim())).join('\n\n');
+}
+
+function lorebookSelectionFor(conv, scanMessages) {
+  if (!conv?.lorebook) return { included: [], omitted: [], used: 0, budget: 0, scanned: false };
+  return selectLoreEntries(conv.lorebook, loreScanText(conv.lorebook, scanMessages));
+}
+
+// The messages Send would scan right now: included history plus the composer draft.
+function pendingLoreScanMessages(conv) {
+  if (!conv) return [];
+  const list = filterRequestHistory(conv.messages).included.map(item => item.message);
+  if (conv.id === activeConvId) {
+    const draft = buildComposerMessage();
+    if (draft) list.push(draft);
+  }
+  return list;
+}
+
+function lorebookConversation() {
+  return conversations.find(item => item.id === lorebookConvId) || null;
+}
+
+function ensureLorebook(conv) {
+  if (!conv.lorebook) {
+    conv.lorebook = normalizeLorebook({
+      name: document.getElementById('lorebookName')?.value || '',
+      scanDepth: document.getElementById('lorebookScanDepth')?.value,
+      budget: document.getElementById('lorebookBudget')?.value,
+      entries: []
+    });
+  }
+  return conv.lorebook;
+}
+
+function fillLorebookSettings(book) {
+  const name = document.getElementById('lorebookName');
+  const depth = document.getElementById('lorebookScanDepth');
+  const budget = document.getElementById('lorebookBudget');
+  if (name) name.value = book?.name || '';
+  if (depth) depth.value = String(book?.scanDepth || LOREBOOK_DEFAULT_SCAN_DEPTH);
+  if (budget) budget.value = String(book?.budget || LOREBOOK_DEFAULT_BUDGET);
+}
+
+function openLorebook() {
+  const conv = getActiveConv();
+  if (!conv || readOnlyShare) return;
+  lorebookConvId = conv.id;
+  lorebookEditingId = null;
+  // Chats imported before lorebooks existed still keep the book inside the character card.
+  if (!conv.lorebook && conv.characterCard?.character_book) {
+    const fromCard = lorebookFromImport({ character_book: conv.characterCard.character_book }, conv.characterCard.name || conv.title || '');
+    if (fromCard) {
+      conv.lorebook = fromCard;
+      delete conv.characterCard.character_book;
+      saveLorebookChange(conv, 'Loaded ' + fromCard.entries.length + ' lorebook entries from the character card.');
+    }
+  }
+  fillLorebookSettings(conv.lorebook);
+  resetLoreAddForm();
+  const hasEntries = Boolean(conv.lorebook?.entries.length);
+  const add = document.getElementById('lorebookAddSection');
+  if (add) add.open = !hasEntries;
+  renderLorebookManager();
+  openModal('lorebookModal', hasEntries ? '#lorebookName' : '#lorebookAddForm input');
+}
+
+async function saveLorebookChange(conv, message) {
+  conv.updatedAt = Date.now();
+  if (conv.id === activeConvId) await saveConversationImmediately();
+  else saveConversations();
+  renderLorebookManager();
+  if (conv.id === activeConvId) {
+    renderContextPanel();
+    updateTokenInfo();
+  }
+  if (message) announce(message);
+}
+
+async function updateLorebookSettings() {
+  const conv = lorebookConversation();
+  if (!conv) return;
+  const created = !conv.lorebook;
+  const book = ensureLorebook(conv);
+  const next = normalizeLorebook({
+    name: document.getElementById('lorebookName').value,
+    scanDepth: document.getElementById('lorebookScanDepth').value,
+    budget: document.getElementById('lorebookBudget').value
+  });
+  fillLorebookSettings(next);
+  if (!created && next.name === book.name && next.scanDepth === book.scanDepth && next.budget === book.budget) return;
+  Object.assign(book, { name: next.name, scanDepth: next.scanDepth, budget: next.budget });
+  await saveLorebookChange(conv, 'Lorebook settings saved.');
+}
+
+function buildLoreEntryForm(entry, { submitLabel, onSubmit, onCancel }) {
+  const form = document.createElement('div');
+  form.className = 'lore-entry-form';
+  const field = (text, control, extraClass = '') => {
+    const label = document.createElement('label');
+    label.className = 'lorebook-field' + (extraClass ? ' ' + extraClass : '');
+    label.append(text, control);
+    return label;
+  };
+  const name = document.createElement('input');
+  name.type = 'text';
+  name.maxLength = 120;
+  name.placeholder = 'Shown in lists and previews';
+  name.value = entry?.name || '';
+  const keys = document.createElement('input');
+  keys.type = 'text';
+  keys.placeholder = 'Mira, the lighthouse';
+  keys.value = entry?.keys.join(', ') || '';
+  const content = document.createElement('textarea');
+  content.rows = 4;
+  content.maxLength = LOREBOOK_ENTRY_CHARS;
+  content.value = entry?.content || '';
+  const priority = document.createElement('input');
+  priority.type = 'number';
+  priority.min = '-1000';
+  priority.max = '1000';
+  priority.step = '1';
+  priority.value = String(entry?.priority ?? 0);
+  const toggle = (text, checked) => {
+    const label = document.createElement('label');
+    label.className = 'toggle-row';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = checked;
+    label.append(input, ' ' + text);
+    return { label, input };
+  };
+  const constant = toggle('Always on: send with every message', entry?.constant === true);
+  const caseSensitive = toggle('Match capital letters exactly', entry?.caseSensitive === true);
+  const error = document.createElement('p');
+  error.className = 'output-error';
+  error.setAttribute('role', 'alert');
+  error.hidden = true;
+  const showError = (message, control) => {
+    [content, keys].forEach(item => item.removeAttribute('aria-invalid'));
+    error.textContent = message;
+    error.hidden = false;
+    control.setAttribute('aria-invalid', 'true');
+    control.focus();
+  };
+  const actions = document.createElement('div');
+  actions.className = 'memory-row-actions';
+  const submit = document.createElement('button');
+  submit.type = 'button';
+  submit.className = 'btn btn-primary';
+  submit.textContent = submitLabel;
+  submit.onclick = async () => {
+    const draft = {
+      name: name.value,
+      keys: normalizeLoreKeys(keys.value),
+      content: content.value,
+      priority: priority.value,
+      constant: constant.input.checked,
+      caseSensitive: caseSensitive.input.checked
+    };
+    if (!draft.content.trim()) return showError('Write what the entry should tell the model.', content);
+    if (!draft.keys.length && !draft.constant) return showError('Add at least one keyword, or turn on Always on.', keys);
+    submit.disabled = true;
+    try { await onSubmit(draft); } finally { submit.disabled = false; }
+  };
+  actions.appendChild(submit);
+  if (onCancel) {
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'btn btn-secondary';
+    cancel.textContent = 'Cancel';
+    cancel.onclick = onCancel;
+    actions.appendChild(cancel);
+  }
+  const settings = document.createElement('div');
+  settings.className = 'lorebook-settings';
+  settings.append(field('Name', name), field('Priority', priority, 'lorebook-field-small'));
+  form.append(settings, field('Keywords, separated by commas', keys), field('Content', content), constant.label, caseSensitive.label, error, actions);
+  return form;
+}
+
+function resetLoreAddForm() {
+  const host = document.getElementById('lorebookAddForm');
+  if (host) host.replaceChildren(buildLoreEntryForm(null, { submitLabel: 'Add entry', onSubmit: addLoreEntry }));
+}
+
+async function addLoreEntry(draft) {
+  const conv = lorebookConversation();
+  if (!conv) return;
+  const book = ensureLorebook(conv);
+  if (book.entries.length >= LOREBOOK_ENTRY_LIMIT) {
+    showToast('A lorebook can hold up to ' + LOREBOOK_ENTRY_LIMIT + ' entries.', 'error');
+    return;
+  }
+  const entry = normalizeLoreEntry({ ...draft, id: genLoreEntryId() }, new Set(book.entries.map(item => item.id)));
+  if (!entry) return;
+  book.entries.push(entry);
+  resetLoreAddForm();
+  await saveLorebookChange(conv, 'Entry added.');
+  document.querySelector('#lorebookAddForm input')?.focus();
+}
+
+async function updateLoreEntry(id, draft) {
+  const conv = lorebookConversation();
+  const book = conv?.lorebook;
+  const index = book ? book.entries.findIndex(item => item.id === id) : -1;
+  if (index < 0) return;
+  const others = new Set(book.entries.filter(item => item.id !== id).map(item => item.id));
+  const entry = normalizeLoreEntry({ ...draft, id, enabled: book.entries[index].enabled }, others);
+  if (!entry) return;
+  book.entries[index] = entry;
+  lorebookEditingId = null;
+  await saveLorebookChange(conv, 'Entry saved.');
+  document.querySelector('#lorebookList [data-lore-id="' + id + '"] button')?.focus();
+}
+
+async function toggleLoreEntry(id) {
+  const conv = lorebookConversation();
+  const entry = conv?.lorebook?.entries.find(item => item.id === id);
+  if (!entry) return;
+  if (entry.enabled === false) delete entry.enabled;
+  else entry.enabled = false;
+  await saveLorebookChange(conv, entry.enabled === false ? 'Entry turned off.' : 'Entry turned on.');
+  document.querySelector('#lorebookList [data-lore-id="' + id + '"] [data-lore-toggle]')?.focus();
+}
+
+async function deleteLoreEntry(id) {
+  const conv = lorebookConversation();
+  const book = conv?.lorebook;
+  const entry = book?.entries.find(item => item.id === id);
+  if (!entry || !confirm('Delete "' + loreEntryTitle(entry) + '"?')) return;
+  book.entries = book.entries.filter(item => item.id !== id);
+  await saveLorebookChange(conv, 'Entry deleted.');
+  document.getElementById('lorebookName')?.focus();
+}
+
+function renderLoreRow(entry, state) {
+  const row = document.createElement('div');
+  row.className = 'prompt-entry memory-row lore-row' + (entry.enabled === false ? ' lore-row-off' : '');
+  row.dataset.loreId = entry.id;
+  const title = loreEntryTitle(entry);
+  const text = document.createElement('div');
+  text.className = 'memory-text';
+  const heading = document.createElement('strong');
+  heading.textContent = title;
+  const preview = document.createElement('span');
+  preview.className = 'lore-preview';
+  const body = entry.content.trim().replace(/\s+/g, ' ');
+  preview.textContent = body.length > 200 ? body.slice(0, 200) + '\u2026' : body;
+  text.append(heading, preview);
+  const meta = document.createElement('div');
+  meta.className = 'memory-meta';
+  meta.textContent = [
+    entry.constant ? 'Always on' : entry.keys.length ? 'Keywords: ' + entry.keys.join(', ') : 'No keywords',
+    'Priority ' + entry.priority,
+    entry.enabled === false ? 'Turned off' : state || 'Not sent next'
+  ].join(' \u00b7 ');
+  const actions = document.createElement('div');
+  actions.className = 'memory-row-actions';
+  const button = (label, aria, onClick, className = 'btn btn-secondary') => {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = className;
+    el.textContent = label;
+    el.setAttribute('aria-label', aria);
+    el.onclick = onClick;
+    actions.appendChild(el);
+    return el;
+  };
+  button('Edit', 'Edit ' + title, () => {
+    lorebookEditingId = entry.id;
+    renderLorebookManager();
+    document.querySelector('#lorebookList [data-lore-id="' + entry.id + '"] input')?.focus();
+  });
+  button(entry.enabled === false ? 'Turn on' : 'Turn off', (entry.enabled === false ? 'Turn on ' : 'Turn off ') + title, () => toggleLoreEntry(entry.id))
+    .dataset.loreToggle = 'true';
+  button('Delete', 'Delete ' + title, () => deleteLoreEntry(entry.id), 'btn btn-danger');
+  row.append(text, meta, actions);
+  return row;
+}
+
+function renderLorebookManager() {
+  const list = document.getElementById('lorebookList');
+  const summary = document.getElementById('lorebookSummary');
+  if (!list || !summary) return;
+  const conv = lorebookConversation();
+  const book = conv?.lorebook || null;
+  const entries = book?.entries || [];
+  const selection = book ? selectLoreEntries(book, loreScanText(book, pendingLoreScanMessages(conv))) : null;
+  const states = new Map();
+  selection?.included.forEach(item => states.set(item.entry.id, 'Sent next: ' + item.reason));
+  selection?.omitted.forEach(item => states.set(item.entry.id, 'Left out: allowance full'));
+  if (entries.length) {
+    summary.textContent = selection.included.length + ' of ' + entries.length + (entries.length === 1 ? ' entry applies' : ' entries apply') +
+      ' to the next message.' +
+      (selection.omitted.length ? ' ' + selection.omitted.length + ' more matched but did not fit the allowance.' : '');
+  } else {
+    summary.textContent = 'No entries yet. Add one below, or import a lorebook or character card.';
+  }
+  list.replaceChildren(...entries.map(entry => {
+    if (entry.id !== lorebookEditingId) return renderLoreRow(entry, states.get(entry.id));
+    const row = document.createElement('div');
+    row.className = 'prompt-entry memory-row lore-row';
+    row.dataset.loreId = entry.id;
+    row.appendChild(buildLoreEntryForm(entry, {
+      submitLabel: 'Save entry',
+      onSubmit: draft => updateLoreEntry(entry.id, draft),
+      onCancel: () => {
+        lorebookEditingId = null;
+        renderLorebookManager();
+        document.querySelector('#lorebookList [data-lore-id="' + entry.id + '"] button')?.focus();
+      }
+    }));
+    return row;
+  }));
+  const deleteBtn = document.getElementById('lorebookDeleteBtn');
+  if (deleteBtn) deleteBtn.hidden = !book;
+  const exportBtn = document.getElementById('lorebookExportBtn');
+  if (exportBtn) exportBtn.disabled = !entries.length;
+}
+
+async function importLorebookFile(event) {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  const conv = lorebookConversation();
+  if (!file || !conv || readOnlyShare) return;
+  try {
+    const raw = file.name.toLowerCase().endsWith('.png')
+      ? extractCharaFromPNG(await file.arrayBuffer())
+      : JSON.parse(await file.text());
+    const imported = lorebookFromImport(raw, file.name.replace(/\.[^.]+$/, ''));
+    if (!imported) {
+      showToast('No lorebook entries found in ' + file.name + '.', 'error');
+      return;
+    }
+    const hadEntries = Boolean(conv.lorebook?.entries.length);
+    const book = ensureLorebook(conv);
+    const room = LOREBOOK_ENTRY_LIMIT - book.entries.length;
+    if (room <= 0) {
+      showToast('A lorebook can hold up to ' + LOREBOOK_ENTRY_LIMIT + ' entries.', 'error');
+      return;
+    }
+    const seen = new Set(book.entries.map(item => item.id));
+    const added = imported.entries.slice(0, room).map(entry => normalizeLoreEntry({ ...entry, id: genLoreEntryId() }, seen)).filter(Boolean);
+    book.entries.push(...added);
+    if (!hadEntries) {
+      book.name = book.name || imported.name;
+      book.scanDepth = imported.scanDepth;
+      book.budget = imported.budget;
+      fillLorebookSettings(book);
+    }
+    const skipped = imported.entries.length - added.length;
+    await saveLorebookChange(conv, '');
+    showToast('Added ' + added.length + (added.length === 1 ? ' entry' : ' entries') + ' from ' + file.name + '.' +
+      (skipped ? ' ' + skipped + ' did not fit; a lorebook holds up to ' + LOREBOOK_ENTRY_LIMIT + '.' : ''), 'success');
+  } catch (err) {
+    showToast('Could not import the lorebook: ' + (err?.message || err), 'error');
+  }
+}
+
+function exportLorebook() {
+  const conv = lorebookConversation();
+  const book = conv?.lorebook;
+  if (!book?.entries.length) return;
+  const name = book.name || conv.title || 'Lorebook';
+  const data = {
+    name,
+    scan_depth: book.scanDepth,
+    token_budget: Math.ceil(book.budget / 4),
+    extensions: {},
+    entries: book.entries.map((entry, index) => ({
+      id: index + 1,
+      keys: entry.keys,
+      content: entry.content,
+      extensions: {},
+      enabled: entry.enabled !== false,
+      insertion_order: entry.priority,
+      priority: entry.priority,
+      case_sensitive: entry.caseSensitive === true,
+      constant: entry.constant === true,
+      name: entry.name,
+      comment: entry.name
+    }))
+  };
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+  link.download = (name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'lorebook') + '-lorebook.json';
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+async function deleteLorebook() {
+  const conv = lorebookConversation();
+  if (!conv?.lorebook || readOnlyShare) return;
+  const count = conv.lorebook.entries.length;
+  if (!confirm('Delete this chat\u2019s lorebook' + (count ? ' and its ' + count + (count === 1 ? ' entry' : ' entries') : '') + '?')) return;
+  delete conv.lorebook;
+  lorebookEditingId = null;
+  fillLorebookSettings(null);
+  resetLoreAddForm();
+  const add = document.getElementById('lorebookAddSection');
+  if (add) add.open = true;
+  await saveLorebookChange(conv, 'Lorebook deleted.');
+  document.getElementById('lorebookName')?.focus();
+}
+
+function renderLorebookSection(conv) {
+  const body = document.getElementById('contextLorebookBody');
+  const status = document.getElementById('lorebookStatus');
+  if (!body || !conv) return;
+  body.replaceChildren();
+  const book = conv.lorebook;
+  const entries = book?.entries || [];
+  if (entries.length) {
+    const selection = selectLoreEntries(book, loreScanText(book, pendingLoreScanMessages(conv)));
+    if (status) status.textContent = selection.included.length + ' of ' + entries.length;
+    const intro = document.createElement('p');
+    intro.textContent = selection.included.length ? 'Sent with the next message:' : 'No entries match the latest messages.';
+    body.appendChild(intro);
+    selection.included.forEach(({ entry, reason }) => {
+      const row = document.createElement('div');
+      row.className = 'context-file-row';
+      const mode = document.createElement('span');
+      mode.className = 'context-file-mode';
+      mode.textContent = reason;
+      row.append(loreEntryTitle(entry), ' ', mode);
+      body.appendChild(row);
+    });
+    if (selection.omitted.length) {
+      const omitted = document.createElement('p');
+      omitted.textContent = selection.omitted.length + ' more matched but did not fit the allowance.';
+      body.appendChild(omitted);
+    }
+  } else {
+    if (status) status.textContent = 'None';
+    const empty = document.createElement('p');
+    empty.textContent = 'Lorebook entries add background details to the request when their keywords come up in the chat.';
+    body.appendChild(empty);
+  }
+  const manage = document.createElement('button');
+  manage.type = 'button';
+  manage.className = 'btn btn-secondary context-wide-action';
+  manage.textContent = entries.length ? 'Manage lorebook' : 'Create lorebook';
+  manage.disabled = readOnlyShare;
+  manage.onclick = () => openLorebook();
+  body.appendChild(manage);
+}
+
+function initLorebook() {
+  ['lorebookName', 'lorebookScanDepth', 'lorebookBudget'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', () => { updateLorebookSettings(); });
+  });
 }
 
 // ============================================
@@ -17632,6 +18457,10 @@ function toggleVoice() {
 // Window bridge for inline handlers and external hooks
 const __windowBridge = {
   toggleComposerExpanded,
+  openLorebook,
+  importLorebookFile,
+  exportLorebook,
+  deleteLorebook,
   updateSelectedPreset,
   openPromptTests,
   addPromptTest,

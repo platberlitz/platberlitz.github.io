@@ -452,6 +452,8 @@ svg.icon {
   position: relative;
 }
 .toolbar-btn:hover { color: var(--text-primary); background: var(--hover); }
+/* The only toolbar button with a word instead of an icon: size it to the word. */
+.toolbar-btn.context-toggle { width: auto; padding: 0 10px; font-size: .9em; white-space: nowrap; }
 .toolbar-btn:active { transform: translateY(1px); }
 
 /* Toolbar more menu */
@@ -2409,6 +2411,36 @@ body.panel-resizing { cursor: col-resize; user-select: none; }
 .context-fork-link { width: 100%; padding: 8px 9px; overflow: hidden; border: 1px solid var(--card-border); border-radius: 6px; background: var(--hover); color: var(--text-primary); font: inherit; font-size: .95em; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .context-fork-link:hover { border-color: var(--accent); }
 
+/* Branches and bookmarks reuse the output list item surface. */
+.branch-tree { display: grid; gap: 6px; }
+.branch-row { padding-left: calc(var(--branch-depth, 0) * 14px); }
+.branch-row + .branch-row { position: relative; }
+.branch-link, .bookmark-jump { width: 100%; min-width: 0; min-height: 40px; padding: 8px 9px; display: grid; gap: 2px; border: 1px solid var(--card-border); border-radius: 6px; background: var(--hover); color: var(--text-primary); font: inherit; font-size: .95em; text-align: left; cursor: pointer; }
+.branch-link:hover, .bookmark-jump:hover { border-color: var(--accent); }
+.branch-link[aria-current="true"] { border-color: var(--accent); cursor: default; }
+.branch-title { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.branch-meta { color: var(--text-secondary); font-size: .9em; }
+.bookmark-row { display: flex; align-items: stretch; gap: 6px; }
+.bookmark-row + .bookmark-row { margin-top: 6px; }
+.bookmark-jump { flex: 1; }
+.context-panel .bookmark-branch { flex: 0 0 auto; }
+.msg-bookmark { align-self: flex-start; margin: 0 0 4px; padding: 2px 8px; border: 1px solid var(--accent); border-radius: 999px; color: var(--accent); font-size: .75em; font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-wrapper.user .msg-bookmark { align-self: flex-end; }
+.msg-wrapper.msg-flash .msg-bubble { box-shadow: 0 0 0 2px var(--accent); transition: box-shadow .3s ease; }
+
+/* Lorebook manager reuses the memory rows. */
+.lorebook-modal { max-width: 720px; }
+.lorebook-settings { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.modal .lorebook-field { flex: 1 1 200px; min-width: 0; display: grid; gap: 4px; margin: 0; color: var(--text-secondary); font-size: .85em; }
+.modal .lorebook-field-small { flex: 0 1 150px; }
+.modal .lorebook-field input, .modal .lorebook-field textarea { margin-bottom: 0; }
+.lore-entry-form { display: grid; gap: 10px; }
+.lore-entry-form .lorebook-settings { margin-top: 0; }
+.lore-entry-form .toggle-row { margin: 0; }
+.lore-entry-form .output-error { margin: 0; }
+.lore-row-off { opacity: .7; }
+.lore-preview { display: block; margin-top: 2px; color: var(--text-secondary); font-size: .9em; }
+
 /* Outputs: editable documents kept beside the chat. */
 .output-list-item + .output-list-item { margin-top: 6px; }
 .output-list-item { width: 100%; min-height: 40px; padding: 8px 9px; display: grid; gap: 2px; border: 1px solid var(--card-border); border-radius: 6px; background: var(--hover); color: var(--text-primary); font: inherit; font-size: .95em; text-align: left; cursor: pointer; }
@@ -2519,6 +2551,7 @@ body.panel-resizing { cursor: col-resize; user-select: none; }
   .context-panel .btn, .queue-action, .follow-up-item .icon-btn { min-height: 44px; }
   .msg-action-btn, .swipe-controls button, .regen-btn, .code-copy-btn, .code-download-btn, .code-preview-btn, .code-output-btn, .chat-search-bar button { min-width: 44px; min-height: 44px; }
   .output-list-item, .output-version-row .btn, .output-workspace .btn { min-height: 44px; }
+  .branch-link, .bookmark-jump, .lorebook-modal .btn { min-height: 44px; }
   /* Touch sizing widens the code buttons; re-space them here, after the base rules, so they never overlap. */
   .code-download-btn { right: 64px; }
   .code-preview-btn, .code-output-btn { right: 112px; }

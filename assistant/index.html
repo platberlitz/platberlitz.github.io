@@ -215,6 +215,10 @@
         <button class="btn btn-secondary context-wide-action" type="button" onclick="openFileSearch()">Search files</button>
       </div>
     </details>
+    <details class="context-panel-section" id="lorebookSection">
+      <summary>Lorebook <span id="lorebookStatus">None</span></summary>
+      <div class="context-panel-section-body" id="contextLorebookBody"><p>No lorebook for this chat.</p></div>
+    </details>
     <details class="context-panel-section" id="outputsSection">
       <summary>Outputs <span id="outputsStatus">None</span></summary>
       <div class="context-panel-section-body" id="contextOutputsBody"><p>No outputs yet. Choose Edit on a code block, or start a blank one.</p></div>
@@ -252,8 +256,12 @@
       <div class="context-panel-section-body" id="contextSourcesBody"><p>No sources for this chat yet.</p></div>
     </details>
     <details class="context-panel-section" id="forksSection">
-      <summary>Forks <span id="forksStatus">None</span></summary>
-      <div class="context-panel-section-body context-fork-links" id="contextForkLinks"><p>No related conversations.</p></div>
+      <summary>Branches <span id="forksStatus">None</span></summary>
+      <div class="context-panel-section-body context-fork-links" id="contextForkLinks"><p>No branches yet.</p></div>
+    </details>
+    <details class="context-panel-section" id="bookmarksSection">
+      <summary>Bookmarks <span id="bookmarksStatus">None</span></summary>
+      <div class="context-panel-section-body" id="contextBookmarksBody"><p>No bookmarks in this chat.</p></div>
     </details>
   </div>
   <section class="output-workspace" id="outputWorkspace" aria-label="Output workspace" hidden>
@@ -836,6 +844,38 @@
     <div class="modal-actions">
       <button class="btn btn-danger" type="button" id="memoryClearAll" onclick="clearAllMemories()">Clear all</button>
       <button class="btn btn-primary" type="button" onclick="closeModal('memoriesModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lorebook Modal -->
+<div class="modal-overlay" id="lorebookModal" aria-hidden="true">
+  <div class="modal lorebook-modal" aria-labelledby="lorebookTitle">
+    <h2 id="lorebookTitle">Lorebook</h2>
+    <div class="setting-hint">Notes about people, places and rules for this chat. An entry is sent only when one of its keywords appears in the latest messages, so long settings stay out of the way until they matter.</div>
+    <div class="lorebook-settings">
+      <label class="lorebook-field">Name
+        <input type="text" id="lorebookName" maxlength="120" placeholder="Untitled lorebook">
+      </label>
+      <label class="lorebook-field lorebook-field-small">Messages to scan
+        <input type="number" id="lorebookScanDepth" min="1" max="50" step="1">
+      </label>
+      <label class="lorebook-field lorebook-field-small">Allowance (characters)
+        <input type="number" id="lorebookBudget" min="500" max="20000" step="100">
+      </label>
+    </div>
+    <div class="memory-summary" id="lorebookSummary" role="status"></div>
+    <div id="lorebookList" class="prompt-entry-list lorebook-list"></div>
+    <details class="memory-add" id="lorebookAddSection">
+      <summary>Add an entry</summary>
+      <div id="lorebookAddForm"></div>
+    </details>
+    <input type="file" id="lorebookImportInput" accept=".json,.png" hidden onchange="importLorebookFile(event)">
+    <div class="modal-actions">
+      <button class="btn btn-danger" type="button" id="lorebookDeleteBtn" onclick="deleteLorebook()">Delete lorebook</button>
+      <button class="btn btn-secondary" type="button" onclick="document.getElementById('lorebookImportInput').click()">Import</button>
+      <button class="btn btn-secondary" type="button" id="lorebookExportBtn" onclick="exportLorebook()">Export</button>
+      <button class="btn btn-primary" type="button" onclick="closeModal('lorebookModal')">Close</button>
     </div>
   </div>
 </div>
