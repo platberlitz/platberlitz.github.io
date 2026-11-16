@@ -34,7 +34,7 @@
 html { scroll-behavior: smooth; scroll-padding-top: calc(var(--topbar-h) + 12px); }
 
 body {
-  background: var(--bg) url('assets/cat-bliss-night.webp') center top / cover fixed no-repeat;
+  background: var(--bg) url('assets/kitty-tile.webp') 0 0 / 400px 400px repeat fixed;
   color: var(--fg);
   font-family: var(--body);
   font-size: 14px;
