@@ -26,7 +26,7 @@ html.skin-vista {
   --body: Inter, 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
   --topbar-h: 42px;
 }
-html.skin-vista body { background: var(--bg) url('assets/mint-aurora-cat.webp') center / cover fixed no-repeat; }
+html.skin-vista body { background: var(--bg) url('assets/kitty-tile-mint.webp') 0 0 / 400px 400px repeat fixed; }
 html.skin-vista ::selection { background: #1f6e53; color: #f2fffa; }
 
 /* Cat pictures become the Vista orb and user tile. */
