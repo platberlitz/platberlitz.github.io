@@ -2095,7 +2095,84 @@ function normalizeMemoryEntry(raw, index, seedTimestamp) {
   if (!id) id = 'mem_' + createdAt + '_' + index;
   // ponytail: never let an imported ID become a magic object property.
   if (['__proto__', 'constructor', 'prototype'].includes(id)) id = 'mem_' + createdAt + '_' + index;
-  return { id, text, createdAt };
+  const entry = { id, text, createdAt };
+  if (raw && typeof raw === 'object') {
+    const scope = MEMORY_SCOPES.includes(raw.scope) ? raw.scope : 'global';
+    const scopeId = typeof raw.scopeId === 'string' ? raw.scopeId.trim().slice(0, 200) : '';
+    if (scope !== 'global' && scopeId) {
+      entry.scope = scope;
+      entry.scopeId = scopeId;
+      if (typeof raw.scopeLabel === 'string' && raw.scopeLabel.trim()) entry.scopeLabel = raw.scopeLabel.trim().slice(0, 200);
+    }
+    if (raw.pinned === true) entry.pinned = true;
+    const updatedAt = Number(raw.updatedAt);
+    if (Number.isFinite(updatedAt) && updatedAt > createdAt) entry.updatedAt = updatedAt;
+    if (typeof raw.sourceConvId === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(raw.sourceConvId)) {
+      entry.sourceConvId = raw.sourceConvId;
+      if (typeof raw.sourceTitle === 'string' && raw.sourceTitle.trim()) entry.sourceTitle = raw.sourceTitle.trim().slice(0, 200);
+    }
+  }
+  return entry;
+}
+
+const MEMORY_SCOPES = ['global', 'project', 'character'];
+const MEMORY_CONTEXT_CHAR_LIMIT = 8000;
+
+function memoryChangedAt(memory) {
+  return Math.max(Number(memory?.createdAt) || 0, Number(memory?.updatedAt) || 0);
+}
+
+function characterScopeId(conv) {
+  const name = conv?.characterCard?.name;
+  return typeof name === 'string' && name.trim() ? 'char:' + name.trim().toLowerCase().slice(0, 190) : '';
+}
+
+function conversationMemoryScopes(conv) {
+  if (!conv || isTemporaryConversation(conv)) return null;
+  const scopes = [{ scope: 'global', scopeId: '' }];
+  const project = getProject(conv.projectId);
+  if (project) scopes.push({ scope: 'project', scopeId: project.id, label: project.name });
+  const character = characterScopeId(conv);
+  if (character) scopes.push({ scope: 'character', scopeId: character, label: conv.characterCard.name.trim() });
+  return scopes;
+}
+
+function memoryAppliesTo(memory, conv) {
+  const scopes = conversationMemoryScopes(conv);
+  if (!scopes) return false;
+  const scope = memory.scope || 'global';
+  return scopes.some(item => item.scope === scope && (scope === 'global' || item.scopeId === memory.scopeId));
+}
+
+// Scope decides eligibility; pinning only orders eligible memories ahead of the allowance.
+function selectMemoriesForConversation(memories, conv, limit = MEMORY_CONTEXT_CHAR_LIMIT) {
+  const eligible = (memories || []).filter(memory => memoryAppliesTo(memory, conv))
+    .sort((a, b) => (b.pinned === true) - (a.pinned === true) || memoryChangedAt(b) - memoryChangedAt(a));
+  const included = [];
+  const omitted = [];
+  let used = 0;
+  eligible.forEach(memory => {
+    const cost = memory.text.length + 3;
+    if (used + cost > limit) { omitted.push(memory); return; }
+    used += cost;
+    included.push(memory);
+  });
+  return { included, omitted, eligible };
+}
+
+function memoryScopeLabel(memory) {
+  if (!memory.scope || memory.scope === 'global') return 'Everywhere';
+  const kind = memory.scope === 'project' ? 'Project' : 'Character';
+  const project = memory.scope === 'project' ? getProject(memory.scopeId) : null;
+  return kind + ': ' + (project?.name || memory.scopeLabel || memory.scopeId.replace(/^char:/, ''));
+}
+
+// Facts learned inside a character roleplay stay with that character; project chats keep
+// theirs inside the project. Everything else is remembered everywhere, as before.
+function defaultMemoryScope(conv) {
+  const scopes = conversationMemoryScopes(conv) || [];
+  const specific = scopes.find(item => item.scope === 'character') || scopes.find(item => item.scope === 'project');
+  return specific ? { scope: specific.scope, scopeId: specific.scopeId, scopeLabel: specific.label } : {};
 }
 
 function normalizeMemoryList(rawList) {
@@ -2189,12 +2266,19 @@ async function saveMemories(memories, valid = () => true, removals = []) {
   syncScheduleAutoPush();
 }
 
-async function getMemoryPrompt() {
-  if (!isMemoryEnabled()) return '';
-  const memories = await loadMemories();
-  if (memories.length === 0) return '';
+async function getMemorySelection(conv) {
+  if (!isMemoryEnabled() || !conv || isTemporaryConversation(conv)) return { included: [], omitted: [], eligible: [] };
+  return selectMemoriesForConversation(await loadMemories(), conv);
+}
+
+function memoryPromptText(selection) {
+  if (!selection?.included?.length) return '';
   return 'User memories (facts learned from previous conversations):\n' +
-    memories.map(m => '- ' + m.text).join('\n');
+    selection.included.map(m => '- ' + m.text).join('\n');
+}
+
+async function getMemoryPrompt(conv = getActiveConv()) {
+  return memoryPromptText(await getMemorySelection(conv));
 }
 
 function inferRequestProvider(settings = {}) {
@@ -3051,9 +3135,11 @@ Example response: ["User prefers TypeScript over JavaScript", "User is building 
     if (Array.isArray(newMemories) && newMemories.length > 0) {
       const memories = await loadMemories();
       if (!valid() || existing.some(old => !memories.some(current => current.id === old.id && current.text === old.text && current.createdAt === old.createdAt))) return;
+      const scope = defaultMemoryScope(conv);
       newMemories.slice(0, 3).forEach(text => {
         if (typeof text === 'string' && text.trim() && !memories.some(memory => memory.text === text.trim())) {
-          memories.push({ id: 'mem_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), text: text.trim(), createdAt: Date.now() });
+          memories.push({ id: 'mem_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), text: text.trim(), createdAt: Date.now(),
+            ...scope, sourceConvId: conv.id, sourceTitle: conv.title || '' });
         }
       });
       await saveMemories(memories, valid);
@@ -3071,7 +3157,8 @@ async function cleanupMemories(conv = getActiveConv(), target = null, sourceVali
   memoryCleanupRunning = true;
   try {
     target = target || getActiveRequestTarget();
-    const memories = await loadMemories();
+    // Pinned memories are user-protected, and other scopes belong to other chats.
+    const memories = (await loadMemories()).filter(memory => !memory.pinned && memoryAppliesTo(memory, conv));
     if (!valid() || memories.length < 5) return;
 
     const prompt = [
@@ -3090,7 +3177,7 @@ If no changes needed: {"remove": []}` },
     const response = await callApiNonStreaming(prompt, { target, signal: null });
     const result = JSON.parse(response);
     const current = await loadMemories();
-    if (!valid() || memories.some(old => !current.some(memory => memory.id === old.id && memory.text === old.text && memory.createdAt === old.createdAt))) return;
+    if (!valid() || memories.some(old => !current.some(memory => memory.id === old.id && memory.text === old.text && memory.createdAt === old.createdAt && !memory.pinned))) return;
     if (Array.isArray(result?.remove) && result.remove.length > 0) {
       const selected = memories.filter(memory => result.remove.includes(memory.id));
       const removed = new Set(selected.map(memory => memory.id));
@@ -3102,43 +3189,239 @@ If no changes needed: {"remove": []}` },
   finally { memoryCleanupRunning = false; }
 }
 
-function openManageMemories() {
-  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+let memoryEditingId = null;
+let memoryRenderToken = 0;
 
-  const overlay = document.createElement('div');
-  overlay.className = 'char-info-overlay';
-
-  const popup = document.createElement('div');
-  popup.className = 'char-info-popup';
-  popup.setAttribute('aria-labelledby', 'memoriesDialogTitle');
-
-  const close = openTransientDialog(overlay, popup);
-
-  async function renderMemoryList() {
-    const memories = await loadMemories();
-    let html = '<h3 id="memoriesDialogTitle">Memories (' + memories.length + ')</h3>';
-    if (memories.length === 0) {
-      html += '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">No memories saved yet. The AI will automatically remember facts about you as you chat.</div>';
-    } else {
-      html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">';
-      memories.forEach(m => {
-        html += '<div style="display:flex;align-items:center;gap:8px;font-size:0.85em;background:var(--hover);padding:8px 10px;border-radius:8px">' +
-          '<span style="flex:1;color:var(--text-secondary)">' + m.text.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>' +
-          '<button data-memory-id="' + m.id.replace(/"/g, '&quot;') + '" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;flex-shrink:0;padding:2px 4px" title="Delete">✕</button>' +
-          '</div>';
-      });
-      html += '</div>';
-      html += '<button class="btn btn-secondary" style="width:100%;margin-bottom:8px;padding:8px;font-size:0.8em" onclick="clearAllMemories()">Clear All</button>';
-    }
-    html += '<button class="btn btn-primary" type="button" data-close-memories style="width:100%;padding:8px">Close</button>';
-    popup.innerHTML = html;
-    popup.querySelectorAll('[data-memory-id]').forEach(btn => {
-      btn.addEventListener('click', () => deleteMemory(btn.dataset.memoryId));
-    });
-    popup.querySelector('[data-close-memories]').onclick = close;
+// Scopes a memory can be given from the active chat: everywhere, plus this chat's
+// project and character when it has them.
+function memoryScopeChoices(conv = getActiveConv(), current = null) {
+  const choices = [{ value: 'global', label: 'Everywhere', scope: {} }];
+  (conversationMemoryScopes(conv) || []).forEach(item => {
+    if (item.scope === 'global') return;
+    choices.push({ value: item.scope + ':' + item.scopeId, label: (item.scope === 'project' ? 'This project: ' : 'This character: ') + item.label,
+      scope: { scope: item.scope, scopeId: item.scopeId, scopeLabel: item.label } });
+  });
+  if (current?.scope && current.scope !== 'global' && !choices.some(choice => choice.value === current.scope + ':' + current.scopeId)) {
+    choices.push({ value: current.scope + ':' + current.scopeId, label: memoryScopeLabel(current),
+      scope: { scope: current.scope, scopeId: current.scopeId, scopeLabel: current.scopeLabel } });
   }
+  return choices;
+}
 
-  renderMemoryList();
+function fillMemoryScopeSelect(select, choices, value) {
+  select.replaceChildren(...choices.map(choice => {
+    const option = document.createElement('option');
+    option.value = choice.value;
+    option.textContent = choice.label;
+    return option;
+  }));
+  select.value = choices.some(choice => choice.value === value) ? value : choices[0].value;
+}
+
+function memoryScopeValue(memory) {
+  return memory?.scope && memory.scope !== 'global' ? memory.scope + ':' + memory.scopeId : 'global';
+}
+
+function openManageMemories() {
+  memoryEditingId = null;
+  const conv = getActiveConv();
+  const filter = document.getElementById('memoryFilter');
+  if (filter) filter.dataset.initialised = '';
+  const scope = document.getElementById('memoryNewScope');
+  if (scope) {
+    const choices = memoryScopeChoices(conv);
+    fillMemoryScopeSelect(scope, choices, memoryScopeValue(defaultMemoryScope(conv)));
+  }
+  openModal('memoriesModal', '#memoryFilter');
+  return renderMemoryManager();
+}
+
+async function renderMemoryManager() {
+  const list = document.getElementById('memoryList');
+  if (!list) return;
+  const token = ++memoryRenderToken;
+  const memories = await loadMemories();
+  if (token !== memoryRenderToken) return;
+  const conv = getActiveConv();
+  const scopes = conversationMemoryScopes(conv);
+  const filter = document.getElementById('memoryFilter');
+  const previous = filter.dataset.initialised ? filter.value : (scopes ? 'chat' : 'all');
+  const filters = [];
+  if (scopes) filters.push({ value: 'chat', label: 'Used in this chat' });
+  filters.push({ value: 'all', label: 'All memories' }, { value: 'global', label: 'Everywhere' }, { value: 'pinned', label: 'Pinned' });
+  const seen = new Set();
+  memories.forEach(memory => {
+    if (!memory.scope || memory.scope === 'global') return;
+    const value = memory.scope + ':' + memory.scopeId;
+    if (seen.has(value)) return;
+    seen.add(value);
+    filters.push({ value, label: memoryScopeLabel(memory) });
+  });
+  fillMemoryScopeSelect(filter, filters, previous);
+  filter.dataset.initialised = '1';
+
+  const selection = scopes && isMemoryEnabled() ? selectMemoriesForConversation(memories, conv) : { included: [], omitted: [], eligible: [] };
+  const sent = new Set(selection.included.map(memory => memory.id));
+  const omitted = new Set(selection.omitted.map(memory => memory.id));
+  const summary = document.getElementById('memorySummary');
+  if (summary) {
+    if (!isMemoryEnabled()) summary.textContent = 'Memory is off, so none of these are sent. Turn it on in Settings, Tools.';
+    else if (!scopes) summary.textContent = 'Temporary chats never use memories.';
+    else summary.textContent = selection.included.length + ' of ' + memories.length + ' sent with the next message in this chat' +
+      (selection.omitted.length ? '. ' + selection.omitted.length + ' left out because the memory allowance is full; pin the ones that matter most.' : '.');
+  }
+  const clearAll = document.getElementById('memoryClearAll');
+  if (clearAll) clearAll.disabled = !memories.length;
+
+  const value = filter.value;
+  const shown = memories.filter(memory => value === 'all' ||
+    (value === 'chat' && memoryAppliesTo(memory, conv)) ||
+    (value === 'global' && (!memory.scope || memory.scope === 'global')) ||
+    (value === 'pinned' && memory.pinned) ||
+    memoryScopeValue(memory) === value)
+    .sort((a, b) => (b.pinned === true) - (a.pinned === true) || memoryChangedAt(b) - memoryChangedAt(a));
+
+  list.replaceChildren();
+  if (!shown.length) {
+    const empty = document.createElement('p');
+    empty.className = 'setting-hint';
+    empty.textContent = memories.length ? 'No memories match this view.' :
+      'No memories yet. With memory on, Synapse saves facts as you chat, or you can add one below.';
+    list.appendChild(empty);
+    return;
+  }
+  shown.forEach(memory => list.appendChild(renderMemoryRow(memory, { sent: sent.has(memory.id), omitted: omitted.has(memory.id), conv })));
+}
+
+function renderMemoryRow(memory, state) {
+  const row = document.createElement('div');
+  row.className = 'prompt-entry memory-row' + (memory.pinned ? ' pinned' : '');
+  row.dataset.memoryId = memory.id;
+  if (memoryEditingId === memory.id) {
+    const text = document.createElement('textarea');
+    text.rows = 3;
+    text.maxLength = 1000;
+    text.value = memory.text;
+    text.setAttribute('aria-label', 'Memory text');
+    const scope = document.createElement('select');
+    scope.setAttribute('aria-label', 'Applies to');
+    const choices = memoryScopeChoices(state.conv, memory);
+    fillMemoryScopeSelect(scope, choices, memoryScopeValue(memory));
+    const actions = document.createElement('div');
+    actions.className = 'memory-row-actions';
+    const save = document.createElement('button');
+    save.type = 'button';
+    save.className = 'btn btn-primary';
+    save.textContent = 'Save memory';
+    save.onclick = () => {
+      const choice = choices.find(item => item.value === scope.value) || choices[0];
+      updateMemory(memory.id, { text: text.value, scope: choice.scope });
+    };
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'btn btn-secondary';
+    cancel.textContent = 'Cancel';
+    cancel.onclick = () => { memoryEditingId = null; renderMemoryManager(); };
+    actions.append(save, cancel);
+    row.append(text, scope, actions);
+    requestAnimationFrame(() => text.focus());
+    return row;
+  }
+  const text = document.createElement('div');
+  text.className = 'memory-text';
+  text.textContent = memory.text;
+  const meta = document.createElement('div');
+  meta.className = 'memory-meta';
+  const parts = [memoryScopeLabel(memory)];
+  if (memory.pinned) parts.push('Pinned');
+  if (state.sent) parts.push('Sent in this chat');
+  else if (state.omitted) parts.push('Left out: allowance full');
+  parts.push((memory.updatedAt ? 'Edited ' : 'Saved ') + formatRelativeTime(memoryChangedAt(memory)));
+  meta.textContent = parts.join(' · ');
+  if (memory.sourceConvId) {
+    const source = conversations.find(conv => conv.id === memory.sourceConvId);
+    const link = document.createElement('button');
+    link.type = 'button';
+    link.className = 'memory-source';
+    link.textContent = source ? 'From ' + (source.title || 'Untitled chat') : 'From a deleted chat';
+    link.disabled = !source;
+    if (source) link.onclick = () => { closeModal('memoriesModal', false); navigateForkConversation(source.id); };
+    meta.append(' · ', link);
+  }
+  const actions = document.createElement('div');
+  actions.className = 'memory-row-actions';
+  const action = (label, aria, handler, className = 'btn btn-secondary') => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = className;
+    button.textContent = label;
+    button.setAttribute('aria-label', aria);
+    button.onclick = handler;
+    actions.appendChild(button);
+  };
+  action(memory.pinned ? 'Unpin' : 'Pin', (memory.pinned ? 'Unpin: ' : 'Pin: ') + memory.text, () => updateMemory(memory.id, { pinned: !memory.pinned }));
+  action('Edit', 'Edit: ' + memory.text, () => { memoryEditingId = memory.id; renderMemoryManager(); });
+  action('Delete', 'Delete: ' + memory.text, () => deleteMemory(memory.id), 'btn btn-danger');
+  row.append(text, meta, actions);
+  return row;
+}
+
+async function updateMemory(id, changes) {
+  if (readOnlyShare) return;
+  if ('text' in changes && !String(changes.text || '').trim()) {
+    showToast('A memory cannot be empty. Delete it instead.', 'error');
+    return;
+  }
+  if (!beginLocalDataOperation()) return;
+  try {
+    const memories = await loadMemories();
+    const memory = memories.find(item => item.id === id);
+    if (!memory) { showToast('That memory no longer exists.', 'error'); return; }
+    if ('text' in changes) memory.text = String(changes.text).trim().slice(0, 1000);
+    if ('pinned' in changes) { if (changes.pinned) memory.pinned = true; else delete memory.pinned; }
+    if ('scope' in changes) {
+      delete memory.scope; delete memory.scopeId; delete memory.scopeLabel;
+      Object.assign(memory, changes.scope || {});
+    }
+    memory.updatedAt = Math.max(Date.now(), memoryChangedAt(memory) + 1);
+    await saveMemories(memories);
+    memoryEditingId = null;
+    announce('Memory saved.');
+  } finally {
+    endLocalDataOperation();
+  }
+  await renderMemoryManager();
+  updateTokenInfo();
+}
+
+async function addMemoryFromManager() {
+  if (readOnlyShare) return;
+  const input = document.getElementById('memoryNewText');
+  const text = String(input?.value || '').trim().slice(0, 1000);
+  if (!text) { showToast('Write the memory first.', 'error'); input?.focus(); return; }
+  const conv = getActiveConv();
+  const scopeSelect = document.getElementById('memoryNewScope');
+  const choice = memoryScopeChoices(conv).find(item => item.value === scopeSelect?.value) || { scope: {} };
+  const pinned = document.getElementById('memoryNewPinned');
+  if (!beginLocalDataOperation()) return;
+  try {
+    const memories = await loadMemories();
+    if (memories.some(memory => memory.text === text && memoryScopeValue(memory) === memoryScopeValue(choice.scope))) {
+      showToast('That memory is already saved.', 'info');
+      return;
+    }
+    const memory = { id: 'mem_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), text, createdAt: Date.now(), ...choice.scope };
+    if (pinned?.checked) memory.pinned = true;
+    memories.push(memory);
+    await saveMemories(memories);
+    input.value = '';
+    if (pinned) pinned.checked = false;
+    announce('Memory added.');
+  } finally {
+    endLocalDataOperation();
+  }
+  await renderMemoryManager();
+  updateTokenInfo();
 }
 
 function openSearchTest() {
@@ -3759,12 +4042,15 @@ async function deleteMemory(id) {
   const existing = await loadMemories();
   // ponytail: delete at/after the record's own time, or clock skew resurrects it.
   const target = existing.find(memory => memory.id === id);
-  if (target) syncRecordTombstones('memories', [id], Math.max(Date.now(), Number(target.createdAt) || 0));
+  if (target) syncRecordTombstones('memories', [id], Math.max(Date.now(), memoryChangedAt(target)));
   await saveMemories(existing.filter(memory => memory.id !== id));
-  openManageMemories();
+  if (memoryEditingId === id) memoryEditingId = null;
+  announce('Memory deleted.');
   } finally {
     endLocalDataOperation();
   }
+  await renderMemoryManager();
+  updateTokenInfo();
 }
 
 async function clearAllMemories() {
@@ -3772,12 +4058,15 @@ async function clearAllMemories() {
   if (!beginLocalDataOperation()) return;
   try {
   const existing = await loadMemories();
-  syncRecordTombstones('memories', existing.map(memory => memory.id), Math.max(Date.now(), ...existing.map(memory => Number(memory.createdAt) || 0)));
+  syncRecordTombstones('memories', existing.map(memory => memory.id), Math.max(Date.now(), ...existing.map(memoryChangedAt)));
   await saveMemories([]);
-  openManageMemories();
+  memoryEditingId = null;
+  announce('All memories cleared.');
   } finally {
     endLocalDataOperation();
   }
+  await renderMemoryManager();
+  updateTokenInfo();
 }
 
 // ============================================
@@ -8732,7 +9021,7 @@ async function buildSystemMessages(conv) {
     msgs.push({ role: 'system', content: 'Conversation summary:\n' + conv.summary });
   }
   // Memory prompt
-  const mem = isTemporaryConversation(conv) ? '' : await getMemoryPrompt();
+  const mem = isTemporaryConversation(conv) ? '' : await getMemoryPrompt(conv);
   if (mem) msgs.push({ role: 'system', content: mem });
   if (areEmotionSpritesEnabled()) msgs.push({ role: 'system', content: buildEmotionSpriteInstructions() });
   return msgs;
@@ -8886,7 +9175,8 @@ async function buildContextPreviewData() {
   };
   messages.forEach(message => collectAttachments(message, message.includeInContext !== false));
   if (draftMessage) collectAttachments(draftMessage, true);
-  return { provider: getLlmProviderInfo(previewModel, detectApiFormat(previewModel), localStorage.getItem('llmProxyUrl') || ''), model: previewModel || '(not set)', systemMessages: built.systemMessages, included: built.included, excluded: all.excluded, draft: built.draft, attachments, stats };
+  const memories = isTemporaryConversation(conv) ? { included: [], omitted: [] } : await getMemorySelection(conv);
+  return { memories, provider: getLlmProviderInfo(previewModel, detectApiFormat(previewModel), localStorage.getItem('llmProxyUrl') || ''), model: previewModel || '(not set)', systemMessages: built.systemMessages, included: built.included, excluded: all.excluded, draft: built.draft, attachments, stats };
 }
 
 function openContextSection(sectionId) {
@@ -9109,6 +9399,10 @@ async function openContextPreview() {
     addSection('Included history', data.included.map(item => item.message.role.toUpperCase() + ': ' + getMsgText(item.message)));
     if (data.draft) addSection('Current draft', [data.draft.message.role.toUpperCase() + ': ' + getMsgText(data.draft.message)]);
     addSection('Excluded history', data.excluded.map(item => item.message.role.toUpperCase() + ': ' + getMsgText(item.message)));
+    if (data.memories.included.length || data.memories.omitted.length) {
+      addSection('Memories sent', data.memories.included.map(memory => memoryScopeLabel(memory) + (memory.pinned ? ', pinned' : '') + ': ' + memory.text));
+      if (data.memories.omitted.length) addSection('Memories left out (allowance full)', data.memories.omitted.map(memory => memoryScopeLabel(memory) + ': ' + memory.text));
+    }
     addSection('Attachments', data.attachments.map(att => att.name + ' · ' + (att.image ? 'image data redacted' : att.chars.toLocaleString() + ' extracted characters') + (att.included ? ' · included' : ' · excluded')));
     if (data.stats.contextWindow && data.stats.includedTokens + data.stats.maxOutput > data.stats.contextWindow) {
       const warning = document.createElement('p');
@@ -13186,7 +13480,8 @@ function syncMergeMemoryLists(localList, remoteList, tombstones = {}) {
   localNormalized.forEach(memory => byId.set(memory.id, memory));
   remoteNormalized.forEach(memory => {
     const existing = byId.get(memory.id);
-    if (!existing || Number(memory.createdAt) >= Number(existing.createdAt)) byId.set(memory.id, memory);
+    // Edits carry updatedAt, so the latest change to a memory wins over an older copy.
+    if (!existing || memoryChangedAt(memory) >= memoryChangedAt(existing)) byId.set(memory.id, memory);
   });
   return syncFilterDeletedRecords(Array.from(byId.values()), tombstones, 'createdAt')
     .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
@@ -15266,6 +15561,9 @@ const __windowBridge = {
   extractMemories,
   cleanupMemories,
   openManageMemories,
+  renderMemoryManager,
+  updateMemory,
+  addMemoryFromManager,
   openSearchTest,
   openSourcesDrawer,
   renderContextSources,

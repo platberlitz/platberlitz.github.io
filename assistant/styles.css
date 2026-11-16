@@ -1459,6 +1459,25 @@ body.share-view .messages-area { padding-bottom: 64px; }
 .prompt-entry-body.open { display: block; }
 .prompt-entry-body textarea { width: 100%; min-height: 100px; resize: vertical; font-size: 16px; background: var(--hover); border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; color: var(--text-primary); }
 
+/* Memory manager rows reuse the prompt-entry surface. */
+.memory-list { max-height: min(46vh, 420px); }
+.memory-row { padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.memory-row.pinned { border-color: var(--accent); }
+.memory-row textarea, .memory-row select { width: 100%; margin: 0; }
+.memory-text { color: var(--text-primary); overflow-wrap: anywhere; line-height: 1.45; }
+.memory-meta { color: var(--text-secondary); font-size: 0.8em; }
+.memory-source { background: none; border: none; padding: 0; color: var(--accent); font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.memory-source:disabled { color: var(--text-secondary); cursor: default; text-decoration: none; }
+.memory-row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.memory-row-actions .btn { padding: 6px 12px; font-size: 0.85em; min-height: 36px; }
+.memory-summary { color: var(--text-secondary); font-size: 0.85em; margin: 8px 0; }
+.memory-add { margin-top: 8px; }
+.memory-add summary { cursor: pointer; color: var(--accent); padding: 6px 0; }
+.memory-add[open] summary { margin-bottom: 4px; }
+@media (max-width: 640px) {
+  .memory-row-actions .btn { min-height: 44px; flex: 1; }
+}
+
 /* Message fade-in animation */
 @keyframes msgFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .msg-new { animation: msgFadeIn 0.3s ease forwards; }

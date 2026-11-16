@@ -738,6 +738,32 @@
   </div>
 </div>
 
+<!-- Memories Modal -->
+<div class="modal-overlay" id="memoriesModal" aria-hidden="true">
+  <div class="modal memories-modal" aria-labelledby="memoriesTitle">
+    <h2 id="memoriesTitle">Memories</h2>
+    <div class="setting-hint" id="memoriesIntro">Facts Synapse remembers between chats. Choose where each one applies.</div>
+    <div class="memory-summary" id="memorySummary" role="status"></div>
+    <div class="model-selector-row">
+      <select id="memoryFilter" aria-label="Show memories" onchange="renderMemoryManager()"></select>
+    </div>
+    <div id="memoryList" class="prompt-entry-list memory-list"></div>
+    <details class="memory-add" id="memoryAddSection">
+      <summary>Add a memory</summary>
+      <label for="memoryNewText">Memory</label>
+      <textarea id="memoryNewText" rows="3" maxlength="1000" placeholder="Something Synapse should remember, in one sentence."></textarea>
+      <label for="memoryNewScope">Applies to</label>
+      <select id="memoryNewScope"></select>
+      <label class="toggle-row"><input type="checkbox" id="memoryNewPinned"> Pin, so it is sent before unpinned memories</label>
+      <button class="btn btn-primary" type="button" onclick="addMemoryFromManager()">Add memory</button>
+    </details>
+    <div class="modal-actions">
+      <button class="btn btn-danger" type="button" id="memoryClearAll" onclick="clearAllMemories()">Clear all</button>
+      <button class="btn btn-primary" type="button" onclick="closeModal('memoriesModal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- Update Instructions Modal -->
 <div class="modal-overlay" id="updateInstructionsModal" aria-hidden="true">
   <div class="modal update-instructions-modal" aria-labelledby="updateInstructionsTitle">
