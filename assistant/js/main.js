@@ -4334,17 +4334,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
   document.querySelector('.settings-tabs')?.addEventListener('keydown', event => {
-    const tabs = Array.from(event.currentTarget.querySelectorAll('[role="tab"]'));
+    const tabs = Array.from(event.currentTarget.querySelectorAll('[role="tab"]:not([hidden])'));
+    if (!tabs.length) return;
     const current = Math.max(0, tabs.indexOf(document.activeElement));
     let next = current;
-    if (event.key === 'ArrowRight') next = (current + 1) % tabs.length;
-    else if (event.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (current + 1) % tabs.length;
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (current - 1 + tabs.length) % tabs.length;
     else if (event.key === 'Home') next = 0;
     else if (event.key === 'End') next = tabs.length - 1;
     else return;
     event.preventDefault();
     tabs[next].click();
     tabs[next].focus();
+  });
+  document.getElementById('setupKey')?.addEventListener('change', event => {
+    // A new key is the moment the model list becomes reachable, so fetch it without waiting for Test connection.
+    const select = document.getElementById('setupModelSelect');
+    if (event.target.value.trim() && select && !Array.from(select.options).some(option => option.value)) testConnection('setup');
+  });
+  document.getElementById('settingsSearch')?.addEventListener('input', event => filterSettings(event.target.value));
+  document.getElementById('settingsSearch')?.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && event.target.value) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.target.value = '';
+      filterSettings('');
+    }
   });
   ['setPersona', 'setRpUserName', 'setStarterPrompts'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', schedulePromptSettingsAutosave);
@@ -4594,7 +4609,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   toggleSidebar(window.innerWidth > 768, false);
-  toggleContextPanel(window.innerWidth > 1100 && localStorage.getItem('assistantContextPanelOpen') !== 'false', false);
+  toggleContextPanel(window.innerWidth > 1100 && localStorage.getItem('assistantContextPanelOpen') === 'true', false);
+  initPanelResizers();
   document.getElementById('sidebar')?.addEventListener('keydown', event => {
     const sidebar = document.getElementById('sidebar');
     if (window.innerWidth <= 768 && !sidebar.classList.contains('collapsed')) trapFocus(sidebar, event);
@@ -4615,7 +4631,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (previousLayoutWidth <= 768 && width > 768) {
       toggleSidebar(true, false);
     }
-    if (previousLayoutWidth <= 1100 && width > 1100 && localStorage.getItem('assistantContextPanelOpen') !== 'false') {
+    if (previousLayoutWidth <= 1100 && width > 1100 && localStorage.getItem('assistantContextPanelOpen') === 'true') {
       toggleContextPanel(true, false);
     }
     if (window.innerWidth > 768) document.getElementById('sidebarOverlay')?.classList.remove('open');
@@ -4623,6 +4639,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // The send button label is shortened on narrow screens.
     if ((previousLayoutWidth <= 768) !== (width <= 768)) updateSendBtnState();
     document.querySelectorAll('.toolbar-menu.open, .connection-picker:not([hidden])').forEach(clampPopupToViewport);
+    if (width !== previousLayoutWidth) applyStoredPanelWidths();
     previousLayoutWidth = width;
   });
 
@@ -5565,7 +5582,58 @@ async function updateTokenInfo() {
   } catch (e) {
     // Token display is advisory; keep the local estimate if system context is unavailable.
   }
-  if (requestId === tokenInfoRequestId) el.textContent = parts.concat(promptPart ? [promptPart] : []).join(' | ');
+  let memoryCount = 0;
+  try { memoryCount = (await getMemorySelection(tokenConv)).included.length; } catch {}
+  if (requestId !== tokenInfoRequestId) return;
+  el.textContent = parts.concat(promptPart ? [promptPart] : []).join(' | ');
+  renderComposerContext(tokenConv, activeProject, memoryCount);
+}
+
+function renderComposerContext(conv, project, memoryCount) {
+  const host = document.getElementById('composerContext');
+  if (!host) return;
+  const chips = [];
+  const chip = (label, title, action, tone = '') => chips.push({ label, title, action, tone });
+  if (conv && isTemporaryConversation(conv)) {
+    chip('Temporary chat', 'Saved memory and project context are left out of temporary chats', () => openContextPreview());
+  }
+  if (project) chip('Project: ' + (project.name || 'Untitled'), 'Open this project', () => openProjectsModal(project.id));
+  const chatDocs = Array.isArray(conv?.docs) ? conv.docs.length : 0;
+  const projectDocs = project ? project.docs.filter(doc => projectDocMode(doc) !== 'off').length : 0;
+  if (chatDocs + projectDocs) {
+    const count = chatDocs + projectDocs;
+    chip(count === 1 ? '1 file' : count + ' files', 'Show files used in this chat', () => openContextSection('filesSection'));
+  }
+  if (memoryCount) chip(memoryCount === 1 ? '1 memory' : memoryCount + ' memories', 'Manage the memories sent with your next message', () => openManageMemories());
+  if (conv?.goal?.trim()) chip('Goal', 'Edit the goal for this chat', () => openContextSection('goalSection'));
+  const policy = getToolPolicy(conv);
+  const tools = [policy.webSearch && 'Web search', policy.urlFetch && 'URL fetch'].filter(Boolean);
+  if (tools.length) chip(tools.join(' + '), 'Change the tools for this chat', () => openContextSection('toolsSection'));
+  host.replaceChildren(...chips.map(item => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'composer-chip' + (item.tone ? ' ' + item.tone : '');
+    button.textContent = item.label;
+    button.title = item.title;
+    button.addEventListener('click', item.action);
+    return button;
+  }));
+  host.hidden = !chips.length;
+}
+
+function toggleComposerExpanded(force) {
+  const area = document.querySelector('.input-area');
+  const button = document.getElementById('composerExpandBtn');
+  if (!area) return;
+  const expanded = typeof force === 'boolean' ? force : !area.classList.contains('composer-expanded');
+  area.classList.toggle('composer-expanded', expanded);
+  if (button) {
+    button.setAttribute('aria-pressed', String(expanded));
+    const label = expanded ? 'Shrink the writing area' : 'Expand the writing area';
+    button.title = label;
+    button.setAttribute('aria-label', label);
+  }
+  document.getElementById('chatInput')?.focus();
 }
 
 // ============================================
@@ -7777,7 +7845,6 @@ function toggleContextPanel(forceOpen, persist = true) {
   }
   overlay.classList.toggle('open', open && window.innerWidth <= 1100);
   trigger?.setAttribute('aria-expanded', String(open));
-  document.getElementById('contextBtn')?.setAttribute('aria-expanded', String(open));
   document.getElementById('toolsBtn')?.setAttribute('aria-expanded', String(open));
   if (persist) localStorage.setItem('assistantContextPanelOpen', String(open));
   if (open && !wasOpen && persist && window.innerWidth <= 1100) getFocusableElements(panel)[0]?.focus();
@@ -7788,6 +7855,94 @@ function toggleContextPanel(forceOpen, persist = true) {
   if (!open) {
     contextPanelFocusReturn = null;
     panel.inert = true;
+  }
+}
+
+const PANEL_RESIZE_LIMITS = {
+  sidebar: { min: 200, max: 420, fallback: 252, key: 'assistantSidebarWidth', variable: '--sidebar-width' },
+  context: { min: 260, max: 560, fallback: 316, key: 'assistantContextWidth', variable: '--context-width' },
+};
+
+function clampPanelWidth(which, width) {
+  const limits = PANEL_RESIZE_LIMITS[which];
+  const value = Math.round(Number(width));
+  if (!Number.isFinite(value)) return limits.fallback;
+  // Keep at least 360px for the conversation itself.
+  const other = which === 'sidebar' ? 'context' : 'sidebar';
+  const otherWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(PANEL_RESIZE_LIMITS[other].variable)) || PANEL_RESIZE_LIMITS[other].fallback;
+  const room = Math.max(limits.min, window.innerWidth - otherWidth - 360);
+  return Math.min(Math.max(value, limits.min), limits.max, room);
+}
+
+function setPanelWidth(which, width, persist = true) {
+  const limits = PANEL_RESIZE_LIMITS[which];
+  const value = clampPanelWidth(which, width);
+  document.documentElement.style.setProperty(limits.variable, `${value}px`);
+  const handle = document.getElementById(which === 'sidebar' ? 'sidebarResizer' : 'contextResizer');
+  handle?.setAttribute('aria-valuenow', String(value));
+  if (persist) {
+    try { localStorage.setItem(limits.key, String(value)); } catch {}
+  }
+  return value;
+}
+
+function resetPanelWidth(which) {
+  const limits = PANEL_RESIZE_LIMITS[which];
+  try { localStorage.removeItem(limits.key); } catch {}
+  setPanelWidth(which, limits.fallback, false);
+}
+
+function applyStoredPanelWidths() {
+  for (const [which, limits] of Object.entries(PANEL_RESIZE_LIMITS)) {
+    const stored = Number(localStorage.getItem(limits.key));
+    setPanelWidth(which, stored > 0 ? stored : limits.fallback, false);
+  }
+}
+
+function initPanelResizers() {
+  applyStoredPanelWidths();
+  for (const which of Object.keys(PANEL_RESIZE_LIMITS)) {
+    const limits = PANEL_RESIZE_LIMITS[which];
+    const handle = document.getElementById(which === 'sidebar' ? 'sidebarResizer' : 'contextResizer');
+    if (!handle) continue;
+    handle.setAttribute('aria-valuemin', String(limits.min));
+    handle.setAttribute('aria-valuemax', String(limits.max));
+    handle.title = 'Drag to resize. Double-click to reset.';
+    const widthFromPointer = clientX => which === 'sidebar' ? clientX : window.innerWidth - clientX;
+    handle.addEventListener('pointerdown', event => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      handle.setPointerCapture?.(event.pointerId);
+      handle.classList.add('dragging');
+      document.body.classList.add('panel-resizing');
+      const move = moveEvent => setPanelWidth(which, widthFromPointer(moveEvent.clientX), false);
+      const finish = () => {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', finish);
+        handle.removeEventListener('pointercancel', finish);
+        handle.classList.remove('dragging');
+        document.body.classList.remove('panel-resizing');
+        setPanelWidth(which, Number(handle.getAttribute('aria-valuenow')));
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', finish);
+      handle.addEventListener('pointercancel', finish);
+    });
+    handle.addEventListener('dblclick', () => resetPanelWidth(which));
+    handle.addEventListener('keydown', event => {
+      const current = Number(handle.getAttribute('aria-valuenow')) || limits.fallback;
+      const step = event.shiftKey ? 48 : 16;
+      // Arrow keys move the divider in the direction pressed.
+      const grow = which === 'sidebar' ? 'ArrowRight' : 'ArrowLeft';
+      const shrink = which === 'sidebar' ? 'ArrowLeft' : 'ArrowRight';
+      if (event.key === grow) setPanelWidth(which, current + step);
+      else if (event.key === shrink) setPanelWidth(which, current - step);
+      else if (event.key === 'Home') setPanelWidth(which, limits.min);
+      else if (event.key === 'End') setPanelWidth(which, limits.max);
+      else if (event.key === 'Enter') resetPanelWidth(which);
+      else return;
+      event.preventDefault();
+    });
   }
 }
 
@@ -8060,11 +8215,22 @@ function getSelectedModel(target) {
   return selectEl.value || localStorage.getItem('llmModel') || '';
 }
 
-function renderSetupError(message = '') {
+function renderSetupError(message = '', fieldId = '') {
   const error = document.getElementById('setupError');
   if (!error) return;
   error.textContent = message;
   error.hidden = !message;
+  document.querySelectorAll('#setupModal [aria-invalid="true"]').forEach(el => {
+    el.removeAttribute('aria-invalid');
+    el.removeAttribute('aria-errormessage');
+  });
+  const field = fieldId ? document.getElementById(fieldId) : null;
+  if (!message || !field) return;
+  field.setAttribute('aria-invalid', 'true');
+  field.setAttribute('aria-errormessage', 'setupError');
+  const advanced = field.closest('details');
+  if (advanced) advanced.open = true;
+  field.focus();
 }
 
 function saveSetup() {
@@ -8072,13 +8238,17 @@ function saveSetup() {
   const key = document.getElementById('setupKey').value.trim();
   const provider = document.getElementById('setupProvider').value || 'custom';
   renderSetupError();
-  if (!proxy || (providerRequiresKey({ llmProvider: provider }) && !key)) {
-    renderSetupError(providerRequiresKey({ llmProvider: provider }) ? 'Enter a base URL and API key.' : 'Enter a base URL.');
+  if (providerRequiresKey({ llmProvider: provider }) && !key) {
+    renderSetupError('Enter your API key for ' + getProviderPreset(provider).label + '.', 'setupKey');
+    return;
+  }
+  if (!proxy) {
+    renderSetupError('Enter the base URL in Advanced connection settings.', 'setupProxy');
     return;
   }
   proxy = stripApiEndpointSuffix(proxy);
   const model = getSelectedModel('setup');
-  if (!model) { renderSetupError('Choose or enter a model.'); return; }
+  if (!model) { renderSetupError('Choose a model, or type its name. Test connection lists the models available.', 'setupModelSelect'); return; }
   localStorage.setItem('llmProxyUrl', proxy);
   localStorage.setItem('llmProvider', provider);
   localStorage.setItem('llmModel', model);
@@ -8138,6 +8308,52 @@ function updateProviderOptions() {
   if (options) options.hidden = resolveRequestApiFormat({ llmApiFormat: inputs.format?.value }, inputs.provider?.value, getSelectedModel('settings')) !== 'anthropic';
 }
 
+function settingsSearchTargets(panel) {
+  // Each label, heading, toggle row and disclosure title is a searchable setting.
+  return Array.from(panel.querySelectorAll('label, .modal-section, h3, .toggle-row, details > summary, .setting-hint'))
+    .filter(el => !el.closest('.toggle-row') || el.classList.contains('toggle-row'));
+}
+
+function filterSettings(rawQuery) {
+  const query = String(rawQuery || '').trim().toLowerCase();
+  const status = document.getElementById('settingsSearchStatus');
+  document.querySelectorAll('.settings-search-hit').forEach(el => el.classList.remove('settings-search-hit'));
+  const tabs = Array.from(document.querySelectorAll('.settings-tab'));
+  if (!query) {
+    tabs.forEach(tab => { tab.hidden = false; });
+    if (status) status.textContent = '';
+    return;
+  }
+  const terms = query.split(/\s+/).filter(Boolean);
+  const matches = new Map();
+  tabs.forEach(tab => {
+    const name = tab.id.replace('settingsTabButton-', '');
+    const panel = document.getElementById('settingsTab-' + name);
+    const tabText = tab.textContent.toLowerCase();
+    const hits = panel ? settingsSearchTargets(panel).filter(el => {
+      const text = (el.textContent + ' ' + (el.getAttribute('aria-label') || '')).toLowerCase();
+      return terms.every(term => text.includes(term) || tabText.includes(term));
+    }) : [];
+    const tabMatches = terms.every(term => tabText.includes(term));
+    tab.hidden = !hits.length && !tabMatches;
+    if (!tab.hidden) matches.set(name, hits);
+  });
+  const total = Array.from(matches.values()).reduce((sum, hits) => sum + hits.length, 0);
+  if (status) status.textContent = matches.size ? (total === 1 ? '1 matching setting' : total + ' matching settings') : 'No settings match.';
+  if (!matches.size) return;
+  const active = document.querySelector('.settings-tab.active');
+  const activeName = active?.id.replace('settingsTabButton-', '');
+  const target = matches.has(activeName) && matches.get(activeName).length ? activeName : matches.keys().next().value;
+  if (target !== activeName) switchSettingsTab(target, document.getElementById('settingsTabButton-' + target));
+  const hits = matches.get(target) || [];
+  hits.forEach(el => {
+    el.classList.add('settings-search-hit');
+    for (let details = el.parentElement?.closest('details'); details; details = details.parentElement?.closest('details')) details.open = true;
+    if (el.tagName === 'SUMMARY') el.parentElement.open = true;
+  });
+  hits[0]?.scrollIntoView({ block: 'nearest', behavior: getScrollBehavior() });
+}
+
 function switchSettingsTab(tabName, btn) {
   document.querySelectorAll('.settings-tab').forEach(tab => {
     const selected = tab === btn;
@@ -8157,6 +8373,9 @@ function switchSettingsTab(tabName, btn) {
 
 function openSettings() {
   if (document.getElementById('settingsModal').classList.contains('open')) return;
+  const settingsSearch = document.getElementById('settingsSearch');
+  if (settingsSearch) settingsSearch.value = '';
+  filterSettings('');
   clearTimeout(_promptSettingsAutosaveTimer);
   clearTimeout(_appearanceSettingsAutosaveTimer);
   _promptSettingsAutosaveTimer = null;
@@ -11685,6 +11904,7 @@ async function sendMessage({ queuedFollowUp = null } = {}) {
       if (cmd.definition.requiresQuery && !cmd.query) { renderCommandMenu(input, cmd.cmd); return finalStatus; }
       input.value = '';
       input.style.height = 'auto';
+      if (document.querySelector('.input-area.composer-expanded')) toggleComposerExpanded(false);
       closeCommandDropdown();
       persistDraftFromUI();
       await handleCommand(cmd, conv);
@@ -11748,6 +11968,7 @@ async function sendMessage({ queuedFollowUp = null } = {}) {
     if (!queuedFollowUp) {
       input.value = '';
       input.style.height = 'auto';
+      if (document.querySelector('.input-area.composer-expanded')) toggleComposerExpanded(false);
       pendingAttachments = [];
       document.getElementById('imagePreview').replaceChildren();
       clearModelOverride();
@@ -15666,6 +15887,7 @@ function toggleVoice() {
 
 // Window bridge for inline handlers and external hooks
 const __windowBridge = {
+  toggleComposerExpanded,
   // Share links (inline onclick in index.html; shareSelfTest is for the console)
   openShareDialog,
   shareConversation,

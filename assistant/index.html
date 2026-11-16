@@ -80,6 +80,7 @@
 </aside>
 
 <!-- Main Area -->
+<div class="panel-resizer" id="sidebarResizer" role="separator" aria-orientation="vertical" aria-controls="sidebar" aria-label="Resize conversations list" tabindex="0"></div>
 <main class="main">
   <!-- Toolbar -->
   <header class="toolbar">
@@ -119,7 +120,7 @@
         </div>
       </div>
       <input type="file" id="importInput" accept=".json" style="display:none" onchange="importConversation(event)">
-      <button class="toolbar-btn context-toggle" id="contextToggle" onclick="toggleContextPanel()" title="Show or hide the conversation panel" aria-label="Toggle conversation panel" aria-controls="contextPanel" aria-expanded="true">Panel</button>
+      <button class="toolbar-btn context-toggle" id="contextToggle" onclick="toggleContextPanel()" title="Show or hide the context panel: goal, files, tools, summary, sources and forks" aria-label="Toggle context panel" aria-controls="contextPanel" aria-expanded="true">Context</button>
     </div>
   </header>
 
@@ -167,8 +168,9 @@
       <button class="input-btn" onclick="document.getElementById('fileInput').click()" title="Attach file" aria-label="Attach file"><svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.2 7.3 8.4 12a3.2 3.2 0 0 1-4.5-4.5l5.2-5.2a2.1 2.1 0 0 1 3 3L7 10.4a1.05 1.05 0 0 1-1.5-1.5l4.7-4.7"/></svg></button>
       <input type="file" id="fileInput" multiple style="display:none" onchange="handleFileSelect(event)">
       <textarea id="chatInput" placeholder="Type a message..." rows="1" aria-label="Message" aria-controls="commandDropdown" aria-expanded="false"></textarea>
+      <button class="input-btn" id="composerExpandBtn" onclick="toggleComposerExpanded()" title="Expand the writing area" aria-label="Expand the writing area" aria-pressed="false"><svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg></button>
       <button class="input-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input" aria-label="Voice input" aria-pressed="false"><svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="1.5" width="4" height="7.5" rx="2"/><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.5M6 14.5h4"/></svg></button>
-      <button class="input-control-btn" id="contextBtn" onclick="openContextPreview()" title="Preview the context sent with your next request" aria-label="Preview request context" aria-controls="contextPanel" aria-expanded="true">Context</button>
+      <button class="input-control-btn" id="contextBtn" onclick="openContextPreview()" title="Preview everything sent with your next message" aria-label="Preview what will be sent">Preview</button>
       <div class="composer-more">
         <button class="input-control-btn" id="composerMoreBtn" onclick="toggleComposerMenu(event)" title="More composer actions" aria-label="More composer actions" aria-controls="composerMenu" aria-expanded="false">+</button>
         <div class="toolbar-menu composer-menu" id="composerMenu" role="menu" aria-label="Composer actions">
@@ -180,18 +182,22 @@
       </div>
       <button class="send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Send message">Send</button>
     </div>
-    <div class="token-info" id="tokenInfo"></div>
+    <div class="composer-status">
+      <div class="composer-context" id="composerContext" aria-label="Sent with your next message"></div>
+      <div class="token-info" id="tokenInfo"></div>
+    </div>
   </footer>
 </main>
 
 <!-- Conversation context -->
-<aside class="context-panel" id="contextPanel" aria-label="Conversation panel" aria-hidden="false">
+<div class="panel-resizer" id="contextResizer" role="separator" aria-orientation="vertical" aria-controls="contextPanel" aria-label="Resize context panel" tabindex="0"></div>
+<aside class="context-panel" id="contextPanel" aria-label="Context panel" aria-hidden="false">
   <header class="context-panel-header">
     <div>
       <span class="context-panel-kicker" id="contextConversationTitle">Current chat</span>
-      <h2>Conversation panel</h2>
+      <h2>Context</h2>
     </div>
-    <button type="button" class="context-panel-close" onclick="toggleContextPanel(false)" aria-label="Close conversation panel">&times;</button>
+    <button type="button" class="context-panel-close" onclick="toggleContextPanel(false)" aria-label="Close context panel">&times;</button>
   </header>
   <div class="context-panel-body">
     <details class="context-panel-section" id="goalSection" open>
@@ -292,7 +298,7 @@
     </details>
     <div class="connection-test-row"><button type="button" class="btn btn-secondary" onclick="testConnection('setup')">Test connection</button><span id="setupConnectionStatus" class="connection-status" aria-live="polite"></span></div>
     <p class="form-error" id="setupError" role="alert" hidden></p>
-    <div class="modal-actions">
+    <div class="modal-actions settings-actions setup-actions">
       <button class="btn btn-secondary" type="button" onclick="continueWithoutProvider()">Continue disconnected</button>
       <button class="btn btn-primary" type="submit">Save and start</button>
     </div>
@@ -304,7 +310,11 @@
   <div class="modal settings-modal" aria-labelledby="settingsModalTitle">
     <h2 id="settingsModalTitle">Settings</h2>
 
-    <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+    <div class="settings-layout">
+    <nav class="settings-nav" aria-label="Settings navigation">
+      <input type="search" id="settingsSearch" class="settings-search" placeholder="Search settings" aria-label="Search settings" aria-describedby="settingsSearchStatus" autocomplete="off">
+      <p class="settings-search-status" id="settingsSearchStatus" role="status" aria-live="polite"></p>
+    <div class="settings-tabs" role="tablist" aria-label="Settings sections" aria-orientation="vertical">
       <button class="settings-tab active" id="settingsTabButton-api" role="tab" aria-selected="true" aria-controls="settingsTab-api" tabindex="0" onclick="switchSettingsTab('api', this)">API</button>
       <button class="settings-tab" id="settingsTabButton-prompts" role="tab" aria-selected="false" aria-controls="settingsTab-prompts" tabindex="-1" onclick="switchSettingsTab('prompts', this)">Prompts</button>
       <button class="settings-tab" id="settingsTabButton-appearance" role="tab" aria-selected="false" aria-controls="settingsTab-appearance" tabindex="-1" onclick="switchSettingsTab('appearance', this)">Appearance</button>
@@ -313,6 +323,8 @@
       <button class="settings-tab" id="settingsTabButton-data" role="tab" aria-selected="false" aria-controls="settingsTab-data" tabindex="-1" onclick="switchSettingsTab('data', this)">Data</button>
       <button class="settings-tab" id="settingsTabButton-debug" role="tab" aria-selected="false" aria-controls="settingsTab-debug" tabindex="-1" onclick="switchSettingsTab('debug', this)">Debug</button>
     </div>
+    </nav>
+    <div class="settings-panels">
 
     <div class="settings-tab-content active" id="settingsTab-api" role="tabpanel" aria-labelledby="settingsTabButton-api">
       <label for="setProvider">Provider</label>
@@ -674,6 +686,8 @@
         <button class="btn btn-secondary" type="button" onclick="copyDebugSnapshot()">Copy snapshot</button>
         <button class="btn btn-secondary" type="button" onclick="clearDebugLog()">Clear</button>
       </div>
+    </div>
+    </div>
     </div>
 
     <div class="modal-actions settings-actions">

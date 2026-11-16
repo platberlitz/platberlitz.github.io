@@ -147,7 +147,7 @@ module.exports = async function(page) {
 
   await page.locator('#toolbarMoreBtn').click();
   await page.getByRole('menuitem', { name: 'Settings', exact: true }).click();
-  await page.locator('#settingsTabButton-api').focus();
+  await page.locator('#settingsSearch').focus();
   await page.keyboard.press('Shift+Tab');
   assert.equal(await page.evaluate(() => document.activeElement.id), 'settingsSaveBtn', 'Reverse Tab stays inside Settings');
   await page.locator('#setModelManual').fill('unsaved-interface-model');
