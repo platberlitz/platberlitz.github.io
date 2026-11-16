@@ -1521,8 +1521,21 @@ body.share-view .messages-area { padding-bottom: 64px; }
 .project-doc-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .modal .project-doc-mode { width: auto; flex: 0 0 auto; margin: 0; padding: 6px 8px; font-size: 0.85em; }
 .context-file-mode { color: var(--text-secondary); font-size: 0.85em; }
+.project-overview-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 16px 0 4px; }
+.project-overview-heading h3 { font-size: 0.85em; font-weight: 600; color: var(--text-primary); }
+.project-overview-heading .btn { padding: 6px 12px; font-size: 0.85em; min-height: 36px; }
+.project-chat-list { display: flex; flex-direction: column; gap: 2px; max-height: min(30vh, 240px); overflow-y: auto; margin: 6px 0 14px; }
+.project-chat-row { display: flex; align-items: baseline; gap: 8px; padding: 6px 10px; border-radius: 6px; }
+.project-chat-row:hover { background: var(--hover); }
+.project-chat-row.active { background: var(--hover); }
+.project-chat-open { flex: 1; min-width: 0; background: none; border: none; padding: 0; color: var(--text-primary); font: inherit; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.project-chat-open:hover { color: var(--accent); }
+.project-chat-meta { flex: 0 0 auto; color: var(--text-secondary); font-size: 0.78em; }
 @media (max-width: 640px) {
   .memory-row-actions .btn { min-height: 44px; flex: 1; }
+  .project-overview-heading .btn { min-height: 44px; }
+  .project-chat-row { flex-direction: column; gap: 2px; min-height: 44px; justify-content: center; }
+  .project-chat-open { width: 100%; }
   .project-doc-row { flex-wrap: wrap; }
   .project-doc-name { flex-basis: 100%; }
   .modal .project-doc-mode { flex: 1; min-height: 44px; }

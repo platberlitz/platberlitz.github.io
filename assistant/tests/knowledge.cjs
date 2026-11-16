@@ -195,6 +195,26 @@ module.exports = async function(page) {
     assert.match(filePreview.text, /Project files excluded/);
     assert.match(filePreview.text, /Style guide/);
     assert.match(filePreview.panel, /Search when needed/);
+
+    // Project overview: the project's chats, a new chat in it, and its memories.
+    const libraryChatId = await page.evaluate(() => getActiveConv().id);
+    await page.evaluate(projectId => openProjectsModal(projectId), files.projectId);
+    assert.deepEqual(await page.$$eval('#projChatList .project-chat-open', rows => rows.map(row => row.getAttribute('aria-current'))), ['true']);
+    assert.match(await page.textContent('#projChatCount'), /^1 chat in this project\./);
+    await page.waitForFunction(() => /0 memories belong to this project/.test(document.getElementById('projMemoryCount').textContent));
+    await page.click('#projectsModal button:has-text("Manage memories")');
+    await page.waitForFunction(projectId => document.getElementById('memoryFilter').value === 'project:' + projectId, files.projectId);
+    assert.equal(await page.$eval('#memoryFilter', select => select.selectedOptions[0].textContent), 'Project: Library');
+    await page.evaluate(() => closeModal('memoriesModal'));
+    await page.click('#projectsModal button:has-text("New chat in this project")');
+    const newChat = await page.evaluate(() => ({ id: getActiveConv().id, projectId: getActiveConv().projectId }));
+    assert.equal(newChat.projectId, files.projectId, 'the new chat belongs to the project');
+    assert.notEqual(newChat.id, libraryChatId);
+    await page.evaluate(projectId => openProjectsModal(projectId), files.projectId);
+    assert.equal(await page.locator('#projChatList .project-chat-row').count(), 2);
+    await page.locator('#projChatList .project-chat-row:not(.active) .project-chat-open').click();
+    assert.equal(await page.evaluate(() => getActiveConv().id), libraryChatId, 'choosing a chat opens it');
+    assert.equal(await page.evaluate(() => document.querySelector('#projectsModal.open') === null), true, 'the overview closes');
   } finally {
     await page.unroute(pattern, route);
   }

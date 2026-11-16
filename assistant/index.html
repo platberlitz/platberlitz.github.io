@@ -736,15 +736,25 @@
     <div id="projEditorBody">
       <label for="projName">Name</label>
       <input type="text" id="projName" placeholder="Project name" oninput="scheduleProjectAutosave()">
+      <div class="project-overview-heading">
+        <h3 id="projChatsHeading">Chats</h3>
+        <button class="btn btn-secondary" type="button" onclick="newChatInEditedProject()">New chat in this project</button>
+      </div>
+      <div class="setting-hint" id="projChatCount"></div>
+      <div id="projChatList" class="project-chat-list" role="list" aria-labelledby="projChatsHeading"></div>
       <label for="projInstructions">Project instructions</label>
       <textarea id="projInstructions" rows="6" placeholder="Applied to every chat in this project." oninput="scheduleProjectAutosave()"></textarea>
       <label for="projFileInput">Project files</label>
       <div id="projDocList" class="prompt-entry-list"></div>
       <input type="file" id="projFileInput" multiple style="display:none" onchange="addProjectFiles(event)">
       <button class="btn btn-secondary" type="button" onclick="document.getElementById('projFileInput').click()">Add files</button>
-      <div class="project-save-status" id="projectSaveStatus" role="status">Saved</div>
-      <div class="setting-hint" id="projChatCount"></div>
       <div class="setting-hint">Always include sends the whole file with every message. Search when needed sends only the passages that match the latest message. Exclude keeps the file here without sending it.</div>
+      <div class="project-overview-heading">
+        <h3>Memories</h3>
+        <button class="btn btn-secondary" type="button" onclick="openEditedProjectMemories()">Manage memories</button>
+      </div>
+      <div class="setting-hint" id="projMemoryCount"></div>
+      <div class="project-save-status" id="projectSaveStatus" role="status">Saved</div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-primary" type="button" onclick="saveProjectFromModal()">Close</button>

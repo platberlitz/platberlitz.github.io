@@ -3222,11 +3222,17 @@ function memoryScopeValue(memory) {
   return memory?.scope && memory.scope !== 'global' ? memory.scope + ':' + memory.scopeId : 'global';
 }
 
-function openManageMemories() {
+// initialFilter, such as { value: 'project:<id>', label: 'Project: Garden' }, opens the
+// list already narrowed; the option is offered even before that scope has memories.
+function openManageMemories(initialFilter = null) {
   memoryEditingId = null;
   const conv = getActiveConv();
   const filter = document.getElementById('memoryFilter');
-  if (filter) filter.dataset.initialised = '';
+  if (filter) {
+    filter.dataset.initialised = '';
+    filter.dataset.pendingValue = initialFilter?.value || '';
+    filter.dataset.pendingLabel = initialFilter?.label || '';
+  }
   const scope = document.getElementById('memoryNewScope');
   if (scope) {
     const choices = memoryScopeChoices(conv);
@@ -3245,7 +3251,8 @@ async function renderMemoryManager() {
   const conv = getActiveConv();
   const scopes = conversationMemoryScopes(conv);
   const filter = document.getElementById('memoryFilter');
-  const previous = filter.dataset.initialised ? filter.value : (scopes ? 'chat' : 'all');
+  const pending = filter.dataset.initialised ? '' : filter.dataset.pendingValue || '';
+  const previous = filter.dataset.initialised ? filter.value : pending || (scopes ? 'chat' : 'all');
   const filters = [];
   if (scopes) filters.push({ value: 'chat', label: 'Used in this chat' });
   filters.push({ value: 'all', label: 'All memories' }, { value: 'global', label: 'Everywhere' }, { value: 'pinned', label: 'Pinned' });
@@ -3257,6 +3264,7 @@ async function renderMemoryManager() {
     seen.add(value);
     filters.push({ value, label: memoryScopeLabel(memory) });
   });
+  if (pending && !filters.some(item => item.value === pending)) filters.push({ value: pending, label: filter.dataset.pendingLabel || pending });
   fillMemoryScopeSelect(filter, filters, previous);
   filter.dataset.initialised = '1';
 
@@ -7190,9 +7198,7 @@ function renderProjectEditor() {
   const saveStatus = document.getElementById('projectSaveStatus');
   if (saveStatus) saveStatus.textContent = 'Saved';
 
-  const count = conversations.filter(c => c.projectId === proj.id).length;
-  document.getElementById('projChatCount').textContent =
-    count === 1 ? '1 chat in this project' : count + ' chats in this project';
+  renderProjectOverview(proj);
 
   const list = document.getElementById('projDocList');
   list.innerHTML = '';
@@ -7230,6 +7236,68 @@ function renderProjectEditor() {
     row.appendChild(del);
     list.appendChild(row);
   });
+}
+
+let projectOverviewToken = 0;
+
+function renderProjectOverview(proj) {
+  const chats = conversations.filter(c => c.projectId === proj.id)
+    .sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
+  const active = chats.filter(c => !c.archivedAt).length;
+  const archived = chats.length - active;
+  const countEl = document.getElementById('projChatCount');
+  if (countEl) {
+    countEl.textContent = (chats.length === 1 ? '1 chat in this project' : chats.length + ' chats in this project') +
+      (archived ? ', ' + archived + ' archived.' : chats.length ? '.' : '. Start one here or move a chat in with the folder button in the sidebar.');
+  }
+  const list = document.getElementById('projChatList');
+  if (list) {
+    list.replaceChildren(...chats.map(chat => {
+      const row = document.createElement('div');
+      row.className = 'project-chat-row' + (chat.id === activeConvId ? ' active' : '');
+      row.setAttribute('role', 'listitem');
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.className = 'project-chat-open';
+      open.textContent = chat.title || 'Untitled chat';
+      if (chat.id === activeConvId) open.setAttribute('aria-current', 'true');
+      open.onclick = () => {
+        closeModal('projectsModal', false);
+        navigateForkConversation(chat.id);
+        document.getElementById('chatInput')?.focus();
+      };
+      const meta = document.createElement('span');
+      meta.className = 'project-chat-meta';
+      const turns = (chat.messages || []).length;
+      meta.textContent = [turns === 1 ? '1 message' : turns + ' messages',
+        chat.archivedAt ? 'Archived' : '', formatRelativeTime(chat.updatedAt || chat.createdAt || Date.now())].filter(Boolean).join(' · ');
+      row.append(open, meta);
+      return row;
+    }));
+  }
+  const memoryEl = document.getElementById('projMemoryCount');
+  if (!memoryEl) return;
+  const token = ++projectOverviewToken;
+  memoryEl.textContent = '';
+  loadMemories().then(memories => {
+    if (token !== projectOverviewToken || _projectEditId !== proj.id) return;
+    const own = memories.filter(memory => memory.scope === 'project' && memory.scopeId === proj.id).length;
+    memoryEl.textContent = (own === 1 ? '1 memory belongs to this project' : own + ' memories belong to this project') +
+      '. Chats here also use memories saved for everywhere.';
+  }).catch(() => {});
+}
+
+function newChatInEditedProject() {
+  const proj = getProject(_projectEditId);
+  if (!proj) return;
+  closeModal('projectsModal', false);
+  createConversation(proj.id);
+}
+
+function openEditedProjectMemories() {
+  const proj = getProject(_projectEditId);
+  if (!proj) return openManageMemories();
+  return openManageMemories({ value: 'project:' + proj.id, label: 'Project: ' + proj.name });
 }
 
 function renderProjectEditorPreservingPendingEdits(projectId) {
@@ -7494,7 +7562,7 @@ function renderSidebar() {
         const label = document.createElement('button');
         label.className = 'project-name-btn';
         label.textContent = proj.name;
-        label.title = 'Edit project';
+        label.title = 'Open ' + proj.name + ' overview';
         label.onclick = () => openProjectsModal(proj.id);
         header.append(collapseBtn, label);
         const addBtn = document.createElement('button');
@@ -15899,6 +15967,8 @@ const __windowBridge = {
   shareSelfTest,
   // Projects (inline onclick in index.html)
   openProjectsModal,
+  newChatInEditedProject,
+  openEditedProjectMemories,
   selectProjectInModal,
   newProjectFromModal,
   scheduleProjectAutosave,
