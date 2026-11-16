@@ -25,13 +25,17 @@ const server = http.createServer(async (request, response) => {
     browser = await chromium.launch({ headless: true });
     const args = process.argv.slice(2);
     const suites = args.filter(arg => arg !== '--standalone');
-    for (const name of suites.length ? suites : ['privacy', 'persistence', 'recovery', 'requests', 'transport', 'context', 'lifecycle', 'interface', 'interaction', 'sprites', 'sync', 'knowledge', 'workspace']) {
+    for (const name of suites.length ? suites : ['privacy', 'persistence', 'recovery', 'requests', 'transport', 'context', 'lifecycle', 'interface', 'interaction', 'sprites', 'sync', 'knowledge', 'workspace', 'outputs']) {
       assert.match(name, /^[a-z]+$/);
       const context = await browser.newContext({ serviceWorkers: 'block', viewport: { width: 1440, height: 1000 } });
       await context.route(/^https?:/, route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
       const page = await context.newPage();
       const errors = [];
-      page.on('pageerror', error => errors.push(error.message));
+      // Blocking service workers makes Playwright inject a script into every frame, which throws
+      // inside sandboxed previews; browsers without Playwright never run it.
+      page.on('pageerror', error => {
+        if (!/^Failed to read the 'serviceWorker' property from 'Navigator': .*sandboxed/.test(error.message)) errors.push(error.message);
+      });
       await page.goto(origin + (args.includes('--standalone') ? '/synapse.html' : '/'), { waitUntil: 'networkidle' });
       await page.waitForFunction(() => window.getActiveConv?.());
       const selfTest = await page.evaluate(() => synapseSelfTest());

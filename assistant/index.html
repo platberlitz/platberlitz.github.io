@@ -215,10 +215,14 @@
         <button class="btn btn-secondary context-wide-action" type="button" onclick="openFileSearch()">Search files</button>
       </div>
     </details>
+    <details class="context-panel-section" id="outputsSection">
+      <summary>Outputs <span id="outputsStatus">None</span></summary>
+      <div class="context-panel-section-body" id="contextOutputsBody"><p>No outputs yet. Choose Edit on a code block, or start a blank one.</p></div>
+    </details>
     <details class="context-panel-section" id="requestContextSection">
       <summary>Request context <span>Preview</span></summary>
       <div class="context-panel-section-body">
-        <div id="contextPreviewBody" class="context-preview-body"><p class="setting-hint">Open this section with the Context button to build a preview.</p></div>
+        <div id="contextPreviewBody" class="context-preview-body"><p class="setting-hint">Open this section with the Preview button to build a preview.</p></div>
         <button class="btn btn-secondary context-wide-action" type="button" onclick="compactOlderTurns()">Compact older turns</button>
       </div>
     </details>
@@ -252,6 +256,49 @@
       <div class="context-panel-section-body context-fork-links" id="contextForkLinks"><p>No related conversations.</p></div>
     </details>
   </div>
+  <section class="output-workspace" id="outputWorkspace" aria-label="Output workspace" hidden>
+    <div class="output-toolbar">
+      <button type="button" class="btn btn-secondary" onclick="closeOutputWorkspace()">Back to context</button>
+      <span class="output-status" id="outputStatus" role="status"></span>
+    </div>
+    <div class="output-details">
+      <label class="output-field">Title<input id="outputTitle" type="text" maxlength="120" autocomplete="off"></label>
+      <label class="output-field output-field-small">Format<input id="outputLanguage" type="text" maxlength="30" autocomplete="off" placeholder="text" spellcheck="false"></label>
+    </div>
+    <label class="sr-only" for="outputEditor">Output content</label>
+    <textarea id="outputEditor" class="output-editor" spellcheck="false" placeholder="Write or paste here."></textarea>
+    <div class="output-actions">
+      <button type="button" class="btn btn-primary" id="outputSaveBtn" onclick="saveOutputVersion()">Save version</button>
+      <button type="button" class="btn btn-secondary" id="outputDiscardBtn" onclick="discardOutputDraft()" hidden>Discard changes</button>
+      <button type="button" class="btn btn-secondary" id="outputPreviewBtn" onclick="toggleOutputPreview()" aria-pressed="false" hidden>Preview</button>
+      <button type="button" class="btn btn-secondary" onclick="downloadOutput()">Download</button>
+    </div>
+    <div class="output-preview" id="outputPreview" hidden></div>
+    <details class="context-panel-section output-section" open>
+      <summary>Revise selection</summary>
+      <div class="context-panel-section-body">
+        <p id="outputSelectionInfo">Select text in the editor, then describe the change.</p>
+        <label class="sr-only" for="outputRevisionInstruction">How to change the selected text</label>
+        <textarea id="outputRevisionInstruction" rows="3" maxlength="2000" placeholder="For example: make this shorter, or rename the variable to total"></textarea>
+        <div class="output-actions">
+          <button type="button" class="btn btn-primary" id="outputReviseBtn" onclick="reviseOutputSelection()">Revise selection</button>
+          <button type="button" class="btn btn-secondary" id="outputReviseCancel" onclick="cancelOutputRevision()" hidden>Cancel</button>
+        </div>
+        <div class="output-revision-result" id="outputRevisionResult" aria-live="polite" hidden></div>
+      </div>
+    </details>
+    <details class="context-panel-section output-section">
+      <summary>Versions <span id="outputVersionCount">1</span></summary>
+      <div class="context-panel-section-body">
+        <div class="output-version-list" id="outputVersionList" role="list"></div>
+        <p>Synapse keeps the latest 30 versions of each output.</p>
+        <div class="output-comparison" id="outputComparison" hidden></div>
+      </div>
+    </details>
+    <div class="output-footer">
+      <button type="button" class="btn btn-danger" onclick="deleteOutput()">Delete output</button>
+    </div>
+  </section>
 </aside>
 
 <!-- Setup Modal -->

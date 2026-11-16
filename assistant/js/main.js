@@ -979,6 +979,19 @@ function normalizeConversationRecord(raw) {
     else safe.messageIndex = messageIndices.get(doc.messageIndex);
     return [safe];
   });
+  if ('outputs' in normalized) {
+    const seen = new Set();
+    normalized.outputs = (Array.isArray(normalized.outputs) ? normalized.outputs : []).flatMap(raw => {
+      const output = normalizeOutputRecord(raw);
+      if (!output || seen.has(output.id)) return [];
+      seen.add(output.id);
+      if ('sourceMessageIndex' in output) {
+        if (messageIndices.has(output.sourceMessageIndex)) output.sourceMessageIndex = messageIndices.get(output.sourceMessageIndex);
+        else delete output.sourceMessageIndex;
+      }
+      return [output];
+    });
+  }
   if (!TAG_COLORS.some(tag => tag.name === normalized.tag)) delete normalized.tag;
   if (!normalized.toolPolicy || typeof normalized.toolPolicy !== 'object') normalized.toolPolicy = null;
   normalized.goal = text(normalized.goal).slice(0, 4000);
@@ -4619,6 +4632,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   toggleSidebar(window.innerWidth > 768, false);
   toggleContextPanel(window.innerWidth > 1100 && localStorage.getItem('assistantContextPanelOpen') === 'true', false);
   initPanelResizers();
+  initOutputWorkspace();
   document.getElementById('sidebar')?.addEventListener('keydown', event => {
     const sidebar = document.getElementById('sidebar');
     if (window.innerWidth <= 768 && !sidebar.classList.contains('collapsed')) trapFocus(sidebar, event);
@@ -5039,8 +5053,10 @@ function renderMarkdown(text) {
 // ============================================
 // Code Copy Buttons
 // ============================================
+const CODE_LANG_EXT = { javascript: 'js', js: 'js', typescript: 'ts', ts: 'ts', python: 'py', py: 'py', java: 'java', c: 'c', cpp: 'cpp', csharp: 'cs', cs: 'cs', go: 'go', rust: 'rs', ruby: 'rb', php: 'php', html: 'html', css: 'css', json: 'json', xml: 'xml', yaml: 'yaml', yml: 'yml', sql: 'sql', bash: 'sh', sh: 'sh', shell: 'sh', markdown: 'md', md: 'md', swift: 'swift', kotlin: 'kt', lua: 'lua', r: 'r', perl: 'pl', scala: 'scala', dart: 'dart', zig: 'zig', nim: 'nim', elixir: 'ex', clojure: 'clj', haskell: 'hs', ocaml: 'ml', toml: 'toml', ini: 'ini', dockerfile: 'dockerfile', makefile: 'makefile', svg: 'svg', text: 'txt', plaintext: 'txt' };
+
 function addCodeCopyButtons(container) {
-  const langExtMap = { javascript: 'js', js: 'js', typescript: 'ts', ts: 'ts', python: 'py', py: 'py', java: 'java', c: 'c', cpp: 'cpp', csharp: 'cs', cs: 'cs', go: 'go', rust: 'rs', ruby: 'rb', php: 'php', html: 'html', css: 'css', json: 'json', xml: 'xml', yaml: 'yaml', yml: 'yml', sql: 'sql', bash: 'sh', sh: 'sh', shell: 'sh', markdown: 'md', md: 'md', swift: 'swift', kotlin: 'kt', lua: 'lua', r: 'r', perl: 'pl', scala: 'scala', dart: 'dart', zig: 'zig', nim: 'nim', elixir: 'ex', clojure: 'clj', haskell: 'hs', ocaml: 'ml', toml: 'toml', ini: 'ini', dockerfile: 'dockerfile', makefile: 'makefile' };
+  const langExtMap = CODE_LANG_EXT;
   container.querySelectorAll('pre').forEach(pre => {
     if (pre.parentElement.classList.contains('code-block-wrapper')) return;
     if (pre.classList.contains('mermaid')) return;
@@ -5226,12 +5242,735 @@ function addArtifactPreview(container) {
 }
 
 // ============================================
+// Outputs Workspace
+// ============================================
+const OUTPUT_CHAR_LIMIT = 200000;
+const OUTPUT_VERSION_LIMIT = 30;
+const OUTPUT_REVISION_CONTEXT_CHARS = 60000;
+const OUTPUT_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
+const OUTPUT_REVISION_SYSTEM = 'You revise one selected passage of a document. Reply with only the replacement text for the selected passage: no explanation, no quotation marks and no code fences. Keep the surrounding formatting, indentation and language unless the instruction asks for something else.';
+const outputWorkspace = { convId: null, outputId: null, compareVersionId: null, previewOpen: false, revision: null };
+let outputPreviewTimer = null;
+
+function genOutputId(prefix = 'out') {
+  return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function normalizeOutputLanguage(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9+#.-]/g, '').slice(0, 30);
+}
+
+function normalizeOutputRecord(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const text = value => typeof value === 'string' ? value : '';
+  const time = value => ['number', 'string'].includes(typeof value) && Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : 0;
+  const id = text(raw.id);
+  if (!OUTPUT_ID_RE.test(id)) return null;
+  const versions = [];
+  (Array.isArray(raw.versions) ? raw.versions : []).forEach(version => {
+    if (!version || typeof version !== 'object' || typeof version.content !== 'string') return;
+    const previous = versions[versions.length - 1]?.number || 0;
+    versions.push({
+      id: OUTPUT_ID_RE.test(text(version.id)) ? version.id : genOutputId('ver'),
+      number: Number.isInteger(version.number) && version.number > previous ? version.number : previous + 1,
+      content: version.content.slice(0, OUTPUT_CHAR_LIMIT),
+      savedAt: time(version.savedAt) || time(raw.createdAt) || Date.now(),
+      label: text(version.label).slice(0, 200)
+    });
+  });
+  if (!versions.length) return null;
+  const kept = versions.slice(-OUTPUT_VERSION_LIMIT);
+  const createdAt = time(raw.createdAt) || kept[0].savedAt;
+  const output = {
+    id,
+    title: text(raw.title).trim().slice(0, 120) || 'Untitled output',
+    language: normalizeOutputLanguage(raw.language),
+    versions: kept,
+    createdAt,
+    updatedAt: Math.max(time(raw.updatedAt), createdAt, kept[kept.length - 1].savedAt)
+  };
+  if (typeof raw.draft === 'string' && raw.draft !== kept[kept.length - 1].content) output.draft = raw.draft.slice(0, OUTPUT_CHAR_LIMIT);
+  if (Number.isInteger(raw.sourceMessageIndex) && raw.sourceMessageIndex >= 0) output.sourceMessageIndex = raw.sourceMessageIndex;
+  return output;
+}
+
+function getConversationOutputs(conv) {
+  return Array.isArray(conv?.outputs) ? conv.outputs : [];
+}
+
+function findOutput(conv, id) {
+  return getConversationOutputs(conv).find(output => output.id === id) || null;
+}
+
+function outputSavedContent(output) {
+  return output?.versions?.[output.versions.length - 1]?.content || '';
+}
+
+function outputDraftContent(output) {
+  return typeof output?.draft === 'string' ? output.draft : outputSavedContent(output);
+}
+
+function outputHasUnsaved(output) {
+  return typeof output?.draft === 'string' && output.draft !== outputSavedContent(output);
+}
+
+function outputLatestNumber(output) {
+  return output?.versions?.[output.versions.length - 1]?.number || 1;
+}
+
+function outputExtension(output) {
+  const language = output?.language || '';
+  return CODE_LANG_EXT[language] || (/^[a-z0-9]{1,10}$/.test(language) ? language : 'txt');
+}
+
+function outputCanPreview(output) {
+  return ARTIFACT_LANGS.includes(output?.language);
+}
+
+function suggestOutputTitle(content, language, existingCount) {
+  const html = content.match(/<title[^>]*>([^<]{1,120})<\/title>/i);
+  const heading = content.match(/^\s{0,3}#{1,3}\s+(.{1,120})$/m);
+  const candidate = (html?.[1] || heading?.[1] || '').trim();
+  if (candidate) return candidate.slice(0, 120);
+  return (language ? language.toUpperCase() : 'Text') + ' output ' + (existingCount + 1);
+}
+
+function activeOutput() {
+  const conv = getActiveConv();
+  if (!conv || outputWorkspace.convId !== conv.id) return null;
+  return findOutput(conv, outputWorkspace.outputId);
+}
+
+async function createOutput({ content = '', language = '', title = '', sourceMessageIndex = null } = {}) {
+  const conv = getActiveConv();
+  if (!conv || readOnlyShare) return null;
+  if (!Array.isArray(conv.outputs)) conv.outputs = [];
+  const text = String(content).slice(0, OUTPUT_CHAR_LIMIT);
+  const existing = text.trim() ? conv.outputs.find(output => outputSavedContent(output) === text) : null;
+  if (existing) {
+    openOutput(existing.id);
+    return existing;
+  }
+  const now = Date.now();
+  const lang = normalizeOutputLanguage(language);
+  const fromMessage = Number.isInteger(sourceMessageIndex) && sourceMessageIndex >= 0;
+  const output = normalizeOutputRecord({
+    id: genOutputId(),
+    title: title || suggestOutputTitle(text, lang, conv.outputs.length),
+    language: lang,
+    versions: [{ id: genOutputId('ver'), number: 1, content: text, savedAt: now, label: fromMessage ? 'From the conversation' : 'Created' }],
+    createdAt: now,
+    updatedAt: now,
+    ...(fromMessage ? { sourceMessageIndex } : {})
+  });
+  conv.outputs.push(output);
+  conv.updatedAt = now;
+  await saveConversationImmediately();
+  openOutput(output.id);
+  announce('Opened ' + output.title + ' in the outputs workspace.');
+  return output;
+}
+
+function addOutputButtons(container) {
+  if (readOnlyShare) return;
+  container.querySelectorAll('.code-block-wrapper').forEach(wrapper => {
+    if (wrapper.querySelector('.code-output-btn')) return;
+    const code = wrapper.querySelector('pre code');
+    if (!code) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'code-output-btn';
+    btn.textContent = 'Edit';
+    btn.title = 'Open this code in the outputs workspace';
+    btn.setAttribute('aria-label', 'Edit this code in the outputs workspace');
+    btn.onclick = event => {
+      event.stopPropagation();
+      const cls = Array.from(code.classList).find(name => name.startsWith('language-'));
+      const index = Number.parseInt(wrapper.closest('.msg-wrapper')?.dataset.msgIdx, 10);
+      createOutput({ content: code.textContent, language: cls ? cls.slice('language-'.length) : '', sourceMessageIndex: Number.isInteger(index) ? index : null });
+    };
+    wrapper.appendChild(btn);
+  });
+}
+
+function resetOutputWorkspaceState() {
+  outputWorkspace.revision?.controller?.abort();
+  clearTimeout(outputPreviewTimer);
+  Object.assign(outputWorkspace, { compareVersionId: null, previewOpen: false, revision: null });
+}
+
+function openOutput(id) {
+  const conv = getActiveConv();
+  if (!findOutput(conv, id)) return;
+  if (outputWorkspace.outputId !== id || outputWorkspace.convId !== conv.id) resetOutputWorkspaceState();
+  outputWorkspace.convId = conv.id;
+  outputWorkspace.outputId = id;
+  toggleContextPanel(true);
+  renderOutputWorkspace();
+  document.getElementById('outputEditor')?.focus();
+}
+
+function closeOutputWorkspace(focusList = true) {
+  resetOutputWorkspaceState();
+  outputWorkspace.convId = null;
+  outputWorkspace.outputId = null;
+  renderOutputWorkspace();
+  renderOutputsSection();
+  if (!focusList) return;
+  const section = document.getElementById('outputsSection');
+  if (section) {
+    section.open = true;
+    section.querySelector('summary')?.focus();
+  }
+}
+
+function setOutputDraft(output, value) {
+  const conv = getActiveConv();
+  if (!conv || !output || readOnlyShare) return;
+  const next = String(value).slice(0, OUTPUT_CHAR_LIMIT);
+  if (next === outputSavedContent(output)) delete output.draft;
+  else output.draft = next;
+  conv.updatedAt = Date.now();
+  debouncedSave();
+  updateOutputStatus(output);
+}
+
+function updateOutputStatus(output) {
+  const unsaved = outputHasUnsaved(output);
+  const latest = output.versions[output.versions.length - 1];
+  const status = document.getElementById('outputStatus');
+  if (status) status.textContent = unsaved ? 'Unsaved changes' : 'Version ' + latest.number + ' saved ' + formatRelativeTime(latest.savedAt);
+  const save = document.getElementById('outputSaveBtn');
+  if (save) save.disabled = !unsaved;
+  const discard = document.getElementById('outputDiscardBtn');
+  if (discard) discard.hidden = !unsaved;
+}
+
+function updateOutputSelectionInfo() {
+  const editor = document.getElementById('outputEditor');
+  const info = document.getElementById('outputSelectionInfo');
+  if (!editor || !info) return;
+  const length = Math.abs(editor.selectionEnd - editor.selectionStart);
+  info.textContent = length
+    ? length + ' character' + (length === 1 ? '' : 's') + ' selected.'
+    : 'Select text in the editor, then describe the change.';
+}
+
+function renderOutputWorkspace() {
+  const workspace = document.getElementById('outputWorkspace');
+  const body = document.querySelector('#contextPanel .context-panel-body');
+  if (!workspace || !body) return;
+  const output = activeOutput();
+  if (!output && outputWorkspace.outputId) {
+    resetOutputWorkspaceState();
+    outputWorkspace.convId = null;
+    outputWorkspace.outputId = null;
+  }
+  workspace.hidden = !output;
+  body.hidden = Boolean(output);
+  if (!output) return;
+  const title = document.getElementById('outputTitle');
+  if (title && document.activeElement !== title) title.value = output.title;
+  const language = document.getElementById('outputLanguage');
+  if (language && document.activeElement !== language) language.value = output.language;
+  const editor = document.getElementById('outputEditor');
+  const draft = outputDraftContent(output);
+  if (editor && editor.value !== draft) editor.value = draft;
+  [title, language, editor].forEach(input => { if (input) input.readOnly = readOnlyShare; });
+  updateOutputStatus(output);
+  updateOutputSelectionInfo();
+  const preview = document.getElementById('outputPreviewBtn');
+  if (preview) {
+    preview.hidden = !outputCanPreview(output);
+    preview.textContent = outputWorkspace.previewOpen ? 'Hide preview' : 'Preview';
+    preview.setAttribute('aria-pressed', String(outputWorkspace.previewOpen));
+  }
+  refreshOutputPreview();
+  renderOutputVersions(output);
+  renderOutputComparison(output);
+  renderOutputRevision(output);
+}
+
+function refreshOutputPreview() {
+  const container = document.getElementById('outputPreview');
+  if (!container) return;
+  const output = activeOutput();
+  if (!output || !outputWorkspace.previewOpen || !outputCanPreview(output)) {
+    container.replaceChildren();
+    container.hidden = true;
+    return;
+  }
+  container.hidden = false;
+  let frame = container.querySelector('iframe');
+  if (!frame) {
+    frame = document.createElement('iframe');
+    frame.className = 'artifact-frame';
+    // allow-scripts ONLY, as in message previews: same-origin would expose stored keys.
+    frame.setAttribute('sandbox', 'allow-scripts');
+    frame.setAttribute('referrerpolicy', 'no-referrer');
+    frame.setAttribute('title', 'Preview of ' + output.title);
+    container.appendChild(frame);
+  }
+  const content = outputDraftContent(output);
+  if (frame.srcdoc !== content) frame.srcdoc = content;
+}
+
+function toggleOutputPreview() {
+  const output = activeOutput();
+  if (!output || !outputCanPreview(output)) return;
+  outputWorkspace.previewOpen = !outputWorkspace.previewOpen;
+  renderOutputWorkspace();
+}
+
+function renderOutputVersions(output) {
+  const list = document.getElementById('outputVersionList');
+  const count = document.getElementById('outputVersionCount');
+  if (count) count.textContent = String(output.versions.length);
+  if (!list) return;
+  list.replaceChildren();
+  const latestId = output.versions[output.versions.length - 1].id;
+  output.versions.slice().reverse().forEach(version => {
+    const row = document.createElement('div');
+    row.className = 'output-version-row';
+    row.setAttribute('role', 'listitem');
+    const text = document.createElement('div');
+    text.className = 'output-version-text';
+    const name = document.createElement('strong');
+    name.textContent = 'Version ' + version.number + (version.id === latestId ? ' (current)' : '');
+    const meta = document.createElement('span');
+    meta.textContent = [version.label, formatRelativeTime(version.savedAt)].filter(Boolean).join(' · ');
+    text.append(name, meta);
+    const actions = document.createElement('div');
+    actions.className = 'output-version-actions';
+    const compare = document.createElement('button');
+    compare.type = 'button';
+    compare.className = 'btn btn-secondary';
+    compare.textContent = 'Compare';
+    compare.setAttribute('aria-label', 'Compare version ' + version.number + ' with the editor');
+    compare.setAttribute('aria-pressed', String(outputWorkspace.compareVersionId === version.id));
+    compare.onclick = () => {
+      outputWorkspace.compareVersionId = outputWorkspace.compareVersionId === version.id ? null : version.id;
+      renderOutputWorkspace();
+      document.getElementById('outputComparison')?.scrollIntoView({ block: 'nearest', behavior: getScrollBehavior() });
+    };
+    actions.appendChild(compare);
+    if (version.id !== latestId && !readOnlyShare) {
+      const restore = document.createElement('button');
+      restore.type = 'button';
+      restore.className = 'btn btn-secondary';
+      restore.textContent = 'Restore';
+      restore.setAttribute('aria-label', 'Restore version ' + version.number);
+      restore.onclick = () => restoreOutputVersion(version.id);
+      actions.appendChild(restore);
+    }
+    row.append(text, actions);
+    list.appendChild(row);
+  });
+}
+
+function diffOutputLines(before, after) {
+  const a = String(before).split('\n');
+  const b = String(after).split('\n');
+  let start = 0;
+  while (start < a.length && start < b.length && a[start] === b[start]) start++;
+  let endA = a.length;
+  let endB = b.length;
+  while (endA > start && endB > start && a[endA - 1] === b[endB - 1]) { endA--; endB--; }
+  const rows = a.slice(0, start).map(text => ({ type: 'same', text }));
+  const midA = a.slice(start, endA);
+  const midB = b.slice(start, endB);
+  if (midA.length * midB.length > 2000000) {
+    midA.forEach(text => rows.push({ type: 'remove', text }));
+    midB.forEach(text => rows.push({ type: 'add', text }));
+  } else {
+    const n = midA.length;
+    const m = midB.length;
+    const width = m + 1;
+    const table = new Uint32Array((n + 1) * width);
+    for (let i = n - 1; i >= 0; i--) {
+      for (let j = m - 1; j >= 0; j--) {
+        table[i * width + j] = midA[i] === midB[j]
+          ? table[(i + 1) * width + j + 1] + 1
+          : Math.max(table[(i + 1) * width + j], table[i * width + j + 1]);
+      }
+    }
+    let i = 0;
+    let j = 0;
+    while (i < n && j < m) {
+      if (midA[i] === midB[j]) { rows.push({ type: 'same', text: midA[i] }); i++; j++; }
+      else if (table[(i + 1) * width + j] >= table[i * width + j + 1]) rows.push({ type: 'remove', text: midA[i++] });
+      else rows.push({ type: 'add', text: midB[j++] });
+    }
+    while (i < n) rows.push({ type: 'remove', text: midA[i++] });
+    while (j < m) rows.push({ type: 'add', text: midB[j++] });
+  }
+  a.slice(endA).forEach(text => rows.push({ type: 'same', text }));
+  return rows;
+}
+
+function renderOutputDiff(container, rows, context = 2) {
+  const added = rows.filter(row => row.type === 'add').length;
+  const removed = rows.filter(row => row.type === 'remove').length;
+  const summary = document.createElement('p');
+  summary.className = 'output-diff-summary';
+  summary.textContent = added || removed
+    ? added + ' line' + (added === 1 ? '' : 's') + ' added, ' + removed + ' removed.'
+    : 'No differences.';
+  container.appendChild(summary);
+  if (!added && !removed) return;
+  const pre = document.createElement('pre');
+  pre.className = 'output-diff';
+  const changed = rows.map(row => row.type !== 'same');
+  let hidden = 0;
+  const flush = () => {
+    if (!hidden) return;
+    const gap = document.createElement('span');
+    gap.className = 'output-diff-line output-diff-gap';
+    gap.textContent = '… ' + hidden + ' unchanged line' + (hidden === 1 ? '' : 's');
+    pre.appendChild(gap);
+    hidden = 0;
+  };
+  rows.forEach((row, index) => {
+    if (!changed.slice(Math.max(0, index - context), index + context + 1).some(Boolean)) { hidden++; return; }
+    flush();
+    const line = document.createElement('span');
+    line.className = 'output-diff-line output-diff-' + row.type;
+    line.textContent = (row.type === 'add' ? '+ ' : row.type === 'remove' ? '- ' : '  ') + row.text;
+    pre.appendChild(line);
+  });
+  flush();
+  container.appendChild(pre);
+}
+
+function renderOutputComparison(output) {
+  const container = document.getElementById('outputComparison');
+  if (!container) return;
+  container.replaceChildren();
+  const version = output.versions.find(item => item.id === outputWorkspace.compareVersionId);
+  if (!version) {
+    outputWorkspace.compareVersionId = null;
+    container.hidden = true;
+    return;
+  }
+  container.hidden = false;
+  const heading = document.createElement('h3');
+  heading.textContent = 'Changes from version ' + version.number + ' to the editor';
+  container.appendChild(heading);
+  renderOutputDiff(container, diffOutputLines(version.content, outputDraftContent(output)));
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'btn btn-secondary';
+  close.textContent = 'Close comparison';
+  close.onclick = () => { outputWorkspace.compareVersionId = null; renderOutputWorkspace(); };
+  container.appendChild(close);
+}
+
+function renderOutputRevision(output) {
+  const result = document.getElementById('outputRevisionResult');
+  const button = document.getElementById('outputReviseBtn');
+  const cancel = document.getElementById('outputReviseCancel');
+  const revision = outputWorkspace.revision;
+  const running = revision?.status === 'running';
+  if (button) {
+    button.disabled = running || readOnlyShare;
+    button.textContent = running ? 'Revising...' : 'Revise selection';
+  }
+  if (cancel) cancel.hidden = !running;
+  if (!result) return;
+  result.replaceChildren();
+  result.hidden = !revision || running;
+  if (!revision || running) return;
+  if (revision.status === 'failed') {
+    const error = document.createElement('p');
+    error.className = 'output-error';
+    error.textContent = revision.error;
+    result.appendChild(error);
+  } else {
+    const heading = document.createElement('h3');
+    heading.textContent = 'Proposed change';
+    result.appendChild(heading);
+    renderOutputDiff(result, diffOutputLines(revision.original, revision.replacement));
+  }
+  const actions = document.createElement('div');
+  actions.className = 'output-actions';
+  if (revision.status === 'ready') {
+    const apply = document.createElement('button');
+    apply.type = 'button';
+    apply.className = 'btn btn-primary';
+    apply.textContent = 'Apply change';
+    apply.onclick = () => applyOutputRevision();
+    actions.appendChild(apply);
+  }
+  const discard = document.createElement('button');
+  discard.type = 'button';
+  discard.className = 'btn btn-secondary';
+  discard.textContent = revision.status === 'ready' ? 'Discard change' : 'Dismiss';
+  discard.onclick = () => { outputWorkspace.revision = null; renderOutputWorkspace(); };
+  actions.appendChild(discard);
+  result.appendChild(actions);
+}
+
+function buildOutputRevisionMessages(output, documentText, start, end, instruction) {
+  let context = documentText;
+  let note = 'Full document';
+  if (documentText.length > OUTPUT_REVISION_CONTEXT_CHARS) {
+    const half = Math.floor(OUTPUT_REVISION_CONTEXT_CHARS / 2);
+    context = documentText.slice(Math.max(0, start - half), end + half);
+    note = 'Excerpt of the document around the selection';
+  }
+  return [
+    { role: 'system', content: OUTPUT_REVISION_SYSTEM },
+    { role: 'user', content: 'Document: ' + output.title + (output.language ? ' (' + output.language + ')' : '') +
+      '\n\n' + note + ', for context only:\n<document>\n' + context + '\n</document>' +
+      '\n\nSelected passage to replace:\n<selection>\n' + documentText.slice(start, end) + '\n</selection>' +
+      '\n\nInstruction: ' + instruction }
+  ];
+}
+
+function cleanOutputRevision(reply, original) {
+  let value = String(reply || '');
+  const fenced = value.trim().match(/^```[^\n]*\n([\s\S]*?)\n?```$/);
+  if (fenced && !original.trim().startsWith('```')) value = fenced[1];
+  const tagged = value.trim().match(/^<selection>\n?([\s\S]*?)\n?<\/selection>$/);
+  if (tagged) value = tagged[1];
+  if (!original.trim()) return value;
+  // Keep the selection's own surrounding whitespace so indentation and line breaks survive.
+  return original.match(/^\s*/)[0] + value.trim() + original.match(/\s*$/)[0];
+}
+
+async function reviseOutputSelection() {
+  const output = activeOutput();
+  const editor = document.getElementById('outputEditor');
+  const input = document.getElementById('outputRevisionInstruction');
+  if (!output || !editor || !input || readOnlyShare || outputWorkspace.revision?.status === 'running') return;
+  const start = Math.min(editor.selectionStart, editor.selectionEnd);
+  const end = Math.max(editor.selectionStart, editor.selectionEnd);
+  const instruction = input.value.trim();
+  if (start === end || !instruction) {
+    outputWorkspace.revision = { status: 'failed', error: start === end ? 'Select the text to revise in the editor first.' : 'Describe the change you want.' };
+    renderOutputRevision(output);
+    (start === end ? editor : input).focus();
+    return;
+  }
+  const documentText = editor.value;
+  const original = documentText.slice(start, end);
+  const controller = new AbortController();
+  const revision = { status: 'running', controller, start, end, original, instruction };
+  outputWorkspace.revision = revision;
+  renderOutputRevision(output);
+  announce('Revising the selected text.');
+  try {
+    const reply = await callApiNonStreaming(buildOutputRevisionMessages(output, documentText, start, end, instruction), {
+      signal: controller.signal,
+      maxTokens: Math.min(8192, Math.max(512, estimateTokens(original) * 3 + 256))
+    });
+    if (outputWorkspace.revision !== revision) return;
+    revision.status = 'ready';
+    revision.replacement = cleanOutputRevision(reply, original);
+  } catch (error) {
+    if (outputWorkspace.revision !== revision) return;
+    if (controller.signal.aborted) outputWorkspace.revision = null;
+    else {
+      revision.status = 'failed';
+      revision.error = 'The revision failed: ' + (error?.message || 'unknown error') + '.';
+    }
+  }
+  delete revision.controller;
+  const current = activeOutput();
+  if (current) renderOutputRevision(current);
+  if (revision.status === 'ready' && outputWorkspace.revision === revision) announce('Revision ready. Review it, then apply or discard it.');
+}
+
+function cancelOutputRevision() {
+  const revision = outputWorkspace.revision;
+  if (revision?.status !== 'running') return;
+  revision.controller?.abort();
+  outputWorkspace.revision = null;
+  const output = activeOutput();
+  if (output) renderOutputRevision(output);
+  announce('Revision cancelled.');
+}
+
+async function applyOutputRevision() {
+  const output = activeOutput();
+  const revision = outputWorkspace.revision;
+  const editor = document.getElementById('outputEditor');
+  if (!output || !editor || revision?.status !== 'ready') return;
+  const current = editor.value;
+  let start = revision.start;
+  if (current.slice(revision.start, revision.end) !== revision.original) {
+    const first = current.indexOf(revision.original);
+    if (first === -1 || current.indexOf(revision.original, first + 1) !== -1) {
+      revision.status = 'failed';
+      revision.error = 'The selected text changed while the revision was running. Select it again and retry.';
+      renderOutputRevision(output);
+      return;
+    }
+    start = first;
+  }
+  const next = current.slice(0, start) + revision.replacement + current.slice(start + revision.original.length);
+  editor.value = next;
+  setOutputDraft(output, next);
+  outputWorkspace.revision = null;
+  await saveOutputVersion('Revised: ' + revision.instruction.slice(0, 80));
+  editor.focus();
+  editor.setSelectionRange(start, start + revision.replacement.length);
+  updateOutputSelectionInfo();
+}
+
+async function saveOutputVersion(label = 'Edited') {
+  const conv = getActiveConv();
+  const output = activeOutput();
+  if (!conv || !output || readOnlyShare) return;
+  if (!outputHasUnsaved(output)) {
+    announce('No changes to save.');
+    return;
+  }
+  const now = Date.now();
+  const number = outputLatestNumber(output) + 1;
+  output.versions.push({ id: genOutputId('ver'), number, content: output.draft, savedAt: now, label: typeof label === 'string' ? label.slice(0, 200) : 'Edited' });
+  if (output.versions.length > OUTPUT_VERSION_LIMIT) output.versions.splice(0, output.versions.length - OUTPUT_VERSION_LIMIT);
+  delete output.draft;
+  output.updatedAt = now;
+  conv.updatedAt = now;
+  await saveConversationImmediately();
+  renderOutputWorkspace();
+  renderOutputsSection();
+  announce('Saved version ' + number + '.');
+}
+
+async function discardOutputDraft() {
+  const output = activeOutput();
+  if (!output || !outputHasUnsaved(output)) return;
+  setOutputDraft(output, outputSavedContent(output));
+  await saveConversationImmediately();
+  renderOutputWorkspace();
+  renderOutputsSection();
+  announce('Changes discarded.');
+}
+
+async function restoreOutputVersion(versionId) {
+  const output = activeOutput();
+  const version = output?.versions.find(item => item.id === versionId);
+  if (!version || readOnlyShare) return;
+  if (outputHasUnsaved(output) && !confirm('Replace your unsaved changes with version ' + version.number + '?')) return;
+  if (version.content === outputSavedContent(output)) {
+    setOutputDraft(output, version.content);
+    renderOutputWorkspace();
+    announce('Version ' + version.number + ' matches the current version.');
+    return;
+  }
+  output.draft = version.content;
+  await saveOutputVersion('Restored version ' + version.number);
+}
+
+async function updateOutputDetails() {
+  const conv = getActiveConv();
+  const output = activeOutput();
+  if (!conv || !output || readOnlyShare) return;
+  const title = document.getElementById('outputTitle')?.value.trim().slice(0, 120) || 'Untitled output';
+  const language = normalizeOutputLanguage(document.getElementById('outputLanguage')?.value);
+  if (title === output.title && language === output.language) return;
+  output.title = title;
+  output.language = language;
+  if (!outputCanPreview(output)) outputWorkspace.previewOpen = false;
+  output.updatedAt = Date.now();
+  conv.updatedAt = output.updatedAt;
+  await saveConversationImmediately();
+  renderOutputWorkspace();
+  renderOutputsSection();
+}
+
+function downloadOutput() {
+  const output = activeOutput();
+  if (!output) return;
+  const name = (output.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'output') + '.' + outputExtension(output);
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([outputDraftContent(output)], { type: 'text/plain' }));
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+async function deleteOutput() {
+  const conv = getActiveConv();
+  const output = activeOutput();
+  if (!conv || !output || readOnlyShare) return;
+  if (!confirm('Delete "' + output.title + '" and all its versions?')) return;
+  conv.outputs = getConversationOutputs(conv).filter(item => item.id !== output.id);
+  conv.updatedAt = Date.now();
+  await saveConversationImmediately();
+  closeOutputWorkspace();
+  announce('Output deleted.');
+}
+
+function renderOutputsSection() {
+  const body = document.getElementById('contextOutputsBody');
+  const status = document.getElementById('outputsStatus');
+  const conv = getActiveConv();
+  if (!body || !conv) return;
+  const outputs = getConversationOutputs(conv).slice().sort((a, b) => b.updatedAt - a.updatedAt);
+  if (status) status.textContent = outputs.length ? String(outputs.length) : 'None';
+  body.replaceChildren();
+  if (!outputs.length) {
+    const empty = document.createElement('p');
+    empty.textContent = 'No outputs yet. Choose Edit on a code block, or start a blank one.';
+    body.appendChild(empty);
+  }
+  outputs.forEach(output => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'output-list-item';
+    const name = document.createElement('strong');
+    name.textContent = output.title;
+    const meta = document.createElement('span');
+    meta.textContent = [output.language && output.language.toUpperCase(), 'Version ' + outputLatestNumber(output), outputHasUnsaved(output) && 'Unsaved changes'].filter(Boolean).join(' · ');
+    item.append(name, meta);
+    item.onclick = () => openOutput(output.id);
+    body.appendChild(item);
+  });
+  const create = document.createElement('button');
+  create.type = 'button';
+  create.className = 'btn btn-secondary context-wide-action';
+  create.textContent = 'New output';
+  create.disabled = readOnlyShare;
+  create.onclick = () => createOutput();
+  body.appendChild(create);
+}
+
+function initOutputWorkspace() {
+  const editor = document.getElementById('outputEditor');
+  if (!editor || editor.dataset.bound) return;
+  editor.dataset.bound = 'true';
+  editor.addEventListener('input', () => {
+    const output = activeOutput();
+    if (!output) return;
+    setOutputDraft(output, editor.value);
+    if (outputWorkspace.compareVersionId) renderOutputComparison(output);
+    if (outputWorkspace.previewOpen) {
+      clearTimeout(outputPreviewTimer);
+      outputPreviewTimer = setTimeout(refreshOutputPreview, 400);
+    }
+    updateOutputSelectionInfo();
+  });
+  ['select', 'keyup', 'mouseup', 'focus'].forEach(type => editor.addEventListener(type, updateOutputSelectionInfo));
+  ['outputTitle', 'outputLanguage'].forEach(id => document.getElementById(id)?.addEventListener('change', updateOutputDetails));
+  document.getElementById('outputRevisionInstruction')?.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      reviseOutputSelection();
+    }
+  });
+}
+
+// ============================================
 // Post-Render Pipeline
 // ============================================
 function postRenderProcessing(bubble) {
   renderEmotionSprites(bubble);
   addCodeCopyButtons(bubble);
   addArtifactPreview(bubble);
+  addOutputButtons(bubble);
   highlightCodeBlocks(bubble);
   // Line-number DOM rewriting can be fragile on some mobile WebKit builds.
   // Keep desktop behavior, skip on small screens for more robust code rendering.
@@ -9686,7 +10425,7 @@ function renderContextPanel() {
     contextPanelConversationId = conv.id;
     contextSourceMessage = null;
     const preview = document.getElementById('contextPreviewBody');
-    if (preview) preview.innerHTML = '<p class="setting-hint">Open this section with the Context button to build a preview.</p>';
+    if (preview) preview.innerHTML = '<p class="setting-hint">Open this section with the Preview button to build a preview.</p>';
   }
   const goalInput = document.getElementById('conversationGoal');
   if (goalInput && (conversationChanged || document.activeElement !== goalInput)) goalInput.value = conv.goal || '';
@@ -9781,6 +10520,9 @@ function renderContextPanel() {
     search.onclick = () => openFileSearch();
     filesBody.appendChild(search);
   }
+
+  renderOutputsSection();
+  renderOutputWorkspace();
 
   if (!conv.messages.includes(contextSourceMessage)) contextSourceMessage = null;
   renderContextSources(contextSourceMessage);
@@ -10440,6 +11182,7 @@ function forkBranch(msgIdx) {
   newConv.messages = structuredClone(messages.slice(0, msgIdx + 1));
   // ponytail: keep only files attached at or before the fork point; unowned legacy docs stay.
   newConv.docs = (newConv.docs || []).filter(doc => doc == null || doc.messageIndex == null || doc.messageIndex <= msgIdx);
+  if (Array.isArray(newConv.outputs)) newConv.outputs = newConv.outputs.filter(output => output.sourceMessageIndex == null || output.sourceMessageIndex <= msgIdx);
   invalidateConversationContext(newConv, msgIdx + 1);
   newConv.messages.forEach(message => {
     delete message._editing;
@@ -15956,6 +16699,14 @@ function toggleVoice() {
 // Window bridge for inline handlers and external hooks
 const __windowBridge = {
   toggleComposerExpanded,
+  closeOutputWorkspace,
+  saveOutputVersion,
+  discardOutputDraft,
+  toggleOutputPreview,
+  downloadOutput,
+  deleteOutput,
+  reviseOutputSelection,
+  cancelOutputRevision,
   // Share links (inline onclick in index.html; shareSelfTest is for the console)
   openShareDialog,
   shareConversation,
