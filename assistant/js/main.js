@@ -6551,7 +6551,8 @@ function normalizeProjectRecord(raw, index = 0) {
     id: String(doc.id || ('doc_' + createdAt + '_' + docIndex)),
     name: String(doc.name || 'Document').slice(0, 200),
     text: String(doc.text || '').slice(0, PROJECT_DOC_CHAR_LIMIT),
-    createdAt: Number(doc.createdAt) || createdAt
+    createdAt: Number(doc.createdAt) || createdAt,
+    ...(['search', 'off'].includes(doc.mode) ? { mode: doc.mode } : {})
   }));
   return {
     id,
@@ -6941,12 +6942,124 @@ function bulkDeleteSelected() {
   removeConversations([...selectedConversationIds]);
 }
 
-function projectDocsSystemText(project) {
-  const docs = (project && project.docs) || [];
-  if (!docs.length) return '';
-  return 'Project files (reference material):\n\n' + docs
-    .map(d => '--- ' + d.name + ' ---\n' + d.text + '\n--- end ' + d.name + ' ---')
-    .join('\n\n');
+const PROJECT_DOC_MODES = ['always', 'search', 'off'];
+const PROJECT_DOC_MODE_LABELS = { always: 'Always include', search: 'Search when needed', off: 'Exclude' };
+const PROJECT_PASSAGE_CHARS = 900;
+const PROJECT_PASSAGE_LIMIT = 6;
+const PROJECT_PASSAGE_CHAR_BUDGET = 6000;
+const PASSAGE_STOP_WORDS = new Set(('the and for are but not you all any can had her was one our out has his how its may new now see two who did get him let say she too use that with have this will your from they know want been good much some time very when come here just like long make many more only over such take than them well were what about would there their which could other into then these those also after should where while does doing being because before between through during each most same both why our ours yours mine what whom whose').split(' '));
+
+function projectDocMode(doc) {
+  return PROJECT_DOC_MODES.includes(doc?.mode) ? doc.mode : 'always';
+}
+
+function passageTerms(text) {
+  return (String(text || '').toLowerCase().match(/[\p{L}\p{N}]+/gu) || [])
+    .filter(term => (term.length >= 3 || /\d/.test(term)) && !PASSAGE_STOP_WORDS.has(term));
+}
+
+// Split on paragraph breaks, merging short paragraphs and cutting long ones so each
+// passage is a readable excerpt rather than an arbitrary character window.
+function splitDocPassages(text) {
+  const paragraphs = String(text || '').split(/\n\s*\n/).map(part => part.trim()).filter(Boolean);
+  const passages = [];
+  let current = '';
+  const push = () => { if (current.trim()) passages.push(current.trim()); current = ''; };
+  paragraphs.forEach(paragraph => {
+    if (paragraph.length > PROJECT_PASSAGE_CHARS) {
+      push();
+      for (let start = 0; start < paragraph.length; start += PROJECT_PASSAGE_CHARS) {
+        let end = Math.min(paragraph.length, start + PROJECT_PASSAGE_CHARS);
+        if (end < paragraph.length) {
+          const space = paragraph.lastIndexOf(' ', end);
+          if (space > start + PROJECT_PASSAGE_CHARS / 2) end = space;
+        }
+        passages.push(paragraph.slice(start, end).trim());
+        start = end - PROJECT_PASSAGE_CHARS;
+      }
+      return;
+    }
+    if (current && current.length + paragraph.length + 2 > PROJECT_PASSAGE_CHARS) push();
+    current = current ? current + '\n\n' + paragraph : paragraph;
+  });
+  push();
+  return passages;
+}
+
+function rankProjectPassages(docs, query, options = {}) {
+  const queryTerms = [...new Set(passageTerms(query))];
+  if (!queryTerms.length) return [];
+  const candidates = [];
+  docs.forEach(doc => {
+    const parts = splitDocPassages(doc.text);
+    const nameTerms = new Set(passageTerms(doc.name));
+    parts.forEach((text, index) => {
+      const counts = new Map();
+      passageTerms(text).forEach(term => counts.set(term, (counts.get(term) || 0) + 1));
+      candidates.push({ doc, text, index, total: parts.length, counts, nameTerms });
+    });
+  });
+  if (!candidates.length) return [];
+  const documentFrequency = new Map(queryTerms.map(term => [term, candidates.filter(item => item.counts.has(term)).length]));
+  candidates.forEach(item => {
+    let score = 0;
+    queryTerms.forEach(term => {
+      const frequency = item.counts.get(term) || 0;
+      const df = documentFrequency.get(term);
+      const idf = Math.log(1 + candidates.length / (df || 1));
+      if (frequency) score += (1 + Math.log(frequency)) * idf;
+      if (item.nameTerms.has(term)) score += 0.5 * idf;
+    });
+    item.score = score;
+  });
+  const limit = options.limit || PROJECT_PASSAGE_LIMIT;
+  const budget = options.budget || PROJECT_PASSAGE_CHAR_BUDGET;
+  const chosen = [];
+  let used = 0;
+  candidates.filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .forEach(item => {
+      if (chosen.length >= limit || used + item.text.length > budget) return;
+      chosen.push(item);
+      used += item.text.length;
+    });
+  return chosen.map(item => ({ docId: item.doc.id, name: item.doc.name, part: item.index + 1, parts: item.total, text: item.text, score: item.score }));
+}
+
+function retrievalQueryFor(historyMessages = [], draftMessage = null) {
+  const draftText = draftMessage ? getMsgText(draftMessage).trim() : '';
+  if (draftText) return draftText;
+  for (let i = historyMessages.length - 1; i >= 0; i--) {
+    if (historyMessages[i]?.role === 'user') {
+      const text = getMsgText(historyMessages[i]).trim();
+      if (text) return text;
+    }
+  }
+  return '';
+}
+
+function projectFileContext(project, query = '') {
+  const docs = Array.isArray(project?.docs) ? project.docs : [];
+  const always = docs.filter(doc => projectDocMode(doc) === 'always');
+  const searchable = docs.filter(doc => projectDocMode(doc) === 'search');
+  const excluded = docs.filter(doc => projectDocMode(doc) === 'off');
+  const passages = searchable.length ? rankProjectPassages(searchable, query) : [];
+  return { always, searchable, excluded, passages, query };
+}
+
+function projectDocsSystemText(project, context = projectFileContext(project)) {
+  const parts = [];
+  if (context.always.length) {
+    parts.push('Project files (reference material):\n\n' + context.always
+      .map(d => '--- ' + d.name + ' ---\n' + d.text + '\n--- end ' + d.name + ' ---')
+      .join('\n\n'));
+  }
+  if (context.passages.length) {
+    parts.push('Relevant passages from project files (selected for the latest message). When you rely on one, cite it as [file name, part N].\n\n' + context.passages
+      .map(p => '--- ' + p.name + ', part ' + p.part + ' of ' + p.parts + ' ---\n' + p.text + '\n--- end ---')
+      .join('\n\n'));
+  }
+  return parts.join('\n\n');
 }
 
 function showProjectPicker(conv, anchorEl) {
@@ -7018,17 +7131,29 @@ function renderProjectEditor() {
   if (!proj.docs.length) {
     const none = document.createElement('div');
     none.className = 'setting-hint';
-    none.textContent = 'No files yet. Files added here are sent with every chat in this project.';
+    none.textContent = 'No files yet. Choose for each file whether it is always sent, searched for relevant passages, or excluded.';
     list.appendChild(none);
     return;
   }
   proj.docs.forEach(doc => {
     const row = document.createElement('div');
-    row.className = 'prompt-entry';
+    row.className = 'prompt-entry project-doc-row';
     const label = document.createElement('span');
-    label.style.flex = '1';
+    label.className = 'project-doc-name';
     label.textContent = doc.name + ' (' + formatTokenCount(estimateTokens(doc.text)) + ' tokens)';
     row.appendChild(label);
+    const mode = document.createElement('select');
+    mode.className = 'project-doc-mode';
+    mode.setAttribute('aria-label', 'How ' + doc.name + ' is used');
+    PROJECT_DOC_MODES.forEach(value => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = PROJECT_DOC_MODE_LABELS[value];
+      mode.appendChild(option);
+    });
+    mode.value = projectDocMode(doc);
+    mode.onchange = () => setProjectDocMode(doc.id, mode.value);
+    row.appendChild(mode);
     const del = document.createElement('button');
     del.textContent = '✕';
     del.title = 'Remove file';
@@ -7124,6 +7249,36 @@ async function removeProjectDoc(docId) {
   const currentStatus = document.getElementById('projectSaveStatus');
   if (_projectEditId === proj.id && revision === _projectSaveRevision && currentStatus) currentStatus.textContent = saved ? 'Saved' : 'Could not save';
   if (!saved) showToast('Could not save project files.', 'error', 6000);
+  } finally {
+    endLocalDataOperation();
+  }
+}
+
+async function setProjectDocMode(docId, mode) {
+  if (!PROJECT_DOC_MODES.includes(mode) || !beginLocalDataOperation()) {
+    renderProjectEditorPreservingPendingEdits(_projectEditId);
+    return;
+  }
+  try {
+    let proj = getProject(_projectEditId);
+    if (!proj) return;
+    await flushProjectAutosave();
+    proj = getProject(proj.id);
+    const doc = proj?.docs.find(item => item.id === docId);
+    if (!doc || projectDocMode(doc) === mode) return;
+    if (mode === 'always') delete doc.mode;
+    else doc.mode = mode;
+    proj.updatedAt = Date.now();
+    const status = document.getElementById('projectSaveStatus');
+    if (_projectEditId === proj.id && status) status.textContent = 'Saving...';
+    const save = saveProjects();
+    const revision = _projectSaveRevision;
+    const saved = await save;
+    const currentStatus = document.getElementById('projectSaveStatus');
+    if (_projectEditId === proj.id && revision === _projectSaveRevision && currentStatus) currentStatus.textContent = saved ? 'Saved' : 'Could not save';
+    if (!saved) showToast('Could not save project files.', 'error', 6000);
+    renderContextPanel();
+    updateTokenInfo();
   } finally {
     endLocalDataOperation();
   }
@@ -8972,8 +9127,9 @@ function applyStMacros(text, context, depth = 0) {
   return applyStMacros(resolved, ctx, depth + 1);
 }
 
-async function buildSystemMessages(conv) {
+async function buildSystemMessages(conv, options = {}) {
   const msgs = [];
+  const report = options.report || {};
   const macroCtx = isStMacroEnabled() ? getRpMacroContext(conv) : null;
   const resolveText = (text) => macroCtx ? applyStMacros(text, macroCtx) : text;
   // Prompt entries (never overridden by character cards)
@@ -8992,7 +9148,8 @@ async function buildSystemMessages(conv) {
     if (project.instructions && project.instructions.trim()) {
       msgs.push({ role: 'system', content: 'Project instructions (' + project.name + '):\n\n' + resolveText(project.instructions) });
     }
-    const projectFiles = projectDocsSystemText(project);
+    report.projectFiles = projectFileContext(project, options.retrievalQuery || '');
+    const projectFiles = projectDocsSystemText(project, report.projectFiles);
     if (projectFiles) msgs.push({ role: 'system', content: projectFiles });
   }
   // Fallback if completely empty
@@ -9106,13 +9263,15 @@ async function buildRequestMessages(conv = getActiveConv(), options = {}) {
       invalidateConversationContext(conv, invalidateFrom);
     };
   }
-  const systemMessages = await buildSystemMessages(candidate);
+  const selection = filterRequestHistory(candidateSource, options);
+  const report = {};
+  const retrievalQuery = retrievalQueryFor(selection.included.map(item => item.message), options.draftMessage);
+  const systemMessages = await buildSystemMessages(candidate, { retrievalQuery, report });
   const toolPolicy = getToolPolicy(conv);
   if (toolPolicy.webSearch || toolPolicy.urlFetch) {
     systemMessages.push({ role: 'system', content: SOURCE_CITATION_INSTRUCTION });
   }
   const requestMessages = [...systemMessages];
-  const selection = filterRequestHistory(candidateSource, options);
   selection.included = selection.included.map(({ message, index }) => {
     const normalized = { role: message.role, content: buildApiContent(message) };
     requestMessages.push(normalized);
@@ -9123,7 +9282,7 @@ async function buildRequestMessages(conv = getActiveConv(), options = {}) {
     draft = { message: options.draftMessage, index: source.length, normalized: { role: 'user', content: buildApiContent(options.draftMessage) } };
     requestMessages.push(draft.normalized);
   }
-  return { messages: requestMessages, systemMessages, included: selection.included, excluded: selection.excluded, draft, toolPolicy, commitInvalidation };
+  return { messages: requestMessages, systemMessages, included: selection.included, excluded: selection.excluded, draft, toolPolicy, commitInvalidation, projectFiles: report.projectFiles || null };
 }
 
 function getModelContextWindow(model = localStorage.getItem('llmModel') || '') {
@@ -9176,7 +9335,7 @@ async function buildContextPreviewData() {
   messages.forEach(message => collectAttachments(message, message.includeInContext !== false));
   if (draftMessage) collectAttachments(draftMessage, true);
   const memories = isTemporaryConversation(conv) ? { included: [], omitted: [] } : await getMemorySelection(conv);
-  return { memories, provider: getLlmProviderInfo(previewModel, detectApiFormat(previewModel), localStorage.getItem('llmProxyUrl') || ''), model: previewModel || '(not set)', systemMessages: built.systemMessages, included: built.included, excluded: all.excluded, draft: built.draft, attachments, stats };
+  return { memories, projectFiles: built.projectFiles, provider: getLlmProviderInfo(previewModel, detectApiFormat(previewModel), localStorage.getItem('llmProxyUrl') || ''), model: previewModel || '(not set)', systemMessages: built.systemMessages, included: built.included, excluded: all.excluded, draft: built.draft, attachments, stats };
 }
 
 function openContextSection(sectionId) {
@@ -9299,7 +9458,7 @@ function renderContextPanel() {
   if (fileStatus) fileStatus.textContent = fileCount ? String(fileCount) : 'None';
   if (filesBody) {
     filesBody.replaceChildren();
-    const addFiles = (label, docs) => {
+    const addFiles = (label, docs, showMode) => {
       if (!docs.length) return;
       const heading = document.createElement('strong');
       heading.className = 'context-file-heading';
@@ -9309,11 +9468,17 @@ function renderContextPanel() {
         const row = document.createElement('div');
         row.className = 'context-file-row';
         row.textContent = doc.name || 'Document';
+        if (showMode) {
+          const mode = document.createElement('span');
+          mode.className = 'context-file-mode';
+          mode.textContent = PROJECT_DOC_MODE_LABELS[projectDocMode(doc)];
+          row.append(' ', mode);
+        }
         filesBody.appendChild(row);
       });
     };
     addFiles('This chat', chatDocs);
-    addFiles(project ? project.name : 'Project', projectDocs);
+    addFiles(project ? project.name : 'Project', projectDocs, true);
     if (!fileCount) {
       const empty = document.createElement('p');
       empty.textContent = isTemporaryConversation(conv)
@@ -9402,6 +9567,16 @@ async function openContextPreview() {
     if (data.memories.included.length || data.memories.omitted.length) {
       addSection('Memories sent', data.memories.included.map(memory => memoryScopeLabel(memory) + (memory.pinned ? ', pinned' : '') + ': ' + memory.text));
       if (data.memories.omitted.length) addSection('Memories left out (allowance full)', data.memories.omitted.map(memory => memoryScopeLabel(memory) + ': ' + memory.text));
+    }
+    const files = data.projectFiles;
+    if (files && (files.always.length || files.searchable.length || files.excluded.length)) {
+      addSection('Project files sent in full', files.always.map(doc => doc.name + ' · ~' + formatTokenCount(estimateTokens(doc.text)) + ' tokens'));
+      if (files.searchable.length) {
+        addSection('Project file passages', files.passages.length
+          ? files.passages.map(p => p.name + ', part ' + p.part + ' of ' + p.parts + '\n' + p.text)
+          : [files.query ? 'No passages matched the latest message.' : 'Passages are chosen once there is a message to match.']);
+      }
+      if (files.excluded.length) addSection('Project files excluded', files.excluded.map(doc => doc.name));
     }
     addSection('Attachments', data.attachments.map(att => att.name + ' · ' + (att.image ? 'image data redacted' : att.chars.toLocaleString() + ' extracted characters') + (att.included ? ' · included' : ' · excluded')));
     if (data.stats.contextWindow && data.stats.includedTokens + data.stats.maxOutput > data.stats.contextWindow) {

@@ -1474,8 +1474,15 @@ body.share-view .messages-area { padding-bottom: 64px; }
 .memory-add { margin-top: 8px; }
 .memory-add summary { cursor: pointer; color: var(--accent); padding: 6px 0; }
 .memory-add[open] summary { margin-bottom: 4px; }
+.project-doc-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; }
+.project-doc-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.modal .project-doc-mode { width: auto; flex: 0 0 auto; margin: 0; padding: 6px 8px; font-size: 0.85em; }
+.context-file-mode { color: var(--text-secondary); font-size: 0.85em; }
 @media (max-width: 640px) {
   .memory-row-actions .btn { min-height: 44px; flex: 1; }
+  .project-doc-row { flex-wrap: wrap; }
+  .project-doc-name { flex-basis: 100%; }
+  .modal .project-doc-mode { flex: 1; min-height: 44px; }
 }
 
 /* Message fade-in animation */

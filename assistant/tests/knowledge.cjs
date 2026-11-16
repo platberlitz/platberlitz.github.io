@@ -7,6 +7,7 @@ module.exports = async function(page) {
   const exposure = `
     window.__knowledgeTest = { createProject, saveProjects, getProject, selectMemoriesForConversation,
       defaultMemoryScope, memoryAppliesTo, normalizeMemoryEntry, syncMergeMemoryLists,
+      normalizeProjectRecord, splitDocPassages, rankProjectPassages, projectFileContext,
       get conversations() { return conversations; } };
   `;
   const route = async request => {
@@ -132,6 +133,68 @@ module.exports = async function(page) {
     });
     assert.match(preview, /Memories sent/);
     assert.match(preview, /Project: Garden, pinned: Garden beds face south/);
+
+    const files = await page.evaluate(async () => {
+      const t = __knowledgeTest;
+      const normalized = t.normalizeProjectRecord({ id: 'proj_norm', docs: [
+        { id: 'a', name: 'A', text: 'x', mode: 'search' },
+        { id: 'b', name: 'B', text: 'x', mode: 'off' },
+        { id: 'c', name: 'C', text: 'x', mode: 'always' },
+        { id: 'd', name: 'D', text: 'x', mode: 'bogus' }
+      ] }).docs.map(doc => doc.mode || null);
+      const long = 'word '.repeat(500).trim();
+      const split = t.splitDocPassages('Short one.\n\nShort two.\n\n' + long);
+      const project = t.createProject('Library');
+      const filler = Array.from({ length: 6 }, (_, i) => ('Chapter ' + i + ' covers pruning roses and compost heaps in detail. ').repeat(14).trim()).join('\n\n');
+      project.docs.push(
+        { id: 'doc-style', name: 'Style guide', text: 'Write in short sentences.', createdAt: Date.now() },
+        { id: 'doc-manual', name: 'Garden manual', mode: 'search', createdAt: Date.now(),
+          text: filler + '\n\nWater the tomatoes deeply twice a week, more often in a heatwave.' },
+        { id: 'doc-secret', name: 'Private notes', mode: 'off', text: 'EXCLUDED-MARKER tomatoes', createdAt: Date.now() }
+      );
+      await t.saveProjects();
+      createConversation();
+      const conv = getActiveConv();
+      conv.projectId = project.id;
+      const built = await buildRequestMessages(conv, { messageList: [], draftMessage: { role: 'user', content: 'How often should I water the tomatoes?' } });
+      const systemText = built.systemMessages.map(message => message.content).join('\n');
+      const empty = await buildRequestMessages(conv, { messageList: [] });
+      return {
+        normalized, splitCount: split.length, splitMax: Math.max(...split.map(part => part.length)), systemText,
+        passages: built.projectFiles.passages.map(p => p.name + ':' + p.part),
+        emptyPassages: empty.projectFiles.passages.length, projectId: project.id
+      };
+    });
+    assert.deepEqual(files.normalized, ['search', 'off', null, null], 'only non-default valid modes are stored');
+    assert.ok(files.splitCount >= 3 && files.splitMax <= 900, 'long text is split into bounded passages');
+    assert.match(files.systemText, /Write in short sentences\./, 'always-included files are sent in full');
+    assert.match(files.systemText, /Water the tomatoes deeply/, 'matching passages are sent');
+    assert.match(files.systemText, /cite it as \[file name, part N\]/);
+    assert.doesNotMatch(files.systemText, /EXCLUDED-MARKER/, 'excluded files are never sent');
+    assert.doesNotMatch(files.systemText, /pruning roses/, 'unrelated passages stay out');
+    assert.deepEqual(files.passages, ['Garden manual:7']);
+    assert.equal(files.emptyPassages, 0, 'no passages without a message to match');
+
+    await page.evaluate(projectId => openProjectsModal(projectId), files.projectId);
+    const modes = await page.$$eval('#projDocList .project-doc-mode', selects => selects.map(select => select.value));
+    assert.deepEqual(modes, ['always', 'search', 'off']);
+    await page.selectOption('#projDocList .project-doc-row:nth-child(1) .project-doc-mode', 'off');
+    await page.waitForFunction(projectId => __knowledgeTest.getProject(projectId).docs[0].mode === 'off', files.projectId);
+    await page.waitForFunction(() => document.getElementById('projectSaveStatus').textContent === 'Saved');
+    await page.evaluate(() => closeModal('projectsModal'));
+
+    const filePreview = await page.evaluate(async () => {
+      document.getElementById('chatInput').value = 'tomatoes watering schedule';
+      await openContextPreview();
+      const text = document.getElementById('contextPreviewBody').textContent;
+      document.getElementById('chatInput').value = '';
+      return { text, panel: document.getElementById('contextFilesBody').textContent };
+    });
+    assert.match(filePreview.text, /Project file passages/);
+    assert.match(filePreview.text, /Garden manual, part 7 of 7/);
+    assert.match(filePreview.text, /Project files excluded/);
+    assert.match(filePreview.text, /Style guide/);
+    assert.match(filePreview.panel, /Search when needed/);
   } finally {
     await page.unroute(pattern, route);
   }
