@@ -478,6 +478,11 @@
         <button class="model-refresh-btn" onclick="document.getElementById('stPresetFile').click()" title="Import SillyTavern preset"><svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10V2.5M4.8 5.2 8 2l3.2 3.2M2.5 10.5v2c0 .6.4 1 1 1h9c.6 0 1-.4 1-1v-2"/></svg></button>
         <input type="file" id="stPresetFile" accept=".json" style="display:none" onchange="importSTPreset(event)">
       </div>
+      <div class="preset-actions">
+        <button type="button" class="btn btn-secondary" id="presetUpdateBtn" onclick="updateSelectedPreset()">Update preset</button>
+        <button type="button" class="btn btn-secondary" onclick="openPromptTests()">Test prompts</button>
+      </div>
+      <div class="setting-hint" id="presetVersionInfo">Choose a preset to load it. Update preset saves the current prompts into it and keeps the previous version.</div>
       <label for="setPersona">Persona</label>
       <small style="opacity:.7;margin-bottom:4px;display:block">Describes who you (the user) are. Sent as context to the assistant.</small>
       <textarea id="setPersona" rows="3" placeholder="e.g. I am a traveling merchant named Kael…"></textarea>
@@ -831,6 +836,36 @@
     <div class="modal-actions">
       <button class="btn btn-danger" type="button" id="memoryClearAll" onclick="clearAllMemories()">Clear all</button>
       <button class="btn btn-primary" type="button" onclick="closeModal('memoriesModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Prompt Tests Modal -->
+<div class="modal-overlay" id="promptTestsModal" aria-hidden="true">
+  <div class="modal prompt-tests-modal" aria-labelledby="promptTestsTitle">
+    <h2 id="promptTestsTitle">Test prompts</h2>
+    <div class="setting-hint">Send the same example messages with two prompt setups and compare the replies. Examples run on their own, without chat history, project files or memories, using the model chosen in API settings. Each example makes two billable requests.</div>
+    <div class="prompt-test-configs">
+      <label>Setup A <select id="promptTestConfigA"></select></label>
+      <label>Setup B <select id="promptTestConfigB"></select></label>
+    </div>
+    <div class="setting-hint" id="promptTestConfigHint"></div>
+    <h3 class="prompt-test-heading">Examples <span id="promptTestCount"></span></h3>
+    <div id="promptTestList" class="prompt-entry-list prompt-test-list"></div>
+    <details class="memory-add" id="promptTestAddSection">
+      <summary>Add an example</summary>
+      <label for="promptTestNewName">Name (optional)</label>
+      <input type="text" id="promptTestNewName" maxlength="80" placeholder="For example: Refund request">
+      <label for="promptTestNewText">Message</label>
+      <textarea id="promptTestNewText" rows="3" maxlength="4000" placeholder="A message someone might send."></textarea>
+      <button class="btn btn-primary" type="button" onclick="addPromptTest()">Add example</button>
+    </details>
+    <p class="prompt-test-status" id="promptTestStatus" role="status"></p>
+    <div id="promptTestResults" class="prompt-test-results" hidden></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" type="button" id="promptTestStop" onclick="stopPromptTests()" hidden>Stop</button>
+      <button class="btn btn-primary" type="button" id="promptTestRun" onclick="runPromptTests()">Run tests</button>
+      <button class="btn btn-secondary" type="button" onclick="closeModal('promptTestsModal')">Close</button>
     </div>
   </div>
 </div>

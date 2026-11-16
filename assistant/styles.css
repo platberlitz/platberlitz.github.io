@@ -1521,6 +1521,28 @@ body.share-view .messages-area { padding-bottom: 64px; }
 .memory-add { margin-top: 8px; }
 .memory-add summary { cursor: pointer; color: var(--accent); padding: 6px 0; }
 .memory-add[open] summary { margin-bottom: 4px; }
+/* Prompt tests reuse the memory rows and the live comparison columns. */
+.prompt-tests-modal { max-width: 920px; }
+.prompt-test-configs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.prompt-test-configs select { margin-bottom: 0; }
+.prompt-test-heading { display: flex; align-items: baseline; gap: 8px; margin: 16px 0 6px; font-size: 0.85em; font-weight: 600; color: var(--text-primary); }
+.prompt-test-heading span { color: var(--text-secondary); font-weight: 400; }
+.prompt-test-list { max-height: min(30vh, 300px); }
+.prompt-test-row { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
+.prompt-test-row input, .prompt-test-row textarea { width: 100%; margin: 4px 0 0; }
+.prompt-test-text { display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.prompt-test-text strong { color: var(--text-primary); font-size: 0.9em; }
+.prompt-test-text span { color: var(--text-secondary); font-size: 0.85em; line-height: 1.45; white-space: pre-wrap; }
+.prompt-test-status { color: var(--text-secondary); font-size: 0.85em; margin: 10px 0 0; min-height: 1.2em; }
+.prompt-test-results { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+.prompt-test-apply { display: flex; flex-wrap: wrap; gap: 8px; }
+.prompt-test-apply .btn, .prompt-test-retry { padding: 6px 12px; font-size: 0.85em; min-height: 36px; }
+.prompt-test-result { border-top: 1px solid var(--card-border); padding-top: 12px; }
+.prompt-test-result h3 { font-size: 0.9em; font-weight: 600; color: var(--text-primary); margin: 0 0 2px; }
+.prompt-test-message { color: var(--text-secondary); font-size: 0.85em; margin: 0 0 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.prompt-test-columns { min-width: 0; }
+.prompt-test-columns .comparison-live-body { max-height: 36vh; }
+.prompt-test-retry { margin-top: 6px; }
 .project-doc-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; }
 .project-doc-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .modal .project-doc-mode { width: auto; flex: 0 0 auto; margin: 0; padding: 6px 8px; font-size: 0.85em; }
@@ -1538,6 +1560,10 @@ body.share-view .messages-area { padding-bottom: 64px; }
 @media (max-width: 640px) {
   .memory-row-actions .btn { min-height: 44px; flex: 1; }
   .project-overview-heading .btn { min-height: 44px; }
+  .prompt-test-configs { grid-template-columns: 1fr; }
+  .prompt-test-apply .btn, .prompt-test-retry { min-height: 44px; }
+  .prompt-test-columns { grid-template-columns: 1fr; }
+  .prompt-test-columns .comparison-live-column + .comparison-live-column { padding: 14px 0 0; border-top: 1px solid var(--card-border); border-left: 0; }
   .project-chat-row { flex-direction: column; gap: 2px; min-height: 44px; justify-content: center; }
   .project-chat-open { width: 100%; }
   .project-doc-row { flex-wrap: wrap; }
@@ -1992,7 +2018,31 @@ body.theme-light .hljs-symbol, body.theme-light .hljs-bullet, body.theme-light .
 .comparison-result + .comparison-result { padding: 14px 0 0 16px; border-left: 1px solid var(--card-border); }
 .comparison-result h4 { margin: 0 0 3px; color: var(--text-primary); font-size: .92em; }
 .comparison-result small { display: block; margin-bottom: 10px; color: var(--text-secondary); overflow-wrap: anywhere; }
-.comparison-result pre { max-height: 42vh; margin: 0 0 12px; overflow: auto; color: var(--text-primary); font: inherit; font-size: .82em; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.comparison-result-stats { margin: 0 0 10px; color: var(--text-secondary); font-size: .76em; }
+.comparison-result-body { max-height: 42vh; margin: 0 0 12px; overflow: auto; color: var(--text-primary); font-size: .88em; line-height: 1.55; overflow-wrap: anywhere; }
+.comparison-result-body > :first-child { margin-top: 0; }
+.comparison-prompts { display: grid; gap: 5px; }
+.comparison-prompts > span { color: var(--text-secondary); font-size: .78em; }
+.comparison-live { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; min-width: min(560px, 100%); }
+.comparison-live-column { min-width: 0; }
+.comparison-live-column + .comparison-live-column { padding-left: 14px; border-left: 1px solid var(--card-border); }
+.comparison-live-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; margin-bottom: 8px; }
+.comparison-live-header strong { color: var(--text-primary); font-size: .86em; }
+.comparison-live-status { color: var(--text-secondary); font-size: .76em; }
+.comparison-live-body { max-height: 50vh; overflow: auto; overflow-wrap: anywhere; }
+.comparison-live-body > :first-child { margin-top: 0; }
+/* Replies shown outside a chat bubble need the bubble's Markdown spacing. */
+.prompt-test-columns .comparison-live-body { color: var(--text-primary); font-size: .88em; line-height: 1.55; }
+:is(.comparison-result-body, .prompt-test-columns .comparison-live-body) :is(p, ul, ol, pre, blockquote, table) { margin: 0 0 8px; }
+:is(.comparison-result-body, .prompt-test-columns .comparison-live-body) :is(ul, ol) { padding-left: 20px; }
+:is(.comparison-result-body, .prompt-test-columns .comparison-live-body) pre { background: var(--code-bg); padding: 10px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+:is(.comparison-result-body, .prompt-test-columns .comparison-live-body) code { background: var(--overlay-10); padding: 2px 5px; border-radius: 4px; font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: .9em; }
+:is(.comparison-result-body, .prompt-test-columns .comparison-live-body) pre code { background: none; padding: 0; }
+:is(.comparison-result-body, .prompt-test-columns .comparison-live-body) blockquote { border-left: 3px solid var(--accent); padding-left: 10px; color: var(--text-secondary); }
+:is(.comparison-result-body, .prompt-test-columns .comparison-live-body) a { color: var(--accent-hover); text-decoration: underline; }
+:is(.comparison-result-body, .prompt-test-columns .comparison-live-body) :is(h1, h2, h3, h4) { margin: 8px 0 4px; font-size: 1em; font-weight: 600; }
+:is(.comparison-result-body, .prompt-test-columns .comparison-live-body) table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+:is(.comparison-result-body, .prompt-test-columns .comparison-live-body) :is(th, td) { border: 1px solid var(--card-border); padding: 4px 8px; }
 .share-dialog { max-width: 560px; }
 .share-state { margin: 0 0 10px; color: var(--accent); font-size: .82em; font-weight: 700; }
 .share-link-row { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -2015,7 +2065,9 @@ body.theme-light .hljs-symbol, body.theme-light .hljs-bullet, body.theme-light .
   .comparison-results { grid-template-columns: 1fr; }
   .comparison-result { padding: 14px 0; }
   .comparison-result + .comparison-result { padding: 14px 0 0; border-top: 1px solid var(--card-border); border-left: 0; }
-  .comparison-result pre { max-height: 28vh; }
+  .comparison-result-body { max-height: 28vh; }
+  .comparison-live { grid-template-columns: 1fr; min-width: 0; }
+  .comparison-live-column + .comparison-live-column { padding: 14px 0 0; border-top: 1px solid var(--card-border); border-left: 0; }
   .manual-ai-dialog .modal-actions { flex-direction: column-reverse; }
   .manual-ai-dialog .modal-actions .btn { width: 100%; }
   .share-link-row { flex-direction: column; }
@@ -2202,8 +2254,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .key-storage-row label { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 /* Undo the broad `.modal input` sizing so radios stay compact. */
 .key-storage-row input[type="radio"] { width: auto; margin: 0; accent-color: var(--accent); }
-.connection-test-row { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; }
-.connection-test-row .btn { padding: 7px 10px; font-size: .78em; }
+.connection-test-row, .preset-actions { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; }
+.preset-actions { flex-wrap: wrap; margin: 0 0 6px; }
+.connection-test-row .btn, .preset-actions .btn { padding: 7px 10px; font-size: .78em; }
 .connection-status { min-height: 1.2em; color: var(--text-secondary); font-size: .75em; }
 .connection-status.testing { color: var(--accent); }
 .connection-status.success { color: var(--success-color, #4ade80); }

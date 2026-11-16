@@ -159,7 +159,7 @@ const SYNC_SETTINGS_KEYS = [  'llmStreaming', 'llmEnterSend', 'llmTemperature',
   'llmEnableStMacros', 'llmRpUserName', 'llmInputCost', 'llmOutputCost',
   'llmWebSearch', 'llmForceSearch', 'llmMemoryEnabled', 'llmHoldScreenshot',
   'llmEmotionSprites', 'llmEmotionSpriteSet',
-  'llmPromptEntries', 'assistantPresets', 'assistantProfiles', 'assistantTheme',
+  'llmPromptEntries', 'assistantPresets', 'assistantPromptTests', 'assistantProfiles', 'assistantTheme',
   'assistantStarterPrompts', 'assistantStarterPromptsHidden',
   'assistantCustomTheme', 'assistantFont', 'assistantMsgFontSize', 'assistantMsgMaxWidth',
   'llmContextWindow', 'llmUrlFetch', 'llmToolConfirm'
@@ -339,16 +339,56 @@ function normalizePresetRecords(raw) {
     const promptEntries = normalizePromptEntries(preset.promptEntries);
     if (promptEntries) normalized.promptEntries = promptEntries;
     if (typeof preset.systemPrompt === 'string') normalized.systemPrompt = preset.systemPrompt;
+    const updatedAt = Number(preset.updatedAt);
+    if (Number.isFinite(updatedAt) && updatedAt > 0) normalized.updatedAt = updatedAt;
+    if (Array.isArray(preset.versions)) {
+      const versions = preset.versions.filter(version => version && typeof version === 'object').map(version => {
+        const savedAt = Number(version.savedAt);
+        return {
+          savedAt: Number.isFinite(savedAt) && savedAt > 0 ? savedAt : 0,
+          promptEntries: normalizePromptEntries(version.promptEntries) || [],
+          persona: String(version.persona || ''),
+          temperature: String(version.temperature ?? ''),
+          extraParams: sanitizeExtraParams(version.extraParams)
+        };
+      }).slice(-PRESET_VERSION_LIMIT);
+      if (versions.length) normalized.versions = versions;
+    }
     return normalized;
   });
+}
+
+const PRESET_VERSION_LIMIT = 10;
+const PROMPT_TEST_LIMIT = 20;
+const PROMPT_TEST_CHAR_LIMIT = 4000;
+
+function normalizePromptTests(raw) {
+  if (!Array.isArray(raw)) return null;
+  const seen = new Set();
+  return raw.filter(test => test && typeof test === 'object' && String(test.text || '').trim()).map((test, index) => {
+    let id = String(test.id || '').slice(0, 80) || ('ptest_import_' + index);
+    while (seen.has(id)) id += '_';
+    seen.add(id);
+    const createdAt = Number(test.createdAt);
+    return {
+      id,
+      name: String(test.name || '').trim().slice(0, 80),
+      text: String(test.text).slice(0, PROMPT_TEST_CHAR_LIMIT),
+      createdAt: Number.isFinite(createdAt) && createdAt > 0 ? createdAt : 0
+    };
+  }).slice(0, PROMPT_TEST_LIMIT);
 }
 
 function normalizeStructuredSettingValue(key, value) {
   if (value === null || value === undefined) return null;
   if (key === 'llmExtraParams') return sanitizeExtraParams(value);
-  if (!['llmPromptEntries', 'assistantPresets', 'assistantProfiles', 'assistantCustomTheme'].includes(key)) return String(value);
+  if (!['llmPromptEntries', 'assistantPresets', 'assistantPromptTests', 'assistantProfiles', 'assistantCustomTheme'].includes(key)) return String(value);
   try {
     const parsed = JSON.parse(String(value));
+    if (key === 'assistantPromptTests') {
+      const tests = normalizePromptTests(parsed);
+      return tests ? JSON.stringify(tests) : undefined;
+    }
     if (key === 'llmPromptEntries') {
       const entries = normalizePromptEntries(parsed);
       return entries ? JSON.stringify(entries) : undefined;
@@ -503,6 +543,8 @@ function closeModal(modalOrId, restoreFocus = true) {
     return;
   }
   if (modal.id === 'projectsModal') void flushProjectAutosave();
+  // Closing prompt tests stops them, so no billable requests keep running out of sight.
+  if (modal.id === 'promptTestsModal') stopPromptTests();
   if (modal.id === 'settingsModal') {
     // ponytail: a failed autosave keeps the dialog open so valid edits are not silently lost.
     if (!flushSettingsAutosaves()) { showToast('Fix the highlighted setting before closing.', 'error'); return; }
@@ -931,9 +973,14 @@ function normalizeConversationRecord(raw) {
         if (!object(request)) return null;
         const safe = { ...request };
         ['status', 'requestId', 'model', 'apiFormat', 'error'].forEach(key => { if (key in safe) safe[key] = text(safe[key]); });
-        ['startedAt', 'completedAt', 'durationMs', 'httpStatus', 'messageCount', 'promptTokens', 'contextWindow'].forEach(key => {
+        ['startedAt', 'completedAt', 'durationMs', 'httpStatus', 'messageCount', 'promptTokens', 'contextWindow', 'firstTextMs'].forEach(key => {
           if (key in safe) safe[key] = safe[key] != null && ['number', 'string'].includes(typeof safe[key]) ? number(safe[key]) : null;
         });
+        if ('usage' in safe) {
+          const usage = extractUsage(safe.usage);
+          if (usage) safe.usage = usage;
+          else delete safe.usage;
+        }
         return safe;
       });
       const llm = value => object(value) ? Object.fromEntries(Object.entries(value).map(([key, value]) => [key, text(value)])) : null;
@@ -943,6 +990,13 @@ function normalizeConversationRecord(raw) {
       if ('timestamp' in message) message.timestamp = number(message.timestamp);
       if (message.role === 'assistant') {
         if (message.comparison !== true) delete message.comparison;
+        if (message.comparison && Array.isArray(message.comparisonTargets)) {
+          message.comparisonTargets = message.comparisonTargets.slice(0, 2).map(target => ({
+            label: text(object(target) ? target.label : '').slice(0, 200),
+            destination: text(object(target) ? target.destination : '').slice(0, 400),
+            prompts: text(object(target) ? target.prompts : '').slice(0, 200)
+          }));
+        } else delete message.comparisonTargets;
         message.swipes = Array.isArray(message.swipes) ? message.swipes.map(value => object(value) ? JSON.stringify(value) : text(value)) : [];
         const content = Array.isArray(message.content)
           ? message.content.filter(part => part.type === 'text').map(part => part.text).join('')
@@ -2424,12 +2478,7 @@ function prepareOpenAiMessages(apiMessages) {
   });
 }
 
-async function callApiNonStreaming(messages, options = {}) {
-  const target = options.target || getActiveRequestTarget();
-  const signal = options.signal === undefined ? abortController?.signal : options.signal;
-  signal?.throwIfAborted();
-  if (target.keyRequired && !target.apiKey) throw new Error('Enter an API key for ' + target.host + '.');
-  const outputTokens = Number.isFinite(Number(options.maxTokens)) && Number(options.maxTokens) > 0 ? Number(options.maxTokens) : 512;
+function buildSimpleApiRequest(messages, target, outputTokens, stream) {
   let url;
   let headers;
   let body;
@@ -2437,13 +2486,15 @@ async function callApiNonStreaming(messages, options = {}) {
     url = joinApiPath(target.baseUrl, '/messages');
     headers = buildProviderHeaders('anthropic', target.apiKey);
     const prepared = prepareAnthropicMessages(messages);
-    body = { model: target.model, system: prepared.system, messages: prepared.messages, max_tokens: outputTokens, stream: false };
+    body = { model: target.model, system: prepared.system, messages: prepared.messages, max_tokens: outputTokens, stream };
   } else {
     url = joinApiPath(target.baseUrl, '/chat/completions');
     headers = buildProviderHeaders('openai', target.apiKey);
-    body = { model: target.model, messages: prepareOpenAiMessages(messages), stream: false };
+    body = { model: target.model, messages: prepareOpenAiMessages(messages), stream };
     const tokenKey = target.provider === 'openai' && /^(?:o\d|gpt-5)/i.test(target.model) ? 'max_completion_tokens' : 'max_tokens';
     body[tokenKey] = outputTokens;
+    // Only OpenAI documents this option; other compatible servers may reject unknown fields.
+    if (stream && target.provider === 'openai') body.stream_options = { include_usage: true };
   }
   if (target.temperature !== null && !NO_SAMPLING_PARAMS_RE.test(target.model)) body.temperature = target.temperature;
   // ponytail: Compare follows the same extra/exclusion rules as ordinary chat.
@@ -2453,8 +2504,46 @@ async function callApiNonStreaming(messages, options = {}) {
     delete body.temperature; delete body.top_p; delete body.top_k;
   }
   body.model = target.model;
-  body.stream = false;
+  body.stream = stream;
   assertProviderRequestFits(body, target);
+  return { url, headers, body };
+}
+
+async function simpleApiError(resp, target) {
+  let detail = '';
+  // ponytail: redact the complete error before shortening, or a key prefix survives the cut.
+  try { detail = sanitizeErrorDetail(await resp.text(), [target.apiKey]); } catch (error) {}
+  const error = new Error('API returned ' + resp.status + (detail ? ': ' + detail : ''));
+  error.httpStatus = resp.status;
+  return error;
+}
+
+function extractUsage(usage) {
+  if (!usage || typeof usage !== 'object') return null;
+  const result = {};
+  // Accepts provider fields and the stored { inputTokens, outputTokens } shape.
+  const input = Number(usage.prompt_tokens ?? usage.input_tokens ?? usage.inputTokens);
+  const output = Number(usage.completion_tokens ?? usage.output_tokens ?? usage.outputTokens);
+  if (Number.isFinite(input) && input >= 0) result.inputTokens = input;
+  if (Number.isFinite(output) && output >= 0) result.outputTokens = output;
+  return Object.keys(result).length ? result : null;
+}
+
+function mergeUsage(current, usage) {
+  const next = extractUsage(usage);
+  return next ? { ...(current || {}), ...next } : current;
+}
+
+function simpleOutputTokens(options) {
+  return Number.isFinite(Number(options.maxTokens)) && Number(options.maxTokens) > 0 ? Number(options.maxTokens) : 512;
+}
+
+async function callApiNonStreaming(messages, options = {}) {
+  const target = options.target || getActiveRequestTarget();
+  const signal = options.signal === undefined ? abortController?.signal : options.signal;
+  signal?.throwIfAborted();
+  if (target.keyRequired && !target.apiKey) throw new Error('Enter an API key for ' + target.host + '.');
+  const { url, headers, body } = buildSimpleApiRequest(messages, target, simpleOutputTokens(options), false);
 
   const resp = await fetchApiWithHttpSupport(url, {
     method: 'POST',
@@ -2462,20 +2551,144 @@ async function callApiNonStreaming(messages, options = {}) {
     body: JSON.stringify(body),
     signal
   }, target.baseUrl, false, target.corsProxy);
-  if (!resp.ok) {
-    let detail = '';
-    // ponytail: redact the complete error before shortening, or a key prefix survives the cut.
-    try { detail = sanitizeErrorDetail(await resp.text(), [target.apiKey]); } catch (error) {}
-    const error = new Error('API returned ' + resp.status + (detail ? ': ' + detail : ''));
-    error.httpStatus = resp.status;
-    throw error;
-  }
+  if (!resp.ok) throw await simpleApiError(resp, target);
   const data = await resp.json();
   signal?.throwIfAborted();
   if (data.error || data.type === 'error') throw new Error(sanitizeErrorDetail(data.error?.message || 'The provider returned an error.', [target.apiKey]));
   const result = extractImages(target.apiFormat === 'anthropic' ? data : getPrimaryChoice(data.choices)?.message);
   if (!result.text.trim() && !(options.returnMessage && result.images.length)) throw new Error('The provider returned an empty response.');
+  if (options.returnMessage) {
+    const usage = extractUsage(data.usage);
+    if (usage) result.usage = usage;
+  }
   return options.returnMessage ? result : result.text;
+}
+
+// Streams one plain reply (no tools) for comparisons and prompt tests. onProgress receives
+// the text and reasoning so far; a JSON reply or disabled streaming arrives in one piece.
+async function callApiStreamingText(messages, options = {}) {
+  const target = options.target || getActiveRequestTarget();
+  const signal = options.signal === undefined ? abortController?.signal : options.signal;
+  signal?.throwIfAborted();
+  if (target.keyRequired && !target.apiKey) throw new Error('Enter an API key for ' + target.host + '.');
+  const anthropic = target.apiFormat === 'anthropic';
+  const stream = target.stream !== false;
+  const { url, headers, body } = buildSimpleApiRequest(messages, target, simpleOutputTokens(options), stream);
+  const resp = await fetchApiWithHttpSupport(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+    signal
+  }, target.baseUrl, false, target.corsProxy);
+  if (!resp.ok) throw await simpleApiError(resp, target);
+
+  let text = '';
+  let thinking = '';
+  let images = [];
+  let usage = null;
+  let firstTextAt = null;
+  const providerError = data => new Error(sanitizeErrorDetail(data.error?.message || 'The provider returned an error.', [target.apiKey]));
+  const progress = () => {
+    if (firstTextAt === null && text.trim()) firstTextAt = Date.now();
+    options.onProgress?.({ text, thinking });
+  };
+  const readMessage = message => {
+    const extracted = extractImages(message);
+    text = extracted.text;
+    images = extracted.images;
+    thinking = anthropic
+      ? (message?.content || []).filter(block => block?.type === 'thinking').map(block => block.thinking || '').join('')
+      : String(message?.reasoning_content || message?.reasoning || '');
+  };
+
+  if (!stream || (resp.headers.get('content-type') || '').includes('application/json')) {
+    const data = await resp.json();
+    signal?.throwIfAborted();
+    if (data.error || data.type === 'error') throw providerError(data);
+    readMessage(anthropic ? data : getPrimaryChoice(data.choices)?.message);
+    usage = extractUsage(data.usage);
+    progress();
+  } else {
+    const reader = resp.body?.getReader();
+    if (!reader) throw new Error('The provider returned no response body.');
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let eventData = [];
+    let complete = false;
+    let finished = false;
+    const acceptEvent = payload => {
+      if (!payload || complete) return;
+      if (payload === '[DONE]') { complete = true; return; }
+      const data = JSON.parse(payload);
+      if (data.error || data.type === 'error') throw providerError(data);
+      if (anthropic) {
+        if (data.type === 'message_start') usage = mergeUsage(usage, data.message?.usage);
+        else if (data.type === 'content_block_start') {
+          const block = data.content_block || {};
+          if (block.type === 'text') text += block.text || '';
+          else if (block.type === 'thinking') thinking += block.thinking || '';
+          else images.push(...extractImages({ content: [block] }).images);
+        } else if (data.type === 'content_block_delta') {
+          if (data.delta?.type === 'text_delta') text += data.delta.text || '';
+          else if (data.delta?.type === 'thinking_delta') thinking += data.delta.thinking || '';
+        } else if (data.type === 'message_delta') usage = mergeUsage(usage, data.usage);
+        else if (data.type === 'message_stop') complete = true;
+      } else {
+        usage = mergeUsage(usage, data.usage);
+        const choice = getPrimaryChoice(data.choices);
+        if (!choice) return;
+        if (choice.message) readMessage(choice.message);
+        const delta = choice.delta || {};
+        if (typeof delta.content === 'string') text += delta.content;
+        else if (Array.isArray(delta.content)) {
+          const extracted = extractImages({ content: delta.content });
+          text += extracted.text;
+          images.push(...extracted.images);
+        }
+        if (delta.images) images.push(...extractImages({ images: delta.images }).images);
+        for (const key of ['reasoning_content', 'reasoning']) {
+          if (typeof delta[key] === 'string') thinking += delta[key];
+        }
+        // The usage chunk follows the finish reason, so keep reading until [DONE] or the end.
+        if (choice.finish_reason != null) finished = true;
+      }
+      progress();
+    };
+    const acceptLine = line => {
+      if (!line) { acceptEvent(eventData.join('\n')); eventData = []; }
+      else if (line.startsWith('data:')) eventData.push(line.slice(5).trimStart());
+    };
+    try {
+      while (!complete) {
+        const { done, value } = await reader.read();
+        signal?.throwIfAborted();
+        buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+        let pending = buffer;
+        let holdCr = false;
+        if (!done && pending.endsWith('\r')) { pending = pending.slice(0, -1); holdCr = true; }
+        const lines = pending.split(/\r\n|\r|\n/);
+        buffer = (lines.pop() ?? '') + (holdCr ? '\r' : '');
+        for (const line of lines) { acceptLine(line); if (complete) break; }
+        if (done) {
+          if (buffer) acceptLine(buffer);
+          if (!complete) acceptEvent(eventData.join('\n'));
+          break;
+        }
+      }
+    } finally {
+      void reader.cancel().catch(() => {});
+      reader.releaseLock();
+    }
+    if (!complete && !finished) {
+      const error = new Error('The provider stream ended before the reply was complete.');
+      error.requestStatus = 'interrupted';
+      error.partialText = text;
+      throw error;
+    }
+  }
+  images = [...new Set(images.map(safeMediaUrl).filter(Boolean))];
+  if (!text.trim() && !images.length) throw new Error('The provider returned an empty response.');
+  return { text, thinking, images, usage, firstTextAt };
 }
 
 function getTargetContextWindow(target) {
@@ -2676,6 +2889,10 @@ function comparisonTargetIdentity(target) {
   return [target?.provider, target?.baseUrl, target?.apiFormat, target?.model].join('\n');
 }
 
+function comparisonEntryIdentity(entry) {
+  return comparisonTargetIdentity(entry.target) + '\n' + (entry.prompts?.id || 'current');
+}
+
 function getComparisonTargetChoices() {
   const choices = [];
   const currentModel = localStorage.getItem('llmModel') || '';
@@ -2763,7 +2980,29 @@ function createComparisonTargetField(slot, choices, defaultId) {
       destination.textContent = manual.hidden ? 'This target is incomplete.' : 'Enter a model name.';
     }
   };
-  const resolve = () => {
+  const promptChoices = promptConfigurations({ includeVersions: false });
+  let promptSelect = null;
+  let promptLabel = null;
+  if (promptChoices.length > 1) {
+    promptLabel = document.createElement('label');
+    promptLabel.className = 'comparison-prompts';
+    const promptText = document.createElement('span');
+    promptText.textContent = 'Prompts';
+    promptSelect = document.createElement('select');
+    promptSelect.setAttribute('aria-label', 'Prompts for target ' + slot);
+    promptChoices.forEach(config => {
+      const option = document.createElement('option');
+      option.value = config.id;
+      option.textContent = config.label;
+      promptSelect.appendChild(option);
+    });
+    promptLabel.append(promptText, promptSelect);
+  }
+  const resolvePrompts = () => {
+    const config = promptSelect ? promptChoices.find(item => item.id === promptSelect.value) : null;
+    return config && config.id !== 'current' ? config : null;
+  };
+  const resolveTarget = () => {
     const choice = selectedChoice();
     if (choice?.kind === 'profile') {
       let current = null;
@@ -2779,9 +3018,11 @@ function createComparisonTargetField(slot, choices, defaultId) {
     if (!model) throw new Error('Enter a model name for target ' + slot + '.');
     return getActiveRequestTarget(model);
   };
+  const resolve = () => ({ target: resolveTarget(), prompts: resolvePrompts() });
   select.onchange = update;
   manual.oninput = update;
   section.append(legend, select, manual, destination, keyLabel);
+  if (promptLabel) section.appendChild(promptLabel);
   update();
   return { section, select, keyInput, resolve, update };
 }
@@ -2825,21 +3066,132 @@ function applyComparisonSettledResults(assistantMsg, targets, settled) {
   const successful = [];
   settled.forEach((result, index) => {
     const request = assistantMsg.swipeRequests[index];
+    // Live comparisons finish each request as it settles, so its own timing is kept.
+    const finished = Boolean(request?.completedAt);
     if (result.status === 'fulfilled') {
       assistantMsg.swipes[index] = String(result.value?.text ?? result.value ?? '').trim();
       (assistantMsg.swipeImages ||= [])[index] = result.value?.images || [];
-      finishRequestMetadata(request, 'complete');
+      if (result.value?.thinking) (assistantMsg.swipeThinking ||= [])[index] = String(result.value.thinking);
+      if (!finished) finishRequestMetadata(request, 'complete');
       successful.push(index);
     } else {
       const stopped = result.reason?.name === 'AbortError';
-      assistantMsg.swipes[index] = '';
-      finishRequestMetadata(request, stopped ? 'stopped' : 'failed', result.reason, result.reason?.httpStatus);
+      const interrupted = result.reason?.requestStatus === 'interrupted';
+      assistantMsg.swipes[index] = interrupted ? String(result.reason.partialText || '').trim()
+        : stopped ? String(assistantMsg.swipes[index] || '').trim() : '';
+      if (!finished) finishRequestMetadata(request, stopped ? 'stopped' : interrupted ? 'interrupted' : 'failed', result.reason, result.reason?.httpStatus);
     }
     selectAssistantSwipe(assistantMsg, index);
     updateMessageTokenMetadata(assistantMsg, index);
   });
   selectAssistantSwipe(assistantMsg, successful[0] ?? 0);
   return successful;
+}
+
+function comparisonSeconds(ms) {
+  return (Math.max(0, Number(ms) || 0) / 1000).toFixed(1) + ' s';
+}
+
+function comparisonTargetTitle(target) {
+  return (target.label || target.profileName || target.model || 'Model') + (target.prompts ? ' · ' + target.prompts : '');
+}
+
+function comparisonStatusText(request, text) {
+  if (!request || request.status === 'pending') return text ? 'Writing…' : 'Waiting for the first words…';
+  if (request.status === 'complete') return 'Finished in ' + comparisonSeconds(request.durationMs);
+  if (request.status === 'stopped') return 'Stopped';
+  if (request.status === 'interrupted') return 'Cut off: ' + (request.error || 'the reply ended early');
+  return 'Failed: ' + (request.error || 'no reply');
+}
+
+function comparisonStatsText(request, text) {
+  const parts = [];
+  if (Number.isFinite(request?.durationMs)) parts.push(comparisonSeconds(request.durationMs) + ' in total');
+  if (Number.isFinite(request?.firstTextMs)) parts.push('first words after ' + comparisonSeconds(request.firstTextMs));
+  const usage = request?.usage;
+  if (usage && Number.isFinite(usage.outputTokens)) {
+    parts.push(usage.outputTokens + ' output tokens' + (Number.isFinite(usage.inputTokens) ? ', ' + usage.inputTokens + ' input' : ''));
+  } else if (text) {
+    parts.push('about ' + estimateTokens(text) + ' output tokens (estimated)');
+  }
+  return parts.join(' · ');
+}
+
+function renderComparisonBody(container, text, images) {
+  const content = stripThinkTags(String(text || '')).content.trim();
+  container.innerHTML = content ? renderMarkdown(content) : '';
+  if (images?.length) container.insertAdjacentHTML('beforeend', renderGenImages(images));
+  addCodeCopyButtons(container);
+  highlightCodeBlocks(container);
+}
+
+function recordComparisonTiming(request, result) {
+  if (!request || !result) return;
+  if (result.usage) request.usage = result.usage;
+  if (result.firstTextAt && request.startedAt) request.firstTextMs = Math.max(0, result.firstTextAt - request.startedAt);
+}
+
+function createComparisonLiveView(bubble, targets, assistantMsg) {
+  if (!bubble) return null;
+  bubble.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'comparison-live';
+  const columns = targets.map((target, index) => {
+    const column = document.createElement('section');
+    column.className = 'comparison-live-column';
+    column.setAttribute('aria-label', 'Response ' + 'AB'[index] + ': ' + comparisonTargetTitle(target));
+    const header = document.createElement('div');
+    header.className = 'comparison-live-header';
+    const title = document.createElement('strong');
+    title.textContent = comparisonTargetTitle(target);
+    const status = document.createElement('span');
+    status.className = 'comparison-live-status';
+    header.append(title, status);
+    const body = document.createElement('div');
+    body.className = 'comparison-live-body';
+    column.append(header, body);
+    grid.appendChild(column);
+    return { status, body, timer: null };
+  });
+  bubble.appendChild(grid);
+  const paint = index => {
+    const column = columns[index];
+    column.timer = null;
+    const text = assistantMsg.swipes[index] || '';
+    column.status.textContent = comparisonStatusText(assistantMsg.swipeRequests?.[index], text);
+    renderComparisonBody(column.body, text, assistantMsg.swipeImages?.[index]);
+  };
+  columns.forEach((_, index) => paint(index));
+  return {
+    update(index, immediate = false) {
+      const column = columns[index];
+      if (!column || !column.body.isConnected) return;
+      if (immediate) {
+        clearTimeout(column.timer);
+        paint(index);
+      } else if (!column.timer) {
+        column.timer = setTimeout(() => paint(index), 80);
+      }
+    },
+    dispose() { columns.forEach(column => clearTimeout(column.timer)); }
+  };
+}
+
+function comparisonTargetsFor(message) {
+  if (Array.isArray(message.comparisonTargets) && message.comparisonTargets.length) return message.comparisonTargets;
+  return (message.swipes || []).map((_, index) => {
+    const llm = message.swipeLlms?.[index] || {};
+    const connection = message.swipeRequests?.[index]?.connection || {};
+    let host = '';
+    try { host = connection.baseUrl ? new URL(connection.baseUrl).host : ''; } catch { host = ''; }
+    return { label: llm.profileName || llm.model || connection.model || 'Response ' + (index + 1), destination: host, prompts: '' };
+  });
+}
+
+function reopenComparisonResults(message) {
+  const conv = getActiveConv();
+  if (!conv || !message?.comparison) return;
+  showComparisonResults(conv, message, comparisonTargetsFor(message));
 }
 
 function showComparisonResults(conv, assistantMsg, targets) {
@@ -2863,12 +3215,20 @@ function showComparisonResults(conv, assistantMsg, targets) {
     const card = document.createElement('section');
     card.className = 'comparison-result';
     const title = document.createElement('h4');
-    title.textContent = target.profileName || target.model;
+    title.textContent = comparisonTargetTitle(target);
     const meta = document.createElement('small');
     meta.textContent = target.destination;
-    const response = document.createElement('pre');
-    response.textContent = assistantMsg.swipes[index] || (assistantMsg.swipeImages?.[index]?.length ? 'Image response (shown in chat).' : 'No response.');
-    const request = assistantMsg.swipeRequests[index];
+    const request = assistantMsg.swipeRequests?.[index];
+    const text = assistantMsg.swipes[index] || '';
+    const stats = document.createElement('p');
+    stats.className = 'comparison-result-stats';
+    stats.textContent = request?.status === 'complete'
+      ? comparisonStatsText(request, text)
+      : [comparisonStatusText(request, text), comparisonStatsText(request, '')].filter(Boolean).join(' · ');
+    const response = document.createElement('div');
+    response.className = 'comparison-result-body';
+    renderComparisonBody(response, text, assistantMsg.swipeImages?.[index]);
+    if (!response.textContent.trim() && !response.querySelector('img')) response.textContent = 'No response.';
     const use = document.createElement('button');
     use.type = 'button';
     use.className = 'btn ' + (assistantMsg.swipeIndex === index ? 'btn-primary' : 'btn-secondary');
@@ -2890,16 +3250,19 @@ function showComparisonResults(conv, assistantMsg, targets) {
       saveConversations();
       renderMessages({ preserveScroll: true });
       close();
-      announce('Selected ' + target.model + ' for future context.');
+      announce('Selected ' + comparisonTargetTitle(target) + ' for future context.');
     };
-    card.append(title, meta, response, use);
+    card.append(title, meta, stats, response, use);
     grid.appendChild(card);
   });
   const done = document.createElement('button');
   done.type = 'button';
   done.className = 'btn btn-secondary';
   done.textContent = 'Close';
-  popup.append(heading, note, grid, done);
+  const actions = document.createElement('div');
+  actions.className = 'modal-actions';
+  actions.appendChild(done);
+  popup.append(heading, note, grid, actions);
   close = openTransientDialog(overlay, popup, grid.querySelector('button:not(:disabled)') || done);
   done.onclick = close;
 }
@@ -2918,22 +3281,35 @@ async function runModelComparison(selectedTargets) {
     endSendingAction();
     return;
   }
-  const targets = selectedTargets.slice(0, 2);
-  const publicTargets = targets.map(target => ({
-    model: target.model,
-    profileName: target.profileName,
-    destination: formatRequestTargetDestination(target)
+  const entries = selectedTargets.slice(0, 2).map(item => item?.target ? item : { target: item, prompts: null });
+  const targets = entries.map(entry => targetWithPromptRecord(entry.target, entry.prompts?.record));
+  const publicTargets = targets.map((target, index) => ({
+    label: target.profileName || target.model,
+    destination: formatRequestTargetDestination(target),
+    prompts: entries[index].prompts?.label || ''
   }));
   const controller = abortController;
   try {
-    const built = await buildRequestMessages(conv, { messageList: messageList.slice(), draftMessage });
+    const buildsByPrompts = new Map();
+    const builds = [];
+    for (const entry of entries) {
+      const key = entry.prompts?.id || 'current';
+      if (!buildsByPrompts.has(key)) {
+        buildsByPrompts.set(key, await buildRequestMessages(conv, {
+          messageList: messageList.slice(),
+          draftMessage,
+          prompts: promptOverrideFor(entry.prompts?.record)
+        }));
+      }
+      builds.push(buildsByPrompts.get(key));
+    }
     assertRequestOwner(conv, messageList, null, controller.signal);
     if (activeConvId !== conv.id || input.value !== originalText || JSON.stringify(cloneDraftAttachments(pendingAttachments)) !== attachmentSnapshot) {
       showToast('The draft changed, so comparison was cancelled.', 'info');
       return;
     }
     const outputLimits = targets.map(target => target.maxTokens || 8192);
-    if (targets.some((target, index) => guardTargetContextLimit(built.messages, target, outputLimits[index]))) return;
+    if (targets.some((target, index) => guardTargetContextLimit(builds[index].messages, target, outputLimits[index]))) return;
 
     const addedDocs = [];
     if (attachments.length) {
@@ -2978,12 +3354,13 @@ async function runModelComparison(selectedTargets) {
       renderSidebar();
     }
 
-    const promptTokens = built.messages.reduce((total, message) => total + estimateTokens(
+    const promptTokens = builds.map(built => built.messages.reduce((total, message) => total + estimateTokens(
       typeof message.content === 'string' ? message.content : JSON.stringify(message.content || '')
-    ), 0);
+    ), 0));
     const assistantMsg = {
       role: 'assistant',
       comparison: true,
+      comparisonTargets: publicTargets,
       content: '',
       swipes: ['', ''],
       swipeIndex: 0,
@@ -2999,8 +3376,8 @@ async function runModelComparison(selectedTargets) {
         target,
         model: target.model,
         apiFormat: target.apiFormat,
-        messageCount: built.messages.length,
-        promptTokens,
+        messageCount: builds[index].messages.length,
+        promptTokens: promptTokens[index],
         contextWindow: getTargetContextWindow(target)
       });
     });
@@ -3010,14 +3387,37 @@ async function runModelComparison(selectedTargets) {
     document.getElementById('sendBtn')?.classList.add('streaming');
     updateSendBtnState();
     const lastBubble = document.querySelector('#messagesArea .msg-wrapper.assistant:last-of-type .msg-bubble');
-    if (lastBubble) lastBubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+    const live = createComparisonLiveView(lastBubble, publicTargets, assistantMsg);
 
-    const settled = await Promise.allSettled(targets.map((target, index) => callApiNonStreaming(built.messages, {
-      target,
-      returnMessage: true,
-      maxTokens: outputLimits[index],
-      signal: controller.signal
-    })));
+    const settled = await Promise.allSettled(targets.map((target, index) => {
+      const request = assistantMsg.swipeRequests[index];
+      return callApiStreamingText(builds[index].messages, {
+        target,
+        maxTokens: outputLimits[index],
+        signal: controller.signal,
+        onProgress: ({ text, thinking }) => {
+          if (request.completedAt) return;
+          assistantMsg.swipes[index] = text;
+          assistantMsg.swipeThinking[index] = thinking || '';
+          live?.update(index);
+        }
+      }).then(result => {
+        recordComparisonTiming(request, result);
+        assistantMsg.swipes[index] = result.text;
+        assistantMsg.swipeImages[index] = result.images || [];
+        finishRequestMetadata(request, 'complete');
+        live?.update(index, true);
+        return result;
+      }, error => {
+        const stopped = error?.name === 'AbortError';
+        const interrupted = error?.requestStatus === 'interrupted';
+        finishRequestMetadata(request, stopped ? 'stopped' : interrupted ? 'interrupted' : 'failed', error, error?.httpStatus);
+        if (interrupted) assistantMsg.swipes[index] = String(error.partialText || '');
+        live?.update(index, true);
+        throw error;
+      });
+    }));
+    live?.dispose();
     assertRequestOwner(conv, messageList, assistantMsg, null);
     const successful = applyComparisonSettledResults(assistantMsg, targets, settled);
     if (foregroundAction) foregroundAction.status = successful.length === targets.length ? 'complete' : controller.signal.aborted ? 'stopped' : 'failed';
@@ -3066,7 +3466,7 @@ function openCompareModels() {
   heading.textContent = 'Compare models';
   const note = document.createElement('p');
   note.className = 'manual-ai-note';
-  note.textContent = 'The same conversation context goes to both destinations. This makes two billable requests. A custom CORS proxy may also receive the context and key when used. Comparison replies do not use tools and do not stream.';
+  note.textContent = 'The same conversation goes to both destinations, each with the prompts chosen for it. This makes two billable requests. A custom CORS proxy may also receive the context and key when used. Comparison replies do not use tools.';
   const targets = document.createElement('div');
   targets.className = 'comparison-targets';
   targets.append(first.section, second.section);
@@ -3092,8 +3492,8 @@ function openCompareModels() {
     error.textContent = '';
     try {
       const selected = [first.resolve(), second.resolve()];
-      if (comparisonTargetIdentity(selected[0]) === comparisonTargetIdentity(selected[1])) {
-        throw new Error('Choose two different models or providers.');
+      if (comparisonEntryIdentity(selected[0]) === comparisonEntryIdentity(selected[1])) {
+        throw new Error('Choose two different models, providers or prompt presets.');
       }
       first.keyInput.value = '';
       second.keyInput.value = '';
@@ -9715,29 +10115,556 @@ function loadPresets() {
     opt.textContent = p.name;
     select.appendChild(opt);
   });
+  renderPresetInfo();
   return presets;
 }
 
+// Legacy presets stored a single system prompt and persona instead of entries.
+function presetPromptEntries(record) {
+  if (!record) return [];
+  if (Array.isArray(record.promptEntries)) return record.promptEntries;
+  const entries = [];
+  if (record.systemPrompt) entries.push({ id: 'pe_legacy_sys', name: 'System Prompt', content: record.systemPrompt, enabled: true });
+  if (record.persona) entries.push({ id: 'pe_legacy_per', name: 'Persona', content: record.persona, enabled: true });
+  return entries;
+}
+
+// fromForm reads the Settings fields, which may hold edits that are not saved yet.
+function currentPromptSnapshot({ fromForm = false } = {}) {
+  const read = (fieldId, key) => {
+    const field = fromForm ? document.getElementById(fieldId) : null;
+    return field ? field.value : (localStorage.getItem(key) || '');
+  };
+  return {
+    promptEntries: loadPromptEntries(),
+    persona: read('setPersona', 'llmPersona'),
+    temperature: read('setTemperature', 'llmTemperature').trim(),
+    extraParams: read('setExtraParams', 'llmExtraParams').trim()
+  };
+}
+
+function promptConfigurations({ includeVersions = false } = {}) {
+  const configs = [{ id: 'current', label: 'Current prompts', record: currentPromptSnapshot() }];
+  readPresetRecords().forEach(preset => {
+    configs.push({ id: 'preset:' + preset.id, label: preset.name, record: preset });
+    if (!includeVersions || !Array.isArray(preset.versions)) return;
+    preset.versions.forEach((version, index) => {
+      configs.push({
+        id: 'version:' + preset.id + ':' + index,
+        label: preset.name + ' · earlier version ' + (index + 1) + ' (' + new Date(version.savedAt).toLocaleString() + ')',
+        record: version
+      });
+    });
+  });
+  return configs;
+}
+
+function promptOverrideFor(record) {
+  if (!record) return null;
+  const legacy = !Array.isArray(record.promptEntries);
+  return {
+    entries: presetPromptEntries(record),
+    persona: legacy ? undefined : String(record.persona || '')
+  };
+}
+
+function targetWithPromptRecord(target, record) {
+  if (!record) return target;
+  const next = { ...target };
+  if ('temperature' in record) {
+    const value = String(record.temperature ?? '').trim();
+    next.temperature = value === '' || !Number.isFinite(Number(value)) ? null : Number(value);
+  }
+  if ('extraParams' in record) next.extraParams = String(record.extraParams || '');
+  return Object.freeze(next);
+}
+
+function applyPresetRecord(record) {
+  if (!record) return;
+  const entries = presetPromptEntries(record);
+  if (Array.isArray(record.promptEntries)) {
+    savePromptEntries(entries);
+    if ('persona' in record) document.getElementById('setPersona').value = record.persona || '';
+  } else if (entries.length > 0) {
+    savePromptEntries(entries.map(entry => ({ ...entry, id: entry.id.replace('legacy', String(Date.now())) })));
+  }
+  renderPromptEntries();
+  if ('temperature' in record) document.getElementById('setTemperature').value = record.temperature ?? '';
+  if ('extraParams' in record) document.getElementById('setExtraParams').value = record.extraParams || '';
+  savePresetGenerationSettings();
+  schedulePromptSettingsAutosave();
+}
+
 function applyPreset(id) {
+  renderPresetInfo();
   if (!id) return;
+  const preset = readPresetRecords().find(p => p.id === id);
+  if (preset) applyPresetRecord(preset);
+}
+
+function presetSnapshot(record) {
+  return {
+    savedAt: record.updatedAt || Date.now(),
+    promptEntries: presetPromptEntries(record),
+    persona: String(record.persona || ''),
+    temperature: String(record.temperature ?? ''),
+    extraParams: String(record.extraParams || '')
+  };
+}
+
+function samePromptRecord(a, b) {
+  const shape = record => JSON.stringify([
+    presetPromptEntries(record).map(entry => [entry.name, entry.content, entry.enabled !== false]),
+    String(record.persona || ''), String(record.temperature ?? '').trim(), String(record.extraParams || '').trim()
+  ]);
+  return shape(a) === shape(b);
+}
+
+function renderPresetInfo() {
+  const select = document.getElementById('setPresetSelect');
+  const info = document.getElementById('presetVersionInfo');
+  const update = document.getElementById('presetUpdateBtn');
+  if (!select || !info) return;
+  const preset = select.value ? readPresetRecords().find(p => p.id === select.value) : null;
+  if (update) update.disabled = !preset;
+  if (!preset) {
+    info.textContent = 'Choose a preset to load it. Update preset saves the current prompts into it and keeps the previous version.';
+    return;
+  }
+  const versions = Array.isArray(preset.versions) ? preset.versions.length : 0;
+  const saved = preset.updatedAt ? 'Updated ' + formatRelativeTime(preset.updatedAt) + '. ' : '';
+  info.textContent = saved + (versions
+    ? versions + (versions === 1 ? ' earlier version kept' : ' earlier versions kept') + '. Test prompts compares them.'
+    : 'No earlier versions yet.');
+}
+
+function updateSelectedPreset() {
+  const select = document.getElementById('setPresetSelect');
+  const id = select.value;
+  if (!id) { showToast('Choose a saved preset to update.', 'info'); return; }
   const presets = readPresetRecords();
   const preset = presets.find(p => p.id === id);
   if (!preset) return;
-  // Prompt entries (new format) or legacy fallback
-  if (preset.promptEntries) {
-    savePromptEntries(preset.promptEntries);
-    if ('persona' in preset) document.getElementById('setPersona').value = preset.persona || '';
-  } else {
-    const entries = [];
-    if (preset.systemPrompt) entries.push({ id: 'pe_' + Date.now() + '_sys', name: 'System Prompt', content: preset.systemPrompt, enabled: true });
-    if (preset.persona) entries.push({ id: 'pe_' + Date.now() + '_per', name: 'Persona', content: preset.persona, enabled: true });
-    if (entries.length > 0) savePromptEntries(entries);
+  const current = currentPromptSnapshot({ fromForm: true });
+  if (samePromptRecord(preset, current)) { showToast('This preset already matches the current prompts.', 'info'); return; }
+  const versions = [...(Array.isArray(preset.versions) ? preset.versions : []), presetSnapshot(preset)].slice(-PRESET_VERSION_LIMIT);
+  delete preset.systemPrompt;
+  Object.assign(preset, current, { versions, updatedAt: Date.now() });
+  localStorage.setItem('assistantPresets', JSON.stringify(presets));
+  syncScheduleAutoPush();
+  loadPresets();
+  select.value = id;
+  renderPresetInfo();
+  showToast('Preset updated: ' + preset.name + '. The previous version was kept.', 'success');
+}
+
+// Prompt tests send saved example messages with two prompt setups, side by side.
+// Results stay in this tab only; the examples themselves are saved and synced.
+const promptTestState = { running: false, controller: null, run: null, editingId: null, cells: new Map(), timers: new Map() };
+
+function loadPromptTests() {
+  try { return normalizePromptTests(JSON.parse(localStorage.getItem('assistantPromptTests') || '[]')) || []; }
+  catch { return []; }
+}
+
+function savePromptTests(tests) {
+  const normalized = normalizePromptTests(tests) || [];
+  localStorage.setItem('assistantPromptTests', JSON.stringify(normalized));
+  syncScheduleAutoPush();
+  return normalized;
+}
+
+function setPromptTestStatus(text) {
+  const status = document.getElementById('promptTestStatus');
+  if (status) status.textContent = text || '';
+}
+
+function promptTestConfigChoices() {
+  const configs = promptConfigurations({ includeVersions: true });
+  configs[0].record = currentPromptSnapshot({ fromForm: true });
+  return configs;
+}
+
+function refreshPromptTestConfigs(defaults = {}) {
+  const configs = promptTestConfigChoices();
+  ['A', 'B'].forEach(slot => {
+    const select = document.getElementById('promptTestConfig' + slot);
+    if (!select) return;
+    const previous = defaults[slot] || select.value;
+    select.innerHTML = '';
+    configs.forEach(config => select.appendChild(new Option(config.label, config.id)));
+    select.value = configs.some(config => config.id === previous) ? previous : 'current';
+  });
+  const hint = document.getElementById('promptTestConfigHint');
+  if (hint) {
+    hint.textContent = configs.length > 1
+      ? 'Current prompts uses what is in Settings now, including edits that are not saved yet.'
+      : 'Save a preset first, so there is a second setup to compare with your current prompts.';
   }
-  renderPromptEntries();
-  if ('temperature' in preset) document.getElementById('setTemperature').value = preset.temperature ?? '';
-  if ('extraParams' in preset) document.getElementById('setExtraParams').value = preset.extraParams || '';
-  savePresetGenerationSettings();
-  schedulePromptSettingsAutosave();
+  return configs;
+}
+
+function openPromptTests() {
+  const presetId = document.getElementById('setPresetSelect')?.value;
+  const configs = promptTestConfigChoices();
+  const fallbackB = presetId ? 'preset:' + presetId : (configs[1]?.id || 'current');
+  const run = promptTestState.run;
+  refreshPromptTestConfigs(run ? { A: run.configs[0].id, B: run.configs[1].id } : { A: 'current', B: fallbackB });
+  promptTestState.editingId = null;
+  renderPromptTestList();
+  renderPromptTestResults();
+  updatePromptTestControls();
+  openModal('promptTestsModal', loadPromptTests().length ? '#promptTestRun' : '#promptTestNewText');
+}
+
+function renderPromptTestList() {
+  const list = document.getElementById('promptTestList');
+  if (!list) return;
+  const tests = loadPromptTests();
+  const count = document.getElementById('promptTestCount');
+  if (count) count.textContent = tests.length ? tests.length + ' of ' + PROMPT_TEST_LIMIT : '';
+  const add = document.getElementById('promptTestAddSection');
+  if (add) {
+    if (!tests.length) add.open = true;
+    add.querySelector('button').disabled = tests.length >= PROMPT_TEST_LIMIT;
+  }
+  list.innerHTML = '';
+  if (!tests.length) {
+    const empty = document.createElement('p');
+    empty.className = 'setting-hint';
+    empty.textContent = 'No examples yet. Add the kinds of messages these prompts should handle well.';
+    list.appendChild(empty);
+    return;
+  }
+  tests.forEach((test, index) => {
+    const title = test.name || 'Example ' + (index + 1);
+    const row = document.createElement('div');
+    row.className = 'prompt-entry prompt-test-row';
+    if (promptTestState.editingId === test.id) {
+      const nameLabel = document.createElement('label');
+      nameLabel.textContent = 'Name';
+      const name = document.createElement('input');
+      name.type = 'text';
+      name.maxLength = 80;
+      name.value = test.name;
+      nameLabel.appendChild(name);
+      const textLabel = document.createElement('label');
+      textLabel.textContent = 'Message';
+      const text = document.createElement('textarea');
+      text.rows = 4;
+      text.maxLength = PROMPT_TEST_CHAR_LIMIT;
+      text.value = test.text;
+      textLabel.appendChild(text);
+      const actions = document.createElement('div');
+      actions.className = 'memory-row-actions';
+      const save = document.createElement('button');
+      save.type = 'button';
+      save.className = 'btn btn-primary';
+      save.textContent = 'Save example';
+      save.onclick = () => updatePromptTest(test.id, { name: name.value, text: text.value });
+      const cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.className = 'btn btn-secondary';
+      cancel.textContent = 'Cancel';
+      cancel.onclick = () => { promptTestState.editingId = null; renderPromptTestList(); };
+      actions.append(save, cancel);
+      row.append(nameLabel, textLabel, actions);
+      list.appendChild(row);
+      requestAnimationFrame(() => text.focus());
+      return;
+    }
+    const body = document.createElement('div');
+    body.className = 'prompt-test-text';
+    const strong = document.createElement('strong');
+    strong.textContent = title;
+    const preview = document.createElement('span');
+    preview.textContent = test.text.length > 180 ? test.text.slice(0, 180) + '…' : test.text;
+    body.append(strong, preview);
+    const actions = document.createElement('div');
+    actions.className = 'memory-row-actions';
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'btn btn-secondary';
+    edit.textContent = 'Edit';
+    edit.setAttribute('aria-label', 'Edit ' + title);
+    edit.onclick = () => { promptTestState.editingId = test.id; renderPromptTestList(); };
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn btn-danger';
+    remove.textContent = 'Delete';
+    remove.setAttribute('aria-label', 'Delete ' + title);
+    remove.onclick = () => deletePromptTest(test.id);
+    actions.append(edit, remove);
+    row.append(body, actions);
+    list.appendChild(row);
+  });
+}
+
+function addPromptTest() {
+  const name = document.getElementById('promptTestNewName');
+  const text = document.getElementById('promptTestNewText');
+  const tests = loadPromptTests();
+  if (tests.length >= PROMPT_TEST_LIMIT) { showToast('You can keep up to ' + PROMPT_TEST_LIMIT + ' examples. Delete one to add another.', 'info'); return; }
+  if (!text.value.trim()) { showToast('Write the example message first.', 'info'); text.focus(); return; }
+  tests.push({ id: 'ptest_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: name.value, text: text.value, createdAt: Date.now() });
+  savePromptTests(tests);
+  name.value = '';
+  text.value = '';
+  renderPromptTestList();
+  updatePromptTestControls();
+  announce('Example added.');
+  text.focus();
+}
+
+function updatePromptTest(id, changes) {
+  if (!String(changes.text || '').trim()) { showToast('An example needs a message.', 'info'); return; }
+  const tests = loadPromptTests();
+  const test = tests.find(item => item.id === id);
+  if (!test) return;
+  test.name = changes.name;
+  test.text = changes.text;
+  savePromptTests(tests);
+  promptTestState.editingId = null;
+  renderPromptTestList();
+  announce('Example saved.');
+}
+
+function deletePromptTest(id) {
+  const tests = loadPromptTests();
+  const test = tests.find(item => item.id === id);
+  if (!test || !confirm('Delete the example "' + (test.name || test.text.slice(0, 60)) + '"?')) return;
+  savePromptTests(tests.filter(item => item.id !== id));
+  renderPromptTestList();
+  updatePromptTestControls();
+  announce('Example deleted.');
+}
+
+function updatePromptTestControls() {
+  const run = document.getElementById('promptTestRun');
+  const stop = document.getElementById('promptTestStop');
+  if (run) {
+    run.disabled = promptTestState.running;
+    run.textContent = promptTestState.running ? 'Running…' : 'Run tests';
+  }
+  if (stop) stop.hidden = !promptTestState.running;
+  ['A', 'B'].forEach(slot => {
+    const select = document.getElementById('promptTestConfig' + slot);
+    if (select) select.disabled = promptTestState.running;
+  });
+  promptTestState.cells.forEach((refs, key) => paintPromptTestCell(key));
+}
+
+function renderPromptTestResults() {
+  const container = document.getElementById('promptTestResults');
+  if (!container) return;
+  promptTestState.cells = new Map();
+  container.innerHTML = '';
+  const run = promptTestState.run;
+  container.hidden = !run;
+  if (!run) return;
+  const apply = document.createElement('div');
+  apply.className = 'prompt-test-apply';
+  run.configs.forEach((config, slot) => {
+    if (config.id === 'current') return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-secondary';
+    button.textContent = 'Use ' + 'AB'[slot] + ': ' + config.label;
+    button.setAttribute('aria-label', 'Load ' + config.label + ' into your current prompts');
+    button.onclick = () => usePromptTestConfig(slot);
+    apply.appendChild(button);
+  });
+  if (apply.childElementCount) container.appendChild(apply);
+  run.examples.forEach((example, index) => {
+    const title = example.name || 'Example ' + (index + 1);
+    const section = document.createElement('section');
+    section.className = 'prompt-test-result';
+    section.setAttribute('aria-label', title);
+    const heading = document.createElement('h3');
+    heading.textContent = title;
+    const message = document.createElement('p');
+    message.className = 'prompt-test-message';
+    message.textContent = example.text.length > 240 ? example.text.slice(0, 240) + '…' : example.text;
+    const grid = document.createElement('div');
+    grid.className = 'comparison-live prompt-test-columns';
+    run.configs.forEach((config, slot) => {
+      const column = document.createElement('section');
+      column.className = 'comparison-live-column';
+      column.setAttribute('aria-label', 'Setup ' + 'AB'[slot] + ' reply: ' + config.label);
+      const header = document.createElement('div');
+      header.className = 'comparison-live-header';
+      const name = document.createElement('strong');
+      name.textContent = 'AB'[slot] + ': ' + config.label;
+      const status = document.createElement('span');
+      status.className = 'comparison-live-status';
+      header.append(name, status);
+      const body = document.createElement('div');
+      body.className = 'comparison-live-body';
+      const stats = document.createElement('p');
+      stats.className = 'comparison-result-stats';
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'btn btn-secondary prompt-test-retry';
+      retry.textContent = 'Retry';
+      retry.setAttribute('aria-label', 'Retry setup ' + 'AB'[slot] + ' for ' + title);
+      retry.onclick = () => retryPromptTestCell(example.id, slot);
+      column.append(header, body, stats, retry);
+      grid.appendChild(column);
+      promptTestState.cells.set(example.id + ':' + slot, { status, body, stats, retry });
+    });
+    section.append(heading, message, grid);
+    container.appendChild(section);
+  });
+  promptTestState.cells.forEach((refs, key) => paintPromptTestCell(key));
+}
+
+function paintPromptTestCell(key) {
+  const refs = promptTestState.cells.get(key);
+  if (!refs) return;
+  const separator = key.lastIndexOf(':');
+  const cell = promptTestState.run?.results.get(key.slice(0, separator))?.[Number(key.slice(separator + 1))];
+  refs.status.textContent = cell ? comparisonStatusText(cell.request, cell.text) : 'Not sent';
+  renderComparisonBody(refs.body, cell?.text || '', cell?.images);
+  refs.stats.textContent = cell?.request.completedAt ? comparisonStatsText(cell.request, cell.text) : '';
+  refs.stats.hidden = !refs.stats.textContent;
+  refs.retry.hidden = promptTestState.running || !!cell && !['failed', 'stopped', 'interrupted'].includes(cell.request.status);
+}
+
+function updatePromptTestCell(exampleId, slot, immediate = false) {
+  const key = exampleId + ':' + slot;
+  const timers = promptTestState.timers;
+  if (immediate) {
+    clearTimeout(timers.get(key));
+    timers.delete(key);
+    paintPromptTestCell(key);
+    return;
+  }
+  if (timers.has(key)) return;
+  timers.set(key, setTimeout(() => { timers.delete(key); paintPromptTestCell(key); }, 80));
+}
+
+async function runPromptTestCell(run, example, slot, signal) {
+  const config = run.configs[slot];
+  const target = targetWithPromptRecord(run.target, config.record);
+  const cell = { text: '', thinking: '', images: [], request: { status: 'pending', startedAt: Date.now(), completedAt: null, durationMs: null, error: '' } };
+  requestTargets.set(cell.request, target);
+  run.results.get(example.id)[slot] = cell;
+  updatePromptTestCell(example.id, slot, true);
+  try {
+    // Examples run on their own: no chat history, project files or memories.
+    const system = await buildSystemMessages({ id: 'prompt_test', title: '', messages: [] }, { prompts: promptOverrideFor(config.record), skipMemory: true });
+    const result = await callApiStreamingText([...system, { role: 'user', content: example.text }], {
+      target,
+      signal,
+      maxTokens: target.maxTokens || 8192,
+      onProgress: ({ text, thinking }) => {
+        if (cell.request.completedAt) return;
+        cell.text = text;
+        cell.thinking = thinking || '';
+        updatePromptTestCell(example.id, slot);
+      }
+    });
+    recordComparisonTiming(cell.request, result);
+    cell.text = result.text;
+    cell.images = result.images || [];
+    finishRequestMetadata(cell.request, 'complete');
+  } catch (error) {
+    const stopped = error?.name === 'AbortError';
+    const interrupted = error?.requestStatus === 'interrupted';
+    if (interrupted) cell.text = String(error.partialText || cell.text);
+    finishRequestMetadata(cell.request, stopped ? 'stopped' : interrupted ? 'interrupted' : 'failed', stopped ? '' : error, error?.httpStatus);
+  }
+  updatePromptTestCell(example.id, slot, true);
+}
+
+async function executePromptTestCells(run, cells) {
+  const controller = new AbortController();
+  promptTestState.running = true;
+  promptTestState.controller = controller;
+  updatePromptTestControls();
+  setPromptTestStatus('Sending ' + cells.length + (cells.length === 1 ? ' request…' : ' requests…'));
+  try {
+    // One example at a time; both setups for an example run together.
+    const byExample = new Map();
+    cells.forEach(([example, slot]) => {
+      if (!byExample.has(example.id)) byExample.set(example.id, { example, slots: [] });
+      byExample.get(example.id).slots.push(slot);
+    });
+    for (const { example, slots } of byExample.values()) {
+      if (controller.signal.aborted) break;
+      await Promise.all(slots.map(slot => runPromptTestCell(run, example, slot, controller.signal)));
+    }
+  } finally {
+    promptTestState.running = false;
+    promptTestState.controller = null;
+    if (promptTestState.run === run) updatePromptTestControls();
+  }
+  const all = [...run.results.values()].flat();
+  const complete = all.filter(cell => cell?.request.status === 'complete').length;
+  const failed = all.filter(cell => cell && ['failed', 'interrupted'].includes(cell.request.status)).length;
+  const summary = controller.signal.aborted
+    ? 'Stopped. ' + complete + ' of ' + all.length + ' replies finished.'
+    : complete + ' of ' + all.length + ' replies finished.' + (failed ? ' Use Retry on a failed reply to send it again.' : '');
+  setPromptTestStatus(summary);
+  announce(summary);
+}
+
+async function runPromptTests() {
+  if (promptTestState.running) return;
+  const examples = loadPromptTests();
+  if (!examples.length) {
+    setPromptTestStatus('Add an example message first.');
+    document.getElementById('promptTestAddSection').open = true;
+    document.getElementById('promptTestNewText').focus();
+    return;
+  }
+  const configs = promptTestConfigChoices();
+  const ids = ['A', 'B'].map(slot => document.getElementById('promptTestConfig' + slot).value);
+  const chosen = ids.map(id => configs.find(config => config.id === id));
+  if (chosen.some(config => !config) || ids[0] === ids[1]) {
+    setPromptTestStatus('Choose two different setups to compare.');
+    return;
+  }
+  const target = getActiveRequestTarget();
+  if (!target.model) { setPromptTestStatus('Choose a model in Settings first.'); return; }
+  if (target.keyRequired && !target.apiKey) { setPromptTestStatus('Add an API key in Settings first.'); return; }
+  const run = {
+    target,
+    configs: chosen.map(config => ({ id: config.id, label: config.label, record: JSON.parse(JSON.stringify(config.record)) })),
+    examples: examples.map(example => ({ ...example })),
+    results: new Map()
+  };
+  run.examples.forEach(example => run.results.set(example.id, [null, null]));
+  promptTestState.run = run;
+  renderPromptTestResults();
+  await executePromptTestCells(run, run.examples.flatMap(example => [[example, 0], [example, 1]]));
+}
+
+function retryPromptTestCell(exampleId, slot) {
+  const run = promptTestState.run;
+  const example = run?.examples.find(item => item.id === exampleId);
+  if (!example || promptTestState.running) return;
+  void executePromptTestCells(run, [[example, slot]]);
+}
+
+function stopPromptTests() {
+  promptTestState.controller?.abort();
+}
+
+function usePromptTestConfig(slot) {
+  const config = promptTestState.run?.configs[slot];
+  if (!config || config.id === 'current') return;
+  if (!confirm('Replace your current prompts with ' + config.label + '?')) return;
+  applyPresetRecord(config.record);
+  const presetId = config.id.startsWith('preset:') ? config.id.slice(7) : config.id.slice(8, config.id.lastIndexOf(':'));
+  const select = document.getElementById('setPresetSelect');
+  if (select && readPresetRecords().some(preset => preset.id === presetId)) select.value = presetId;
+  renderPresetInfo();
+  refreshPromptTestConfigs();
+  const message = 'Loaded ' + config.label + ' into your current prompts.' +
+    (config.id.startsWith('version:') ? ' Choose Update preset to make it the preset\'s latest version.' : '');
+  setPromptTestStatus(message);
+  announce(message);
 }
 
 function saveCurrentAsPreset() {
@@ -9757,6 +10684,7 @@ function saveCurrentAsPreset() {
   syncScheduleAutoPush();
   loadPresets();
   document.getElementById('setPresetSelect').value = preset.id;
+  renderPresetInfo();
   showToast('Preset saved: ' + name, 'success');
 }
 
@@ -10158,8 +11086,10 @@ async function buildSystemMessages(conv, options = {}) {
   const report = options.report || {};
   const macroCtx = isStMacroEnabled() ? getRpMacroContext(conv) : null;
   const resolveText = (text) => macroCtx ? applyStMacros(text, macroCtx) : text;
-  // Prompt entries (never overridden by character cards)
-  const entries = loadPromptEntries();
+  // Prompt entries (never overridden by character cards). Comparisons and prompt tests
+  // may pass a saved preset's prompts instead of the current ones.
+  const prompts = options.prompts || null;
+  const entries = prompts ? prompts.entries : loadPromptEntries();
   entries.forEach(entry => {
     const content = resolveText(entry.content);
     if (entry.enabled && typeof content === 'string' && content.trim()) msgs.push({ role: 'system', content });
@@ -10195,7 +11125,8 @@ async function buildSystemMessages(conv, options = {}) {
   }
   // Persona — who the user is. A saved empty per-chat persona is an intentional
   // blank, not a missing value; only fall back to the global default when absent.
-  const persona = (conv && conv.persona != null ? conv.persona : localStorage.getItem('llmPersona')) || '';
+  const fallbackPersona = prompts && typeof prompts.persona === 'string' ? prompts.persona : localStorage.getItem('llmPersona');
+  const persona = (conv && conv.persona != null ? conv.persona : fallbackPersona) || '';
   if (persona.trim()) {
     msgs.push({ role: 'system', content: 'The following describes the user you are speaking with:\n\n' + resolveText(persona) });
   }
@@ -10204,7 +11135,7 @@ async function buildSystemMessages(conv, options = {}) {
     msgs.push({ role: 'system', content: 'Conversation summary:\n' + conv.summary });
   }
   // Memory prompt
-  const mem = isTemporaryConversation(conv) ? '' : await getMemoryPrompt(conv);
+  const mem = isTemporaryConversation(conv) || options.skipMemory ? '' : await getMemoryPrompt(conv);
   if (mem) msgs.push({ role: 'system', content: mem });
   if (areEmotionSpritesEnabled()) msgs.push({ role: 'system', content: buildEmotionSpriteInstructions() });
   return msgs;
@@ -10292,7 +11223,7 @@ async function buildRequestMessages(conv = getActiveConv(), options = {}) {
   const selection = filterRequestHistory(candidateSource, options);
   const report = {};
   const retrievalQuery = retrievalQueryFor(selection.included.map(item => item.message), options.draftMessage);
-  const systemMessages = await buildSystemMessages(candidate, { retrievalQuery, report });
+  const systemMessages = await buildSystemMessages(candidate, { retrievalQuery, report, prompts: options.prompts || null });
   const toolPolicy = getToolPolicy(conv);
   if (toolPolicy.webSearch || toolPolicy.urlFetch) {
     systemMessages.push({ role: 'system', content: SOURCE_CITATION_INSTRUCTION });
@@ -10900,6 +11831,7 @@ function renderMessages({ preserveScroll = false } = {}) {
       Boolean(String(getMsgText(msg) || '').trim()) && (!requestStatus || ['complete', 'stopped', 'failed', 'interrupted'].includes(requestStatus)) &&
       !NO_TRAILING_ASSISTANT_RE.test(localStorage.getItem('llmModel') || '');
     const secondaryActions = [];
+    if (isComparison) secondaryActions.push({ label: 'Compare responses', action: () => reopenComparisonResults(msg) });
     if (msg.role === 'assistant') secondaryActions.push({ id: 'read-aloud', get label() { return spokenMessage === msg ? 'Stop reading aloud' : 'Read aloud'; }, action: () => speakMessage(msg) });
     if (msg.role === 'assistant' && idx === messages.length - 1 && getMsgText(msg).trim() && (!requestStatus || requestStatus === 'complete')) {
       secondaryActions.push({ label: 'Suggest follow-ups', action: () => suggestFollowUps(idx) });
@@ -13003,7 +13935,8 @@ const EXPORT_SETTING_ALLOWLIST = [
   'llmForceSearch', 'llmMemoryEnabled', 'llmHoldScreenshot', 'llmEmotionSprites', 'llmEmotionSpriteSet', 'llmPromptEntries',
   'llmUrlFetch', 'llmToolConfirm', 'llmSearchApiUrl', 'llmCorsProxy',
   'assistantTheme', 'assistantStarterPrompts', 'assistantStarterPromptsHidden',
-  'assistantCustomTheme', 'assistantFont', 'assistantMsgFontSize', 'assistantMsgMaxWidth', 'assistantPresets'
+  'assistantCustomTheme', 'assistantFont', 'assistantMsgFontSize', 'assistantMsgMaxWidth', 'assistantPresets',
+  'assistantPromptTests'
 ];
 const IMPORT_SETTING_URL_KEYS = new Set(['llmProxyUrl', 'llmSearchApiUrl', 'llmCorsProxy']);
 
@@ -16699,6 +17632,11 @@ function toggleVoice() {
 // Window bridge for inline handlers and external hooks
 const __windowBridge = {
   toggleComposerExpanded,
+  updateSelectedPreset,
+  openPromptTests,
+  addPromptTest,
+  runPromptTests,
+  stopPromptTests,
   closeOutputWorkspace,
   saveOutputVersion,
   discardOutputDraft,
